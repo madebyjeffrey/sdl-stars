@@ -2,6 +2,8 @@
 
 **Snapshot:** `develop` at `29a731f9` (2026-11-03). This report records the remaining L05 work after the formatter result change was committed.
 
+The subsequent text-destination scan is recorded in [L05 destination scan](</Users/jdrake/Projects/sdl-stars/docs/CPP-LIVE-L05-DESTINATION-SCAN.md>) with its [628-callsite formatter inventory](</Users/jdrake/Projects/sdl-stars/docs/CPP-LIVE-L05-FORMATTER-DESTINATIONS.csv>). The scan identifies unchecked, fixed-size display formatting as a follow-up to resolve before closing `bounded-text-destinations`.
+
 ## Status
 
 L05 has 214 recorded completed substeps and two open audit items:

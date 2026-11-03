@@ -2477,7 +2477,7 @@
       },
       "help_path_page_and_stamp_views": {
         "status": "complete; locally verified",
-        "change": "FHelpAssets and PszHelpDocument accept string_view paths/page names; WinHelpA carries selected page and owned help directory as views. The stamp comparison uses CchGetNativeLine\u2019s returned byte count.",
+        "change": "FHelpAssets and PszHelpDocument accept string_view paths/page names; WinHelpA carries selected page and owned help directory as views. The stamp comparison uses CchGetNativeLine’s returned byte count.",
         "sdk_boundary": "WinHelpA retains its SDK signature; only private helpers and their internal values changed.",
         "verification": {
           "batch": "Bound help path, page, and stamp text",
@@ -2528,7 +2528,7 @@
           },
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
-          "api_audit": "PszHelpDocument\u2019s internal operation flag and WinHelpA\u2019s local launch result use bool. WinHelpA retains its SDK BOOL return type; all success/failure values remain 0/1.",
+          "api_audit": "PszHelpDocument’s internal operation flag and WinHelpA’s local launch result use bool. WinHelpA retains its SDK BOOL return type; all success/failure values remain 0/1.",
           "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -27996,7 +27996,7 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5\u201331 byte acceptance range.",
+      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5–31 byte acceptance range.",
       "api_audit": "Removed the strlen rescan after ProfileTextIO::ReadString by using its returned byte count.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
@@ -28842,7 +28842,7 @@
         "skipped": 0
       },
       "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
-      "api_audit": "IdNearestUnknownPlanet returns UNKNOWNPLANETRESULT with the selected planet and optional wormhole pointer. IdTargetScout owns that result internally; its wormhole output pointer and all callers\u2019 now-unused pointer arguments are removed. The random wormhole check remains in the same search point and is still reached by every existing scout caller; game state and choices are unchanged.",
+      "api_audit": "IdNearestUnknownPlanet returns UNKNOWNPLANETRESULT with the selected planet and optional wormhole pointer. IdTargetScout owns that result internally; its wormhole output pointer and all callers’ now-unused pointer arguments are removed. The random wormhole check remains in the same search point and is still reached by every existing scout caller; game state and choices are unchanged.",
       "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
       "diff_check": "Pass."
     },
@@ -29384,7 +29384,7 @@
       "PszGetTaskName carries REPORTTEXTRESULT with an exact byte count; fleet task drawing and dump serialization use that count or its bounded view.",
       "Replaced two std::strlen scans of the fixed \"-- \" placeholder in report drawing with its compile-time byte length; rendered bytes are unchanged.",
       "APPGAMESTATE now has compile-time string_view sources for its mineral and planet attribute labels. Existing C-string pointer arrays retain their layout and point to those literals; UI sizing, drawing, and text-out calls now use the exact byte lengths.",
-      "Fleet order labels copied into fixed buffers now use CchGetString\u2019s returned byte count for drawing; the composed mine-laying message uses CchSprintf\u2019s returned count. Six std::strlen rescans were removed without changing displayed text.",
+      "Fleet order labels copied into fixed buffers now use CchGetString’s returned byte count for drawing; the composed mine-laying message uses CchSprintf’s returned count. Six std::strlen rescans were removed without changing displayed text.",
       "The C++ text service now returns PLANETNAMERESULT for planet names, carrying owned fixed storage and the exact UTF-8 byte count. The legacy array-returning PszGetPlanetName wrapper remains for the archived C observer. Report drawing uses result or formatter counts in seven former std::strlen sites."
     ],
     "current_source_audits": {
@@ -30412,7 +30412,7 @@
         "owned_function_like_macros": 0,
         "legacy_string_and_numeric_call_spellings": 0,
         "src_BOOL_spellings": [
-          "src/ui/nativeui.h:24 \u2014 Win32 BOOL callback signature for win32::GetCursorPos; retained to match that SDK boundary."
+          "src/ui/nativeui.h:24 — Win32 BOOL callback signature for win32::GetCursorPos; retained to match that SDK boundary."
         ],
         "result": "Fresh lexical scan of src and compat/win32/include/src; comments/literals not parsed separately by this quick check. Maintained cleanup manifests remain authoritative for full audits."
       },
@@ -30480,10 +30480,10 @@
     "library_export_path_length": "FExportLibraryOrders builds one bounded view of the selected path and reuses its size and separator/extension indices; path truncation at the first NUL and suffix replacement semantics are unchanged.",
     "compat_list_search_length": "COMPATLIST owns cchSearch alongside szSearch; ResetList clears both and WM_CHAR updates the count on every append/restart, removing the repeated buffer scan.",
     "library_recent_key_length": "FDeleteLibraryGameRecentPaths uses the byte count returned by CchGetString for idsFile1 when replacing the numeric suffix.",
-    "game_file_path_length": "FOpenGame carries CchCopyUtf8\u2019s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
-    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8\u2019s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
+    "game_file_path_length": "FOpenGame carries CchCopyUtf8’s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
+    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8’s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
     "strlen_inventory_method": "Individual call counts use rg -o and wc -l; rg -c counts matching lines and undercounts when a line has multiple calls.",
-    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8\u2019s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
+    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8’s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
     "compat_menu_label_lengths": "COMPATMENUITEM records the byte count when it owns its label; GetMenuStringA and popup sizing reuse that count.",
     "compat_list_item_lengths": "COMPATLISTITEM records the UTF-8 byte length at AddList ownership transfer; LB_GETTEXTLEN and LB_GETTEXT reuse it, removing the owned-item strlen scan and an implicit string_view length scan. Input search text remains a C-string ABI boundary.",
     "strlen_occurrence_inventory_method": "rg -o confirms 3 std::strlen calls in production C++ source/header files and 10 additional test/witness occurrences; no Objective-C++ std::strlen or SDL_strlen calls remain.",
@@ -30667,5 +30667,16 @@
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
     "next": "Use docs/CPP-LIVE-L05-REPORT.md and docs/CPP-LIVE-L06-REPORT.md to close the remaining text/ownership and buffer/length audits, then qualify the current source on Windows/Linux and close chooser coverage."
+  },
+  "latest_l05_destination_scan": {
+    "source_commit": "c845deb9",
+    "formatter_destination_callsites": 626,
+    "cch_sprintf_utf8_prefix_sites": 432,
+    "cch_snprintf_bounded_span_sites": 194,
+    "legacy_owned_c_string_copy_calls": 0,
+    "report": "docs/CPP-LIVE-L05-DESTINATION-SCAN.md",
+    "callsite_inventory": "docs/CPP-LIVE-L05-FORMATTER-DESTINATIONS.csv",
+    "status": "Scan and capacity/truncation inventory recorded. L05 bounded-text-destinations remains open while unchecked fixed-size display formatting and caller-side strict truncation handling are reconciled.",
+    "formatter_inventory_rows_including_span_wrapper_declarations": 628
   }
 }
