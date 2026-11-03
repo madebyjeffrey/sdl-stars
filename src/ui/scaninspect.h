@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <optional>
 
 /* UI-thread, copied player-client data. Object keys are (game, turn, player,
  * kind, id), not array indices or pointers. Re-capture after loading a turn.
@@ -26,8 +27,7 @@ struct SCANSNAPSHOT {
     std::unique_ptr<SCANOBJECT[]> rgobj;
     std::size_t cObject;
 };
-BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap);
-void FreeScannerSnapshot(SCANSNAPSHOT *lpsnap);
+std::optional<SCANSNAPSHOT> RgCaptureScanner(APPSESSION &app);
 BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile);
 /* Select the secondary scanner object through ChangeScanSel; optionally pan.
  * No orders are issued and the main object/waypoint editing mode is untouched.

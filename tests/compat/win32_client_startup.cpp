@@ -346,7 +346,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
 }
 
 static BOOL FCheckMapInspection(APPSESSION &app) {
-    SCANSNAPSHOT snap = {}, fresh = {};
+    std::optional<SCANSNAPSHOT> snap, fresh;
     size_t i, j, cPlanetFound = 0;
     POINT16 pt;
     POINT screen;
@@ -354,7 +354,7 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     SEL selSav = app.state.sel;
     BOOL fPassed = 0;
     HWND hwndInspector, hwndMap, hwndChild, hwndGrandchild;
-    char szNameSav[sizeof(fresh.rgobj[0].szName)];
+    char szNameSav[sizeof(SCANOBJECT{}.szName)];
     char szExport[32768];
     size_t cb;
     const char *pszViewerCapture = PszCompatEnvironment("STARS_MAP_VIEWER_CAPTURE");
@@ -362,44 +362,46 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     NATIVEFILEOWNER nftemp{nullptr, ICloseNativeFile};
     const char *pszCapture = PszCompatEnvironment("STARS_MAP_CAPTURE");
     int16_t fDirty = app.state.game.fDirty;
-    if (!FCaptureScanner(app, &snap) || snap.cObject < (size_t)app.state.game.cPlanMax ||
-        snap.lidGame != app.state.game.lid || snap.idPlayer != app.state.idPlayer || snap.turn != app.state.game.turn) goto LDone;
-    for (i = 0; i < snap.cObject; i++) {
-        if (!snap.rgobj[i].szName[0]) goto LDone;
-        pt = PointTo16(snap.rgobj[i].ptUniverse); LogicalToScan(app, &pt);
+    snap = RgCaptureScanner(app);
+    if (!snap || snap->cObject < (size_t)app.state.game.cPlanMax ||
+        snap->lidGame != app.state.game.lid || snap->idPlayer != app.state.idPlayer || snap->turn != app.state.game.turn) goto LDone;
+    for (i = 0; i < snap->cObject; i++) {
+        if (!snap->rgobj[i].szName[0]) goto LDone;
+        pt = PointTo16(snap->rgobj[i].ptUniverse); LogicalToScan(app, &pt);
         screen = PointFrom16(pt); win32::ClientToScreen(app.lpui->hwndScanner, &screen);
-        if (pt.x != snap.rgobj[i].ptClient.x || pt.y != snap.rgobj[i].ptClient.y ||
-            screen.x != snap.rgobj[i].ptScreen.x || screen.y != snap.rgobj[i].ptScreen.y) goto LDone;
-        if (snap.rgobj[i].grType == grobjPlanet) cPlanetFound++;
-        for (j = i + 1; j < snap.cObject; j++)
-            if (snap.rgobj[i].grType == snap.rgobj[j].grType && snap.rgobj[i].id == snap.rgobj[j].id) goto LDone;
+        if (pt.x != snap->rgobj[i].ptClient.x || pt.y != snap->rgobj[i].ptClient.y ||
+            screen.x != snap->rgobj[i].ptScreen.x || screen.y != snap->rgobj[i].ptScreen.y) goto LDone;
+        if (snap->rgobj[i].grType == grobjPlanet) cPlanetFound++;
+        for (j = i + 1; j < snap->cObject; j++)
+            if (snap->rgobj[i].grType == snap->rgobj[j].grType && snap->rgobj[i].id == snap->rgobj[j].id) goto LDone;
     }
     if (cPlanetFound != (size_t)app.state.game.cPlanMax || app.state.game.fDirty != fDirty || memcmp(&app.state.sel, &selSav, sizeof(app.state.sel))) goto LDone;
-    snap.turn++;
-    if (FSelectScannerObject(app, &snap, grobjPlanet, 0, 1)) goto LDone;
-    snap.turn--;
-    if (FSelectScannerObject(app, &snap, grobjPlanet, std::numeric_limits<std::uint16_t>::max(), 1) ||
-        !FSelectScannerObject(app, &snap, grobjPlanet, 0, 1) || app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 0) goto LDone;
-    if (!FCaptureScanner(app, &fresh) || !fresh.rgobj[0].fOnScreen || !fresh.rgobj[0].fScanSelected || app.state.game.fDirty != fDirty) goto LDone;
-    memcpy(szNameSav, fresh.rgobj[0].szName, sizeof(szNameSav));
-    strcpy(fresh.rgobj[0].szName, "Quoted \"\xc3\xa9\xe2\x82\xac\"\r\n");
+    snap->turn++;
+    if (FSelectScannerObject(app, &*snap, grobjPlanet, 0, 1)) goto LDone;
+    snap->turn--;
+    if (FSelectScannerObject(app, &*snap, grobjPlanet, std::numeric_limits<std::uint16_t>::max(), 1) ||
+        !FSelectScannerObject(app, &*snap, grobjPlanet, 0, 1) || app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 0) goto LDone;
+    fresh = RgCaptureScanner(app);
+    if (!fresh || !fresh->rgobj[0].fOnScreen || !fresh->rgobj[0].fScanSelected || app.state.game.fDirty != fDirty) goto LDone;
+    memcpy(szNameSav, fresh->rgobj[0].szName, sizeof(szNameSav));
+    strcpy(fresh->rgobj[0].szName, "Quoted \"\xc3\xa9\xe2\x82\xac\"\r\n");
     nftemp = NfoNativeTemporary(); lpfile = nftemp.get();
     if (!lpfile) goto LDone;
-    if (!FWriteScannerSnapshot(&fresh, lpfile)) goto LDone;
+    if (!FWriteScannerSnapshot(&*fresh, lpfile)) goto LDone;
     ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szExport}.first(sizeof(szExport) - 1), lpfile); szExport[cb] = 0; nftemp.reset();
     if (!strstr(szExport, "\xc3\xa9\xe2\x82\xac") || !strstr(szExport, "\\u000d\\u000a")) goto LDone;
-    memcpy(fresh.rgobj[0].szName, szNameSav, sizeof(szNameSav));
+    memcpy(fresh->rgobj[0].szName, szNameSav, sizeof(szNameSav));
     if (pszCapture) {
         lpfile = PfNativeOpen(pszCapture, NATIVEFILEMODE::writeTruncate);
         if (!lpfile) goto LDone;
-        if (!FWriteScannerSnapshot(&fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
+        if (!FWriteScannerSnapshot(&*fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
         if (ICloseNativeFile(lpfile) != 0) goto LDone;
     }
     hwndInspector = StarsCompatShowInspector();
     if (!hwndInspector || !win32::GetDlgItem(hwndInspector,4)) goto LDone;
     ui::SendMessage(win32::GetDlgItem(hwndInspector,4), win32::BM_CLICK,0,0);
     hwndMap = ShowScannerInspector();
-    if (!hwndMap || ui::SendMessage(win32::GetDlgItem(hwndMap,1),win32::LB_GETCOUNT,0,0) != (LRESULT)fresh.cObject ||
+    if (!hwndMap || ui::SendMessage(win32::GetDlgItem(hwndMap,1),win32::LB_GETCOUNT,0,0) != (LRESULT)fresh->cObject ||
         !ui::UpdateWindow(hwndMap) || !FCompatPresent(hwndMap)) goto LDone;
     for (hwndChild = win32::GetWindow(hwndMap, win32::GW_CHILD); hwndChild; hwndChild = win32::GetWindow(hwndChild, win32::GW_HWNDNEXT)) {
         ui::UpdateWindow(hwndChild);
@@ -418,7 +420,6 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     ChangeScanSel(app, &scanSav,2);
     fPassed = 1;
 LDone:
-    FreeScannerSnapshot(&snap); FreeScannerSnapshot(&fresh);
     return fPassed;
 }
 
@@ -1267,7 +1268,7 @@ static void DispatchWorkflowInput(APPSESSION &app, win32::MSG *lpmsg) {
 }
 
 static BOOL FCheckRouteAppendDelete(APPSESSION &app, int idFleet) {
-    SCANSNAPSHOT snap = {};
+    std::optional<SCANSNAPSHOT> snap;
     SCANOBJECT obj, objDrag;
     POINT ptFrom;
     FLEET *lpfl = LpflFromId(app, (int16_t)idFleet);
@@ -1280,15 +1281,16 @@ static BOOL FCheckRouteAppendDelete(APPSESSION &app, int idFleet) {
     BOOL fPassed = 0;
     if (!lpfl || lpfl->cord != 1) return 0;
     ordSav = lpfl->lpplord->rgord()[0];
-    if (!FCaptureScanner(app, &snap)) return 0;
-    for (i = 0; i < snap.cObject; i++) {
-        obj = snap.rgobj[i];
+    snap = RgCaptureScanner(app);
+    if (!snap) return 0;
+    for (i = 0; i < snap->cObject; i++) {
+        obj = snap->rgobj[i];
         if (obj.grType == grobjPlanet && obj.id != lpfl->idPlanet && obj.fOnScreen && !obj.fFiltered &&
-            obj.ptClient.x > 3 && obj.ptClient.y > 3 && obj.ptClient.x < snap.rcViewport.right - 3 &&
-            obj.ptClient.y < snap.rcViewport.bottom - 3) break;
+            obj.ptClient.x > 3 && obj.ptClient.y > 3 && obj.ptClient.x < snap->rcViewport.right - 3 &&
+            obj.ptClient.y < snap->rcViewport.bottom - 3) break;
     }
-    fPassed = i < snap.cObject;
-    FreeScannerSnapshot(&snap);
+    fPassed = i < snap->cObject;
+    snap.reset();
     if (!fPassed) return 0;
     fPassed = 0;
     rc = (RECT){obj.ptClient.x - 1, obj.ptClient.y - 1, obj.ptClient.x + 1, obj.ptClient.y + 1};
@@ -1304,18 +1306,19 @@ static BOOL FCheckRouteAppendDelete(APPSESSION &app, int idFleet) {
     if (lpfl->cord != 2 || lpfl->lpplord->rgord()[1].grobj != grobjPlanet || lpfl->lpplord->rgord()[1].id != obj.id ||
         lpfl->lpplord->rgord()[1].pt.x != obj.ptUniverse.x || lpfl->lpplord->rgord()[1].pt.y != obj.ptUniverse.y) goto LDone;
     // Re-capture after the append: the UI may have changed the scanner view.
-    if (!FCaptureScanner(app, &snap)) goto LDone;
-    for (i = 0; i < snap.cObject; i++)
-        if (snap.rgobj[i].grType == grobjPlanet && snap.rgobj[i].id == obj.id) { ptFrom = snap.rgobj[i].ptClient; break; }
-    fPassed = i < snap.cObject;
-    if (fPassed) for (i = 0; i < snap.cObject; i++) {
-        objDrag = snap.rgobj[i];
+    snap = RgCaptureScanner(app);
+    if (!snap) goto LDone;
+    for (i = 0; i < snap->cObject; i++)
+        if (snap->rgobj[i].grType == grobjPlanet && snap->rgobj[i].id == obj.id) { ptFrom = snap->rgobj[i].ptClient; break; }
+    fPassed = i < snap->cObject;
+    if (fPassed) for (i = 0; i < snap->cObject; i++) {
+        objDrag = snap->rgobj[i];
         if (objDrag.grType == grobjPlanet && objDrag.id != obj.id && objDrag.id != lpfl->idPlanet &&
             objDrag.fOnScreen && !objDrag.fFiltered && objDrag.ptClient.x > 3 && objDrag.ptClient.y > 3 &&
-            objDrag.ptClient.x < snap.rcViewport.right - 3 && objDrag.ptClient.y < snap.rcViewport.bottom - 3) break;
+            objDrag.ptClient.x < snap->rcViewport.right - 3 && objDrag.ptClient.y < snap->rcViewport.bottom - 3) break;
     }
-    fPassed = fPassed && i < snap.cObject;
-    FreeScannerSnapshot(&snap);
+    fPassed = fPassed && i < snap->cObject;
+    snap.reset();
     if (!fPassed) goto LDone;
     fPassed = 0;
     if (!FPushWorkflowDrag(app.lpui->hwndScanner, ptFrom, objDrag.ptClient)) goto LDone;

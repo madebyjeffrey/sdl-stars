@@ -98,7 +98,7 @@ static void LogState(APPSESSION &app, const char *pszEvent) {
 
 static BOOL FSaveState(APPSESSION &app, const char *pszName) {
     STARSCOMPATSNAPSHOT snap = {};
-    SCANSNAPSHOT scan = {};
+    std::optional<SCANSNAPSHOT> scan;
     NATIVEFILE *lpfile;
     char szPath[100];
     BOOL fResult;
@@ -111,11 +111,11 @@ static BOOL FSaveState(APPSESSION &app, const char *pszName) {
     StarsCompatFreeHierarchy(&snap);
     if (!fResult || !win32::IsWindow(app.lpui->hwndScanner)) return fResult;
     snprintf(szPath, sizeof(szPath), "%s-map.json", pszName);
-    if (!FCaptureScanner(app, &scan)) return 0;
+    scan = RgCaptureScanner(app);
+    if (!scan) return 0;
     lpfile = PfNativeOpen(szPath, NATIVEFILEMODE::writeTruncate);
-    fResult = lpfile && FWriteScannerSnapshot(&scan, lpfile);
+    fResult = lpfile && FWriteScannerSnapshot(&*scan, lpfile);
     if (lpfile && ICloseNativeFile(lpfile)) fResult = 0;
-    FreeScannerSnapshot(&scan);
     return fResult;
 }
 
@@ -236,33 +236,35 @@ static HWND HwndModal(void) {
 }
 
 static BOOL FFindMapObject(APPSESSION &app, uint16_t grType, uint16_t idObject, const char *pszName) {
-    SCANSNAPSHOT snap = {};
+    std::optional<SCANSNAPSHOT> snap;
     size_t i;
     BOOL fFound = 0, fReveal = 0;
-    if (!FCaptureScanner(app, &snap)) return 0;
-    for (i = 0; i < snap.cObject; i++) {
-        if (snap.rgobj[i].grType == grType && (pszName ? !strcmp(snap.rgobj[i].szName, pszName) : snap.rgobj[i].id == idObject) && !snap.rgobj[i].fFiltered) {
-            objTarget = snap.rgobj[i];
+    snap = RgCaptureScanner(app);
+    if (!snap) return 0;
+    for (i = 0; i < snap->cObject; i++) {
+        if (snap->rgobj[i].grType == grType && (pszName ? !strcmp(snap->rgobj[i].szName, pszName) : snap->rgobj[i].id == idObject) && !snap->rgobj[i].fFiltered) {
+            objTarget = snap->rgobj[i];
             if (!objTarget.fOnScreen) {
-                fReveal = FSelectScannerObject(app, &snap, grType, objTarget.id, 1);
+                fReveal = FSelectScannerObject(app, &*snap, grType, objTarget.id, 1);
                 break;
             }
             fFound = 1;
             break;
         }
     }
-    FreeScannerSnapshot(&snap);
+    snap.reset();
     if (fReveal) {
         LogState(app, "map-reveal");
-        if (!FCaptureScanner(app, &snap)) return 0;
-        for (i = 0; i < snap.cObject; i++) {
-            if (snap.rgobj[i].grType == grType && snap.rgobj[i].id == objTarget.id && snap.rgobj[i].fOnScreen) {
-                objTarget = snap.rgobj[i];
+        snap = RgCaptureScanner(app);
+        if (!snap) return 0;
+        for (i = 0; i < snap->cObject; i++) {
+            if (snap->rgobj[i].grType == grType && snap->rgobj[i].id == objTarget.id && snap->rgobj[i].fOnScreen) {
+                objTarget = snap->rgobj[i];
                 fFound = 1;
                 break;
             }
         }
-        FreeScannerSnapshot(&snap);
+        snap.reset();
     }
     return fFound;
 }
@@ -272,22 +274,22 @@ static BOOL FFindPlanet(APPSESSION &app, const char *pszName) {
 }
 
 static BOOL FFindSalvageHere(APPSESSION &app) {
-    SCANSNAPSHOT snap = {};
+    std::optional<SCANSNAPSHOT> snap;
     POINT pt = objTarget.ptUniverse;
     char szName[64];
     size_t i;
     BOOL fFound = 0;
 
     CchGetString(app, idsSalvage, szName);
-    if (!FCaptureScanner(app, &snap)) return 0;
-    for (i = 0; i < snap.cObject; i++) {
-        if (snap.rgobj[i].grType == grobjThing && snap.rgobj[i].ith == ithMineralPacket &&
-            !snap.rgobj[i].fFiltered && snap.rgobj[i].ptUniverse.x == pt.x && snap.rgobj[i].ptUniverse.y == pt.y &&
-            !strcmp(snap.rgobj[i].szName, szName)) {
-            objTarget = snap.rgobj[i]; fFound = 1; break;
+    snap = RgCaptureScanner(app);
+    if (!snap) return 0;
+    for (i = 0; i < snap->cObject; i++) {
+        if (snap->rgobj[i].grType == grobjThing && snap->rgobj[i].ith == ithMineralPacket &&
+            !snap->rgobj[i].fFiltered && snap->rgobj[i].ptUniverse.x == pt.x && snap->rgobj[i].ptUniverse.y == pt.y &&
+            !strcmp(snap->rgobj[i].szName, szName)) {
+            objTarget = snap->rgobj[i]; fFound = 1; break;
         }
     }
-    FreeScannerSnapshot(&snap);
     return fFound;
 }
 
