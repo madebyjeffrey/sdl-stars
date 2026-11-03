@@ -1976,7 +1976,8 @@
         "host-ini-reader-uses-shared-native-file-owner",
         "native-file-size-optional-result",
         "temporary_native_stream_api_returns_unique_owner",
-        "native_file_position_optional_result"
+        "native_file_position_optional_result",
+        "owned-windows-chooser-text-and-filter-buffer"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2794,6 +2795,13 @@
         "interface": "FZipLibraryDirectory and FUnzipLibraryArchive take std::string_view archive/root paths; their declarations include the type directly.",
         "callers": "Current library export/import call sites pass existing bounded views/arrays through the API without reconstructing or retaining a C string.",
         "remaining": "Other non-ZIP service paths and chooser Milestone D remain in the L06 scope."
+      },
+      "windows_sdk_chooser_buffers": {
+        "status": "implemented; locally verified; Windows runtime launch blocked by sandbox",
+        "change": "SzChooserText returns optional<wstring>; title, folder and initial filename use owned strings; filter text uses one wstring preserving the SDK double-NUL format; filename and CWD buffers use vectors. Manual malloc/realloc/free and the cleanup callback are removed.",
+        "failure": "Allocation failure returns -1 with ENOMEM; oversized C++ container lengths return -1 with EOVERFLOW.",
+        "verification": "Strict MinGW C++20 compile and link of the chooser contract test pass. Existing test covers Unicode conversion, filter framing, selection, cancellation, output bounds and CWD restoration. Wine could not launch: wineserver bind was denied by the sandbox. macOS Debug build, desktop/host units, full regressions and tutorial smoke pass.",
+        "baseline": "Unchanged."
       }
     },
     {
@@ -2991,7 +2999,7 @@
       "id": "L08",
       "status": "active",
       "current_macro_audit": {
-        "status": "Local source audit refreshed at 9cd5fb52: no production C translation units or owned function-like API macros. Windows/Linux current-source qualification and chooser full-coverage review remain pending.",
+        "status": "Local source audit refreshed at 3000132f: no production C translation units or owned function-like API macros. Windows/Linux current-source qualification and chooser full-coverage review remain pending.",
         "change": "Replaced SDL_arraysize with std::size; SDL_zero with C++ aggregate initialization/reset; INT32_C/UINT32_C/UINT64_C with explicitly typed C++ integer literals. Updated resource constant extraction for typed forms.",
         "search": "No SDL convenience family or INT/UINT fixed-width literal macros remain in scanned owned application or ordinary test C++ sources. Remaining uses are isolated to SDK/reference fixtures and the independent C precision probe.",
         "remaining": "Qualify the current develop source on Windows and Linux, including Linux portal/X11 chooser coverage and Windows SDK/client build.",
@@ -2999,10 +3007,10 @@
         "api_like_names": "LOWORD, HIWORD, LOBYTE, HIBYTE and MAKELONG in src/platform/value.h are typed constexpr C++ functions. MAKEWPARAM, MAKELPARAM, MAKEINTRESOURCE, RGB, PALETTEINDEX, PALETTERGB and GET_*_WPARAM in wincompat_values.h are typed C++ functions/templates.",
         "preprocessor": "Remaining owned conditionals select platform/compiler/test configurations or guard headers. Third-party free-api headers retain SDK macros under compat/win32/upstream; these are excluded from owned-code cleanup.",
         "source_files": "44 tracked .c translation units remain, all under tests; none are production under src or compat/win32.",
-        "last_reviewed_source_head": "9cd5fb52",
+        "last_reviewed_source_head": "3000132f",
         "last_reviewed_date": "2026-11-02",
         "final_local_inventory": {
-          "source_head": "9cd5fb52",
+          "source_head": "3000132f",
           "date": "2026-11-02",
           "tracked_c_translation_units": 44,
           "production_c_translation_units": 0,
@@ -3016,7 +3024,7 @@
           "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
           "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
           "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-          "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified; local macOS and host verification passes through 9cd5fb52."
+          "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified; local macOS and host verification passes through 3000132f."
         }
       },
       "linux_desktop_execution_budget": {
@@ -25431,8 +25439,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L05 borrow owned window title for SDL creation",
-    "latest_published_head": "9cd5fb52",
+    "latest_batch": "L06 own Windows chooser text and filter buffers",
+    "latest_published_head": "3000132f",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -25463,17 +25471,17 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 borrow owned window title for SDL creation",
-    "source_commit": "9cd5fb52",
-    "status": "Locally committed as 9cd5fb52. Strict macOS SDL Debug build, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L06 own Windows chooser text and filter buffers",
+    "source_commit": "3000132f",
+    "status": "Locally committed as 3000132f. Strict macOS SDL Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; strict MinGW compile/link passes. Wine runtime test was blocked by sandbox socket permissions. Windows/Linux full qualification remains outstanding.",
     "changes": [
-      "CreateWindowExA borrows its validated, owned title for SDL_CreateWindow; removed the duplicate SDL allocation and raw pointer helper."
+      "Windows SDK chooser text and filter buffers use optional<wstring>, wstring and vector; removed manual allocation and cleanup."
     ],
     "verification": {
-      "batch": "L05 borrow owned window title for SDL creation",
-      "parent": "89da1105",
-      "source_commit": "9cd5fb52",
-      "macos_debug_build": "make compile passes; changed window adapter rebuilt against SDL 3.4.12.",
+      "batch": "L06 own Windows chooser text and filter buffers",
+      "parent": "9cd5fb52",
+      "source_commit": "3000132f",
+      "macos_debug_build": "make compile passes.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
@@ -25489,8 +25497,9 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; window title text and SDL window behavior are preserved.",
-      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "windows_minGW": "Strict x86_64-w64-mingw32-g++ C++20 syntax check and link of tests/compat/win32_filedialog_windows.cpp pass with -Wall -Wextra -Wpedantic -Werror.",
+      "windows_runtime": "Not run: Wine failed to start its server because sandbox policy denied socket bind (Operation not permitted). The existing contract test covers Unicode, filter double-NUL framing, cancel/error paths, cwd restoration and output bounds.",
+      "baseline": "Unchanged.",
       "diff_check": "git diff --check passes."
     },
     "current_source_audits": {
@@ -25513,8 +25522,8 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "9cd5fb52",
-      "borrowed_return_audit": "Removed PszNativeTitle, which returned a fresh SDL_strdup of the compat window-owned title; CreateWindowExA now borrows lpwin->pszTitle for SDL_CreateWindow. Other L05 text/scratch/borrowed-return review remains active."
+      "source_head": "3000132f",
+      "borrowed_return_audit": "Recent ownership cleanup removed redundant SDL title duplication and replaced Windows chooser malloc/realloc buffers with optional<wstring>, wstring and vector owners. Broader L05 text/scratch/borrowed-return audit remains active."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -25721,6 +25730,10 @@
       {
         "commit": "9cd5fb52",
         "message": "Borrow the owned title when creating SDL windows"
+      },
+      {
+        "commit": "3000132f",
+        "message": "Own Windows chooser text in C++ containers"
       }
     ],
     "latest_source_commit": "08db1856",
@@ -25733,7 +25746,7 @@
       "current_source_after_08db1856": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "c_macro_audit": {
-      "source_head": "9cd5fb52",
+      "source_head": "3000132f",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25749,18 +25762,18 @@
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification is current."
     },
-    "borrowed_return_audit": "Removed PszNativeTitle, which returned a fresh SDL_strdup of the compat window-owned title; CreateWindowExA now borrows lpwin->pszTitle for SDL_CreateWindow. Other L05 text/scratch/borrowed-return review remains active."
+    "borrowed_return_audit": "Recent ownership cleanup removed redundant SDL title duplication and replaced Windows chooser malloc/realloc buffers with optional<wstring>, wstring and vector owners. Broader L05 text/scratch/borrowed-return audit remains active."
   },
   "current_checkpoint": {
-    "batch": "L05 borrow owned window title for SDL creation",
-    "status": "Locally committed as 9cd5fb52. Strict macOS SDL Debug build, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "89da1105",
-    "change": "CreateWindowExA borrows its validated, window-owned title for SDL_CreateWindow instead of allocating a duplicate SDL string. SDL 3.4.12 copies the title into the created SDL_Window.",
+    "batch": "L06 own Windows chooser text and filter buffers",
+    "status": "Locally committed as 3000132f. Strict macOS SDL Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; strict MinGW compile/link passes. Wine runtime test was blocked by sandbox socket permissions. Windows/Linux full qualification remains outstanding.",
+    "parent": "9cd5fb52",
+    "change": "Windows SDK chooser text and filter buffers now use owned C++ strings/vectors instead of malloc/realloc/free; preserves UTF-8 conversion, double-NUL filter framing, file capacity and CWD restoration.",
     "verification": {
-      "batch": "L05 borrow owned window title for SDL creation",
-      "parent": "89da1105",
-      "source_commit": "9cd5fb52",
-      "macos_debug_build": "make compile passes; changed window adapter rebuilt against SDL 3.4.12.",
+      "batch": "L06 own Windows chooser text and filter buffers",
+      "parent": "9cd5fb52",
+      "source_commit": "3000132f",
+      "macos_debug_build": "make compile passes.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
@@ -25776,8 +25789,9 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; window title text and SDL window behavior are preserved.",
-      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "windows_minGW": "Strict x86_64-w64-mingw32-g++ C++20 syntax check and link of tests/compat/win32_filedialog_windows.cpp pass with -Wall -Wextra -Wpedantic -Werror.",
+      "windows_runtime": "Not run: Wine failed to start its server because sandbox policy denied socket bind (Operation not permitted). The existing contract test covers Unicode, filter double-NUL framing, cancel/error paths, cwd restoration and output bounds.",
+      "baseline": "Unchanged.",
       "diff_check": "git diff --check passes."
     },
     "platform_ci": {
@@ -25843,9 +25857,9 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "9cd5fb52",
+      "source_head": "3000132f",
       "raw_copy_call_audit": {
-        "source_head": "9cd5fb52",
+        "source_head": "3000132f",
         "owned_production_calls": 0,
         "spellings_checked": [
           "strcpy",
@@ -25855,7 +25869,7 @@
         ],
         "result": "No owned production call sites found in src and compat/win32 source/header trees."
       },
-      "borrowed_return_audit": "Removed PszNativeTitle, which returned a fresh SDL_strdup of the compat window-owned title; CreateWindowExA now borrows lpwin->pszTitle for SDL_CreateWindow. Other L05 text/scratch/borrowed-return review remains active."
+      "borrowed_return_audit": "Recent ownership cleanup removed redundant SDL title duplication and replaced Windows chooser malloc/realloc buffers with optional<wstring>, wstring and vector owners. Broader L05 text/scratch/borrowed-return audit remains active."
     },
     "next": [
       "L05: finish bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -26040,10 +26054,10 @@
         "message": "Return native file positions as optional values"
       }
     ],
-    "source_commit": "9cd5fb52",
-    "latest_change": "Removed one redundant C-heap title duplicate at the SDL window creation boundary; broader bounded-text and borrowed-return review remains open.",
+    "source_commit": "3000132f",
+    "latest_change": "Windows SDK chooser text and filter buffers now use owned C++ strings/vectors instead of malloc/realloc/free; preserves UTF-8 conversion, double-NUL filter framing, file capacity and CWD restoration.",
     "c_macro_audit": {
-      "source_head": "9cd5fb52",
+      "source_head": "3000132f",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26058,7 +26072,7 @@
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
       "platform_qualification": "Windows SDL and Linux desktop are not current-source qualified; local macOS and host verification passes through 9cd5fb52.",
-      "borrowed_return_audit": "Removed PszNativeTitle, which returned a fresh SDL_strdup of the compat window-owned title; CreateWindowExA now borrows lpwin->pszTitle for SDL_CreateWindow. Other L05 text/scratch/borrowed-return review remains active."
+      "borrowed_return_audit": "Recent ownership cleanup removed redundant SDL title duplication and replaced Windows chooser malloc/realloc buffers with optional<wstring>, wstring and vector owners. Broader L05 text/scratch/borrowed-return audit remains active."
     }
   },
   "milestone_d_checkpoint": {
