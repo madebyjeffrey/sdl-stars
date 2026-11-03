@@ -40,9 +40,7 @@ static void test_battle_replay_bytes(void) {
     TOK rgtok[2]{};
     int32_t rgdp[2]{};
     int16_t ish, i;
-    int32_t dpArmor, dpShields;
-    int16_t csh;
-    DV dv;
+    VCRSTATS vcrStats;
     BTLREC br{};
     KILL kill{};
 
@@ -79,8 +77,8 @@ static void test_battle_replay_bytes(void) {
     app.lpui->viStepVCRCur = -1; app.lpui->vcStepVCR = 1;
     TEST_CHECK(SetVCRBoard(app, -1) == -1 && rgdp[0] == 1000 && rgtok[0].brc == 0x12);
     TEST_CHECK(SetVCRBoard(app, 0) == 0 && rgtok[0].brc == 0x34 && app.lpui->viVCRFocus == 0);
-    GetVCRStats(app, 0, &dpArmor, &dv, &dpShields, &csh);
-    TEST_CHECK(dpArmor == 720 && dpShields == 16 && csh == 8 && dv.dp == kill.dv.dp);
+    vcrStats = GetVCRStats(app, 0);
+    TEST_CHECK(vcrStats.dpArmor == 720 && vcrStats.dpShields == 16 && vcrStats.csh == 8 && vcrStats.dv.dp == kill.dv.dp);
     TEST_CHECK(SetVCRBoard(app, 1) == 1 && app.lpui->viRound == 1 && app.lpui->vlpbrVCR == lpb + 86);
     TEST_CHECK(rgtok[0].csh == 8 && rgtok[0].dpShield == 18 && rgdp[0] == 720);
     TEST_CHECK(rgtok[1].brc == 0x56 && app.lpui->viVCRFocus == 1);

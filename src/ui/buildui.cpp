@@ -1200,6 +1200,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
     std::int16_t  dRange;
     std::int16_t  pctDetect;
     std::int16_t  pct;
+    VCRSTATS vcrStats;
 
     fCreatedDC = 0;
     if (app.lpui->mdBuild != mdBuildComp) {
@@ -1227,8 +1228,11 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
         crForeSav = win32::SetTextColor(hdc, 0);
         crBackSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
         if (app.lpui->hwndPopup && app.lpui->GlobalPD.grPopup == grPopupShdef && app.lpui->GlobalPD.fToken) {
-            GetVCRStats(app, app.lpui->viVCRFocus, &dp, &dv, &dpShield, &csh);
-            dpShield = static_cast<std::uint32_t>(app.state.vrgtok[app.lpui->viVCRFocus].dpShield) - dpShield;
+            vcrStats = GetVCRStats(app, app.lpui->viVCRFocus);
+            dp = vcrStats.dpArmor;
+            dv = vcrStats.dv;
+            csh = vcrStats.csh;
+            dpShield = static_cast<std::uint32_t>(app.state.vrgtok[app.lpui->viVCRFocus].dpShield) - vcrStats.dpShields;
             if (dpShield < 0) {
                 dpShield = 0;
             }

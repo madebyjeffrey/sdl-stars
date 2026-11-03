@@ -500,7 +500,7 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void GetVCRStats(APPSESSION &app, std::int16_t itok, std::int32_t *pdpArmor, DV *pdv, std::int32_t *pdpShields, std::int16_t *pcsh) {
+VCRSTATS GetVCRStats(APPSESSION &app, std::int16_t itok) {
     std::int16_t  cshT;
     DV       dv;
     std::int32_t  dpShields;
@@ -542,19 +542,7 @@ void GetVCRStats(APPSESSION &app, std::int16_t itok, std::int32_t *pdpArmor, DV 
         dpArmor = 0;
         dpShields = static_cast<std::uint32_t>((static_cast<std::uint32_t>(app.state.vrgtok[itok].dpShield) * static_cast<std::uint32_t>(app.state.vrgtok[itok].csh)));
     }
-    if (pdv) {
-        pdv->dp = dv.dp;
-    }
-    if (pcsh) {
-        *pcsh = cshT;
-    }
-    if (pdpArmor) {
-        *pdpArmor = dpArmor;
-    }
-    if (pdpShields) {
-        *pdpShields = dpShields;
-    }
-    return;
+    return {dpArmor, dv, dpShields, cshT};
 }
 
 void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
@@ -587,6 +575,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
     std::int16_t cshT;
     std::int32_t dpShT;
     DV      dv;
+    VCRSTATS vcrStats;
     std::int16_t xT;
     std::int16_t cshNew;
 
@@ -692,9 +681,9 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                     j += BevFromLp(app, app.lpui->vlpbrVCR).rgkill(i - 1).cshKill();
                     if (!rgfSeen[itokT]) {
                         rgfSeen[itokT] = 1;
-                        GetVCRStats(app, itokT, &dpT, nullptr, &dpShT, &cshT);
-                        dpArmor += app.lpui->vrgdpVCR[itokT] - dpT;
-                        dpShields += dpShT;
+                        vcrStats = GetVCRStats(app, itokT);
+                        dpArmor += app.lpui->vrgdpVCR[itokT] - vcrStats.dpArmor;
+                        dpShields += vcrStats.dpShields;
                     }
                 }
                 c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDDDoing).data(), brcT & 0xf, brcT >> 4);
@@ -756,7 +745,11 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                     lpshdef = app.state.rglpshdef[app.state.vrgtok[app.lpui->viVCRFocus].iplr] + app.state.vrgtok[app.lpui->viVCRFocus].ishdef;
                 }
                 csh = app.state.vrgtok[app.lpui->viVCRFocus].csh;
-                GetVCRStats(app, app.lpui->viVCRFocus, &dpT, &dv, &dpShields, &cshT);
+                vcrStats = GetVCRStats(app, app.lpui->viVCRFocus);
+                dpT = vcrStats.dpArmor;
+                dv = vcrStats.dv;
+                dpShields = vcrStats.dpShields;
+                cshT = vcrStats.csh;
                 cshNew = cshT;
                 cshT = csh - cshT;
                 if (csh > 1 || cshT != 0) {
