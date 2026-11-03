@@ -7,7 +7,7 @@
 #include <limits>
 #include <string_view>
 
-struct COMPATLISTITEM { char *psz; LPARAM lData; BOOL fSelected; };
+struct COMPATLISTITEM { char *psz; std::size_t cch; LPARAM lData; BOOL fSelected; };
 struct COMPATLIST {
     COMPATLISTITEM *rgitem;
     int cItem, cAlloc, iSel, iCaret, iTop, cyItem, iAnchor, iDrag;
@@ -99,7 +99,7 @@ static void ResetList(HWND hwnd) {
     lp->iAnchor = -1; lp->szSearch[0] = 0; lp->cchSearch = 0;
     EndListDrag(hwnd, 1);
     win32::InvalidateRect(hwnd, nullptr, 1);
-    for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = nullptr; DeleteNotice(hwnd, static_cast<UINT>(i), rg[i].lData); }
+    for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = nullptr; rg[i].cch = 0; DeleteNotice(hwnd, static_cast<UINT>(i), rg[i].lData); }
     rgKeep.reset();
     if (win32::IsWindow(hwnd) && !hwnd->fDestroying) ClampList(hwnd);
 }
@@ -109,7 +109,9 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     COMPATLISTITEM *rg;
     char *pszNew;
     int cAlloc;
+    std::size_t cch;
     if (!psz || !FUtf8Valid(psz) || lp->cItem == std::numeric_limits<int>::max()) return win32::LB_ERR;
+    cch = std::string_view{psz}.size();
     pszNew = SDL_strdup(psz);
     NATIVEOWNER<char, SDL_free> pszOwner(pszNew);
     if (!pszNew) return win32::LB_ERRSPACE;
@@ -122,7 +124,7 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     }
     if (i < 0 || i > lp->cItem) i = lp->cItem;
     std::memmove(lp->rgitem + i + 1, lp->rgitem + i, static_cast<std::size_t>((lp->cItem - i)) * sizeof(*lp->rgitem));
-    lp->rgitem[i] = COMPATLISTITEM{pszOwner.release(), 0, 0}; lp->cItem++; lp->nMutation++;
+    lp->rgitem[i] = COMPATLISTITEM{pszOwner.release(), cch, 0, 0}; lp->cItem++; lp->nMutation++;
     if (lp->iSel >= i) lp->iSel++;
     if (lp->cItem > 1 && lp->iCaret >= i) lp->iCaret++;
     if (lp->iAnchor >= i) lp->iAnchor++;
@@ -385,11 +387,11 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         ClampList(hwnd); c = lp->cItem; DeleteNotice(hwnd, static_cast<UINT>(i), lData); return c;
     case win32::LB_RESETCONTENT: ResetList(hwnd); return 0;
     case win32::LB_GETCOUNT: return lp->cItem;
-    case win32::LB_GETTEXTLEN: return i >= 0 && i < lp->cItem ? static_cast<LRESULT>(std::strlen(lp->rgitem[i].psz)) : win32::LB_ERR;
+    case win32::LB_GETTEXTLEN: return i >= 0 && i < lp->cItem ? static_cast<LRESULT>(lp->rgitem[i].cch) : win32::LB_ERR;
     case win32::LB_GETTEXT:
         if (i < 0 || i >= lp->cItem || !l) return win32::LB_ERR;
         {
-            const std::string_view szText{lp->rgitem[i].psz};
+            const std::string_view szText{lp->rgitem[i].psz, lp->rgitem[i].cch};
             auto *pszText = reinterpret_cast<LPSTR>(l);
             std::copy(szText.begin(), szText.end(), pszText);
             pszText[szText.size()] = '\0';
