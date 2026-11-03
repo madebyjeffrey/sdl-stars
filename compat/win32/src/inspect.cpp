@@ -257,7 +257,7 @@ static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
         cch = CchUtf8Prefix(szSource, sizeof(szText) - 1);
         std::copy_n(szSource.data(), cch, szText); szText[cch] = 0;
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
-        CchSnprintf(std::span{sz}, "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
+        CchSprintf(std::span{sz}, "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
                  lp->id, lp->szClass.c_str(), static_cast<std::intptr_t>(lp->idControl), szText, lp->fVisible ? "" : " (hidden)");
         iRow = static_cast<int>(win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(sz)));
         if (iRow >= 0) win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, static_cast<WPARAM>(iRow), static_cast<LPARAM>(i));

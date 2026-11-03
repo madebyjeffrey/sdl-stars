@@ -39,7 +39,11 @@ static bool FHelpAssets(std::string_view pszDirectory) {
             return false;
         }
     }
-    CchSnprintf(std::span{szFile}, "%s/complete.stamp", pszDirectory);
+    cch = CchSnprintf(std::span{szFile}, "%s/complete.stamp", pszDirectory);
+    if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) {
+        win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
+        return false;
+    }
     lpFile = PfNativeOpen(szFile, NATIVEFILEMODE::read);
     if (!lpFile) {
         win32::SetLastError(win32::ERROR_ACCESS_DENIED);

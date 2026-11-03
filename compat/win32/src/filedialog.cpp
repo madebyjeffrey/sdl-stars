@@ -144,7 +144,7 @@ static bool FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     if (lp->rgentry.size() > 1) std::sort(lp->rgentry.begin(), lp->rgentry.end(), FFileEntryBefore);
     win32::SendMessageA(hwndList, win32::LB_RESETCONTENT, 0, 0);
     for (i = 0; i < lp->rgentry.size(); i++) {
-        CchSnprintf(std::span{szLabel}, lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].szName.c_str());
+        CchSprintf(std::span{szLabel}, lp->rgentry[i].fDir ? "[%s]" : "%s", lp->rgentry[i].szName.c_str());
         iEntry = win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szLabel));
         if (iEntry < 0 || win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, static_cast<WPARAM>(iEntry), static_cast<LPARAM>(i)) == win32::LB_ERR) {
             lp->dwError = win32::CDERR_MEMALLOCFAILURE; win32::EndDialog(hwnd, 0); return 0;
