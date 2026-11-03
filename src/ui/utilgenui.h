@@ -14,7 +14,7 @@ std::int16_t          DxStreamTextOut(HDC hdc, std::int16_t &x, std::int16_t y, 
 void WrapTextOut(APPSESSION &app, HDC hdc, std::int16_t &x, std::int16_t &y, std::string_view szText, std::int16_t xLeft, std::int16_t dxWidth, std::int16_t *pxMax, std::int16_t fNewLine, std::int16_t fPrint);
 void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szText, bool fClear = false);
 // The mutable overload preserves the legacy cLen == -1 output-buffer request.
-void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t dxErase);
+void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::string_view szText, std::int16_t cLen, std::int16_t dxErase);
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::span<char> psz, std::int16_t cLen, std::int16_t dxErase);
 template<std::size_t N>
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, char (&psz)[N], std::int16_t cLen, std::int16_t dxErase) {

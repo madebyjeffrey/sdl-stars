@@ -167,21 +167,26 @@ void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szText, 
 
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::span<char> psz, std::int16_t cLen, std::int16_t dxErase) {
     if (cLen == -1) cLen = TextIO().pfnCchGetString(app, idsNone2, psz);
-    RightTextOut(app, hdc, x, y, psz.data(), cLen, dxErase);
+    else if (cLen == 0) cLen = win32::lstrlenA(psz.data());
+    RightTextOut(app, hdc, x, y, psz.empty() ? std::string_view{} : std::string_view{psz.data(), psz.size()}, cLen, dxErase);
 }
 
-void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, const char *psz, std::int16_t cLen, std::int16_t dxErase) {
+void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::string_view szText, std::int16_t cLen, std::int16_t dxErase) {
     std::int16_t dx;
     RECT    rc;
+    const char *psz;
 
     if (cLen == -1) {
         char szNone[cchCatalogText];
         cLen = TextIO().pfnCchGetString(app, idsNone2, std::span{szNone});
-        RightTextOut(app, hdc, x, y, static_cast<const char *>(szNone), cLen, dxErase);
+        RightTextOut(app, hdc, x, y, std::string_view{szNone, static_cast<std::size_t>(cLen)}, cLen, dxErase);
         return;
     } else if (cLen == 0) {
-        cLen = win32::lstrlenA(psz);
+        cLen = static_cast<std::int16_t>(szText.size());
     }
+    szText = szText.substr(0, static_cast<std::size_t>(cLen));
+    cLen = static_cast<std::int16_t>(szText.size());
+    psz = szText.empty() ? "" : szText.data();
     dx = LOWORD(GetTextExtent(hdc, psz, cLen));
     if (dxErase > dx) {
         win32::SetRect(&rc, x - dxErase, y, x - dx, y + app.state.dyArial8);
