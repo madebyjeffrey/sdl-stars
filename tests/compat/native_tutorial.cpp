@@ -114,7 +114,7 @@ static BOOL FSaveState(APPSESSION &app, const char *pszName) {
     scan = RgCaptureScanner(app);
     if (!scan) return 0;
     lpfile = PfNativeOpen(szPath, NATIVEFILEMODE::writeTruncate);
-    fResult = lpfile && FWriteScannerSnapshot(&*scan, lpfile);
+    fResult = lpfile && FWriteScannerSnapshot(*scan, lpfile);
     if (lpfile && ICloseNativeFile(lpfile)) fResult = 0;
     return fResult;
 }
@@ -245,7 +245,7 @@ static BOOL FFindMapObject(APPSESSION &app, uint16_t grType, uint16_t idObject, 
         if (snap->rgobj[i].grType == grType && (pszName ? !strcmp(snap->rgobj[i].szName, pszName) : snap->rgobj[i].id == idObject) && !snap->rgobj[i].fFiltered) {
             objTarget = snap->rgobj[i];
             if (!objTarget.fOnScreen) {
-                fReveal = FSelectScannerObject(app, &*snap, grType, objTarget.id, 1);
+                fReveal = FSelectScannerObject(app, *snap, grType, objTarget.id, 1);
                 break;
             }
             fFound = 1;

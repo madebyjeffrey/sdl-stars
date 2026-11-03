@@ -621,14 +621,14 @@ static void TestScannerSnapshotUtf8(void) {
     snprintf(obj.szName, sizeof(obj.szName), "Quoted \"%s\"\r\n", psz);
     snap.cObject = 1;
     pftemp = NfoNativeTemporary(); pf = pftemp.get(); TEST_ASSERT(pf);
-    TEST_ASSERT(FWriteScannerSnapshot(&snap, pf));
+    TEST_ASSERT(FWriteScannerSnapshot(snap, pf));
     ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), pf); sz[cb] = 0;
     TEST_CHECK(FUtf8Valid(std::string_view{sz, cb}));
     TEST_CHECK(strstr(sz, psz) != NULL && strstr(sz, "\\u000d\\u000a") != NULL);
     strcpy(obj.szName, "\xff");
-    TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));
+    TEST_CHECK(!FWriteScannerSnapshot(snap, pf));
     memset(obj.szName, 'a', sizeof(obj.szName));
-    TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));
+    TEST_CHECK(!FWriteScannerSnapshot(snap, pf));
     ICloseNativeFile(pftemp.release());
 }
 #endif

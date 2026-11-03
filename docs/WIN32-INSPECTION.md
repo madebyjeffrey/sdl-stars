@@ -95,8 +95,10 @@ Select/reveal changes the secondary scanner selection through the normal game
 UI path and pans if needed. It issues no orders and leaves the main selection
 and waypoint editing mode alone. This also works with the headless backend.
 
-[scaninspect.h](../src/ui/scaninspect.h) exposes `FCaptureScanner`,
-`FWriteScannerSnapshot`, `FSelectScannerObject` and `FreeScannerSnapshot`.
+[scaninspect.h](../src/ui/scaninspect.h) exposes `RgCaptureScanner`,
+`FWriteScannerSnapshot` and `FSelectScannerObject`. Captures return an optional,
+owning snapshot; its array is released automatically when the snapshot leaves
+scope.
 Call them on the UI thread with a loaded player game. A snapshot contains game,
 turn, player and zoom, the scanner viewport, and each object's kind, ID, name,
 owner/detail, universe/client/screen coordinates, filter state and selection
@@ -112,14 +114,11 @@ fleets affect rendering, and large overlays can extend beyond their centers.
 `fFiltered` reports the existing scanner filter rules separately. JSON schema 1
 converts copied CP1252 names to UTF-8 and preserves numeric IDs.
 
-```c
-SCANSNAPSHOT snap = {0};
-if (FCaptureScanner(&snap)) {
-    FWriteScannerSnapshot(&snap, stdout);
-    /* Use an enumerated kind/id; TRUE pans to reveal the selected object. */
-    if (snap.cObject != 0)
-        FSelectScannerObject(&snap, snap.rgobj[0].grType, snap.rgobj[0].id, TRUE);
-    FreeScannerSnapshot(&snap);
+```cpp
+auto snap = RgCaptureScanner(app);
+if (snap && snap->cObject != 0) {
+    /* Use an enumerated kind/id; a nonzero reveal flag pans to the object. */
+    FSelectScannerObject(app, *snap, snap->rgobj[0].grType, snap->rgobj[0].id, 1);
 }
 ```
 

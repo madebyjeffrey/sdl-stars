@@ -377,24 +377,24 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     }
     if (cPlanetFound != (size_t)app.state.game.cPlanMax || app.state.game.fDirty != fDirty || memcmp(&app.state.sel, &selSav, sizeof(app.state.sel))) goto LDone;
     snap->turn++;
-    if (FSelectScannerObject(app, &*snap, grobjPlanet, 0, 1)) goto LDone;
+    if (FSelectScannerObject(app, *snap, grobjPlanet, 0, 1)) goto LDone;
     snap->turn--;
-    if (FSelectScannerObject(app, &*snap, grobjPlanet, std::numeric_limits<std::uint16_t>::max(), 1) ||
-        !FSelectScannerObject(app, &*snap, grobjPlanet, 0, 1) || app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 0) goto LDone;
+    if (FSelectScannerObject(app, *snap, grobjPlanet, std::numeric_limits<std::uint16_t>::max(), 1) ||
+        !FSelectScannerObject(app, *snap, grobjPlanet, 0, 1) || app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 0) goto LDone;
     fresh = RgCaptureScanner(app);
     if (!fresh || !fresh->rgobj[0].fOnScreen || !fresh->rgobj[0].fScanSelected || app.state.game.fDirty != fDirty) goto LDone;
     memcpy(szNameSav, fresh->rgobj[0].szName, sizeof(szNameSav));
     strcpy(fresh->rgobj[0].szName, "Quoted \"\xc3\xa9\xe2\x82\xac\"\r\n");
     nftemp = NfoNativeTemporary(); lpfile = nftemp.get();
     if (!lpfile) goto LDone;
-    if (!FWriteScannerSnapshot(&*fresh, lpfile)) goto LDone;
+    if (!FWriteScannerSnapshot(*fresh, lpfile)) goto LDone;
     ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szExport}.first(sizeof(szExport) - 1), lpfile); szExport[cb] = 0; nftemp.reset();
     if (!strstr(szExport, "\xc3\xa9\xe2\x82\xac") || !strstr(szExport, "\\u000d\\u000a")) goto LDone;
     memcpy(fresh->rgobj[0].szName, szNameSav, sizeof(szNameSav));
     if (pszCapture) {
         lpfile = PfNativeOpen(pszCapture, NATIVEFILEMODE::writeTruncate);
         if (!lpfile) goto LDone;
-        if (!FWriteScannerSnapshot(&*fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
+        if (!FWriteScannerSnapshot(*fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
         if (ICloseNativeFile(lpfile) != 0) goto LDone;
     }
     hwndInspector = StarsCompatShowInspector();

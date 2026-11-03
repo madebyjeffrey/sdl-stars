@@ -96,11 +96,11 @@ std::optional<SCANSNAPSHOT> RgCaptureScanner(APPSESSION &app) {
     return snap;
 }
 
-BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT *lpsnap, std::uint16_t grType, std::uint16_t id, BOOL fReveal) {
+BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT &snap, std::uint16_t grType, std::uint16_t id, BOOL fReveal) {
     SCAN scan;
     std::int16_t i;
     POINT16 pt;
-    if (!lpsnap || !FScannerReady(app) || lpsnap->lidGame != app.state.game.lid || lpsnap->turn != app.state.game.turn || lpsnap->idPlayer != app.state.idPlayer) return 0;
+    if (!FScannerReady(app) || snap.lidGame != app.state.game.lid || snap.turn != app.state.game.turn || snap.idPlayer != app.state.idPlayer) return 0;
     scan = {}; scan.idpl = idplNone; scan.ifl = iflNone; scan.ith = ithNone; scan.iwp = iwpNone;
     if (grType == grobjPlanet) {
         if (id >= static_cast<std::uint16_t>(app.state.game.cPlanMax)) return 0;
@@ -140,16 +140,16 @@ static BOOL FWriteScanString(NATIVEFILE *lpfile, std::string_view sz) {
     return ChPutNativeFile('"', lpfile) != EOF;
 }
 
-BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
+BOOL FWriteScannerSnapshot(const SCANSNAPSHOT &snap, NATIVEFILE *lpfile) {
     std::size_t i;
     const SCANOBJECT *lp;
-    if (!lpsnap || !lpfile || (lpsnap->cObject != 0 && !lpsnap->rgobj)) return 0;
+    if (!lpfile || (snap.cObject != 0 && !snap.rgobj)) return 0;
     if (CchNativePrintf(lpfile, "{\"schema\":1,\"game\":%ld,\"turn\":%u,\"player\":%d,\"zoom\":%d,\"viewport\":[%ld,%ld,%ld,%ld],\"objects\":[\n",
-        static_cast<long>(lpsnap->lidGame), lpsnap->turn, lpsnap->idPlayer, lpsnap->iZoom,
-        static_cast<long>(lpsnap->rcViewport.left),static_cast<long>(lpsnap->rcViewport.top),static_cast<long>(lpsnap->rcViewport.right),static_cast<long>(lpsnap->rcViewport.bottom)) < 0) return 0;
-    for (i = 0; i < lpsnap->cObject; i++) {
+        static_cast<long>(snap.lidGame), snap.turn, snap.idPlayer, snap.iZoom,
+        static_cast<long>(snap.rcViewport.left),static_cast<long>(snap.rcViewport.top),static_cast<long>(snap.rcViewport.right),static_cast<long>(snap.rcViewport.bottom)) < 0) return 0;
+    for (i = 0; i < snap.cObject; i++) {
         const char *pchNameEnd;
-        lp = &lpsnap->rgobj[i];
+        lp = &snap.rgobj[i];
         pchNameEnd = static_cast<const char *>(std::memchr(lp->szName, 0, sizeof(lp->szName)));
         if (!pchNameEnd) return 0;
         if (CchNativePrintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"owner\":%d,\"detail\":%d,\"thingType\":%d,\"universe\":[%ld,%ld],\"client\":[%ld,%ld],\"screen\":[%ld,%ld],"
@@ -227,7 +227,7 @@ static LRESULT  ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             i = static_cast<int>(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_GETCURSEL, 0, 0));
             if (i >= 0 && static_cast<std::size_t>(i) < snapScanInspector.cObject) {
                 lp = &snapScanInspector.rgobj[i];
-                if (!FSelectScannerObject(app, &snapScanInspector, lp->grType, lp->id, 1)) ControlIO().pfnMessageBeep(win32::MB_ICONEXCLAMATION);
+                if (!FSelectScannerObject(app, snapScanInspector, lp->grType, lp->id, 1)) ControlIO().pfnMessageBeep(win32::MB_ICONEXCLAMATION);
                 RefreshScannerInspector(app, hwnd);
                 ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_SETCURSEL, i, 0);
                 ScannerInspectDetails(hwnd);
