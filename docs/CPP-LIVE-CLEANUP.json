@@ -281,7 +281,8 @@
         "typed-planet-pane-and-prefixed-label-shifts",
         "typed-dialog-help-context-enumerator-call-sites",
         "typed-library-name-character-shifts",
-        "standard-algorithms-for-owned-text-copies"
+        "standard-algorithms-for-owned-text-copies",
+        "bounded-text-scans-use-cpp-ranges-and-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -28495,8 +28496,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "6665dd0d9738069a456dca9209bf21df0fd42254",
-  "latest_batch_status": "Source commit 6665dd0d and its ledger checkpoint are published on develop. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "01c9a21d5cdf91f6ef15fe8730f221c56dac6ab9",
+  "latest_batch_status": "Source commit 01c9a21d verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28513,7 +28514,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "6665dd0d",
+    "source_head": "01c9a21d",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28591,12 +28592,13 @@
     "native_file_query_results": "FFileExists and FFileReadOnly return bool to match their predicate semantics; caller-visible values remain 0 or 1 and the int16_t game field assignment stays unchanged.",
     "typed_help_context_calls": "Transfer, custom transport order, and ship designer branches pass named HelpContextId values. The remaining numeric values 1089, 1090, and 13002 are absent from the original help map; compatibility coverage explicitly asserts 13002 is unmapped, so their previous behavior is retained.",
     "library_name_shifts": "Four overlapping character-range std::memmove calls in GetGameLibraryName and GetRaceLibraryStem were replaced by std::move/std::move_backward; byte ranges and NUL movement are unchanged.",
-    "owned_text_range_copies": "Four non-overlapping std::memmove copies from catalog/decode scratch and legacy race-name scratch now use std::copy_n; byte counts and explicit terminator writes are unchanged."
+    "owned_text_range_copies": "Four non-overlapping std::memmove copies from catalog/decode scratch and legacy race-name scratch now use std::copy_n; byte counts and explicit terminator writes are unchanged.",
+    "bounded_text_cpp_scans": "Five bounded terminator scans in message, decompressor, scanner snapshot, file-dialog and LOGFONT buffers use C++ ranges/views. Profile BOM comparison uses a three-byte string_view. Encoded compression output copies through std::byte spans."
   },
-  "latest_change": "L05 replace non-overlapping owned-text memmoves with std::copy_n",
+  "latest_change": "L05 replace bounded C string scans with C++ ranges and views",
   "latest_batch_verification": {
-    "batch": "L05 replace non-overlapping owned-text memmoves with std::copy_n",
-    "source_commit": "6665dd0d9738069a456dca9209bf21df0fd42254",
+    "batch": "L05 replace bounded C string scans with C++ ranges and views",
+    "source_commit": "01c9a21d5cdf91f6ef15fe8730f221c56dac6ab9",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -28613,10 +28615,9 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. Four non-overlapping text-buffer copy ranges use std::copy_n with the same byte counts; existing terminator writes and legacy truncation behavior remain unchanged.",
-    "api_audit": "Removed four std::memmove calls from catalog text copying, decoded user text output, and converted legacy race-name truncation.",
+    "baseline": "Unchanged. Scans retain the same buffer bounds and first-terminator behavior; BOM comparison uses the same three bytes; compressed byte output retains the same byte count.",
+    "api_audit": "Five bounded NUL scans now use std::find or string_view::find, the fixed three-byte UTF-8 BOM check uses string_view equality, and an encoded byte copy uses std::copy_n over std::byte.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-    "diff_check": "Pass.",
-    "ledger_commit": "34431f79"
+    "diff_check": "Pass."
   }
 }
