@@ -279,7 +279,8 @@
         "bounded-battle-plan-name-length",
         "typed-production-queue-array-shifts",
         "typed-planet-pane-and-prefixed-label-shifts",
-        "typed-dialog-help-context-enumerator-call-sites"
+        "typed-dialog-help-context-enumerator-call-sites",
+        "typed-library-name-character-shifts"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -28493,8 +28494,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "740a7c9b",
-  "latest_batch_status": "Source commit 740a7c9b verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "72f4e380c18e5fc43bc770f47162d9197f8a594d",
+  "latest_batch_status": "Source commit 72f4e380 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28511,7 +28512,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "740a7c9b",
+    "source_head": "72f4e380",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28587,11 +28588,13 @@
     "typed_production_queue_shifts": "Production queue insertion/removal shifts PROD ranges with std::move_backward/std::move instead of byte-count memmove; the literal four-byte stride and sizeof-based byte count are removed.",
     "typed_planet_pane_shifts": "Planet pane TILE reordering and fleet/packet label prefix shifts use std::move/std::move_backward over the same element ranges, replacing four memmove calls.",
     "native_file_query_results": "FFileExists and FFileReadOnly return bool to match their predicate semantics; caller-visible values remain 0 or 1 and the int16_t game field assignment stays unchanged.",
-    "typed_help_context_calls": "Transfer, custom transport order, and ship designer branches pass named HelpContextId values. The remaining numeric values 1089, 1090, and 13002 are absent from the original help map; compatibility coverage explicitly asserts 13002 is unmapped, so their previous behavior is retained."
+    "typed_help_context_calls": "Transfer, custom transport order, and ship designer branches pass named HelpContextId values. The remaining numeric values 1089, 1090, and 13002 are absent from the original help map; compatibility coverage explicitly asserts 13002 is unmapped, so their previous behavior is retained.",
+    "library_name_shifts": "Four overlapping character-range std::memmove calls in GetGameLibraryName and GetRaceLibraryStem were replaced by std::move/std::move_backward; byte ranges and NUL movement are unchanged."
   },
-  "latest_change": "L06 native directory context callbacks use bool",
+  "latest_change": "L05 replace overlapping library-name text memmoves with standard range algorithms",
   "latest_batch_verification": {
-    "batch": "L06 native directory context callbacks use bool",
+    "batch": "L05 replace overlapping library-name text memmoves with standard range algorithms",
+    "source_commit": "72f4e380c18e5fc43bc770f47162d9197f8a594d",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -28608,8 +28611,8 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. Directory enumeration callbacks preserve the prior continue/stop truth values; regression outputs and wire layouts match.",
-    "api_audit": "The typed-context adapter now accepts bool callbacks. All production directory-entry callbacks and the native-file unit callback return bool with bool literals; historical int16 callbacks remain only in independent reference headers.",
+    "baseline": "Unchanged. Four overlapping character-range shifts in game/race library-name normalization use std::move/std::move_backward over the same bytes, including the existing NUL terminator.",
+    "api_audit": "Removed four unnecessary std::memmove calls from library text normalization. Other C-style text copy operations elsewhere have not yet been fully inventoried.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass."
   }
