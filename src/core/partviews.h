@@ -41,7 +41,7 @@ public:
     friend bool operator==(NATIVEPARTCOMMONVIEW a, NATIVEPARTCOMMONVIEW b) noexcept { return a.lpv == b.lpv; }
     friend bool operator==(NATIVEPARTCOMMONVIEW a, const void *b) noexcept { return a.lpv == b; }
     std::int8_t *rgTech() const noexcept { return Visit([](auto &item) { return item.rgTech; }); }
-    char *szName() const noexcept {
+    const char *szName() const noexcept {
         return Visit([](auto &item) {
             if constexpr (std::is_same_v<std::remove_cvref_t<decltype(item)>, HUL>) return item.szClass;
             else return item.szName;
