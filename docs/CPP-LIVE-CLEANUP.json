@@ -2294,7 +2294,8 @@
         "native-directory-enumeration-result-and-type-erased-callback-use-bool",
         "native-directory-context-callbacks-return-bool",
         "native-stream-error-eof-predicates-return-bool",
-        "vcr-stats-value-result"
+        "vcr-stats-value-result",
+        "vcr-damage-value-input"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -3226,6 +3227,23 @@
           "api_audit": "Removed the optional pointer-output interface. All three production call sites and the battle unit caller consume VCRSTATS by value.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 VCR damage value passed by value",
+          "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. VCR damage arithmetic and token updates are unchanged.",
+          "api_audit": "LdpFromItokDv accepts DV by value. No nullable DV pointer or pointer-forwarding overload remains; all call sites provide a value.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -3505,6 +3523,28 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged. GetVCRStats preserves its calculations and now returns armor, DV, shields and ship count together; no disk or wire structures changed.",
           "api_audit": "Removed the optional pointer-output interface. All three production call sites and the battle unit caller consume VCRSTATS by value.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
+        }
+      },
+      "damage_value_inputs": {
+        "status": "complete; locally verified",
+        "interface": "LdpFromItokDv accepts a DV value, removes the nullable DV pointer and removes the forwarding overload.",
+        "callers": "SetVCRBoard passes token damage values and decoded kill-record values directly.",
+        "verification": {
+          "batch": "L06 VCR damage value passed by value",
+          "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. VCR damage arithmetic and token updates are unchanged.",
+          "api_audit": "LdpFromItokDv accepts DV by value. No nullable DV pointer or pointer-forwarding overload remains; all call sites provide a value.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -27661,10 +27701,10 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 VCR statistics return a value",
-    "status": "Source commit 25513dc7 verified locally; ledger checkpoint pending publication.",
-    "parent": "926f2fa6459f17bd8d95c9affc18d98f4d646c44",
-    "change": "GetVCRStats returns a named VCRSTATS value instead of writing through four optional output pointers.",
+    "batch": "L06 VCR damage value passed by value",
+    "status": "Source commit 066a21ba verified locally; ledger checkpoint pending publication.",
+    "parent": "9dcc9729348393afd8eb4be2a1fe6244e517bbff",
+    "change": "LdpFromItokDv takes the damage value directly and no longer uses an optional output pointer or pointer-forwarding overload.",
     "verification": {
       "batch": "L06 native file queries return bool",
       "source_commits": [
@@ -28081,7 +28121,7 @@
       }
     ],
     "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "latest_change": "L06 VCR statistics return a value",
+    "latest_change": "L06 VCR damage value passed by value",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -28100,14 +28140,14 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
-    "latest_batch_status": "Source commit 25513dc7 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+    "latest_batch_status": "Source commit 066a21ba verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
-      "batch": "L06 VCR statistics return a value",
-      "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
-      "macos_sdl_debug_build": "make compile passes with strict warnings; all changed translation units compile.",
-      "desktop_unit_tests": "18/18 pass. The first full run timed out in sdl_test_turn3; that test passed alone and the complete suite passed on rerun.",
+      "batch": "L06 VCR damage value passed by value",
+      "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+      "macos_sdl_debug_build": "make compile passes with strict warnings.",
+      "desktop_unit_tests": "18/18 pass.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -28115,16 +28155,16 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged. GetVCRStats preserves its calculations and now returns armor, DV, shields and ship count together; no disk or wire structures changed.",
-      "api_audit": "Removed the optional pointer-output interface. All three production call sites and the battle unit caller consume VCRSTATS by value.",
+      "baseline": "Unchanged. VCR damage arithmetic and token updates are unchanged.",
+      "api_audit": "LdpFromItokDv accepts DV by value. No nullable DV pointer or pointer-forwarding overload remains; all call sites provide a value.",
       "platform": "Current-source Windows and Linux qualification remains outstanding.",
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L06 VCR statistics return a value",
-      "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
+      "batch": "L06 VCR damage value passed by value",
+      "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "desktop_unit_tests": "18/18 pass on full rerun; the earlier isolated timeout passed alone and did not reproduce.",
+      "desktop_unit_tests": "18/18 pass.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -28132,11 +28172,11 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; VCR combat calculations and serialized state are unchanged.",
-      "api_audit": "GetVCRStats now returns VCRSTATS by value; all callers migrated from optional output pointers.",
+      "baseline": "Unchanged; VCR damage arithmetic and serialized state remain unchanged.",
+      "api_audit": "LdpFromItokDv now takes DV by value, with the nullable pointer overload removed.",
       "platform": "Current-source Windows and Linux qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit 25513dc7 verified locally; ledger checkpoint pending publication.",
+      "status": "Source commit 066a21ba verified locally; ledger checkpoint pending publication.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
@@ -28657,8 +28697,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
-  "latest_batch_status": "Source commit 25513dc7 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+  "latest_batch_status": "Source commit 066a21ba verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28782,12 +28822,12 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L06 VCR statistics return a value",
+  "latest_change": "L06 VCR damage value passed by value",
   "latest_batch_verification": {
-    "batch": "L06 VCR statistics return a value",
-    "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
-    "macos_sdl_debug_build": "make compile passes with strict warnings; all changed translation units compile.",
-    "desktop_unit_tests": "18/18 pass. The first full run timed out in sdl_test_turn3; that test passed alone and the complete suite passed on rerun.",
+    "batch": "L06 VCR damage value passed by value",
+    "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+    "macos_sdl_debug_build": "make compile passes with strict warnings.",
+    "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
@@ -28795,16 +28835,16 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. GetVCRStats preserves its calculations and now returns armor, DV, shields and ship count together; no disk or wire structures changed.",
-    "api_audit": "Removed the optional pointer-output interface. All three production call sites and the battle unit caller consume VCRSTATS by value.",
+    "baseline": "Unchanged. VCR damage arithmetic and token updates are unchanged.",
+    "api_audit": "LdpFromItokDv accepts DV by value. No nullable DV pointer or pointer-forwarding overload remains; all call sites provide a value.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L06 VCR statistics return a value",
-    "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
+    "batch": "L06 VCR damage value passed by value",
+    "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "desktop_unit_tests": "18/18 pass on full rerun; the earlier isolated timeout passed alone and did not reproduce.",
+    "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
@@ -28812,11 +28852,11 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; VCR combat calculations and serialized state are unchanged.",
-    "api_audit": "GetVCRStats now returns VCRSTATS by value; all callers migrated from optional output pointers.",
+    "baseline": "Unchanged; VCR damage arithmetic and serialized state remain unchanged.",
+    "api_audit": "LdpFromItokDv now takes DV by value, with the nullable pointer overload removed.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit 25513dc7 verified locally; ledger checkpoint pending publication.",
+    "status": "Source commit 066a21ba verified locally; ledger checkpoint pending publication.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
