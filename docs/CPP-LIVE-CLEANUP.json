@@ -2563,7 +2563,8 @@
         "remove-posix-getcwd-and-mkdir-shims",
         "remove-redundant-ai-recipe-byte-pointer-casts",
         "ai-recipe-input-fixed-extent-spans",
-        "cybertron-temporary-buffer-typed-view"
+        "cybertron-temporary-buffer-typed-view",
+        "cybertron-persistent-plan-typed-view"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -29261,14 +29262,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "5347ac33",
-  "latest_batch_status": "Source commit 5347ac33 verified locally: macOS SDL Debug build with strict warnings, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. Four broad code-audit substeps and current-source Windows/Linux qualification remain open.",
+  "latest_source_commit": "b0c55424",
+  "latest_batch_status": "Source commit b0c55424 verified locally: macOS SDL Debug build with strict warnings, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. Four broad code-audit substeps and current-source Windows/Linux qualification remain open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "5347ac33",
+      "source_commit": "b0c55424",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -29281,12 +29282,13 @@
         "L06 remaining-native-file-path-results"
       ],
       "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser coverage.",
-      "interpretation": "Four code audit substeps remain open; these are not a known count of edits. Current broad scans show zero confirmed replaceable production C files, application API macros, legacy string/numeric calls, mechanically replaceable memcpy calls, POSIX _getcwd/_mkdir compatibility shims, redundant AI recipe byte-pointer casts, raw AI recipe input pointers, or DoCyberAiTurn temporary-plan pointer parameters. The remaining audits may still identify additional candidates.",
+      "interpretation": "Four code audit substeps remain open; these are not a known count of edits. Current broad scans show zero confirmed replaceable production C files, application API macros, legacy string/numeric calls, mechanically replaceable memcpy calls, POSIX _getcwd/_mkdir compatibility shims, redundant AI recipe byte-pointer casts, raw AI recipe input pointers, or raw Cybertron temporary/persistent-plan pointer locals in ai4.cpp. The remaining audits may still identify additional candidates.",
       "production_cost_output_api": "GetProductionCosts uses std::span<std::int32_t, 4>; callers no longer reinterpret signed int32 arrays as uint32_t output pointers. Fixed extent, storage widths, and legacy 32-bit wrap behavior are preserved.",
       "posix_getcwd_and_mkdir_compatibility_shims": 0,
       "redundant_ai_recipe_byte_pointer_casts": 0,
       "bounded_ai_recipe_input_interfaces": 0,
-      "ai_cybertron_temporary_plan_pointer_parameters": 0
+      "ai_cybertron_temporary_plan_pointer_parameters": 0,
+      "ai_cybertron_persistent_plan_pointer_locals": 0
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -29410,12 +29412,13 @@
     "posix_directory_crt_shims": "The application-owned POSIX _getcwd and _mkdir adapters were unused by production callers and have been removed; test helpers now use POSIX APIs and scenario setup uses CreateNativeDir. Windows SDK APIs remain SDK-owned.",
     "redundant_ai_recipe_pointer_casts": "All 68 redundant static_cast<std::uint8_t *> conversions on addresses of elements in the AI recipe tables were removed; no such conversions remain.",
     "ai_recipe_spans": "FCreateAiShdef accepts a bounded byte span. The generated dataids header exposes each AI recipe table extent; all 68 callers pass a remaining subspan and the callee checks the selected hull slot count.",
-    "cybertron_temporary_view": "DoCyberFreighter and the Cybertron AI turn helpers use NATIVEAICYBERTEMPVIEW for temporary-plan bytes; the reset uses a bounded Rgb() span."
+    "cybertron_temporary_view": "DoCyberFreighter and the Cybertron AI turn helpers use NATIVEAICYBERTEMPVIEW for temporary-plan bytes; the reset uses a bounded Rgb() span.",
+    "cybertron_plan_views": "DoCyberAiTurn, DoCyberPackets, DoCyberFreighter and the Cybertron callback helpers use the typed persistent/temporary views rather than local byte pointers."
   },
-  "latest_change": "L06 Cybertron temporary plan uses a typed view",
+  "latest_change": "L06 Cybertron persistent plan uses typed views",
   "latest_batch_verification": {
-    "batch": "L06 Cybertron temporary plan uses a typed view",
-    "source_commit": "5347ac33",
+    "batch": "L06 Cybertron persistent plan uses typed views",
+    "source_commit": "b0c55424",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass, including C++ manifest and routing-policy checks.",
@@ -29433,13 +29436,13 @@
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "DoCyberFreighter and the Cybertron turn helpers now carry NATIVEAICYBERTEMPVIEW instead of a raw temporary-plan byte pointer. Reset uses a bounded byte span. View layout and storage offsets are unchanged.",
+    "api_audit": "All Cybertron persistent-plan and temporary-plan local pointers in ai4.cpp now use NATIVEAICYBERVIEW or NATIVEAICYBERTEMPVIEW, including the DoCyberFreighter parameter. Byte offsets and live updates are unchanged.",
     "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L06 Cybertron temporary plan uses a typed view",
-    "source_commit": "5347ac33",
+    "batch": "L06 Cybertron persistent plan uses typed views",
+    "source_commit": "b0c55424",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass, including C++ manifest and routing-policy checks.",
@@ -29457,10 +29460,10 @@
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "DoCyberFreighter and the Cybertron turn helpers now carry NATIVEAICYBERTEMPVIEW instead of a raw temporary-plan byte pointer. Reset uses a bounded byte span. View layout and storage offsets are unchanged.",
+    "api_audit": "All Cybertron persistent-plan and temporary-plan local pointers in ai4.cpp now use NATIVEAICYBERVIEW or NATIVEAICYBERTEMPVIEW, including the DoCyberFreighter parameter. Byte offsets and live updates are unchanged.",
     "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit 5347ac33 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit b0c55424 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05 bounded-text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06 remaining buffer/length service interfaces and native file/path results; complete chooser Windows/Linux qualification.",
