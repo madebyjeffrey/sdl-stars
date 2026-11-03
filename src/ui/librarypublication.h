@@ -51,7 +51,7 @@ std::int16_t FWriteLibraryMetadata(APPSESSION &app, std::string_view pszDir, std
 std::int16_t RemoveLibraryGameTree(APPSESSION &app, std::string_view pszDirectory);
 bool CopyImportEntry(APPSESSION &app, LIBRARYIMPORT *pli, std::string_view pszName);
 bool CopyBackupDirectory(APPSESSION &app, LIBRARYIMPORT *pli, std::string_view pszName);
-bool RemoveImportFile(APPSESSION &app, const char *pszRoot, std::string_view pszFile);
+bool RemoveImportFile(APPSESSION &app, std::string_view pszRoot, std::string_view pszFile);
 std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
                                     std::string_view pszSource, std::string_view szTarget,
                                     std::string_view pszName, int iplr, std::int32_t lidGame,

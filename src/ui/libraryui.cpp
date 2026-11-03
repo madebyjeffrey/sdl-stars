@@ -1659,31 +1659,31 @@ bool CopyBackupDirectory(APPSESSION &app, LIBRARYIMPORT *pli, std::string_view p
     return true;
 }
 
-static bool RemoveImportChild(APPSESSION &, const char *pszRoot, std::string_view pszFile) {
+static bool RemoveImportChild(APPSESSION &, std::string_view pszRoot, std::string_view pszFile) {
     char szFile[512];
     CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", pszRoot, szDirSep, pszFile);
     RemoveNativePath(szFile);
     return true;
 }
 
-bool RemoveImportFile(APPSESSION &app, const char *pszRoot, std::string_view pszFile) {
+bool RemoveImportFile(APPSESSION &app, std::string_view pszRoot, std::string_view pszFile) {
     char szFile[512];
     CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", pszRoot, szDirSep, pszFile);
     if (FNativeDirectoryExists(szFile)) {
-        FNativeEnumerateDirectory(app, szFile, RemoveImportChild, szFile);
+        FNativeEnumerateDirectory(app, szFile, RemoveImportChild, std::string_view{szFile});
         RemoveNativePath(szFile);
     } else RemoveNativePath(szFile);
     return true;
 }
 
-static bool RemoveImportTreeEntry(APPSESSION &app, const char *pszRoot, std::string_view pszFile) {
+static bool RemoveImportTreeEntry(APPSESSION &app, std::string_view pszRoot, std::string_view pszFile) {
     std::optional<NATIVEPATHINFO> npiPath;
     char szPath[512];
 
     if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pszRoot, szDirSep, pszFile) <= 0 ||
         !(npiPath = FNativePathInfo(szPath))) return false;
     if (npiPath->fDirectory && !npiPath->fLink) {
-        if (!FNativeEnumerateDirectory(app, szPath, RemoveImportTreeEntry, szPath)) return false;
+        if (!FNativeEnumerateDirectory(app, szPath, RemoveImportTreeEntry, std::string_view{szPath})) return false;
     }
     return RemoveNativePath(szPath) == 0;
 }
@@ -1815,12 +1815,12 @@ std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, std::string_view psz
         if (!FExportLibraryGame(app, hwnd, pszName, std::string_view(szZipStage))) goto LZipFail;
         cch = CchSnprintf(std::span{szZipGame, sizeof(szZipGame)}, "%s%s%s", szZipStage, szDirSep, szName);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szZipGame) || !FZipLibraryDirectory(app, szZipGame, szTarget)) goto LZipFail;
-        FNativeEnumerateDirectory(app, szZipGame, RemoveImportTreeEntry, szZipGame);
+        FNativeEnumerateDirectory(app, szZipGame, RemoveImportTreeEntry, std::string_view{szZipGame});
         RemoveNativePath(szZipGame);
         RemoveNativePath(szZipStage);
         return 1;
 LZipFail:
-        FNativeEnumerateDirectory(app, szZipStage, RemoveImportTreeEntry, szZipStage);
+        FNativeEnumerateDirectory(app, szZipStage, RemoveImportTreeEntry, std::string_view{szZipStage});
         RemoveNativePath(szZipStage);
         goto LFail;
     }
@@ -1854,7 +1854,7 @@ LZipFail:
     lem.pszTarget = szDestination;
     lem.fBad = 0;
     if (!FNativeEnumerateDirectory(app, szStage, MoveGameExportEntry, &lem) || lem.fBad) {
-        FNativeEnumerateDirectory(app, szDestination, RemoveImportFile, szDestination);
+        FNativeEnumerateDirectory(app, szDestination, RemoveImportFile, std::string_view{szDestination});
         RemoveNativePath(szDestination);
         goto LStageFail;
     }
@@ -1862,7 +1862,7 @@ LZipFail:
     return 1;
 
 LStageFail:
-    FNativeEnumerateDirectory(app, szStage, RemoveImportFile, szStage);
+    FNativeEnumerateDirectory(app, szStage, RemoveImportFile, std::string_view{szStage});
     RemoveNativePath(szStage);
 LFail:
     if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameExportFailed).data(), win32::MB_ICONHAND);
@@ -2169,7 +2169,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
         if (!FCreateLibraryZipStage(app, std::span{szZipStage}, "zip-importing")) return 0;
         iZipResult = FUnzipLibraryArchive(szSource, szZipStage);
         if (iZipResult != ZIP_IMPORT_OK) {
-            FNativeEnumerateDirectory(app, szZipStage, RemoveImportTreeEntry, szZipStage);
+            FNativeEnumerateDirectory(app, szZipStage, RemoveImportTreeEntry, std::string_view{szZipStage});
             RemoveNativePath(szZipStage);
             if (iZipResult == ZIP_IMPORT_UNSUPPORTED_NAME) {
                 AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryZipNameEncoding).data(), win32::MB_ICONEXCLAMATION);
@@ -2179,7 +2179,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
             return 0;
         }
         fImported = FImportLibraryGame(app, hwnd, szZipStage);
-        FNativeEnumerateDirectory(app, szZipStage, RemoveImportTreeEntry, szZipStage);
+        FNativeEnumerateDirectory(app, szZipStage, RemoveImportTreeEntry, std::string_view{szZipStage});
         RemoveNativePath(szZipStage);
         return fImported;
     }
