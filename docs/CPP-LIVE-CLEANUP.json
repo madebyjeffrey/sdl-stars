@@ -275,7 +275,8 @@
         "owned-toolbar-collections-with-vectors",
         "retire-lstrlenA-compatibility-shim",
         "bounded-fixed-hull-labels-in-report-drawing",
-        "carry-bounded-game-name-length-for-map-printing"
+        "carry-bounded-game-name-length-for-map-printing",
+        "bounded-battle-plan-name-length"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -2175,7 +2176,8 @@
         "utf8-font-metrics-returns-optional-value",
         "scanner-snapshots-return-optional-owned-values",
         "scanner-snapshot-consumers-use-required-references",
-        "scanner-consumers-use-required-snapshot-references"
+        "scanner-consumers-use-required-snapshot-references",
+        "owned-vector-inspector-snapshot-and-optional-capture-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -27502,15 +27504,14 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L05 bounded report hull names and carried game-name length for map printing",
-    "status": "Published to origin/develop at 8eb069fc. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
-    "parent": "5a62be5e",
-    "change": "Removed three unbounded std::strlen calls for fixed hull-name fields. Map printing reuses one bounded game-name length across all page draws.",
+    "batch": "L06 owned inspector snapshots and bounded final battle-plan name scan",
+    "status": "Source commit 6c185819 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, focused compatibility tests 11/11, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "parent": "ce705395",
+    "change": "Inspector snapshots now return optional owned vectors and strings, eliminating manual malloc/free and an always-true UTF-8 flag; battle-plan name sizing is bounded.",
     "verification": {
       "batch": "L05 bounded report hull names and carried game-name length for map printing",
       "source_commits": [
-        "39e0aa42",
-        "0f693393"
+        "6c185819"
       ],
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
@@ -27523,7 +27524,7 @@
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
       "baseline": "Unchanged; report rendering uses the same valid hull-name bytes, and print-map draws the same valid game-name bytes.",
       "api_audit": "Removed three unbounded std::strlen calls for fixed hull-name fields. Map printing reuses one bounded game-name length across all page draws.",
-      "remaining_strlen": "Six production std::strlen calls: three C-string boundary/input calls and three owned/fixed-storage calls under review.",
+      "remaining_strlen": "Three production std::strlen calls remain, all incoming C-string API/input boundaries; zero owned/fixed text scans remain.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
     },
@@ -28476,8 +28477,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "39e0aa42+0f693393",
-  "latest_batch_status": "Published to origin/develop at 8eb069fc. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
+  "latest_source_commit": "6c185819",
+  "latest_batch_status": "Source commit 6c185819 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, focused compatibility tests 11/11, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28494,8 +28495,8 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "0f693393",
-    "strlen_occurrence_inventory": "Six std::strlen calls remain in owned production C++ source/header files: three measure C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input), and three measure owned/fixed text (the inspector class/text fields and battle-plan name). Three report hull-name calls now use bounded fixed-array views; map printing carries the bounded game-name length across page draws. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
+    "source_head": "6c185819",
+    "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28531,7 +28532,7 @@
     "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8’s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
     "compat_menu_label_lengths": "COMPATMENUITEM records the byte count when it owns its label; GetMenuStringA and popup sizing reuse that count.",
     "compat_list_item_lengths": "COMPATLISTITEM records the UTF-8 byte length at AddList ownership transfer; LB_GETTEXTLEN and LB_GETTEXT reuse it, removing the owned-item strlen scan and an implicit string_view length scan. Input search text remains a C-string ABI boundary.",
-    "strlen_occurrence_inventory_method": "rg -o confirms 11 std::strlen calls in C++ source/header files and no Objective-C++ std::strlen or SDL_strlen calls after this source batch.",
+    "strlen_occurrence_inventory_method": "rg -o confirms 3 std::strlen calls in production C++ source/header files and 10 additional test/witness occurrences; no Objective-C++ std::strlen or SDL_strlen calls remain.",
     "file_dialog_path_lengths": "CchJoinFile returns std::optional<std::size_t> for a validated joined path; IAcceptFilePath reuses the result for extension placement and carries the final path length through result copy and required-buffer reporting.",
     "legacy_file_path_views": "OpenFile creates one view from the incoming path, then carries a view of the assembled path through UTF-8 validation, capacity checks and LPOFSTRUCT copying. This removes two strlen calls and redundant implicit scans while preserving the C API boundary.",
     "compat_window_text_lengths": "HWND__ caches title, undo and composition byte counts beside its owned C strings. Window creation and WM_SETTEXT set title lengths; edit replacement and undo keep title/undo lengths synchronized; composition ownership sets and clears its count. WM_GETTEXTLENGTH and edit helpers reuse the values, removing two std::strlen scans and one SDL_strlen scan.",
@@ -28544,23 +28545,17 @@
     "cocoa_chooser_path_length": "IChooseCocoaFile creates one bounded view for the selected native path and reuses its byte length for capacity admission and copy, removing a duplicate std::strlen scan.",
     "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed.",
     "strlen_occurrence_classification": {
-      "source_head": "7f6cc1de",
-      "total": 11,
-      "c_string_api_or_input_boundaries": 4,
-      "owned_or_fixed_text_length_reads": 7,
+      "source_head": "6c185819",
+      "total": 3,
+      "c_string_api_or_input_boundaries": 3,
+      "owned_or_fixed_text_length_reads": 0,
       "boundary_sites": [
         "compat/win32/src/list.cpp: LB_FINDSTRING LPARAM input",
-        "compat/win32/src/services.cpp: lstrlenA compatibility adapter",
         "compat/win32/src/filedialog_portal.cpp: DBus unique-name result",
         "compat/win32/src/edit.cpp: ReplaceEdit LPCSTR input"
       ],
-      "length_read_sites": [
-        "compat/win32/src/inspect.cpp: snapshot class and text lengths for details-buffer sizing",
-        "src/ui/reportui.cpp: three ship-class label lengths during report drawing",
-        "src/ui/battleui.cpp: fixed battle-plan name length before suffix update",
-        "src/ui/mdi.cpp: fixed game-name length for print output"
-      ],
-      "interpretation": "The seven length reads are not yet confirmed replacements; a migration should carry lengths only where it removes repeated work without adding fragile duplicated state."
+      "length_read_sites": [],
+      "interpretation": "All remaining production std::strlen calls measure incoming NUL-terminated API/input strings; no owned or fixed-storage text-length reads remain."
     },
     "paint_region_merge_result": "CrcMergeRegion accepts a span of active rectangles and returns the merged count; it no longer mutates a size_t output pointer.",
     "paint_update_region_ownership": "HWND pending update rectangles and HDC paint rectangles are vector-owned; add/subtract helpers mutate a vector, and the separate count fields and realloc-based temporary ownership are removed.",
@@ -28571,14 +28566,14 @@
     "toolbar_owned_collections": "COMPATTOOLBAR button/bitmap arrays use std::vector and labels use NATIVEOWNER<char, SDL_free>; count fields derive from collection sizes.",
     "win32_length_helper": "win32::lstrlenA is retired; UI spans are measured within their bounds, and scanner labels reuse copied UTF-8 byte counts.",
     "report_hull_names": "Planet starbase, fleet composition, and enemy-fleet composition report cells use SzvPartName bounded views for fixed 32-byte hull-name fields; no record layout changes.",
-    "map_print_game_name": "CommandHandler measures the fixed game-name field once within its array extent and reuses the byte count across printed map pages."
+    "map_print_game_name": "CommandHandler measures the fixed game-name field once within its array extent and reuses the byte count across printed map pages.",
+    "inspector_snapshot_result": "Hierarchy capture returns std::optional<std::vector<STARSCOMPATWINDOW>> with owned std::string class/text fields; callers use value ownership without manual allocation/free or an always-true UTF-8 flag. JSON output and window inspection behavior remain unchanged."
   },
-  "latest_change": "L05 bounded report hull names and carried game-name length for map printing",
+  "latest_change": "L06 owned inspector snapshots and bounded the final owned battle-plan name scan",
   "latest_batch_verification": {
-    "batch": "L05 bounded report hull names and carried game-name length for map printing",
+    "batch": "L06 owned inspector snapshots and bounded the final owned battle-plan name scan",
     "source_commits": [
-      "39e0aa42",
-      "0f693393"
+      "6c185819"
     ],
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
@@ -28589,9 +28584,9 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; report rendering uses the same valid hull-name bytes, and print-map draws the same valid game-name bytes.",
-    "api_audit": "Removed three unbounded std::strlen calls for fixed hull-name fields. Map printing reuses one bounded game-name length across all page draws.",
-    "remaining_strlen": "Six production std::strlen calls: three C-string boundary/input calls and three owned/fixed-storage calls under review.",
+    "baseline": "Unchanged for valid input; the inspector serializes the same window data, and battle-plan suffix handling now bounds the name scan and guards short names.",
+    "api_audit": "Inspector snapshots now use optional/vector/string ownership, removing manual allocation/free and the always-true fUtf8Text flag. The last owned/fixed text scan uses a bounded array search.",
+    "remaining_strlen": "Three production std::strlen calls remain, all incoming C-string API/input boundaries; zero owned/fixed text scans remain.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass."
   }
