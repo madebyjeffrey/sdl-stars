@@ -262,13 +262,15 @@ static void LayoutFileDialog(HWND hwnd) {
 static HWND HwndFileControl(HWND hwnd, LPCSTR pszClass, LPCSTR pszText, DWORD style, int x, int y, int cx, int cy, int id);
 static INT_PTR  FolderDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     char *pszName = reinterpret_cast<char *>(win32::GetWindowLongPtrA(hwnd, win32::DWLP_USER));
+    std::string_view szName;
     if (msg == win32::WM_INITDIALOG) { win32::SetWindowLongPtrA(hwnd, win32::DWLP_USER, l); return 1; }
     if (msg == win32::WM_CLOSE || (msg == win32::WM_COMMAND && LOWORD(w) == win32::IDCANCEL)) {
         win32::EndDialog(hwnd, win32::IDCANCEL); return 1;
     }
     if (msg == win32::WM_COMMAND && LOWORD(w) == win32::IDOK && pszName) {
         win32::GetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_NAME), pszName, PATH_MAX);
-        if (!*pszName || std::strchr(pszName, '/') || std::strcmp(pszName, ".") == 0 || std::strcmp(pszName, "..") == 0) {
+        szName = pszName;
+        if (szName.empty() || szName.find('/') != std::string_view::npos || szName == "." || szName == "..") {
             FileError(hwnd, "Enter a folder name without a path."); return 1;
         }
         win32::EndDialog(hwnd, win32::IDOK); return 1;

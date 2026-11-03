@@ -119,7 +119,8 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     const char *pszBase, *pszName, *pszPage = nullptr;
     char szDirectory[PATH_MAX];
     const char *pszDirectory;
-    std::size_t i;
+    std::string_view szHelp;
+    std::size_t i, ichSlash;
     int cch;
     BOOL fLaunched;
 
@@ -128,13 +129,18 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
         return 0;
     }
-    if (!pszHelp || !*pszHelp || std::strlen(pszHelp) >= PATH_MAX) {
+    if (!pszHelp) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return 0;
     }
-    pszName = std::strrchr(pszHelp, '/');
-    pszName = pszName ? pszName + 1 : pszHelp;
-    if (strcasecmp(pszName, "stars-help.html") || std::strchr(pszHelp, '\\') || std::strchr(pszHelp, '/')) {
+    szHelp = std::string_view{pszHelp, SDL_strnlen(pszHelp, PATH_MAX)};
+    if (szHelp.empty() || szHelp.size() >= PATH_MAX) {
+        win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+    ichSlash = szHelp.rfind('/');
+    pszName = ichSlash != std::string_view::npos ? pszHelp + ichSlash + 1 : pszHelp;
+    if (strcasecmp(pszName, "stars-help.html") || szHelp.find_first_of("\\/") != std::string_view::npos) {
         win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
         return 0;
     }
