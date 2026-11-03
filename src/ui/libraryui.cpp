@@ -97,19 +97,19 @@ struct LIBRARYNAMECHECK {
 static void SaveRaceState(APPSESSION &app, RACESTATE *prs) {
     prs->plr = app.state.vplr;
     prs->fNew = fNewLibraryRace;
-    std::memcpy(prs->szPass, app.state.szRacePass, sizeof(prs->szPass));
-    std::memcpy(prs->szFile, app.state.szRaceFile, sizeof(prs->szFile));
-    std::memcpy(prs->szPath, szRaceLibraryPath, sizeof(prs->szPath));
+    std::copy_n(app.state.szRacePass, sizeof(prs->szPass), prs->szPass);
+    std::copy_n(app.state.szRaceFile, sizeof(prs->szFile), prs->szFile);
+    std::copy_n(szRaceLibraryPath, sizeof(prs->szPath), prs->szPath);
 }
 
 static void RestoreRaceState(APPSESSION &app, const RACESTATE *prs, std::int16_t fRestoreRace, std::int16_t fRestorePath) {
     if (fRestoreRace) {
         app.state.vplr = prs->plr;
-        std::memcpy(app.state.szRacePass, prs->szPass, sizeof(prs->szPass));
-        std::memcpy(app.state.szRaceFile, prs->szFile, sizeof(prs->szFile));
+        std::copy_n(prs->szPass, sizeof(prs->szPass), app.state.szRacePass);
+        std::copy_n(prs->szFile, sizeof(prs->szFile), app.state.szRaceFile);
     }
     if (fRestorePath) {
-        std::memcpy(szRaceLibraryPath, prs->szPath, sizeof(prs->szPath));
+        std::copy_n(prs->szPath, sizeof(prs->szPath), szRaceLibraryPath);
         fNewLibraryRace = prs->fNew;
     }
 }

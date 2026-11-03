@@ -584,7 +584,7 @@ static std::int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, std::
         cbNames = static_cast<std::size_t>(cch);
     } else {
         if (cbName + 1 >= sizeof(szNames)) return 0;
-        std::memcpy(szNames, szName, cbName);
+        std::copy_n(szName, cbName, szNames);
         szNames[cbName] = 's';
         szNames[cbName + 1] = 0;
         cbNames = cbName + 1;
@@ -599,8 +599,8 @@ static std::int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, std::
         pplr->szNames[cbKeep] = 0;
         if (!FConfirmLegacyRaceNames(app, pplr->szName, pplr->szNames)) return -1;
     } else {
-        std::memcpy(pplr->szName, szName, cbName + 1);
-        std::memcpy(pplr->szNames, szNames, cbNames + 1);
+        std::copy_n(szName, cbName + 1, pplr->szName);
+        std::copy_n(szNames, cbNames + 1, pplr->szNames);
     }
     return 1;
 }
