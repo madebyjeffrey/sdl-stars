@@ -48,26 +48,34 @@ static thread_local DWORD dwDialogError;
 DWORD win32::CommDlgExtendedError(void) { return dwDialogError; }
 void CompatSetDialogError(DWORD dw) { dwDialogError = dw; }
 
-static BOOL FFilePattern(LPCSTR psz, LPCSTR pszPattern, std::size_t cpat) {
-    LPCSTR pszStar = nullptr, pszRetry = nullptr, pszEnd = pszPattern + cpat;
-    if (cpat == 3 && std::memcmp(pszPattern, "*.*", 3) == 0) return 1;
-    while (*psz) {
-        if (pszPattern < pszEnd && (*pszPattern == '?' || SDL_tolower(static_cast<unsigned char>(*pszPattern)) == SDL_tolower(static_cast<unsigned char>(*psz)))) { pszPattern++; psz++; }
-        else if (pszPattern < pszEnd && *pszPattern == '*') { pszStar = ++pszPattern; pszRetry = psz; }
-        else if (pszStar) { pszPattern = pszStar; psz = ++pszRetry; }
+static BOOL FFilePattern(std::string_view szName, std::string_view szPattern) {
+    std::size_t ichName = 0, ichPattern = 0, ichStar = std::string_view::npos, ichRetry = 0;
+    if (szPattern == "*.*") return 1;
+    while (ichName < szName.size()) {
+        if (ichPattern < szPattern.size() && (szPattern[ichPattern] == '?' ||
+            SDL_tolower(static_cast<unsigned char>(szPattern[ichPattern])) == SDL_tolower(static_cast<unsigned char>(szName[ichName])))) {
+            ichPattern++; ichName++;
+        } else if (ichPattern < szPattern.size() && szPattern[ichPattern] == '*') {
+            ichStar = ++ichPattern; ichRetry = ichName;
+        } else if (ichStar != std::string_view::npos) {
+            ichPattern = ichStar; ichName = ++ichRetry;
+        }
         else return 0;
     }
-    while (pszPattern < pszEnd && *pszPattern == '*') pszPattern++;
-    return pszPattern == pszEnd;
+    while (ichPattern < szPattern.size() && szPattern[ichPattern] == '*') ichPattern++;
+    return ichPattern == szPattern.size();
 }
 static BOOL FFileFilter(COMPATFILEDIALOG *lp, LPCSTR psz) {
-    LPCSTR pszPattern, pszNext;
+    std::string_view szPatterns, szPattern;
+    std::size_t ichPattern, ichEnd;
     if (lp->cFilter == 0) return 1;
-    pszPattern = lp->lpRequest->rgFilters[static_cast<std::size_t>(lp->iFilter)].szPattern.c_str();
-    while (*pszPattern) {
-        pszNext = std::strchr(pszPattern, ';'); if (!pszNext) pszNext = pszPattern + std::strlen(pszPattern);
-        if (FFilePattern(psz, pszPattern, static_cast<std::size_t>((pszNext - pszPattern)))) return 1;
-        pszPattern = *pszNext ? pszNext + 1 : pszNext;
+    szPatterns = lp->lpRequest->rgFilters[static_cast<std::size_t>(lp->iFilter)].szPattern;
+    for (ichPattern = 0; ichPattern < szPatterns.size();) {
+        ichEnd = szPatterns.find(';', ichPattern);
+        szPattern = szPatterns.substr(ichPattern, ichEnd == std::string_view::npos ? ichEnd : ichEnd - ichPattern);
+        if (FFilePattern(psz, szPattern)) return 1;
+        if (ichEnd == std::string_view::npos) break;
+        ichPattern = ichEnd + 1;
     }
     return 0;
 }

@@ -11,6 +11,7 @@
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 using namespace win32::files;
 
@@ -57,26 +58,27 @@ static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
 }
 static BOOL FFilter(DBusMessageIter *lpIter, const FILESELECTIONFILTER &filterValue) {
     DBusMessageIter filter, patterns, item;
-    const char *psz, *pszEnd;
+    std::string_view szSourcePattern, szPatternView;
     const char *pszName = filterValue.szName.c_str();
-    const char *pszSourcePattern = filterValue.szPattern.c_str();
     char szPattern[16385];
-    std::size_t i, c;
+    std::size_t i, c, ichPattern, ichEnd;
     dbus_uint32_t kind = 0;
     BOOL fOk = 0;
-    if (!FUtf8Valid(pszName) || !FUtf8Valid(pszSourcePattern)) return 0;
+    szSourcePattern = filterValue.szPattern;
+    if (!FUtf8Valid(pszName) || !FUtf8Valid(szSourcePattern)) return 0;
     if (!dbus_message_iter_open_container(lpIter, DBUS_TYPE_STRUCT, nullptr, &filter) ||
         !dbus_message_iter_append_basic(&filter, DBUS_TYPE_STRING, &pszName) ||
         !dbus_message_iter_open_container(&filter, DBUS_TYPE_ARRAY, "(us)", &patterns)) goto done;
-    for (psz = pszSourcePattern; *psz; psz = *pszEnd ? pszEnd + 1 : pszEnd) {
-        pszEnd = std::strchr(psz, ';'); if (!pszEnd) pszEnd = psz + std::strlen(psz);
+    for (ichPattern = 0; ichPattern < szSourcePattern.size();) {
+        ichEnd = szSourcePattern.find(';', ichPattern);
+        szPatternView = szSourcePattern.substr(ichPattern, ichEnd == std::string_view::npos ? ichEnd : ichEnd - ichPattern);
         c = 0;
-        if (pszEnd - psz == 3 && std::memcmp(psz, "*.*", 3) == 0) szPattern[c++] = '*';
-        else for (i = 0; i < static_cast<std::size_t>(pszEnd - psz); i++) {
-            if ((psz[i] >= 'a' && psz[i] <= 'z') || (psz[i] >= 'A' && psz[i] <= 'Z')) {
-                szPattern[c++] = '['; szPattern[c++] = static_cast<char>(SDL_tolower(static_cast<unsigned char>(psz[i])));
-                szPattern[c++] = static_cast<char>(SDL_toupper(static_cast<unsigned char>(psz[i]))); szPattern[c++] = ']';
-            } else szPattern[c++] = psz[i];
+        if (szPatternView == "*.*") szPattern[c++] = '*';
+        else for (char ch : szPatternView) {
+            if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) {
+                szPattern[c++] = '['; szPattern[c++] = static_cast<char>(SDL_tolower(static_cast<unsigned char>(ch)));
+                szPattern[c++] = static_cast<char>(SDL_toupper(static_cast<unsigned char>(ch))); szPattern[c++] = ']';
+            } else szPattern[c++] = ch;
         }
         szPattern[c] = 0;
         {
@@ -86,6 +88,8 @@ static BOOL FFilter(DBusMessageIter *lpIter, const FILESELECTIONFILTER &filterVa
                 !dbus_message_iter_append_basic(&item, DBUS_TYPE_STRING, &pszPattern) ||
                 !dbus_message_iter_close_container(&patterns, &item)) goto done;
         }
+        if (ichEnd == std::string_view::npos) break;
+        ichPattern = ichEnd + 1;
     }
     fOk = dbus_message_iter_close_container(&filter, &patterns) && dbus_message_iter_close_container(lpIter, &filter);
 done:
