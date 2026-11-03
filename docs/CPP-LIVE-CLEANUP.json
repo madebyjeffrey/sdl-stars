@@ -236,7 +236,8 @@
         "bounded-scanner-snapshot-name-serialization",
         "managed-race-reader-readonly-path-view",
         "bounded-saved-fleet-name-record-view",
-        "audit-remaining-const-text-interfaces"
+        "audit-remaining-const-text-interfaces",
+        "bounded-library-path-helper-output-spans"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1438,6 +1439,20 @@
           "batch": "L05 saved fleet-name record uses a string view",
           "source_commit": "6a8f9bbe",
           "change": "WriteRtString and the wire-name encoder accept std::string_view; the non-compressed form still writes marker, name bytes and NUL with the same 31-byte UTF-8 limit. FLEET layout is unchanged.",
+          "macos_debug_build": "make compile passes with strict warnings and header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 library path outputs use spans",
+          "source_commit": "e9c023c2",
+          "change": "Library race-stage, family-member, export/import staging and file-chooser helpers accept spans for bounded output buffers. Race export and stage-purpose inputs use string_view; the chooser passes the same span to the selection service.",
           "macos_debug_build": "make compile passes with strict warnings and header checks.",
           "desktop_unit_tests": "18/18 pass.",
           "host_unit_tests": "29/29 pass.",
@@ -25272,7 +25287,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 saved fleet-name record uses a string view",
+    "latest_batch": "L05 library path outputs use spans",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25304,16 +25319,17 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 saved fleet-name record uses a string view",
-    "source_commit": "6a8f9bbe",
-    "status": "Locally committed as 6a8f9bbe. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 library path outputs use spans",
+    "source_commit": "e9c023c2",
+    "status": "Locally committed as e9c023c2. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
       "Ampersand escaping uses dynamic string scratch storage; updated history-menu checks and transport-preset witness types.",
       "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
       "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services.",
-      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged."
+      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged.",
+      "Library path helpers take spans for bounded destinations and views for their input paths."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25540,14 +25556,19 @@
       {
         "commit": "6a8f9bbe",
         "message": "Encode saved fleet names from string views"
+      },
+      {
+        "commit": "e9c023c2",
+        "message": "Pass library path buffers as spans"
       }
     ],
-    "latest_source_commit": "6a8f9bbe",
-    "latest_batch_status": "Locally committed as 6a8f9bbe. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "e9c023c2",
+    "latest_batch_status": "Locally committed as e9c023c2. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
-      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_e9c023c2": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "c_macro_audit": {
       "source_head": "4983e9ac",
@@ -25568,9 +25589,9 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05 saved fleet-name record uses a string view",
-    "status": "Locally committed as 6a8f9bbe. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "267e56bd",
+    "batch": "L05 library path outputs use spans",
+    "status": "Locally committed as e9c023c2. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "3e8c8252",
     "change": "DrawProductionItem accepts std::string_view rows; the owner-draw callback forwards the list control\u2019s returned text length and fixed metadata reads stay within the view.",
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and header checks.",
@@ -25598,7 +25619,8 @@
       "local_cross_attempt": "The mingw-debug preset is disabled when hostSystemName is not Windows. A manual MinGW host-only configure reached CMake but stopped because the Python 3.14 cross-build environment lacks pinned PyYAML 6.0.3 and restricted network DNS could not reach pypi.org; no Windows SDL target was built.",
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
-      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_e9c023c2": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25618,7 +25640,8 @@
       "The report-row caller supplies a view; row metadata and visible text use bounded indexing and subviews.",
       "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
       "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services.",
-      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged."
+      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged.",
+      "Library path helpers take spans for bounded destinations and views for their input paths."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -25777,10 +25800,14 @@
       {
         "commit": "6a8f9bbe",
         "message": "Encode saved fleet names from string views"
+      },
+      {
+        "commit": "e9c023c2",
+        "message": "Pass library path buffers as spans"
       }
     ],
-    "source_commit": "6a8f9bbe",
-    "latest_change": "WriteRtString and the wire-name encoder accept std::string_view; the non-compressed form still writes marker, name bytes and NUL with the same 31-byte UTF-8 limit. FLEET layout is unchanged.",
+    "source_commit": "e9c023c2",
+    "latest_change": "Library race-stage, family-member, export/import staging and file-chooser helpers accept spans for bounded output buffers. Race export and stage-purpose inputs use string_view; the chooser passes the same span to the selection service.",
     "c_macro_audit": {
       "source_head": "4983e9ac",
       "date": "2026-11-02",
@@ -25823,16 +25850,17 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 saved fleet-name record uses a string view",
-    "source_commit": "6a8f9bbe",
-    "status": "Locally committed as 6a8f9bbe. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 library path outputs use spans",
+    "source_commit": "e9c023c2",
+    "status": "Locally committed as e9c023c2. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
       "Ampersand escaping uses dynamic string scratch storage; updated history-menu checks and transport-preset witness types.",
       "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
       "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services.",
-      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged."
+      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged.",
+      "Library path helpers take spans for bounded destinations and views for their input paths."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25875,7 +25903,8 @@
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending.",
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
-      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_e9c023c2": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -26188,9 +26217,13 @@
       {
         "commit": "6a8f9bbe",
         "message": "Encode saved fleet names from string views"
+      },
+      {
+        "commit": "e9c023c2",
+        "message": "Pass library path buffers as spans"
       }
     ],
-    "parent": "267e56bd",
+    "parent": "3e8c8252",
     "c_macro_audit": {
       "source_head": "4983e9ac",
       "date": "2026-11-02",
