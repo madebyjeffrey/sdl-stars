@@ -101,6 +101,7 @@ void ShowTitleScreen(APPSESSION &app) {
 // recent files and saves the list to stars.ini.
 void AddMRUFile(APPSESSION &app, std::string_view szFileName, std::string_view szExt) {
     std::int16_t i;
+    std::int16_t cchEntry;
     char    szT[256];
     char    szIniFile[16];
     char    szSection[16];
@@ -121,8 +122,8 @@ void AddMRUFile(APPSESSION &app, std::string_view szFileName, std::string_view s
         CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.first(256), szT);
         TextIO().pfnCchGetString(app, idsStarsIni, std::span{szIniFile});
         TextIO().pfnCchGetString(app, idsFiles, std::span{szSection});
-        TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
-        psz = &szEntry[std::strlen(szEntry) - 1];
+        cchEntry = TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
+        psz = &szEntry[cchEntry - 1];
         for (i = 0; i < 9; i++) {
             *psz = i + '1';
             CchCopyUtf8(std::span{szT}, app.lpui->vrgszMRU + 256 * i);
