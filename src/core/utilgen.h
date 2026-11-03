@@ -6,6 +6,7 @@
 #include <array>
 #include <optional>
 #include <span>
+#include <string>
 #include <string_view>
 
 extern std::int16_t aiPNChunkOffset[];
@@ -34,7 +35,7 @@ std::int16_t AlertSz(APPSESSION &app, std::string_view sz, std::int16_t mbType);
 std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz);
 std::array<char, 12> PszFromInt(APPSESSION &app, std::int16_t i);
 std::array<char, 12> PszFromLong(APPSESSION &app, std::int32_t l);
-std::array<char, 12> PszFromLongK(APPSESSION &app, std::int32_t l);
+std::string PszFromLongK(APPSESSION &app, std::int32_t l);
 std::array<char, 15> CommaFormatLong(APPSESSION &app, std::int32_t l);
 void    BoundPoints(RECT *prc, POINT16 *rgpt, std::int16_t cpt);
 // Success returns encoded bytes; failure leaves the destination unchanged.

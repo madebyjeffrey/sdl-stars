@@ -732,7 +732,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
 }
 
 void DrawScoreReport(APPSESSION &app, HDC hdc) {
-    std::array<char, 12> szNumber{};
+    std::string szNumber;
     std::array<char, 50> szPlayerName{};
     std::int16_t  dxDig;
     std::int16_t  yTop;
@@ -834,7 +834,7 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
                     }
                     szNumber = PszFromLongK(app, lVal);
                     psz = szNumber.data();
-                    cch = static_cast<std::int16_t>(std::strlen(psz));
+                    cch = static_cast<std::int16_t>(szNumber.size());
                     RightTextOut(app, hdc, xLeft, yTop, psz, cch, 0);
                 }
                 if (iPass == 1) {
@@ -1653,7 +1653,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
 }
 
 void DrawMineralItem(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::int16_t iMineral, std::int32_t l) {
-    std::array<char, 12> szNumber{};
+    std::string szNumber;
     const char *psz;
     std::int16_t cch;
 
@@ -1665,7 +1665,7 @@ void DrawMineralItem(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, s
     if (l >= 0) {
         szNumber = PszFromLongK(app, l);
         psz = szNumber.data();
-        cch = static_cast<std::int16_t>(std::strlen(psz));
+        cch = static_cast<std::int16_t>(szNumber.size());
     } else {
         cch = std::strlen(app.state.szDblDash);
         psz = app.state.szDblDash;

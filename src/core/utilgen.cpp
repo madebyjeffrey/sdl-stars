@@ -323,11 +323,12 @@ std::array<char, 12> PszFromLong(APPSESSION &app, std::int32_t l) {
     return psz;
 }
 
-std::array<char, 12> PszFromLongK(APPSESSION &app, std::int32_t l) {
+std::string PszFromLongK(APPSESSION &app, std::int32_t l) {
     std::int16_t fExtraLarge;
     std::int16_t fLarge;
-    std::size_t cch;
-    std::array<char, 12> psz{};
+    std::array<char, 12> rgch{};
+    std::string szResult;
+    int cch;
 
     fLarge = l >= 10000;
     fExtraLarge = l >= 1000000;
@@ -343,15 +344,14 @@ std::array<char, 12> PszFromLongK(APPSESSION &app, std::int32_t l) {
             l = 999;
         }
     }
-    psz = PszFromInt(app, LOWORD(l));
-    cch = static_cast<std::size_t>(std::find(psz.begin(), psz.end(), 0) - psz.begin());
+    cch = CchSprintf(rgch, app.state.PCTD, static_cast<std::int16_t>(LOWORD(l)));
+    szResult.assign(rgch.data(), static_cast<std::size_t>(cch));
     if (fExtraLarge) {
-        psz[cch++] = 'M';
+        szResult.push_back('M');
     } else if (fLarge) {
-        psz[cch++] = 'k';
+        szResult.push_back('k');
     }
-    psz[cch] = 0;
-    return psz;
+    return szResult;
 }
 
 std::array<char, 15> CommaFormatLong(APPSESSION &app, std::int32_t l) {
