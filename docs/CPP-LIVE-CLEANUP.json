@@ -224,7 +224,8 @@
         "bounded-preset-path-view-interfaces",
         "bounded-ini-window-and-recent-file-input-views",
         "typed-save-file-path-inputs",
-        "bounded-library-publication-path-length-callback"
+        "bounded-library-publication-path-length-callback",
+        "bounded-right-text-output-view-interface"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -24945,6 +24946,32 @@
       "api_audit": "LIBRARYPUBLICATIONIO::pfnPathLength takes string_view and returns its bounded byte size; removed the std::strlen callback.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 bounded RightTextOut string-view interface",
+      "parent": "1550a025",
+      "source_commit": "a8768de0",
+      "macos_debug_build": "make compile passes; strict warnings and standalone header checks pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "Desktop utilgen unit coverage passes; writable-span and -1 catalog sentinel overload remain available.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; normal right-aligned text rendering and erase behavior preserve the regression baseline.",
+      "api_audit": "RightTextOut readonly text input now takes string_view. Length zero uses the view length; explicit lengths are clamped to the view. The mutable span overload preserves NUL-length and catalog-output behavior.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -24965,7 +24992,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded library publication path length callback",
+    "latest_batch": "L05 bounded RightTextOut string-view interface",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25182,10 +25209,14 @@
       {
         "commit": "c9c04df3",
         "message": "Measure publication paths through views"
+      },
+      {
+        "commit": "a8768de0",
+        "message": "Draw right-aligned text from views"
       }
     ],
-    "latest_source_commit": "c9c04df3",
-    "latest_batch_status": "Locally committed as c9c04df3. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "a8768de0",
+    "latest_batch_status": "Locally committed as a8768de0. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
@@ -25404,11 +25435,11 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded library publication path length callback",
-    "source_commit": "c9c04df3",
-    "status": "Locally committed as c9c04df3. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 bounded RightTextOut string-view interface",
+    "source_commit": "a8768de0",
+    "status": "Locally committed as a8768de0. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "LIBRARYPUBLICATIONIO::pfnPathLength now takes string_view and reads its byte size; publication path length admission passes bounded path views."
+      "RightTextOut takes string_view for readonly text and clamps explicit lengths to that view; the writable span overload retains the legacy cLen conventions."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
