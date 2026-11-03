@@ -10,8 +10,10 @@ class APPSESSION;
 #include <climits>
 #include <cstdlib>
 #include <cstdio>
+#include <functional>
 #include <span>
 #include <string_view>
+#include <type_traits>
 #include "encoding.h"
 #include "nativeformat.h"
 #include "fileio.h"
@@ -72,8 +74,16 @@ std::int16_t FFileReadOnly(std::string_view szFile);
 void    MakeDir(std::string_view szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
 int     CreateNativeDir(std::string_view pszDir);
-using FNativeDirectoryEntryProc = std::int16_t (*)(APPSESSION &, void *lpData, std::string_view pszEntry);
-std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, FNativeDirectoryEntryProc pfnEntry, void *lpData);
+using FNativeDirectoryEntryProc = std::function<std::int16_t(APPSESSION &, std::string_view)>;
+std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, const FNativeDirectoryEntryProc &pfnEntry);
+template<class TContext>
+std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir,
+                                      std::int16_t (*pfnEntry)(APPSESSION &, TContext, std::string_view), std::type_identity_t<TContext> context) {
+    FNativeDirectoryEntryProc pfnBound = [pfnEntry, context](APPSESSION &appEntry, std::string_view pszEntry) {
+        return pfnEntry(appEntry, context, pszEntry);
+    };
+    return FNativeEnumerateDirectory(app, pszDir, pfnBound);
+}
 std::optional<std::int64_t> FNativeFileSize(std::string_view pszFile);
 std::int16_t FNativeDirectoryExists(std::string_view pszDir);
 // Inspect the final component without following links or Windows reparse points.

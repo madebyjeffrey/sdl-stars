@@ -18,8 +18,7 @@ struct NEWGAMERACEMENU {
     const char *pszSelected;
 };
 
-static std::int16_t AddNewGameLibraryRace(APPSESSION &, void *lpData, std::string_view pszName) {
-    NEWGAMERACEMENU *pnrm = static_cast<NEWGAMERACEMENU *>(lpData);
+static std::int16_t AddNewGameLibraryRace(APPSESSION &, NEWGAMERACEMENU *pnrm, std::string_view pszName) {
     char szLabel[512];
     char *pchLabel = szLabel;
     UINT grf;
@@ -530,7 +529,9 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         nrm.hmenu = rghmenuSubPopup[1];
         nrm.cRace = 0;
         nrm.pszSelected = (iCurVal & 3) == 2 ? rgszLibraryRaceNew[iCurVal >> 2] : nullptr;
-        FEnumerateLibraryRaces(app, AddNewGameLibraryRace, &nrm);
+        FEnumerateLibraryRaces(app, [&nrm](APPSESSION &appEntry, std::string_view pszName) {
+            return AddNewGameLibraryRace(appEntry, &nrm, pszName);
+        });
         if (nrm.cRace == 0)
             win32::AppendMenuA(nrm.hmenu, win32::MF_GRAYED, 0, TextIO().pfnCompressed(app, idsLibraryNoRaces).data());
         rghmenuSubPopup[2] = win32::CreatePopupMenu();

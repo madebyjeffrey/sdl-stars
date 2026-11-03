@@ -88,7 +88,7 @@ std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, std::string_view psz
 void InitLibraryRaces(APPSESSION &app, HWND hwnd, const RECT *lprc);
 void RefreshLibraryRaces(APPSESSION &app, HWND hwnd);
 std::int16_t FSelectLibraryRace(HWND hwnd, std::span<char, 256> pszName);
-std::int16_t FEnumerateLibraryRaces(APPSESSION &app, FNativeDirectoryEntryProc pfnEntry, void *lpData);
+std::int16_t FEnumerateLibraryRaces(APPSESSION &app, const FNativeDirectoryEntryProc &pfnEntry);
 void ShowLibraryImportFolderPicker(HWND hwnd);
 INT_PTR  LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 // WM_INITDIALOG borrows a std::span<char, 256>* until the dialog closes.

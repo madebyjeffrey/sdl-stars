@@ -2,6 +2,8 @@
 #define STARS_LIBRARYPUBLICATIONIO_H
 #include "librarypublication.h"
 
+enum class LIBRARYPUBLICATIONENUMERATION { importFiles, backupFiles, removeFiles };
+
 struct LIBRARYPUBLICATIONIO {
     std::size_t (*pfnPathLength)(std::string_view) = [](std::string_view szPath) { return szPath.size(); };
     NATIVEFORMATTER                        pfnCchSnprintf;
@@ -21,7 +23,11 @@ struct LIBRARYPUBLICATIONIO {
     decltype(&FLibraryNameAvailable)         pfnFLibraryNameAvailable = FLibraryNameAvailable;
     decltype(&FWriteLibraryMetadata)         pfnFWriteLibraryMetadata = FWriteLibraryMetadata;
     decltype(&RemoveLibraryGameTree)         pfnRemoveLibraryGameTree = RemoveLibraryGameTree;
-    decltype(&FNativeEnumerateDirectory)     pfnFNativeEnumerateDirectory = FNativeEnumerateDirectory;
+    std::int16_t (*pfnEnumerateDirectory)(APPSESSION &, LIBRARYPUBLICATIONENUMERATION, std::string_view,
+                                          const FNativeDirectoryEntryProc &) = [](APPSESSION &app, LIBRARYPUBLICATIONENUMERATION,
+                                                                                 std::string_view path, const FNativeDirectoryEntryProc &callback) {
+        return FNativeEnumerateDirectory(app, path, callback);
+    };
     decltype(&CreateNativeDir)               pfnCreateNativeDir = CreateNativeDir;
 };
 const LIBRARYPUBLICATIONIO &LibraryPublicationIO() noexcept;

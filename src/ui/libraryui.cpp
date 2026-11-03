@@ -114,8 +114,7 @@ static void RestoreRaceState(APPSESSION &app, const RACESTATE *prs, std::int16_t
     }
 }
 
-static std::int16_t FindLibraryName(APPSESSION &, void *lpData, std::string_view pszFile) {
-    LIBRARYNAMECHECK *plnc = static_cast<LIBRARYNAMECHECK *>(lpData);
+static std::int16_t FindLibraryName(APPSESSION &, LIBRARYNAMECHECK *plnc, std::string_view pszFile) {
     const std::string szName{plnc->pszName};
     const std::string szFile{pszFile};
     if (!SDL_strcasecmp(szName.c_str(), szFile.c_str())) {
@@ -534,9 +533,8 @@ static std::int16_t FWriteLibraryMetadataValues(std::string_view pszDir, std::st
     return ReplaceNativeFile(szTemp, szFile) == 0;
 }
 
-static std::int16_t RemovePendingFile(APPSESSION &, void *lpUnused, std::string_view pszFile) {
+static std::int16_t RemovePendingFile(APPSESSION &, std::string_view pszFile) {
     char szFile[256];
-    static_cast<void>(lpUnused);
     CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", szLibraryPending, szDirSep, pszFile);
     /* Failed generation can leave an empty directory at a file destination. */
     RemoveNativePath(szFile);
@@ -767,8 +765,7 @@ static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, std::span<c
     }
 }
 
-static std::int16_t FindRaceVersion(APPSESSION &app, void *lpData, std::string_view pszName) {
-    RACEVERSIONS *prv = static_cast<RACEVERSIONS *>(lpData);
+static std::int16_t FindRaceVersion(APPSESSION &app, RACEVERSIONS *prv, std::string_view pszName) {
     const std::string_view szName = pszName;
     const std::size_t ichExt = szName.rfind('.');
     char szPath[512];
@@ -1500,9 +1497,8 @@ static std::int16_t FLibraryNameAvailableExcept(APPSESSION &app, std::string_vie
     return !lnc.fFound;
 }
 
-static std::int16_t FCopyLibraryGameEntry(APPSESSION &app, void *lpData, std::string_view pszName) {
+static std::int16_t FCopyLibraryGameEntry(APPSESSION &app, LIBRARYGAMECOPY *plgc, std::string_view pszName) {
     std::optional<NATIVEPATHINFO> npiPath;
-    LIBRARYGAMECOPY *plgc = static_cast<LIBRARYGAMECOPY *>(lpData);
     char szSource[512], szTarget[512];
     const char *pszTargetFile;
     LIBRARYGAMECOPY lgb;
@@ -1566,8 +1562,7 @@ static std::int16_t FBackupDirectoryName(std::string_view pszName) {
     return 1;
 }
 
-std::int16_t CopyImportEntry(APPSESSION &, void *lpData, std::string_view pszName) {
-    LIBRARYIMPORT *pli = static_cast<LIBRARYIMPORT *>(lpData);
+std::int16_t CopyImportEntry(APPSESSION &, LIBRARYIMPORT *pli, std::string_view pszName) {
     char szSource[512], szTarget[512];
     std::optional<LIBRARYFAMILYMEMBER> lfm;
     int iplr;
@@ -1629,8 +1624,7 @@ struct LIBRARYBACKUP {
     std::int16_t fBad;
 };
 
-static std::int16_t CopyBackupEntry(APPSESSION &, void *lpData, std::string_view pszName) {
-    LIBRARYBACKUP *plb = static_cast<LIBRARYBACKUP *>(lpData);
+static std::int16_t CopyBackupEntry(APPSESSION &, LIBRARYBACKUP *plb, std::string_view pszName) {
     std::optional<LIBRARYFAMILYMEMBER> lfm;
     char szSource[512], szTarget[512], szDirectory[512];
     lfm = FImportFamilyMember(pszName, plb->pszStem);
@@ -1645,8 +1639,7 @@ static std::int16_t CopyBackupEntry(APPSESSION &, void *lpData, std::string_view
     return 1;
 }
 
-std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, std::string_view pszName) {
-    LIBRARYIMPORT *pli = static_cast<LIBRARYIMPORT *>(lpData);
+std::int16_t CopyBackupDirectory(APPSESSION &app, LIBRARYIMPORT *pli, std::string_view pszName) {
     LIBRARYBACKUP lb;
     char szSource[512], szTarget[512];
     if (!FBackupDirectoryName(pszName)) return 1;
@@ -1664,16 +1657,15 @@ std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, std::string_view
     return 1;
 }
 
-static std::int16_t RemoveImportChild(APPSESSION &, void *lpData, std::string_view pszFile) {
+static std::int16_t RemoveImportChild(APPSESSION &, const char *pszRoot, std::string_view pszFile) {
     char szFile[512];
-    CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", static_cast<char *>(lpData), szDirSep, pszFile);
+    CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", pszRoot, szDirSep, pszFile);
     RemoveNativePath(szFile);
     return 1;
 }
 
-std::int16_t RemoveImportFile(APPSESSION &app, void *lpData, std::string_view pszFile) {
+std::int16_t RemoveImportFile(APPSESSION &app, const char *pszRoot, std::string_view pszFile) {
     char szFile[512];
-    const char *pszRoot = static_cast<const char *>(lpData);
     CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", pszRoot, szDirSep, pszFile);
     if (FNativeDirectoryExists(szFile)) {
         FNativeEnumerateDirectory(app, szFile, RemoveImportChild, szFile);
@@ -1682,11 +1674,11 @@ std::int16_t RemoveImportFile(APPSESSION &app, void *lpData, std::string_view ps
     return 1;
 }
 
-static std::int16_t RemoveImportTreeEntry(APPSESSION &app, void *lpData, std::string_view pszFile) {
+static std::int16_t RemoveImportTreeEntry(APPSESSION &app, const char *pszRoot, std::string_view pszFile) {
     std::optional<NATIVEPATHINFO> npiPath;
     char szPath[512];
 
-    if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", static_cast<const char *>(lpData), szDirSep, pszFile) <= 0 ||
+    if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pszRoot, szDirSep, pszFile) <= 0 ||
         !(npiPath = FNativePathInfo(szPath))) return 0;
     if (npiPath->fDirectory && !npiPath->fLink) {
         if (!FNativeEnumerateDirectory(app, szPath, RemoveImportTreeEntry, szPath)) return 0;
@@ -1724,8 +1716,7 @@ struct LIBRARYEXPORT {
     std::int16_t fSawPlayable;
 };
 
-static std::int16_t CopyGameExportEntry(APPSESSION &, void *lpData, std::string_view pszName) {
-    LIBRARYEXPORT *ple = static_cast<LIBRARYEXPORT *>(lpData);
+static std::int16_t CopyGameExportEntry(APPSESSION &, LIBRARYEXPORT *ple, std::string_view pszName) {
     char szSource[512], szTarget[512];
     std::optional<LIBRARYFAMILYMEMBER> lfm;
 
@@ -1762,8 +1753,7 @@ struct LIBRARYEXPORTMOVE {
     std::int16_t fBad;
 };
 
-static std::int16_t MoveGameExportEntry(APPSESSION &, void *lpData, std::string_view pszName) {
-    LIBRARYEXPORTMOVE *plem = static_cast<LIBRARYEXPORTMOVE *>(lpData);
+static std::int16_t MoveGameExportEntry(APPSESSION &, LIBRARYEXPORTMOVE *plem, std::string_view pszName) {
     char szSource[512], szTarget[512];
     CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", plem->pszSource, szDirSep, pszName);
     CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", plem->pszTarget, szDirSep, pszName);
@@ -1904,14 +1894,13 @@ void ShowLibraryExportFolderPicker(HWND hwnd) {
     CompatFolderIO().pfnShowOpenFolderDialog(LibraryExportFolderSelected, PvLibraryFolderContext(hwnd), nullptr, nullptr, 0);
 }
 
-static std::int16_t FindImportUniverse(APPSESSION &, void *lpData, std::string_view pszName) {
-    char *pszStem = static_cast<char *>(lpData);
+static std::int16_t FindImportUniverse(APPSESSION &, std::span<char, 256> pszStem, std::string_view pszName) {
     const std::size_t ichExt = pszName.rfind('.');
     if (ichExt == std::string_view::npos || pszName.size() - ichExt != 3 ||
         SDL_strncasecmp(pszName.data() + ichExt, ".xy", 3)) return 1;
     if (pszStem[0]) { pszStem[0] = '!'; return 1; }
     if (ichExt >= 256) { pszStem[0] = '!'; return 1; }
-    std::copy_n(pszName.data(), ichExt, pszStem);
+    std::copy_n(pszName.data(), ichExt, pszStem.data());
     pszStem[ichExt] = 0;
     return 1;
 }
@@ -1923,8 +1912,7 @@ struct LIBRARYTURNMATCH {
     char szSelected[256];
 };
 
-static std::int16_t FindLibraryTurnMatch(APPSESSION &app, void *lpData, std::string_view pszName) {
-    LIBRARYTURNMATCH *plm = static_cast<LIBRARYTURNMATCH *>(lpData);
+static std::int16_t FindLibraryTurnMatch(APPSESSION &app, LIBRARYTURNMATCH *plm, std::string_view pszName) {
     char szUniverse[512], szMetadata[512];
     NATIVEFILE *pf;
     std::int32_t lidGame;
@@ -2255,9 +2243,8 @@ struct LIBRARYGAMEREMOVE {
 
 std::int16_t RemoveLibraryGameTree(APPSESSION &app, std::string_view pszDirectory);
 
-static std::int16_t RemoveLibraryGameEntry(APPSESSION &app, void *lpData, std::string_view pszName) {
+static std::int16_t RemoveLibraryGameEntry(APPSESSION &app, LIBRARYGAMEREMOVE *plgr, std::string_view pszName) {
     std::optional<NATIVEPATHINFO> npiPath;
-    LIBRARYGAMEREMOVE *plgr = static_cast<LIBRARYGAMEREMOVE *>(lpData);
     char szPath[512];
 
     int cch = CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", plgr->pszDirectory, szDirSep, pszName);
@@ -2803,7 +2790,7 @@ std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenera
     }
     if (fGenerated) fGenerated = FWriteLibraryMetadata(szLibraryPending, szLibraryName, app.state.idPlayer);
     if (!fGenerated) {
-        FNativeEnumerateDirectory(app, szLibraryPending, RemovePendingFile, nullptr);
+        FNativeEnumerateDirectory(app, szLibraryPending, RemovePendingFile);
         RemoveNativePath(szLibraryPending);
         CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
@@ -2842,7 +2829,7 @@ static void ClearLibraryGameList(void) {
     cLibraryGameListMax = 0;
 }
 
-static std::int16_t ListLibraryGame(APPSESSION &app, void *lpList, std::string_view pszName) {
+static std::int16_t ListLibraryGame(APPSESSION &app, HWND hwndList, std::string_view pszName) {
     char szFile[256], szDirectory[256], szMetadataName[256], szExchangeName[256];
     int iplr, iplrSaved, cch;
     std::optional<std::int64_t> cbFile;
@@ -2868,10 +2855,10 @@ static std::int16_t ListLibraryGame(APPSESSION &app, void *lpList, std::string_v
     }
     if (!grfPlayers) return 1;
     const std::string szName{pszName};
-    return FAddLibraryGameListItem(static_cast<HWND>(lpList), szName.c_str(), iplrSaved, grfPlayers, rgturn);
+    return FAddLibraryGameListItem(hwndList, szName.c_str(), iplrSaved, grfPlayers, rgturn);
 }
 
-static std::int16_t ListLibraryHostGame(APPSESSION &app, void *lpList, std::string_view pszName) {
+static std::int16_t ListLibraryHostGame(APPSESSION &app, HWND hwndList, std::string_view pszName) {
     char szHost[512], szUniverse[512], szMetadata[512];
     NATIVEFILE *pf;
     std::optional<std::int64_t> cbFile;
@@ -2892,12 +2879,11 @@ static std::int16_t ListLibraryHostGame(APPSESSION &app, void *lpList, std::stri
         !FInspectImportFile(szUniverse, dtXY, iplrNone, lidUniverse, nullptr, nullptr, fMulti) ||
         lidHost != lidUniverse) return 1;
     const std::string szName{pszName};
-    i = ControlIO().pfnSendMessage(static_cast<HWND>(lpList), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szName.c_str()));
+    i = ControlIO().pfnSendMessage(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szName.c_str()));
     return i != win32::LB_ERR && i != win32::LB_ERRSPACE;
 }
 
-static std::int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, std::string_view pszName) {
-    LIBRARYCONTINUE *plc = static_cast<LIBRARYCONTINUE *>(lpData);
+static std::int16_t FindContinueLibraryGame(APPSESSION &app, LIBRARYCONTINUE *plc, std::string_view pszName) {
     char szFile[512], szMetadataName[256];
     std::string_view szMetadataNameView;
     NATIVEFILE *pf;
@@ -3016,32 +3002,22 @@ void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc) {
                 static_cast<unsigned long long>((CompatTimeIO().pfnGetTicks() - msStart)));
 }
 
-struct LIBRARYRACEENUM {
-    FNativeDirectoryEntryProc pfnEntry;
-    void *lpData;
-};
-
-static std::int16_t EnumLibraryRace(APPSESSION &app, void *lpData, std::string_view pszName) {
-    LIBRARYRACEENUM *plre = static_cast<LIBRARYRACEENUM *>(lpData);
-    char szPath[512];
-    std::optional<std::int64_t> cbFile;
-    if (!FPortableRaceFilename(app, pszName)) return 1;
-    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
-    if (!(cbFile = FNativeFileSize(szPath)) || (*cbFile) <= 0) return 1;
-    return plre->pfnEntry(app, plre->lpData, pszName);
+std::int16_t FEnumerateLibraryRaces(APPSESSION &app, const FNativeDirectoryEntryProc &pfnEntry) {
+    return FInitRaceLibrary() && FNativeEnumerateDirectory(app, szRaceLibraryRoot, [&pfnEntry](APPSESSION &appEntry, std::string_view pszName) {
+        char szPath[512];
+        std::optional<std::int64_t> cbFile;
+        if (!FPortableRaceFilename(appEntry, pszName)) return std::int16_t{1};
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+        if (!(cbFile = FNativeFileSize(szPath)) || (*cbFile) <= 0) return std::int16_t{1};
+        return pfnEntry(appEntry, pszName);
+    });
 }
 
-std::int16_t FEnumerateLibraryRaces(APPSESSION &app, FNativeDirectoryEntryProc pfnEntry, void *lpData) {
-    LIBRARYRACEENUM lre = {pfnEntry, lpData};
-
-    return FInitRaceLibrary() && FNativeEnumerateDirectory(app, szRaceLibraryRoot, EnumLibraryRace, &lre);
-}
-
-static std::int16_t ListLibraryRace(APPSESSION &, void *lpList, std::string_view pszName) {
+static std::int16_t ListLibraryRace(APPSESSION &, HWND hwndList, std::string_view pszName) {
     LRESULT i;
 
     const std::string szName{pszName};
-    i = ControlIO().pfnSendMessage(static_cast<HWND>(lpList), win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szName.c_str()));
+    i = ControlIO().pfnSendMessage(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szName.c_str()));
     return i != win32::LB_ERR && i != win32::LB_ERRSPACE;
 }
 
@@ -3070,7 +3046,9 @@ void RefreshLibraryRaces(APPSESSION &app, HWND hwnd) {
     HWND hwndList = ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_RACES);
     if (!hwndList) return;
     ControlIO().pfnSendMessage(hwndList, win32::LB_RESETCONTENT, 0, 0);
-    FEnumerateLibraryRaces(app, ListLibraryRace, hwndList);
+    FEnumerateLibraryRaces(app, [hwndList](APPSESSION &appEntry, std::string_view pszName) {
+        return ListLibraryRace(appEntry, hwndList, pszName);
+    });
     ControlIO().pfnSendMessage(hwndList, win32::LB_SETCURSEL, 0, 0);
     ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_RACE_EDIT), ControlIO().pfnSendMessage(hwndList, win32::LB_GETCOUNT, 0, 0) > 0);
     ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(hwnd, IDC_LIBRARY_RACE_DUPLICATE), ControlIO().pfnSendMessage(hwndList, win32::LB_GETCOUNT, 0, 0) > 0);
@@ -3419,12 +3397,15 @@ std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &pa
     li.pszTarget = szStage;
     li.pszName = paths.szLibraryName;
     li.fCopy = 1;
-    if (!LibraryPublicationIO().pfnFNativeEnumerateDirectory(app, szDir, CopyImportEntry, &li) || li.fBad ||
-        !LibraryPublicationIO().pfnFNativeEnumerateDirectory(app, szDir, CopyBackupDirectory, &li) || li.fBad ||
+    if (!LibraryPublicationIO().pfnEnumerateDirectory(app, LIBRARYPUBLICATIONENUMERATION::importFiles, szDir,
+            [&li](APPSESSION &appEntry, std::string_view pszName) { return CopyImportEntry(appEntry, &li, pszName); }) || li.fBad ||
+        !LibraryPublicationIO().pfnEnumerateDirectory(app, LIBRARYPUBLICATIONENUMERATION::backupFiles, szDir,
+            [&li](APPSESSION &appEntry, std::string_view pszName) { return CopyBackupDirectory(appEntry, &li, pszName); }) || li.fBad ||
         !LibraryPublicationIO().pfnFWriteLibraryMetadata(szStage, paths.szLibraryName,
                                li.grfPlayers ? static_cast<std::int16_t>(__builtin_ctz(li.grfPlayers)) : iplrNone) ||
         RemoveNativePath(paths.szLibraryPending) != 0 || RenameNativeFile(szStage, paths.szLibraryPending) != 0) {
-        LibraryPublicationIO().pfnFNativeEnumerateDirectory(app, szStage, RemoveImportFile, szStage);
+        LibraryPublicationIO().pfnEnumerateDirectory(app, LIBRARYPUBLICATIONENUMERATION::removeFiles, szStage,
+            [szStage](APPSESSION &appEntry, std::string_view pszName) { return RemoveImportFile(appEntry, szStage, pszName); });
         RemoveNativePath(szStage);
         RemoveNativePath(paths.szLibraryPending);
         paths.szLibraryPending[0] = 0;

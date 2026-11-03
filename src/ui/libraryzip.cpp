@@ -94,9 +94,8 @@ static std::int16_t FZipNameUtf8Supported(std::string_view pszName, std::uint16_
     return 1;
 }
 
-static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, std::string_view pszName) try {
+static std::int16_t FCollectZipFiles(APPSESSION &app, ZIPFILES *pz, std::string_view pszName) try {
     std::optional<NATIVEPATHINFO> npiPath;
-    ZIPFILES *pz = static_cast<ZIPFILES *>(lpData);
     char szPath[512];
 
     ZIPFILES zfChild{};
@@ -120,7 +119,7 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, void *lpData, std::string_
     pz->rgpsz.emplace_back(pszName);
     return 1;
 } catch (const std::bad_alloc &) {
-    static_cast<ZIPFILES *>(lpData)->fBad = 1;
+    pz->fBad = 1;
     errno = ENOMEM;
     return 0;
 }

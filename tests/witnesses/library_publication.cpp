@@ -248,17 +248,15 @@ static size_t TestNativeStrlen(std::string_view szPath) {
 // Family enumeration is a declared stage-only provider; cleanup aggregates the
 // source enumeration plus final TestRemoveNativePath, including possible remnants.
 
-static int TestFNativeEnumerateDirectory(APPSESSION &, std::string_view path, FNativeDirectoryEntryProc callback, void *context) {
+static int16_t TestFNativeEnumerateDirectory(APPSESSION &, LIBRARYPUBLICATIONENUMERATION action, std::string_view path,
+                                             const FNativeDirectoryEntryProc &) {
     (void)path;
-    if (callback == &CopyImportEntry || callback == &CopyBackupDirectory) {
-        int ok = build(callback == &CopyImportEntry ? 5 : 6);
-        if (variant == 4 && !ok) {
-            ((LIBRARYIMPORT *)context)->fBad = 1;
-            return 1;
-        }
+    if (action == LIBRARYPUBLICATIONENUMERATION::importFiles || action == LIBRARYPUBLICATIONENUMERATION::backupFiles) {
+        int ok = build(action == LIBRARYPUBLICATIONENUMERATION::importFiles ? 5 : 6);
+        if (variant == 4 && !ok) return 0;
         return ok;
     }
-    assert(callback == &RemoveImportFile);
+    assert(action == LIBRARYPUBLICATIONENUMERATION::removeFiles);
     // Removal itself is performed by the immediately following source call.
     return 1;
 }
@@ -314,7 +312,7 @@ int main(void) {
     io.pfnFLibraryNameAvailable = WITNESSADAPTER<&TestFLibraryNameAvailable, decltype(io.pfnFLibraryNameAvailable)>::Call;
     io.pfnFWriteLibraryMetadata = WITNESSADAPTER<&TestFWriteLibraryMetadata, decltype(io.pfnFWriteLibraryMetadata)>::Call;
     io.pfnRemoveLibraryGameTree = WITNESSADAPTER<&TestRemoveLibraryGameTree, decltype(io.pfnRemoveLibraryGameTree)>::Call;
-    io.pfnFNativeEnumerateDirectory = WITNESSADAPTER<&TestFNativeEnumerateDirectory, decltype(io.pfnFNativeEnumerateDirectory)>::Call;
+    io.pfnEnumerateDirectory = TestFNativeEnumerateDirectory;
     io.pfnCreateNativeDir = WITNESSADAPTER<&TestCreateNativeDir, decltype(io.pfnCreateNativeDir)>::Call;
     io.pfnPathLength = TestNativeStrlen;
     LIBRARYPUBLICATIONIOSCOPE publicationScope(io);
