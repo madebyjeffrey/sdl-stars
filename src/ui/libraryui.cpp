@@ -275,13 +275,13 @@ std::int16_t FPathUnderLibrary(std::string_view szRoot, std::string_view szFile)
 #endif
 }
 
-static char *PchLibrarySeparator(char *pszPath) {
-    char *pch = std::strrchr(pszPath, chDirSep);
+static std::optional<std::size_t> IchLibrarySeparator(std::string_view pszPath) {
+    std::size_t ich = pszPath.rfind(chDirSep);
 #ifdef _WIN32
-    char *pchSlash = std::strrchr(pszPath, '/');
-    if (pchSlash && (!pch || pchSlash > pch)) pch = pchSlash;
+    const std::size_t ichSlash = pszPath.rfind('/');
+    if (ichSlash != std::string_view::npos && (ich == std::string_view::npos || ichSlash > ich)) ich = ichSlash;
 #endif
-    return pch;
+    return ich == std::string_view::npos ? std::nullopt : std::optional{ich};
 }
 
 std::int16_t FIsManagedLibraryGameFile(std::string_view pszFile) {
@@ -1078,7 +1078,8 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
     char szStageBase[sizeof(app.state.szBase)], szStage[sizeof(app.state.szBase)], szStageHist[sizeof(app.state.szBase)];
     char szSource[sizeof(app.state.szBase)], szSourceHist[sizeof(app.state.szBase)], szPreviousHist[sizeof(app.state.szBase)];
     char szTemp[512], szMessage[640], szExt[4];
-    char *pch, *pchSlash;
+    std::optional<std::size_t> ichSlash, ichPreviousSlash;
+    std::size_t ichName, ichTargetSlash, ichDot;
     const char *pszLibraryName;
     std::size_t cchTargetPath;
     StringId idsSaveError;
@@ -1094,15 +1095,12 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
 
     pszLibraryName = szLibraryExchangeName;
     if (!pszLibraryName[0]) {
-        pch = PchLibrarySeparator(app.state.szBase);
-        if (!pch) return 0;
-        pchSlash = pch;
-        while (pchSlash > app.state.szBase && pchSlash[-1] != chDirSep
-#ifdef _WIN32
-               && pchSlash[-1] != '/'
-#endif
-        ) pchSlash--;
-        cch = CchSnprintf(std::span{szName, sizeof(szName)}, "%.*s", static_cast<int>((pch - pchSlash)), pchSlash);
+        ichSlash = IchLibrarySeparator(app.state.szBase);
+        if (!ichSlash) return 0;
+        ichPreviousSlash = IchLibrarySeparator(std::string_view{app.state.szBase, *ichSlash});
+        ichName = ichPreviousSlash ? *ichPreviousSlash + 1 : 0;
+        cch = CchSnprintf(std::span{szName, sizeof(szName)}, "%.*s", static_cast<int>(*ichSlash - ichName),
+                          app.state.szBase + ichName);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szName)) return 0;
         pszLibraryName = szName;
     }
@@ -1128,11 +1126,9 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
         std::copy(pszTarget->begin(), pszTarget->end(), szTarget);
         szTarget[pszTarget->size()] = 0;
     }
-    pchSlash = std::strrchr(szTarget, '/');
-    pch = std::strrchr(szTarget, '\\');
-    if (pch && (!pchSlash || pch > pchSlash)) pchSlash = pch;
-    pch = std::strrchr(szTarget, '.');
-    if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
+    ichTargetSlash = std::string_view{szTarget}.find_last_of("/\\");
+    ichDot = std::string_view{szTarget}.rfind('.');
+    if (ichDot != std::string_view::npos && (ichTargetSlash == std::string_view::npos || ichDot > ichTargetSlash)) szTarget[ichDot] = 0;
     if (!szTarget[0]) return 0;
     cchTargetPath = std::strlen(szTarget);
     cch = CchSnprintf(std::span{szTarget + cchTargetPath, sizeof(szTarget) - cchTargetPath}, ".x%d", app.state.idPlayer + 1);
@@ -1154,9 +1150,9 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
     fHistoryReplaced = 0;
     fHistoryBackup = 0;
     dwTick = DwTickCount();
-    pch = std::strrchr(szBaseStem, '.');
-    pchSlash = PchLibrarySeparator(szBaseStem);
-    if (pch && (!pchSlash || pch > pchSlash)) *pch = 0;
+    ichDot = std::string_view{szBaseStem}.rfind('.');
+    ichSlash = IchLibrarySeparator(szBaseStem);
+    if (ichDot != std::string_view::npos && (!ichSlash || ichDot > *ichSlash)) szBaseStem[ichDot] = 0;
     cch = CchSnprintf(std::span{szStageBase, sizeof(szStageBase)}, "%s_exportstage_%u.m%d", szBaseStem, dwTick, app.state.idPlayer + 1);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szStageBase)) return 0;
     /* FWriteLogFile creates its destination directly, so save to a sibling first. */
@@ -3292,23 +3288,23 @@ std::int16_t FActOnSelectedLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t 
 
 void RememberLibraryGame(APPSESSION &app) {
     char szDir[256], szMetadataName[256];
-    char *pch;
+    std::optional<std::size_t> ichSlash;
     int iplr;
     long long lPlayed;
 
     if (!FInitLibrary() || !LibraryPathIO().pfnUnder(szLibraryRoot, app.state.szBase)) return;
     CchCopyUtf8(std::span{szDir}, app.state.szBase);
-    pch = PchLibrarySeparator(szDir);
-    if (!pch) return;
-    *pch = 0;
-    pch = PchLibrarySeparator(szDir);
-    if (!pch) return;
+    ichSlash = IchLibrarySeparator(szDir);
+    if (!ichSlash) return;
+    szDir[*ichSlash] = 0;
+    ichSlash = IchLibrarySeparator(szDir);
+    if (!ichSlash) return;
     szLibraryExchangeName[0] = 0;
     /* szDir already names the game folder; retain its exchange basename before
      * publishing the newly opened player and last-played time. */
     if (!FReadLibraryMetadata(szDir, std::span{szMetadataName}, iplr, lPlayed,
                               std::span{szLibraryExchangeName})) szLibraryExchangeName[0] = 0;
-    if (FWriteLibraryMetadata(szDir, pch + 1, app.state.idPlayer))
+    if (FWriteLibraryMetadata(szDir, std::string_view{szDir}.substr(*ichSlash + 1), app.state.idPlayer))
         ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", nullptr, TextIO().pfnCompressed(app, idsStarsIni).data());
 }
 
