@@ -294,7 +294,8 @@
         "library-name-buffer-owned-by-ui-session",
         "exchange-basename-buffer-owned-by-ui-session",
         "race-library-root-owned-by-ui-session",
-        "game-library-root-and-cached-length-owned-by-ui-session"
+        "game-library-root-and-cached-length-owned-by-ui-session",
+        "recursive-import-cleanup-roots-use-string-view"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1737,6 +1738,24 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged; game-library path selection, imports, exports, conflict resolution, listing, and managed-file detection retain the same fixed 256-byte capacity and behavior.",
           "api_audit": "APPUISTATE owns the 256-byte game-library root and cached length. LIBRARYPATHS now carries a fixed-extent span; managed-file checks and stage/hold path creation receive APPSESSION.",
+          "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 import cleanup roots use string views",
+          "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
+          "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
           "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -28021,7 +28040,7 @@
       }
     ],
     "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "latest_change": "L05 move game library root and cached length into UI session state",
+    "latest_change": "L05 import cleanup roots use string views",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -28040,12 +28059,12 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
-    "latest_batch_status": "Source commit ae40d864 and ledger checkpoint f63ff466 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
+    "latest_batch_status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_published_head": "f63ff466",
     "latest_batch_verification": {
-      "batch": "L05 move game library root and cached length into UI session state",
-      "source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
+      "batch": "L05 import cleanup roots use string views",
+      "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
       "desktop_unit_tests": "18/18 pass.",
@@ -28056,15 +28075,14 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; game-library path selection, imports, exports, conflict resolution, listing, and managed-file detection retain the same fixed 256-byte capacity and behavior.",
-      "api_audit": "APPUISTATE owns the 256-byte game-library root and cached length. LIBRARYPATHS now carries a fixed-extent span; managed-file checks and stage/hold path creation receive APPSESSION.",
+      "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
+      "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass.",
-      "ledger_commit": "f63ff4669dd0bf902af514698afbe14d5d048a3a"
+      "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L05 move game library root and cached length into UI session state",
-      "source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
+      "batch": "L05 import cleanup roots use string views",
+      "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
       "desktop_unit_tests": "18/18 pass.",
@@ -28075,18 +28093,17 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; game-library path selection, imports, exports, conflict resolution, listing, and managed-file detection retain the same fixed 256-byte capacity and behavior.",
-      "api_audit": "APPUISTATE owns the 256-byte game-library root and cached length. LIBRARYPATHS now carries a fixed-extent span; managed-file checks and stage/hold path creation receive APPSESSION.",
+      "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
+      "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit ae40d864 and ledger checkpoint f63ff466 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification.",
-      "ledger_commit": "f63ff4669dd0bf902af514698afbe14d5d048a3a"
+      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification."
     }
   },
   "milestone_d_checkpoint": {
@@ -28546,12 +28563,12 @@
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
-    "latest_source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
-    "latest_batch_status": "Source commit ae40d864 and ledger checkpoint f63ff466 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
-    "latest_change": "L05 move game library root and cached length into UI session state",
+    "latest_source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
+    "latest_batch_status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_change": "L05 import cleanup roots use string views",
     "latest_batch_verification": {
-      "batch": "L05 move game library root and cached length into UI session state",
-      "source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
+      "batch": "L05 import cleanup roots use string views",
+      "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
       "desktop_unit_tests": "18/18 pass.",
@@ -28562,15 +28579,14 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; game-library path selection, imports, exports, conflict resolution, listing, and managed-file detection retain the same fixed 256-byte capacity and behavior.",
-      "api_audit": "APPUISTATE owns the 256-byte game-library root and cached length. LIBRARYPATHS now carries a fixed-extent span; managed-file checks and stage/hold path creation receive APPSESSION.",
+      "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
+      "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass.",
-      "ledger_commit": "f63ff4669dd0bf902af514698afbe14d5d048a3a"
+      "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L05 move game library root and cached length into UI session state",
-      "source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
+      "batch": "L05 import cleanup roots use string views",
+      "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
       "desktop_unit_tests": "18/18 pass.",
@@ -28581,18 +28597,17 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; game-library path selection, imports, exports, conflict resolution, listing, and managed-file detection retain the same fixed 256-byte capacity and behavior.",
-      "api_audit": "APPUISTATE owns the 256-byte game-library root and cached length. LIBRARYPATHS now carries a fixed-extent span; managed-file checks and stage/hold path creation receive APPSESSION.",
+      "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
+      "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit ae40d864 and ledger checkpoint f63ff466 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification.",
-      "ledger_commit": "f63ff4669dd0bf902af514698afbe14d5d048a3a"
+      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -28601,8 +28616,8 @@
     ],
     "latest_published_head": "f63ff466"
   },
-  "latest_source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
-  "latest_batch_status": "Source commit ae40d864 and ledger checkpoint f63ff466 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
+  "latest_batch_status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28717,12 +28732,19 @@
         "The game-library root and its cached byte length are owned by APPUISTATE; LIBRARYPATHS carries the root as a fixed-extent span, and the shared libraryui.cpp globals were removed."
       ],
       "remaining_observed": "No shared library path/name arrays remain in libraryui.cpp. The broader post-migration scratch-storage and borrowed-return audit remains open."
+    },
+    "import_cleanup_roots": {
+      "source_head": "6391e1fe",
+      "former_interface": "RemoveImportFile and recursive cleanup callbacks accepted const char* root contexts.",
+      "current_interface": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry take std::string_view roots; recursive typed directory contexts carry string_view.",
+      "callers": "All recursive archive and managed-game cleanup call sites pass string_view contexts.",
+      "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L05 move game library root and cached length into UI session state",
+  "latest_change": "L05 import cleanup roots use string views",
   "latest_batch_verification": {
-    "batch": "L05 move game library root and cached length into UI session state",
-    "source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
+    "batch": "L05 import cleanup roots use string views",
+    "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
     "desktop_unit_tests": "18/18 pass.",
@@ -28733,14 +28755,14 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; game-library path selection, imports, exports, conflict resolution, listing, and managed-file detection retain the same fixed 256-byte capacity and behavior.",
-    "api_audit": "APPUISTATE owns the 256-byte game-library root and cached length. LIBRARYPATHS now carries a fixed-extent span; managed-file checks and stage/hold path creation receive APPSESSION.",
+    "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
+    "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L05 move game library root and cached length into UI session state",
-    "source_commit": "ae40d864842cc35ccdda60fc46e169c058404a1f",
+    "batch": "L05 import cleanup roots use string views",
+    "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
     "desktop_unit_tests": "18/18 pass.",
@@ -28751,11 +28773,11 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; game-library path selection, imports, exports, conflict resolution, listing, and managed-file detection retain the same fixed 256-byte capacity and behavior.",
-    "api_audit": "APPUISTATE owns the 256-byte game-library root and cached length. LIBRARYPATHS now carries a fixed-extent span; managed-file checks and stage/hold path creation receive APPSESSION.",
+    "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
+    "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit ae40d864 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
