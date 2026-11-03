@@ -242,7 +242,8 @@
         "const-qualified-catalog-part-name-view",
         "const-qualified-catalog-tech-level-view",
         "borrow-owned-window-title-to-sdl",
-        "owned-dialog-template-labels-and-items"
+        "owned-dialog-template-labels-and-items",
+        "DrawText-scratch-containers"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25450,8 +25451,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L06 bounded embedded-DIB decoder span interface",
-    "latest_published_head": "d3977f06",
+    "latest_batch": "L05 DrawText scratch ownership",
+    "latest_published_head": "d6230fbb",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -25482,17 +25483,17 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L06 bounded embedded-DIB decoder span interface",
-    "source_commit": "d3977f06",
-    "status": "Locally committed as d3977f06. macOS Debug build, desktop/host units, DIB resource test, full native/host regressions and tutorial smoke pass. The macOS leak wrapper could not get a task port; Windows/Linux qualification remains outstanding.",
+    "batch": "L05 DrawText scratch ownership",
+    "source_commit": "d6230fbb",
+    "status": "Locally committed as d6230fbb. macOS Debug build, desktop/host units, paint/font tests, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "FCompatDib now receives bounded info and pixel buffers as byte spans and writes its decoded result through a reference. The genuine native GDI DIB adapter retains its unknown-extent SDK boundary."
+      "DrawTextA now owns its formatted text, underline flags, and line records in a string and vectors instead of three manual scratch allocations. Existing capacities, zero initialization, layout arithmetic, and allocation-failure return are preserved."
     ],
     "verification": {
-      "macos_debug_build": "make compile passes; DIB decoder, callers and test compile.",
+      "macos_debug_build": "make compile passes; paint.cpp rebuilt with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "dib_resource_test": "win32_sdl_resource_dib passes 1/1, including bounded invalid-input cases and 38 resource assets.",
+      "paint_font_tests": "win32_sdl_paint_batch, win32_sdl_resource_font, and win32_utf8_font pass 3/3.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
@@ -25506,8 +25507,7 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "leak_instrumentation": "win32_sdl_leaks_dib timed out after the underlying DIB/resource test reported PASS; the macOS leaks wrapper could not obtain a task port for the launched process.",
-      "baseline": "Unchanged; decoder input extents and decoded results retain existing behavior.",
+      "baseline": "Unchanged; text layout, capacity limits, underlining, and visible output retain existing behavior.",
       "platform": "Windows/Linux full-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25520,7 +25520,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through d3977f06.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through d6230fbb.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25531,7 +25531,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "d3977f06",
+      "source_head": "d6230fbb",
       "borrowed_return_audit": "The remaining text/scratch/borrowed-return audit is active; redundant SDL title duplication and manual chooser/dialog-template allocation paths have been removed."
     },
     "next": [
@@ -25755,10 +25755,14 @@
       {
         "commit": "d3977f06",
         "message": "Pass bounded DIB inputs as spans"
+      },
+      {
+        "commit": "d6230fbb",
+        "message": "Own DrawText scratch buffers with containers"
       }
     ],
-    "latest_source_commit": "d3977f06",
-    "latest_batch_status": "Locally committed as d3977f06. macOS Debug build, desktop/host units, DIB resource test, full native/host regressions and tutorial smoke pass. The macOS leak wrapper could not get a task port; Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "d6230fbb",
+    "latest_batch_status": "Locally committed as d6230fbb. macOS Debug build, desktop/host units, paint/font tests, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -25766,10 +25770,11 @@
       "current_source_after_e9c023c2": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_08db1856": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_29cadc6a": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
-      "current_source_after_d3977f06": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
+      "current_source_after_d3977f06": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
+      "current_source_after_d6230fbb": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "c_macro_audit": {
-      "source_head": "d3977f06",
+      "source_head": "d6230fbb",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25783,22 +25788,22 @@
       "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through d3977f06."
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through d6230fbb."
     },
     "borrowed_return_audit": "The remaining text/scratch/borrowed-return audit is active; redundant SDL title duplication and manual chooser/dialog-template allocation paths have been removed."
   },
   "current_checkpoint": {
-    "batch": "L06 bounded embedded-DIB decoder span interface",
-    "status": "Locally committed as d3977f06. macOS Debug build, desktop/host units, DIB resource test, full native/host regressions and tutorial smoke pass. The macOS leak wrapper could not get a task port; Windows/Linux qualification remains outstanding.",
-    "parent": "29cadc6a",
-    "change": "FCompatDib now receives std::span<const BYTE> for both the bounded header/color table and pixel data, and returns the parsed COMPATDIB by reference. Callers retain exact resource extents; the native SDK adapter remains separate.",
+    "batch": "L05 DrawText scratch ownership",
+    "status": "Locally committed as d6230fbb. macOS Debug build, desktop/host units, paint/font tests, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "3d7c6e06",
+    "change": "DrawTextA owns the text, underline flags, and line records in std::string and vectors. Capacity formulas, initialization, line layout, and failure result are preserved.",
     "verification": {
-      "batch": "L06 bounded embedded-DIB decoder span interface",
-      "source_commit": "d3977f06",
-      "macos_debug_build": "make compile passes; DIB decoder, callers and test compile.",
+      "batch": "L05 DrawText scratch ownership",
+      "source_commit": "d6230fbb",
+      "macos_debug_build": "make compile passes; paint.cpp rebuilt with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "dib_resource_test": "win32_sdl_resource_dib passes 1/1, including bounded invalid-input cases and 38 resource assets.",
+      "paint_font_tests": "win32_sdl_paint_batch, win32_sdl_resource_font, and win32_utf8_font pass 3/3.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
@@ -25812,8 +25817,7 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "leak_instrumentation": "win32_sdl_leaks_dib timed out after the underlying DIB/resource test reported PASS; the macOS leaks wrapper could not obtain a task port for the launched process.",
-      "baseline": "Unchanged; decoder input extents and decoded results retain existing behavior.",
+      "baseline": "Unchanged; text layout, capacity limits, underlining, and visible output retain existing behavior.",
       "platform": "Windows/Linux full-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25838,7 +25842,8 @@
       "current_source_after_23aa5a11": "Windows/Linux qualification remains pending; local macOS/host verification passes through this source commit.",
       "current_source_after_e14499cd": "Windows/Linux qualification remains pending; local macOS/host builds, units and regressions pass through this source commit.",
       "current_source_after_29cadc6a": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
-      "current_source_after_d3977f06": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
+      "current_source_after_d3977f06": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
+      "current_source_after_d6230fbb": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25853,7 +25858,7 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "Embedded DIB decoding now receives bounded byte spans and writes through a result reference."
+      "Replaced three manual DrawTextA scratch allocations with C++ containers."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -25864,7 +25869,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through d3977f06.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through d6230fbb.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25875,7 +25880,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "d3977f06",
+      "source_head": "d6230fbb",
       "raw_copy_call_audit": {
         "source_head": "3670b2be",
         "owned_production_calls": 0,
@@ -26078,12 +26083,16 @@
       {
         "commit": "d3977f06",
         "message": "Pass bounded DIB inputs as spans"
+      },
+      {
+        "commit": "d6230fbb",
+        "message": "Own DrawText scratch buffers with containers"
       }
     ],
-    "source_commit": "d3977f06",
+    "source_commit": "d6230fbb",
     "latest_change": "Private dialog templates now own decoded labels and item records through optional<string> and vector; malformed templates retain the same failure result and valid resource bytes are unchanged.",
     "c_macro_audit": {
-      "source_head": "d3977f06",
+      "source_head": "d6230fbb",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26097,7 +26106,7 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through d3977f06.",
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through d6230fbb.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     }
   },

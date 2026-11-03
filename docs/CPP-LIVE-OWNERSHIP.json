@@ -1,5 +1,5 @@
 {
-  "source_parent": "d930156e",
+  "source_parent": "d6230fbb",
   "scope": [
     "src",
     "compat/win32/include",
@@ -453,8 +453,8 @@
       "id": "64",
       "path": "compat/win32/src/paint.cpp",
       "scope": "DrawTextA",
-      "owner": "szOwner, rgUnderlineOwner, rglineOwner",
-      "reason": "Formatting/line-layout scratch arrays stay owned through all early exits and drawing calls. Keep allocation sizes, byte-based underline storage and layout arithmetic."
+      "owner": "std::string sz, std::vector<BYTE> rgUnderline, std::vector<COMPATTEXTLINE> rgline",
+      "reason": "C++ containers own the text, underline, and line-layout scratch buffers through drawing and all early exits. Existing 8 * cch + 1 limits, zero initialization, byte-based underline storage, layout arithmetic, and allocation-failure result remain."
     },
     {
       "id": "65",
@@ -1829,36 +1829,6 @@
       "contract": "63"
     },
     {
-      "path": "compat/win32/src/paint.cpp",
-      "line": 1804,
-      "scope": "DrawTextA",
-      "operation": "malloc",
-      "code": "std::malloc(static_cast<std::size_t>(cch) * 8 + 1)",
-      "normalized_call": "std::malloc(static_cast<std::size_t>(cch)*8+1)",
-      "compiler_context": true,
-      "contract": "64"
-    },
-    {
-      "path": "compat/win32/src/paint.cpp",
-      "line": 1804,
-      "scope": "DrawTextA",
-      "operation": "calloc",
-      "code": "std::calloc(static_cast<std::size_t>(cch) * 8 + 1, 1)",
-      "normalized_call": "std::calloc(static_cast<std::size_t>(cch)*8+1,1)",
-      "compiler_context": true,
-      "contract": "64"
-    },
-    {
-      "path": "compat/win32/src/paint.cpp",
-      "line": 1805,
-      "scope": "DrawTextA",
-      "operation": "malloc",
-      "code": "std::malloc((static_cast<std::size_t>(cch) * 8 + 1) * sizeof(*rgline))",
-      "normalized_call": "std::malloc((static_cast<std::size_t>(cch)*8+1)*sizeof(*rgline))",
-      "compiler_context": true,
-      "contract": "64"
-    },
-    {
       "path": "compat/win32/src/profile.cpp",
       "line": 26,
       "scope": "FreeProfile",
@@ -2540,6 +2510,14 @@
       "change": "Removed raw SDL allocation/free ownership from libraryzip.cpp. ZIP names and tables use std::vector/std::string; payloads use per-entry vectors; the bounded local filename comparison uses a fixed array. Allocation failures are caught and retain error/temporary cleanup behavior.",
       "verification": "Full macOS SDL Debug build; desktop 18/18; host 29/29 including compiler and ownership manifests; ZIP game-export workflow 1/1; native and host regressions 519 matches each with zero differences; tutorial smoke 1/1.",
       "remaining": "Other modules and current-source Windows/Linux qualification remain in the cleanup scope."
+    },
+    {
+      "batch": "L05 DrawText scratch ownership",
+      "source_commit": "d6230fbb",
+      "retired_heap_sites": 3,
+      "change": "DrawTextA uses std::string and vectors for its three operation-scoped scratch buffers; it retains the same capacities, zero initialization, and failure return.",
+      "verification": "macOS SDL Debug build; desktop units 18/18; host units 29/29; paint/font/UTF-8 font tests 3/3; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
+      "baseline": "Unchanged."
     }
   ],
   "retired_path_text_sites": [
@@ -2601,6 +2579,41 @@
       "compiler_context": true,
       "contract": "71",
       "disposition": "L06k replaced raw temporary-path allocation with owned template/result values"
+    }
+  ],
+  "retired_scratch_sites": [
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1804,
+      "scope": "DrawTextA",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(cch) * 8 + 1)",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(cch)*8+1)",
+      "compiler_context": true,
+      "contract": "64",
+      "disposition": "L05 DrawText scratch buffers moved to std::string/std::vector in d6230fbb"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1804,
+      "scope": "DrawTextA",
+      "operation": "calloc",
+      "code": "std::calloc(static_cast<std::size_t>(cch) * 8 + 1, 1)",
+      "normalized_call": "std::calloc(static_cast<std::size_t>(cch)*8+1,1)",
+      "compiler_context": true,
+      "contract": "64",
+      "disposition": "L05 DrawText scratch buffers moved to std::string/std::vector in d6230fbb"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1805,
+      "scope": "DrawTextA",
+      "operation": "malloc",
+      "code": "std::malloc((static_cast<std::size_t>(cch) * 8 + 1) * sizeof(*rgline))",
+      "normalized_call": "std::malloc((static_cast<std::size_t>(cch)*8+1)*sizeof(*rgline))",
+      "compiler_context": true,
+      "contract": "64",
+      "disposition": "L05 DrawText scratch buffers moved to std::string/std::vector in d6230fbb"
     }
   ]
 }
