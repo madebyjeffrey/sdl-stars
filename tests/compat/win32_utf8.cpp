@@ -82,7 +82,7 @@ int main(void) {
     std::optional<std::string> szSnapshotDir;
     const char *psz = "\xc3\xa9\xce\xa9\xe6\x9d\xb1\xe4\xba\xac\xf0\x9f\x98\x80";
     NATIVEFILE *pf;
-    STARSCOMPATSNAPSHOT snap = {};
+    std::optional<STARSCOMPATSNAPSHOT> snap;
     OFSTRUCT ofs;
     size_t cb, i;
     BOOL fFound = 0;
@@ -140,17 +140,16 @@ int main(void) {
     CHECK(win32::GetTextExtentPoint32A(hdc, psz, 14, &size) && size.cx > 0);
     CHECK(win32::DrawTextA(hdc, psz, 14, &rc, win32::DT_SINGLELINE | win32::DT_NOPREFIX | win32::DT_CALCRECT) > 0 && rc.right == size.cx);
     CHECK(win32::TextOutA(hdc, 0, 0, psz, 14) && win32::ReleaseDC(hwndEdit, hdc) && win32::ReleaseDC(hwndOrdinary, hdcOrdinary));
-    CHECK(StarsCompatCaptureHierarchy(&snap));
-    for (i = 0; i < snap.cWindow; i++) if (snap.rgWindow[i].id == StarsCompatWindowId(hwndEdit)) {
-        CHECK(snap.rgWindow[i].fUtf8Text && strcmp(snap.rgWindow[i].pszText, psz) == 0); fFound = 1;
+    snap = StarsCompatCaptureHierarchy(); CHECK(snap);
+    for (i = 0; i < snap->size(); i++) if ((*snap)[i].id == StarsCompatWindowId(hwndEdit)) {
+        CHECK((*snap)[i].szText == psz); fFound = 1;
     }
     CHECK(fFound && (szSnapshotDir = SzFilesystemTempDir()));
     CHECK(snprintf(szSnapshotPath, sizeof(szSnapshotPath), "%s/hierarchy.json", szSnapshotDir->c_str()) < (int)sizeof(szSnapshotPath));
-    CHECK((pf = PfNativeOpen(szSnapshotPath, NATIVEFILEMODE::readWriteTruncate)) && StarsCompatWriteHierarchy(&snap, pf));
+    CHECK((pf = PfNativeOpen(szSnapshotPath, NATIVEFILEMODE::readWriteTruncate)) && StarsCompatWriteHierarchy(*snap, pf));
     ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szJson}.first(sizeof(szJson) - 1), pf); szJson[cb] = 0;
     CHECK(strstr(szJson, psz));
     CHECK(ICloseNativeFile(pf) == 0 && FFilesystemRemove(szSnapshotPath) && FFilesystemRemove(*szSnapshotDir));
-    StarsCompatFreeHierarchy(&snap);
     hwndPassword = win32::CreateWindowExA(0, "EDIT", "old", win32::WS_CHILD | win32::ES_PASSWORD, 0, 0, 100, 24,
                                 hwnd, (HMENU)(INT_PTR)102, wc.hInstance, NULL);
     CHECK(hwndPassword);

@@ -38,19 +38,20 @@ window; snapshot capture itself does not change focus or call game procedures.
 
 | Function | Purpose |
 | --- | --- |
-| `StarsCompatCaptureHierarchy` | Copy all live logical HWNDs and metadata into a snapshot |
-| `StarsCompatFreeHierarchy` | Release copied strings/rows and zero the snapshot |
-| `StarsCompatWriteHierarchy` | Write schema-1 UTF-8 JSON to a caller-owned `FILE` |
+| `StarsCompatCaptureHierarchy` | Return an optional owned vector of live logical HWNDs and metadata |
+| `StarsCompatWriteHierarchy` | Write schema-1 UTF-8 JSON from an owned snapshot to a caller-owned native file |
 | `StarsCompatWindowId` | Obtain a logical ID for a live HWND |
 | `StarsCompatResolveWindow` | Resolve an ID to a currently live HWND |
 | `StarsCompatFindControl` | Find a unique immediate child by control ID and optional class |
 | `StarsCompatShowInspector` | Open or refresh the built-in viewer |
 
-Capture/lookup/viewer calls run on the UI thread. Snapshot copying never invokes
+Capture/lookup/viewer calls run on the UI thread. A missing capture result reports
+allocation or native-window-query failure; an empty vector is a successful empty
+snapshot. The vector and its strings own their storage, so copying never requires
+a matching free call. Snapshot copying never invokes
 `WM_GETTEXT`, subclass procedures, enumeration callbacks or event pumping.
-The copied snapshot survives window destruction and runtime shutdown. Initialize
-it to zero and free it before reuse. Freeing and serializing an independently
-owned snapshot do not require a live runtime.
+The copied snapshot survives window destruction and runtime shutdown. Serializing
+an independently owned snapshot does not require a live runtime.
 
 IDs are decimal strings in JSON to preserve all 64 bits. They are unique for
 the process lifetime, including compatibility-runtime restarts, and are never
@@ -133,10 +134,9 @@ rejection, JSON escaping and selection/reveal, plus viewer close/reopen.
 state, focus/capture, duplicate control-ID rejection, off-thread rejection,
 password redaction, CP1252-to-UTF-8 JSON escaping, IDs above 2^53, snapshot lifetime,
 stale-ID rejection and monotonically increasing IDs across runtime restart.
-Snapshot text is CP1252 unless `fUtf8Text` marks an explicit UTF-8 path field
-or native caption. JSON always emits UTF-8, and the viewer converts its rows
-consistently. Game text remains CP1252; title, path-field and JSON assertions
-cover those separate boundaries.
+Snapshot class and title text are owned UTF-8 strings. JSON and the viewer use
+those same bytes directly; no per-row encoding flag is needed. Game-file text
+retains its separately documented legacy encoding rules.
 It also checks distinct logical IDs over a reused native wizard window, direct
 button activation, viewer refresh/details/painting, the diagnostic chord,
 close/reopen, and normal/silent teardown. Python parses the exported JSON.

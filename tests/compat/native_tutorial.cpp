@@ -97,18 +97,17 @@ static void LogState(APPSESSION &app, const char *pszEvent) {
 }
 
 static BOOL FSaveState(APPSESSION &app, const char *pszName) {
-    STARSCOMPATSNAPSHOT snap = {};
+    auto snap = StarsCompatCaptureHierarchy();
     std::optional<SCANSNAPSHOT> scan;
     NATIVEFILE *lpfile;
     char szPath[100];
     BOOL fResult;
 
     snprintf(szPath, sizeof(szPath), "%s-hierarchy.json", pszName);
-    if (!StarsCompatCaptureHierarchy(&snap)) return 0;
+    if (!snap) return 0;
     lpfile = PfNativeOpen(szPath, NATIVEFILEMODE::writeTruncate);
-    fResult = lpfile && StarsCompatWriteHierarchy(&snap, lpfile);
+    fResult = lpfile && StarsCompatWriteHierarchy(*snap, lpfile);
     if (lpfile && ICloseNativeFile(lpfile)) fResult = 0;
-    StarsCompatFreeHierarchy(&snap);
     if (!fResult || !win32::IsWindow(app.lpui->hwndScanner)) return fResult;
     snprintf(szPath, sizeof(szPath), "%s-map.json", pszName);
     scan = RgCaptureScanner(app);
@@ -222,16 +221,15 @@ static BOOL FDragPoint(HWND hwnd, POINT ptFrom, POINT ptTo) {
 
 /* Resolve a fresh hierarchy every time; a callback can destroy the old dialog. */
 static HWND HwndModal(void) {
-    STARSCOMPATSNAPSHOT snap = {};
+    auto snap = StarsCompatCaptureHierarchy();
     HWND hwnd = NULL, hwndT;
     size_t i;
-    if (!StarsCompatCaptureHierarchy(&snap)) return NULL;
-    for (i = 0; i < snap.cWindow; i++) {
-        hwndT = StarsCompatResolveWindow(snap.rgWindow[i].id);
+    if (!snap) return NULL;
+    for (i = 0; i < snap->size(); i++) {
+        hwndT = StarsCompatResolveWindow((*snap)[i].id);
         /* Snapshots list older windows first; a nested modal disables its owner. */
-        if (hwndT && hwndT->fModal && snap.rgWindow[i].fVisible && win32::IsWindowEnabled(hwndT)) hwnd = hwndT;
+        if (hwndT && hwndT->fModal && (*snap)[i].fVisible && win32::IsWindowEnabled(hwndT)) hwnd = hwndT;
     }
-    StarsCompatFreeHierarchy(&snap);
     return hwnd;
 }
 

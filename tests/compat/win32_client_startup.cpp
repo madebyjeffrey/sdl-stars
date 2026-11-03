@@ -769,16 +769,15 @@ static BOOL fWorkflowPassed, fWorkflowBusy;
 static uint64_t idWorkflowDialog;
 
 static HWND HwndWorkflowDialog(APPSESSION &app) {
-    STARSCOMPATSNAPSHOT snap = {};
+    auto snap = StarsCompatCaptureHierarchy();
     uint64_t idOwner = StarsCompatWindowId(app.lpui->hwndFrame), idDialog = 0;
     size_t i;
-    if (!StarsCompatCaptureHierarchy(&snap)) return NULL;
-    for (i = 0; i < snap.cWindow; i++) {
-        if (!snap.rgWindow[i].fDialog || !snap.rgWindow[i].fVisible || snap.rgWindow[i].idOwner != idOwner) continue;
+    if (!snap) return NULL;
+    for (i = 0; i < snap->size(); i++) {
+        if (!(*snap)[i].fDialog || !(*snap)[i].fVisible || (*snap)[i].idOwner != idOwner) continue;
         if (idDialog) { idDialog = 0; break; }
-        idDialog = snap.rgWindow[i].id;
+        idDialog = (*snap)[i].id;
     }
-    StarsCompatFreeHierarchy(&snap);
     return StarsCompatResolveWindow(idDialog);
 }
 

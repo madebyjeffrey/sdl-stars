@@ -436,8 +436,8 @@ tooltips. Windows uses its native `comctl32` control. See
 [toolbar contracts, reference tests and remaining scope](../../docs/WIN32-TOOLBARS.md).
 
 All decoded application text is UTF-8, including controls, captions, clipboard,
-resources and inspection. Hierarchy snapshots always mark `fUtf8Text` true for
-API compatibility. Native Windows text/chooser boundaries convert strictly to
+resources and inspection. Hierarchy snapshots own their class and title strings
+as UTF-8 values. Native Windows text/chooser boundaries convert strictly to
 UTF-16. See [encoding contracts](../../docs/UNICODE-BOUNDARIES.md).
 
 The canonical guide is `res/help-utf8.zip`, staged without legacy decoding by

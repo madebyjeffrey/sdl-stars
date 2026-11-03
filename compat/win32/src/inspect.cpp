@@ -1,12 +1,12 @@
 /* Logical-window inspection for the native UI and in-process tutorial harness. */
 #include "internal.h"
+#include <algorithm>
 #include <limits>
 #include <utility>
 #include <iterator>
 #include <stars_compat.h>
 #include <commctrl.h>
 #include <cinttypes>
-#include <cstring>
 #include <span>
 #include <string>
 #include <string_view>
@@ -116,54 +116,43 @@ std::uint64_t StarsCompatFindControl(std::uint64_t idParent, LONG_PTR idControl,
     return id;
 }
 
-void StarsCompatFreeHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
-    std::size_t i;
-    if (!lpsnap) return;
-    for (i = 0; i < lpsnap->cWindow; i++) {
-        SDL_free(lpsnap->rgWindow[i].pszClass);
-        SDL_free(lpsnap->rgWindow[i].pszText);
-    }
-    SDL_free(lpsnap->rgWindow);
-    *lpsnap = {};
-}
-
-BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap) {
+std::optional<STARSCOMPATSNAPSHOT> StarsCompatCaptureHierarchy() {
     HWND lpwin;
-    STARSCOMPATWINDOW *lpitem;
-    std::size_t c = 0, i;
-    if (!SDL_IsMainThread() || !lpsnap || lpsnap->rgWindow || lpsnap->cWindow != 0) return 0;
+    STARSCOMPATWINDOW item{};
+    STARSCOMPATSNAPSHOT rgWindow;
+    std::size_t c = 0;
+    if (!SDL_IsMainThread()) return std::nullopt;
     for (lpwin = HwndCompatRegistry(); lpwin; lpwin = lpwin->lpNext)
         if (lpwin->fAlive && !lpwin->fDestroying) c++;
-    if (c == 0) return 1;
-    if (c > std::numeric_limits<std::size_t>::max() / sizeof(*lpitem)) return 0;
-    lpsnap->rgWindow = static_cast<STARSCOMPATWINDOW *>((SDL_calloc(c, sizeof(*lpitem))));
-    if (!lpsnap->rgWindow) return 0;
-    lpsnap->cWindow = c;
-    i = c;
-    // No SendMessage, enumeration callbacks or event pumping: a capture cannot
-    // run an application's subclass procedure or observe a partially freed HWND.
-    for (lpwin = HwndCompatRegistry(); lpwin; lpwin = lpwin->lpNext) {
-        if (!lpwin->fAlive || lpwin->fDestroying) continue;
-        lpitem = &lpsnap->rgWindow[--i];
-        lpitem->id = lpwin->idInspect;
-        lpitem->idParent = StarsCompatWindowId(lpwin->hwndParent);
-        lpitem->idOwner = StarsCompatWindowId(lpwin->hwndOwner);
-        lpitem->idControl = lpwin->idChild;
-        lpitem->dwStyle = lpwin->dwStyle; lpitem->dwExStyle = lpwin->dwExStyle;
-        lpitem->iControl = lpwin->iControl; lpitem->fDialog = lpwin->fDialog;
-        lpitem->fVisible = win32::IsWindowVisible(lpwin); lpitem->fEnabled = win32::IsWindowEnabled(lpwin);
-        lpitem->fFocused = win32::GetFocus() == lpwin; lpitem->fCaptured = win32::GetCapture() == lpwin;
-        lpitem->fUtf8Text = 1;
-        lpitem->pszClass = SDL_strdup(lpwin->lpclass->pszClass.get());
-        lpitem->pszText = SDL_strdup(lpwin->iControl == 3 && (lpwin->dwStyle & win32::ES_PASSWORD) ?
-                                    "[password]" : lpwin->pszTitle);
-        if (!lpitem->pszClass || !lpitem->pszText || !win32::GetWindowRect(lpwin, &lpitem->rcWindow) ||
-            !win32::GetClientRect(lpwin, &lpitem->rcClient)) {
-            StarsCompatFreeHierarchy(lpsnap);
-            return 0;
+    try {
+        rgWindow.reserve(c);
+        // No SendMessage, enumeration callbacks or event pumping: a capture cannot
+        // run an application's subclass procedure or observe a partially freed HWND.
+        for (lpwin = HwndCompatRegistry(); lpwin; lpwin = lpwin->lpNext) {
+            if (!lpwin->fAlive || lpwin->fDestroying) continue;
+            item.id = lpwin->idInspect;
+            item.idParent = StarsCompatWindowId(lpwin->hwndParent);
+            item.idOwner = StarsCompatWindowId(lpwin->hwndOwner);
+            item.idControl = lpwin->idChild;
+            item.dwStyle = lpwin->dwStyle; item.dwExStyle = lpwin->dwExStyle;
+            item.iControl = lpwin->iControl; item.fDialog = lpwin->fDialog;
+            item.fVisible = win32::IsWindowVisible(lpwin); item.fEnabled = win32::IsWindowEnabled(lpwin);
+            item.fFocused = win32::GetFocus() == lpwin; item.fCaptured = win32::GetCapture() == lpwin;
+            if (!win32::GetWindowRect(lpwin, &item.rcWindow) || !win32::GetClientRect(lpwin, &item.rcClient))
+                return std::nullopt;
+            item.szClass = lpwin->lpclass->pszClass.get();
+            item.szText = lpwin->iControl == 3 && (lpwin->dwStyle & win32::ES_PASSWORD) ?
+                          "[password]" : lpwin->pszTitle;
+            rgWindow.push_back(std::move(item));
+            item = {};
         }
+    } catch (const std::bad_alloc &) {
+        return std::nullopt;
+    } catch (const std::length_error &) {
+        return std::nullopt;
     }
-    return 1;
+    std::reverse(rgWindow.begin(), rgWindow.end());
+    return std::move(rgWindow);
 }
 
 static BOOL FWriteString(NATIVEFILE *lpfile, std::string_view szValue) {
@@ -186,14 +175,14 @@ static BOOL FWriteString(NATIVEFILE *lpfile, std::string_view szValue) {
     return ChPutNativeFile('"', lpfile) != EOF;
 }
 
-BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
+BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT &rgWindow, NATIVEFILE *lpfile) {
     std::size_t i;
     const STARSCOMPATWINDOW *lp;
     char szStyle[2048], szExStyle[2048];
-    if (!lpsnap || !lpfile || (lpsnap->cWindow != 0 && !lpsnap->rgWindow)) return 0;
+    if (!lpfile) return 0;
     if (IPutNativeString("{\"schema\":1,\"windows\":[\n", lpfile) == EOF) return 0;
-    for (i = 0; i < lpsnap->cWindow; i++) {
-        lp = &lpsnap->rgWindow[i];
+    for (i = 0; i < rgWindow.size(); i++) {
+        lp = &rgWindow[i];
         FormatStyles(lp, 0, std::span{szStyle});
         FormatStyles(lp, 1, std::span{szExStyle});
         if (CchNativePrintf(lpfile, "%s{\"id\":\"%" PRIu64 "\",\"parent\":\"%" PRIu64
@@ -207,8 +196,8 @@ BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lp
                     lp->fEnabled ? "true" : "false", lp->fFocused ? "true" : "false", lp->fCaptured ? "true" : "false",
                     lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
                     lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom) < 0 ||
-            !FWriteString(lpfile, lp->pszClass) || IPutNativeString(",\"text\":", lpfile) == EOF ||
-            !FWriteString(lpfile, lp->pszText) || IPutNativeString(",\"styleNames\":", lpfile) == EOF ||
+            !FWriteString(lpfile, lp->szClass) || IPutNativeString(",\"text\":", lpfile) == EOF ||
+            !FWriteString(lpfile, lp->szText) || IPutNativeString(",\"styleNames\":", lpfile) == EOF ||
             !FWriteString(lpfile, szStyle) || IPutNativeString(",\"exStyleNames\":", lpfile) == EOF ||
             !FWriteString(lpfile, szExStyle) || IPutNativeString(",\"controlKindName\":", lpfile) == EOF ||
             !FWriteString(lpfile, SzvControlKind(lp->iControl)) || ChPutNativeFile('}', lpfile) == EOF) return 0;
@@ -226,11 +215,11 @@ static void InspectDetails(HWND hwnd) {
     std::size_t cb, cchStyle, cchExStyle;
     if (i == win32::LB_ERR) return;
     iItem = win32::SendMessageA(hwndList, win32::LB_GETITEMDATA, static_cast<WPARAM>(i), 0);
-    if (iItem < 0 || static_cast<std::size_t>(iItem) >= snapInspector.cWindow) return;
-    lp = &snapInspector.rgWindow[iItem];
+    if (iItem < 0 || static_cast<std::size_t>(iItem) >= snapInspector.size()) return;
+    lp = &snapInspector[static_cast<std::size_t>(iItem)];
     cchStyle = FormatStyles(lp, 0, std::span{szStyle});
     cchExStyle = FormatStyles(lp, 1, std::span{szExStyle});
-    cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + cchStyle + cchExStyle;
+    cb = lp->szClass.size() + lp->szText.size() + cchStyle + cchExStyle;
     if (cb > std::numeric_limits<std::size_t>::max() - 640) return;
     try {
         szDetails.resize(cb + 640);
@@ -244,12 +233,12 @@ static void InspectDetails(HWND hwnd) {
         "\r\nClass: %s\r\nControl kind: %u (%s)\r\nDialog: %d\r\nVisible: %d\r\nEnabled: %d\r\nFocus: %d"
         "\r\nCapture: %d\r\nStyle: 0x%08x\r\n%s\r\nExStyle: 0x%08x\r\n%s"
         "\r\nWindow: %d,%d - %d,%d\r\nClient: %d,%d - %d,%d\r\n\r\nText:\r\n%s",
-        lp->id, lp->idParent, lp->idOwner, static_cast<std::intptr_t>(lp->idControl), lp->pszClass, lp->iControl,
+        lp->id, lp->idParent, lp->idOwner, static_cast<std::intptr_t>(lp->idControl), lp->szClass.c_str(), lp->iControl,
         SzvControlKind(lp->iControl),
         lp->fDialog, lp->fVisible, lp->fEnabled, lp->fFocused, lp->fCaptured,
         static_cast<unsigned>(lp->dwStyle), szStyle, static_cast<unsigned>(lp->dwExStyle), szExStyle,
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
-        lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->pszText);
+        lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->szText.c_str());
     win32::SetWindowTextA(win32::GetDlgItem(hwnd, 2), szDetails.c_str());
 }
 
@@ -261,15 +250,15 @@ static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
     std::string_view szSource;
     const STARSCOMPATWINDOW *lp;
     if (cDepth >= 64) return;
-    for (i = 0; i < snapInspector.cWindow; i++) {
-        lp = &snapInspector.rgWindow[i];
+    for (i = 0; i < snapInspector.size(); i++) {
+        lp = &snapInspector[i];
         if (lp->idParent != idParent) continue;
-        szSource = lp->pszText;
+        szSource = lp->szText;
         cch = CchUtf8Prefix(szSource, sizeof(szText) - 1);
         std::copy_n(szSource.data(), cch, szText); szText[cch] = 0;
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
         CchSnprintf(std::span{sz}, "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
-                 lp->id, lp->pszClass, static_cast<std::intptr_t>(lp->idControl), szText, lp->fVisible ? "" : " (hidden)");
+                 lp->id, lp->szClass.c_str(), static_cast<std::intptr_t>(lp->idControl), szText, lp->fVisible ? "" : " (hidden)");
         iRow = static_cast<int>(win32::SendMessageA(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(sz)));
         if (iRow >= 0) win32::SendMessageA(hwndList, win32::LB_SETITEMDATA, static_cast<WPARAM>(iRow), static_cast<LPARAM>(i));
         InspectRows(hwndList, lp->id, cDepth + 1);
@@ -277,13 +266,12 @@ static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
 }
 
 static BOOL RefreshInspector(HWND hwnd) {
-    STARSCOMPATSNAPSHOT snap = {};
+    std::optional<STARSCOMPATSNAPSHOT> snap;
     HWND hwndList = win32::GetDlgItem(hwnd, 1);
-    NATIVECLEANUPSCOPE snapshotOwner([&]() noexcept { if (snap.rgWindow) StarsCompatFreeHierarchy(&snap); });
-    if (!StarsCompatCaptureHierarchy(&snap)) return 0;
+    snap = StarsCompatCaptureHierarchy();
+    if (!snap) return 0;
     win32::SendMessageA(hwndList, win32::LB_RESETCONTENT, 0, 0);
-    StarsCompatFreeHierarchy(&snapInspector);
-    snapInspector = std::exchange(snap, STARSCOMPATSNAPSHOT{});
+    snapInspector = std::move(*snap);
     InspectRows(hwndList, 0, 0);
     win32::SendMessageA(hwndList, win32::LB_SETCURSEL, 0, 0);
     InspectDetails(hwnd);
@@ -322,7 +310,7 @@ static LRESULT  InspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         else if (LOWORD(w) == 1 && HIWORD(w) == win32::LBN_SELCHANGE) InspectDetails(hwnd);
         return 0;
     case win32::WM_DESTROY:
-        idInspector = 0; StarsCompatFreeHierarchy(&snapInspector); return 0;
+        idInspector = 0; snapInspector.clear(); return 0;
     default: return win32::DefWindowProcA(hwnd, msg, w, l);
     }
 }
@@ -351,5 +339,5 @@ HWND StarsCompatShowInspector(void) {
 
 void CompatShutdownInspector(void) {
     idInspector = 0; fInspectorClass = 0; pfnObjectInspector = nullptr;
-    StarsCompatFreeHierarchy(&snapInspector);
+    snapInspector.clear();
 }

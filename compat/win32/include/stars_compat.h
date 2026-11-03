@@ -4,7 +4,10 @@
 #include <windows.h>
 #include <cstdint>
 #include <cstdio>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <vector>
 #include "fileio.h"
 #include "messagepayload.h"
 /* Keep one native window and its completed frame across same-sized modal
@@ -21,9 +24,9 @@ BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable);
 
 /* UI-thread inspection. IDs identify logical windows, never native SDL windows,
  * and are not reused during the process lifetime (including runtime restarts).
- * Snapshot strings are UTF-8; fUtf8Text is always true.
+ * Snapshot strings are owned UTF-8 values.
  * Strings are copied without calling application procedures.
- * Password text is redacted. Initialize snapshots to zero; free before reuse.
+ * Password text is redacted.
  */
 struct STARSCOMPATWINDOW {
     std::uint64_t id, idParent, idOwner;
@@ -32,17 +35,12 @@ struct STARSCOMPATWINDOW {
     UINT iControl;
     BOOL fDialog, fVisible, fEnabled, fFocused, fCaptured;
     RECT rcWindow, rcClient;
-    char *pszClass, *pszText;
-    BOOL fUtf8Text;
+    std::string szClass, szText;
 };
-struct STARSCOMPATSNAPSHOT {
-    STARSCOMPATWINDOW *rgWindow;
-    std::size_t cWindow;
-};
-BOOL StarsCompatCaptureHierarchy(STARSCOMPATSNAPSHOT *lpsnap);
-void StarsCompatFreeHierarchy(STARSCOMPATSNAPSHOT *lpsnap);
+using STARSCOMPATSNAPSHOT = std::vector<STARSCOMPATWINDOW>;
+std::optional<STARSCOMPATSNAPSHOT> StarsCompatCaptureHierarchy();
 /* JSON uses UTF-8 text and decimal strings for IDs, to preserve 64-bit values. */
-BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT *lpsnap, NATIVEFILE *lpfile);
+BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT &rgWindow, NATIVEFILE *lpfile);
 std::uint64_t StarsCompatWindowId(HWND hwnd);
 HWND StarsCompatResolveWindow(std::uint64_t id);
 /* Unique immediate child; zero means absent or ambiguous. NULL class matches any. */

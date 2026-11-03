@@ -13,19 +13,20 @@ static int cMessages, cDialogs, cDialogErrors, cCommands;
 static uint64_t rgidDialog[2];
 static SDL_WindowID rgidNative[2];
 static INT_PTR  DialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    STARSCOMPATSNAPSHOT snap = {};
+    std::optional<STARSCOMPATSNAPSHOT> snap;
     size_t i;
     BOOL fFound = 0;
     (void)w; (void)l;
     if (msg != win32::WM_INITDIALOG) return 0;
+    snap = StarsCompatCaptureHierarchy();
     rgidDialog[cDialogs] = StarsCompatWindowId(hwnd);
     rgidNative[cDialogs] = LpCompatWindow(hwnd)->id;
-    if (!StarsCompatCaptureHierarchy(&snap)) cDialogErrors++;
-    for (i = 0; i < snap.cWindow; i++) if (snap.rgWindow[i].id == rgidDialog[cDialogs]) {
-        fFound = snap.rgWindow[i].fDialog && snap.rgWindow[i].idOwner != 0;
+    if (!snap) cDialogErrors++;
+    for (i = 0; snap && i < snap->size(); i++) if ((*snap)[i].id == rgidDialog[cDialogs]) {
+        fFound = (*snap)[i].fDialog && (*snap)[i].idOwner != 0;
     }
     if (!fFound) cDialogErrors++;
-    StarsCompatFreeHierarchy(&snap); cDialogs++;
+    cDialogs++;
     win32::EndDialog(hwnd, 2);
     return 1;
 }
@@ -36,13 +37,12 @@ static LRESULT  WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 static const STARSCOMPATWINDOW *LpItem(const STARSCOMPATSNAPSHOT *lpsnap, uint64_t id) {
     size_t i;
-    for (i = 0; i < lpsnap->cWindow; i++) if (lpsnap->rgWindow[i].id == id) return &lpsnap->rgWindow[i];
+    for (i = 0; i < lpsnap->size(); i++) if ((*lpsnap)[i].id == id) return &(*lpsnap)[i];
     return NULL;
 }
 static int SDLCALL Worker(void *lpv) {
-    STARSCOMPATSNAPSHOT snap = {};
     uint64_t id = *(uint64_t *)lpv;
-    if (StarsCompatCaptureHierarchy(&snap) || StarsCompatResolveWindow(id) || StarsCompatShowInspector()) return 1;
+    if (StarsCompatCaptureHierarchy() || StarsCompatResolveWindow(id) || StarsCompatShowInspector()) return 1;
     return 0;
 }
 static int TestStyles(void) {
@@ -59,17 +59,17 @@ static int TestStyles(void) {
         { 0, 1, win32::WS_POPUP | win32::DS_SETFONT | win32::DS_MODALFRAME, "DS_SETFONT | DS_MODALFRAME", "BS_" },
         { 1, 0, win32::WS_CHILD | 0x000c, "0x0000000c", "BS_PUSHBUTTON" },
     };
-    STARSCOMPATWINDOW item = {};
-    STARSCOMPATSNAPSHOT snap = { &item, 1 };
+    STARSCOMPATSNAPSHOT snap(1);
+    STARSCOMPATWINDOW &item = snap[0];
     size_t i, cb;
     NATIVEFILE *lpfile;
     NATIVEFILEOWNER nftemp{nullptr, ICloseNativeFile};
     char sz[8192], szClass[] = "StyleTest", szText[] = "";
-    item.pszClass = szClass; item.pszText = szText;
+    item.szClass = szClass; item.szText = szText;
     item.dwExStyle = win32::WS_EX_TOOLWINDOW | win32::WS_EX_NOACTIVATE | std::uint32_t{0x40000000};
     for (i = 0; i < std::size(rg); i++) {
         item.iControl = rg[i].iControl; item.fDialog = rg[i].fDialog; item.dwStyle = rg[i].dw;
-        nftemp = NfoNativeTemporary(); lpfile = nftemp.get(); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile));
+        nftemp = NfoNativeTemporary(); lpfile = nftemp.get(); CHECK(lpfile && StarsCompatWriteHierarchy(snap, lpfile));
         ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile); sz[cb] = 0; nftemp.reset();
         CHECK(strstr(sz, rg[i].psz) && !strstr(sz, rg[i].pszAbsent));
         CHECK(strstr(sz, "WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | 0x40000000"));
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     WNDCLASS wc = {};
     HWND hwnd, hwndChild, hwndNested, hwndHidden, hwndOwned, hwndDuplicate, hwndViewer, hwndNew, hwndPaint;
     uint64_t id, idChild, idNested, idViewer;
-    STARSCOMPATSNAPSHOT snap = {}, snapAfter = {};
+    std::optional<STARSCOMPATSNAPSHOT> snap, snapAfter;
     const STARSCOMPATWINDOW *lp;
     NATIVEFILE *lpfile;
     NATIVEFILEOWNER nftemp{nullptr, ICloseNativeFile};
@@ -109,22 +109,22 @@ int main(int argc, char **argv) {
     CHECK(id != 0 && idChild > id && idNested > idChild);
     win32::SetFocus(hwndChild); win32::SetCapture(hwndChild);
     cBefore = cMessages;
-    CHECK(StarsCompatCaptureHierarchy(&snap) && snap.cWindow == 5);
+    snap = StarsCompatCaptureHierarchy(); CHECK(snap && snap->size() == 5);
     CHECK(cMessages == cBefore);
-    CHECK(!StarsCompatCaptureHierarchy(&snap));
+    CHECK(StarsCompatCaptureHierarchy() && snap->size() == 5);
     CHECK(StarsCompatResolveWindow(idChild) == hwndChild);
     CHECK(StarsCompatFindControl(id, 7, "button") == idChild);
     CHECK(StarsCompatFindControl(id, 8, NULL) == 0);
     CHECK(StarsCompatFindControl(idChild, 8, "Edit") == idNested);
-    lp = LpItem(&snap, idChild);
+    lp = LpItem(&*snap, idChild);
     CHECK(lp && lp->idParent == id && lp->idOwner == 0 && lp->idControl == 7 && lp->fFocused && lp->fCaptured);
-    CHECK(lp->fVisible && lp->fEnabled && !strcmp(lp->pszClass, "Button"));
+    CHECK(lp->fVisible && lp->fEnabled && lp->szClass == "Button");
     CHECK(lp->rcClient.right == 90 && lp->rcClient.bottom == 30);
-    lp = LpItem(&snap, idNested);
-    CHECK(lp && !strcmp(lp->pszText, "[password]"));
-    lp = LpItem(&snap, StarsCompatWindowId(hwndHidden));
+    lp = LpItem(&*snap, idNested);
+    CHECK(lp && lp->szText == "[password]");
+    lp = LpItem(&*snap, StarsCompatWindowId(hwndHidden));
     CHECK(lp && !lp->fVisible && !lp->fEnabled);
-    lp = LpItem(&snap, StarsCompatWindowId(hwndOwned));
+    lp = LpItem(&*snap, StarsCompatWindowId(hwndOwned));
     CHECK(lp && lp->idParent == 0 && lp->idOwner == id);
     lpthread = SDL_CreateThread(Worker, "inspection-thread-contract", &id);
     CHECK(lpthread); SDL_WaitThread(lpthread, &iStatus); CHECK(iStatus == 0);
@@ -133,8 +133,8 @@ int main(int argc, char **argv) {
     CHECK(StarsCompatFindControl(id, 7, "Button") == idChild);
     CHECK(win32::DestroyWindow(hwndDuplicate));
     // A JSON consumer must preserve IDs above JavaScript's exact-integer range.
-    for (i = 0; i < snap.cWindow; i++) if (snap.rgWindow[i].id == StarsCompatWindowId(hwndOwned))
-        snap.rgWindow[i].id = std::uint64_t{9007199254740993};
+    for (i = 0; i < snap->size(); i++) if ((*snap)[i].id == StarsCompatWindowId(hwndOwned))
+        (*snap)[i].id = std::uint64_t{9007199254740993};
     CHECK(StarsCompatBeginDialogSequence(hwnd));
     CHECK(DialogBoxParamA(NULL, win32::MAKEINTRESOURCE(IDD_PASSWORD), hwnd, DialogProc, 0) == 2);
     CHECK(!StarsCompatResolveWindow(rgidDialog[0]));
@@ -142,11 +142,11 @@ int main(int argc, char **argv) {
     CHECK(cDialogs == 2 && cDialogErrors == 0 && rgidDialog[1] > rgidDialog[0]);
     CHECK(rgidNative[0] == rgidNative[1] && !StarsCompatResolveWindow(rgidDialog[1]));
     StarsCompatEndDialogSequence();
-    nftemp = NfoNativeTemporary(); lpfile = nftemp.get(); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile));
+    nftemp = NfoNativeTemporary(); lpfile = nftemp.get(); CHECK(lpfile && StarsCompatWriteHierarchy(*snap, lpfile));
     ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile); sz[cb] = 0; nftemp.reset();
     CHECK(strstr(sz, "\\\"quote\\\"") && strstr(sz, "\\\\") && strstr(sz, "\\u000d\\u000a"));
     CHECK(strstr(sz, "\342\202\254") && strstr(sz, "[password]") && !strstr(sz, "secret"));
-    if (argc == 2) { lpfile = PfNativeOpen(argv[1], NATIVEFILEMODE::writeTruncate); CHECK(lpfile && StarsCompatWriteHierarchy(&snap, lpfile)); CHECK(ICloseNativeFile(lpfile) == 0); }
+    if (argc == 2) { lpfile = PfNativeOpen(argv[1], NATIVEFILEMODE::writeTruncate); CHECK(lpfile && StarsCompatWriteHierarchy(*snap, lpfile)); CHECK(ICloseNativeFile(lpfile) == 0); }
     win32::ReleaseCapture();
     hwndViewer = StarsCompatShowInspector(); CHECK(hwndViewer && win32::IsWindowVisible(hwndViewer));
     idViewer = StarsCompatWindowId(hwndViewer);
@@ -180,10 +180,9 @@ int main(int argc, char **argv) {
     CHECK(cCommands == 1);
     CHECK(win32::DestroyWindow(hwndChild));
     CHECK(!StarsCompatResolveWindow(idChild) && !StarsCompatResolveWindow(idNested));
-    CHECK(StarsCompatCaptureHierarchy(&snapAfter));
-    CHECK(!LpItem(&snapAfter, idChild) && !LpItem(&snapAfter, idNested));
-    StarsCompatFreeHierarchy(&snapAfter);
-    CHECK(!strcmp(LpItem(&snap, idChild)->pszText, "Action"));
+    snapAfter = StarsCompatCaptureHierarchy(); CHECK(snapAfter);
+    CHECK(!LpItem(&*snapAfter, idChild) && !LpItem(&*snapAfter, idNested));
+    CHECK(LpItem(&*snap, idChild)->szText == "Action");
     StarsCompatProcessExit();
     CHECK(!StarsCompatResolveWindow(id));
     CHECK(win32::RegisterClassA(&wc));
@@ -191,8 +190,7 @@ int main(int argc, char **argv) {
     CHECK(hwndNew && StarsCompatWindowId(hwndNew) > idViewer && !StarsCompatResolveWindow(id));
     CHECK(StarsCompatShowInspector());
     StarsCompatShutdown();
-    StarsCompatFreeHierarchy(&snap); CHECK(!snap.rgWindow && snap.cWindow == 0);
-    StarsCompatFreeHierarchy(&snap);
+    CHECK(LpItem(&*snap, idChild)->szText == "Action");
     SDL_Quit();
     return 0;
 }

@@ -1,4 +1,6 @@
 #include "win.h"
+#include <algorithm>
+#include <iterator>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -316,8 +318,8 @@ INT_PTR  BattlePlansDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 app.lpui->fDirtyPlan = 0;
             }
             app.lpui->iPlanSelDlg = app.state.rgcbtlplan[app.state.idPlayer]++;
-            cLen = std::strlen(app.lpui->btlplan.szName);
-            if (cLen <= 27) {
+            cLen = static_cast<std::int16_t>(std::find(std::begin(app.lpui->btlplan.szName), std::end(app.lpui->btlplan.szName), '\0') - std::begin(app.lpui->btlplan.szName));
+            if (cLen >= 3 && cLen <= 27) {
                 if (app.lpui->btlplan.szName[cLen - 1] != ')' || std::isdigit(app.lpui->btlplan.szName[cLen - 2]) == 0 || app.lpui->btlplan.szName[cLen - 3] != '(') {
                     CchCopyUtf8(std::span{app.lpui->btlplan.szName}.subspan(static_cast<std::size_t>(cLen)), " (2)");
                 } else if (app.lpui->btlplan.szName[cLen - 2] == '9') {

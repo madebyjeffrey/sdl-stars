@@ -24,7 +24,7 @@ static BOOL fNativeSaveOwner, fCheckIcon, fIconPassed;
 static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
     APPSESSION &app = AppCompatCallbackContext();
 
-    STARSCOMPATSNAPSHOT snap = {};
+    std::optional<STARSCOMPATSNAPSHOT> snap;
     HWND hwnd;
     SDL_Event event = {};
     size_t i;
@@ -46,7 +46,9 @@ static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
         win32::PostMessageA(app.lpui->hwndTitle, win32::WM_COMMAND, fRace ? IDC_LIBRARY_RACE_NEW : 0, 0);
         return;
     }
-    if (iStage == 0 || fQuit || !StarsCompatCaptureHierarchy(&snap)) return;
+    if (iStage == 0 || fQuit) return;
+    snap = StarsCompatCaptureHierarchy();
+    if (!snap) return;
 #ifdef __APPLE__
     if (fNativeSaveOwner && iStage == 2 && win32::IsWindow(hwndNewGame)) {
         hwnd = LpCompatWindow(hwndNewGame);
@@ -58,18 +60,18 @@ static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
         }
     }
 #endif
-    for (i = 0; i < snap.cWindow; i++) {
-        hwnd = LpCompatWindow(StarsCompatResolveWindow(snap.rgWindow[i].id));
+    for (i = 0; i < snap->size(); i++) {
+        hwnd = LpCompatWindow(StarsCompatResolveWindow((*snap)[i].id));
         if (!hwnd || !hwnd->fVisible || !hwnd->fDialog) continue;
         if (fSaveOwner) {
             if (iStage == 1 && hwnd->lpfnDlg == NewGameDlg) {
                 hwndNewGame = hwnd;
                 pszRoot = PszCompatEnvironment("STARS_LIBRARY_DIR");
                 if (!pszRoot) pszRoot = PszCompatEnvironment("STARS_SETTINGS_DIR");
-                if (!pszRoot) { StarsCompatFreeHierarchy(&snap); win32::PostQuitMessage(1); return; }
+                if (!pszRoot) { win32::PostQuitMessage(1); return; }
                 CchSnprintf(std::span{szCollision, sizeof(szCollision)}, "%s%sGames%sOwner check", pszRoot, szDirSep, szDirSep);
                 if (!SDL_CreateDirectory(szCollision) || !win32::SetDlgItemTextA(hwnd, IDC_NEW_GAME_NAME, "Owner check")) {
-                    StarsCompatFreeHierarchy(&snap); win32::PostQuitMessage(1); return;
+                    win32::PostQuitMessage(1); return;
                 }
                 iStage = 2;
                 win32::PostMessageA(hwnd, win32::WM_COMMAND, IDC_FINISH, 0);
@@ -105,7 +107,6 @@ static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
             break;
         }
     }
-    StarsCompatFreeHierarchy(&snap);
 }
 
 int main(int argc, char **argv) {
