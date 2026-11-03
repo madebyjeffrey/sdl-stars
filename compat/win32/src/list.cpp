@@ -19,6 +19,7 @@ struct COMPATLIST {
     UINT_PTR idDragTimer;
     LPARAM lDragPoint;
     char szSearch[128];
+    int cchSearch = 0;
     Uint64 msSearch;
     unsigned nMutation;
     ~COMPATLIST() noexcept {
@@ -95,7 +96,7 @@ static void ResetList(HWND hwnd) {
     };
     std::unique_ptr<COMPATLISTITEM[], decltype(freeItems)> rgKeep(rg, freeItems);
     lp->rgitem = nullptr; lp->cItem = lp->cAlloc = lp->iTop = lp->iCaret = 0; lp->iSel = -1; lp->nMutation++;
-    lp->iAnchor = -1; lp->szSearch[0] = 0;
+    lp->iAnchor = -1; lp->szSearch[0] = 0; lp->cchSearch = 0;
     EndListDrag(hwnd, 1);
     win32::InvalidateRect(hwnd, nullptr, 1);
     for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = nullptr; DeleteNotice(hwnd, static_cast<UINT>(i), rg[i].lData); }
@@ -527,10 +528,10 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         return 0;
     case win32::WM_CHAR:
         if (w < 32 || w > 255 || lp->cItem == 0) return 0;
-        c = static_cast<int>(std::strlen(lp->szSearch));
+        c = lp->cchSearch;
         if (CompatTimeIO().pfnGetTicks() - lp->msSearch > 1000 || c >= static_cast<int>(sizeof(lp->szSearch)) - 1 ||
             (c == 1 && static_cast<BYTE>(lp->szSearch[0]) == static_cast<BYTE>(w))) c = 0;
-        lp->szSearch[c] = static_cast<char>(w); lp->szSearch[c + 1] = 0; lp->msSearch = CompatTimeIO().pfnGetTicks();
+        lp->szSearch[c] = static_cast<char>(w); lp->szSearch[c + 1] = 0; lp->cchSearch = c + 1; lp->msSearch = CompatTimeIO().pfnGetTicks();
         i = static_cast<int>(CompatListProc(hwnd, win32::LB_FINDSTRING, c != 0 ? lp->iCaret - 1 : lp->iCaret, reinterpret_cast<LPARAM>(lp->szSearch)));
         if (i != win32::LB_ERR) ExtendedSelectList(hwnd, i, 0, 0, 1);
         return 0;
