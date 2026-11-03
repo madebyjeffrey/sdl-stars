@@ -835,6 +835,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
     std::int16_t  iEff;
     COLORREF crFore;
     std::int16_t  cch;
+    std::int16_t  cchNum;
     std::int16_t  x;
     HPEN     hpenSav;
     COLORREF crBack;
@@ -1861,8 +1862,8 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                 c = TextIO().pfnCchGetString(app, idsShieldCoverageVsDefenseQuan, std::span{app.state.szWork});
                 CtrTextOut(hdc, ((rcData.right - rcData.left) >> 1) + rcData.left, rcData.top, std::string_view{app.state.szWork, static_cast<std::size_t>(c)});
                 rcData.top += app.state.dyArial8;
-                cch = TextIO().pfnCchGetString(app, idsNum, std::span{szT});
-                dxStr = LOWORD(GetTextExtent(hdc, szT, cch));
+                cchNum = TextIO().pfnCchGetString(app, idsNum, std::span{szT});
+                dxStr = LOWORD(GetTextExtent(hdc, szT, cchNum));
                 dxQuan = static_cast<std::int16_t>((rcData.right - rcData.left - dxStr - 10)) / 5;
                 dyPct = static_cast<std::int16_t>((rcData.bottom - rcData.top - app.state.dyArial8 - 8)) / 5;
                 win32::PatBlt(hdc, rcData.left + dxStr + 6, rcData.top, 1, rcData.bottom - rcData.top - app.state.dyArial8 - 4, win32::BLACKNESS);
@@ -1885,7 +1886,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
                     y += dyPct;
                 }
                 y = rcData.bottom - app.state.dyArial8;
-                RightTextOut(app, hdc, x, y, szT, std::strlen(szT), 0);
+                RightTextOut(app, hdc, x, y, szT, cchNum, 0);
                 x += 6;
                 dxDigit = LOWORD(GetTextExtent(hdc, "0", 1));
                 ch = '0';

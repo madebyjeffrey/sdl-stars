@@ -454,9 +454,9 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             win32::SetRect(&rc, xLeft, yTop, prc->right - 8, prc->bottom - 8);
             if (!(1 << app.state.idPlayer & lpth->tht().grbitPlr())) {
-                szCatalogPsz = TextIO().pfnCompressed(app, idsTraderRequestsInterestedPartiesSendFleetLeast);
+                cch = TextIO().pfnCchGetString(app, idsTraderRequestsInterestedPartiesSendFleetLeast, std::span{szCatalogPsz});
                 psz = szCatalogPsz.data();
-                yTop += win32::DrawTextA(hdc, psz, std::strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX) + 8;
+                yTop += win32::DrawTextA(hdc, psz, cch, &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX) + 8;
             }
             cch = CchSprintf(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsTraderTravelingWarpD).data(), lpth->tht().iWarp());
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, cch);
