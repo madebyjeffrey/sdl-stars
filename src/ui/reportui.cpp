@@ -1776,6 +1776,7 @@ int ICompReport(APPSESSION &app, std::uint16_t *pid1, std::uint16_t *pid2) {
     PLANETNAMERESULT szPlanetName1{};
     PLANETNAMERESULT szPlanetName2{};
     char         szT[80];
+    std::size_t cchProd1, cchProd2;
     std::int32_t      l2;
     std::int16_t      fAscending;
     std::int16_t      icolSort;
@@ -1874,9 +1875,10 @@ TryTier2:
             break;
         case colPlanetProduction:
             ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, lppl1);
-            CchCopyUtf8Prefix(std::span{szT}, app.state.szWork);
+            cchProd1 = CchCopyUtf8Prefix(std::span{szT}, app.state.szWork);
             ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, lppl2);
-            iRet = std::strcmp(&szT[6], &app.state.szWork[6]);
+            cchProd2 = static_cast<std::size_t>(std::ranges::find(app.state.szWork, '\0') - std::begin(app.state.szWork));
+            iRet = std::string_view{szT, cchProd1}.substr(6).compare(std::string_view{app.state.szWork, cchProd2}.substr(6));
             break;
         case colPlanetCapacity:
             iRet = CapacityIO().pfnPctPlanetCapacity(app, lppl1) - CapacityIO().pfnPctPlanetCapacity(app, lppl2);
