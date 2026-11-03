@@ -839,7 +839,7 @@ std::optional<NATIVEFILEINFO> IGetNativeOpenInfo(NATIVEFILE *pf) {
     info.fRegular = S_ISREG(st.st_mode);
     info.fDirectory = S_ISDIR(st.st_mode);
 #endif
-    info.cb = st.st_size; info.grfMode = st.st_mode & 0777; info.fLink = 0;
+    info.cb = st.st_size; info.grfMode = st.st_mode & 0777; info.fLink = false;
     return info;
 }
 int IUnlinkNativePath(std::string_view szPath) {

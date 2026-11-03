@@ -22,7 +22,7 @@ struct NATIVEDIR;
 struct NATIVEFILEINFO {
     std::int64_t cb;
     std::uint32_t grfMode;
-    int fDirectory, fRegular, fLink;
+    bool fDirectory, fRegular, fLink;
 };
 
 struct NATIVEFILEIDENTITY {
