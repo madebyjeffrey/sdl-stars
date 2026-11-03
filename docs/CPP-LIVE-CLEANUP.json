@@ -233,7 +233,8 @@
         "bounded-remaining-library-publication-path-interfaces",
         "borrowed-library-import-and-backup-callback-views",
         "popup-menu-labels-as-optional-bounded-views",
-        "bounded-scanner-snapshot-name-serialization"
+        "bounded-scanner-snapshot-name-serialization",
+        "managed-race-reader-readonly-path-view"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1408,6 +1409,20 @@
           "batch": "L05 scanner snapshot names serialize from bounded views",
           "source_commit": "fc3bb6a0",
           "change": "FWriteScanString accepts std::string_view. FWriteScannerSnapshot bounds the fixed name field at its terminator before validating UTF-8 and escaping bytes; output bytes are unchanged.",
+          "macos_debug_build": "make compile passes with strict warnings and header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 managed race reader accepts a read-only path view",
+          "source_commit": "4983e9ac",
+          "change": "FReadManagedRace accepts std::string_view for its read-only path and passes the bounded input to native path/file services and FWasRaceFile.",
           "macos_debug_build": "make compile passes with strict warnings and header checks.",
           "desktop_unit_tests": "18/18 pass.",
           "host_unit_tests": "29/29 pass.",
@@ -25223,7 +25238,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 scanner snapshot names serialize from bounded views",
+    "latest_batch": "L05 managed race reader accepts a read-only path view",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25255,14 +25270,15 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 scanner snapshot names serialize from bounded views",
-    "source_commit": "fc3bb6a0",
-    "status": "Locally committed as fc3bb6a0. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 managed race reader accepts a read-only path view",
+    "source_commit": "4983e9ac",
+    "status": "Locally committed as 4983e9ac. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
       "Ampersand escaping uses dynamic string scratch storage; updated history-menu checks and transport-preset witness types.",
-      "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator."
+      "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
+      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25479,18 +25495,23 @@
       {
         "commit": "fc3bb6a0",
         "message": "Serialize scanner names from bounded views"
+      },
+      {
+        "commit": "4983e9ac",
+        "message": "Use a path view for managed race reads"
       }
     ],
-    "latest_source_commit": "fc3bb6a0",
-    "latest_batch_status": "Locally committed as fc3bb6a0. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "4983e9ac",
+    "latest_batch_status": "Locally committed as 4983e9ac. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "platform_ci": {
-      "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     }
   },
   "current_checkpoint": {
-    "batch": "L05 scanner snapshot names serialize from bounded views",
-    "status": "Locally committed as fc3bb6a0. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "db624733",
+    "batch": "L05 managed race reader accepts a read-only path view",
+    "status": "Locally committed as 4983e9ac. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "b98ddf39",
     "change": "DrawProductionItem accepts std::string_view rows; the owner-draw callback forwards the list control\u2019s returned text length and fixed metadata reads stay within the view.",
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and header checks.",
@@ -25516,7 +25537,8 @@
       "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending.",
       "local_cross_attempt": "The mingw-debug preset is disabled when hostSystemName is not Windows. A manual MinGW host-only configure reached CMake but stopped because the Python 3.14 cross-build environment lacks pinned PyYAML 6.0.3 and restricted network DNS could not reach pypi.org; no Windows SDL target was built.",
-      "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25534,7 +25556,8 @@
       "DrawProductionItem no longer assumes that row text is NUL terminated.",
       "Owner-draw uses the list control\u2019s returned length; its error path preserves the previous NUL-terminated fallback.",
       "The report-row caller supplies a view; row metadata and visible text use bounded indexing and subviews.",
-      "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator."
+      "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
+      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -25683,10 +25706,14 @@
       {
         "commit": "fc3bb6a0",
         "message": "Serialize scanner names from bounded views"
+      },
+      {
+        "commit": "4983e9ac",
+        "message": "Use a path view for managed race reads"
       }
     ],
-    "source_commit": "fc3bb6a0",
-    "latest_change": "FWriteScanString accepts std::string_view. FWriteScannerSnapshot bounds the fixed name field at its terminator before validating UTF-8 and escaping bytes; output bytes are unchanged."
+    "source_commit": "4983e9ac",
+    "latest_change": "FReadManagedRace accepts std::string_view for its read-only path and passes the bounded input to native path/file services and FWasRaceFile."
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
@@ -25712,14 +25739,15 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 scanner snapshot names serialize from bounded views",
-    "source_commit": "fc3bb6a0",
-    "status": "Locally committed as fc3bb6a0. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 managed race reader accepts a read-only path view",
+    "source_commit": "4983e9ac",
+    "status": "Locally committed as 4983e9ac. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
       "Ampersand escaping uses dynamic string scratch storage; updated history-menu checks and transport-preset witness types.",
-      "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator."
+      "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
+      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25757,7 +25785,8 @@
       "windows_sdl": "failure: entry.cpp unused argc under -Werror; fixed in 60a94d06.",
       "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending.",
-      "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -26062,8 +26091,12 @@
       {
         "commit": "fc3bb6a0",
         "message": "Serialize scanner names from bounded views"
+      },
+      {
+        "commit": "4983e9ac",
+        "message": "Use a path view for managed race reads"
       }
     ],
-    "parent": "db624733"
+    "parent": "b98ddf39"
   }
 }
