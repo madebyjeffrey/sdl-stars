@@ -274,16 +274,6 @@ BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm) {
     return 1;
 }
 
-BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
-                    void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
-    return FCompatFontDrawScaled(lpfont, psz, cch, rgdx, 1, pfn, lpv);
-}
-
-static std::optional<std::string_view> SzFontText(LPCSTR psz, int cch) {
-    if (cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return std::nullopt;
-    return cch == 0 ? std::string_view{} : std::string_view{psz, static_cast<std::size_t>(cch)};
-}
-
 BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz, SIZE &size) {
     std::size_t i = 0;
     std::optional<UTF8CHAR> uch;
@@ -301,40 +291,17 @@ BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz, SIZE &size) {
     return 1;
 }
 
-BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
-                        void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
-    int i = 0, x, y;
-    std::optional<std::string_view> sz;
-    std::optional<UTF8CHAR> uch;
-    std::int64_t dx = 0;
-    SIZE size;
-    COMPATGLYPH *lp;
-    sz = SzFontText(psz, cch);
-    if (!sz || !FCompatFontSizeUtf8(lpfont, *sz, size)) return 0;
-    while (i < static_cast<int>(sz->size())) {
-        uch = DecodeUtf8Char(sz->substr(static_cast<std::size_t>(i)));
-        if (!uch) return 0;
-        lp = LpGlyphUtf8(lpfont, uch->ch); if (!lp) return 0;
-        for (y = 0; y < lp->cy; y++) for (x = 0; x < lp->cx; x++)
-            if (lp->rgb[static_cast<std::size_t>(y) * lp->cx + x]) pfn(lpv, dx + lp->x + x, lp->y + y, lp->rgb[static_cast<std::size_t>(y) * lp->cx + x]);
-        dx += lp->dx; i += static_cast<int>(uch->cch);
-    }
-    return 1;
-}
-
-BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, int iScale,
+BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
                           void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
     LOGFONTA lf;
     SIZE size;
     COMPATGLYPH *lp, *lpRaster;
     int i = 0, j, x, y;
-    std::optional<std::string_view> sz;
     std::optional<UTF8CHAR> uch;
     std::int64_t dx = 0;
 
-    sz = SzFontText(psz, cch);
-    if (iScale < 1 || iScale > 4 || !sz || !FCompatFontSizeUtf8(lpfont, *sz, size)) return 0;
-    if (cch == 0) return 1;
+    if (iScale < 1 || iScale > 4 || !FCompatFontSizeUtf8(lpfont, sz, size)) return 0;
+    if (sz.empty()) return 1;
     if (iScale != 1 && lpfont->iScale != iScale) {
         lf = lpfont->lf;
         lf.lfHeight = -static_cast<int>(lpfont->face->size->metrics.y_ppem) * iScale;
@@ -344,8 +311,8 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
         lpfont->iScale = lpfont->lpScaled ? iScale : 0;
         if (!lpfont->lpScaled) return 0;
     }
-    while (i < static_cast<int>(sz->size())) {
-        uch = DecodeUtf8Char(sz->substr(static_cast<std::size_t>(i)));
+    while (i < static_cast<int>(sz.size())) {
+        uch = DecodeUtf8Char(sz.substr(static_cast<std::size_t>(i)));
         if (!uch) return 0;
         lp = LpGlyphUtf8(lpfont, uch->ch);
         lpRaster = iScale == 1 ? lp : LpGlyphUtf8(lpfont->lpScaled.get(), uch->ch);
@@ -356,7 +323,7 @@ BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *r
                     lpfont->tm.tmAscent * iScale - (iScale == 1 ? lpfont : lpfont->lpScaled.get())->tm.tmAscent + lpRaster->y + y,
                     lpRaster->rgb[static_cast<std::size_t>(y) * lpRaster->cx + x]);
         // Keep logical advances and baselines: Retina rasterization must not reflow the UI.
-        if (rgdx) for (j = 0; j < static_cast<int>(uch->cch); j++) dx += rgdx[i + j];
+        if (!rgdx.empty()) for (j = 0; j < static_cast<int>(uch->cch); j++) dx += rgdx[i + j];
         else dx += lp->dx;
         i += static_cast<int>(uch->cch);
     }

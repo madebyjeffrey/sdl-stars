@@ -1654,16 +1654,16 @@ struct COMPATTEXTDRAW {
     double cs, sn;
 };
 
-static BOOL FTextSize(HDC lpdc, LPCSTR psz, int cch, LPSIZE lpsize) {
-    std::string_view sz;
-    if (!lpsize || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return 0;
-    if (cch) sz = std::string_view{psz, static_cast<std::size_t>(cch)};
-    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), sz, *lpsize);
+static BOOL FTextSize(HDC lpdc, std::string_view sz, SIZE &size) {
+    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), sz, size);
 }
 
 BOOL win32::GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
     HDC lpdc = LpDC(hdc);
-    return lpdc && FTextSize(lpdc, psz, cch, lpsize);
+    std::string_view sz;
+    if (!lpdc || !lpsize || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return 0;
+    if (cch) sz = std::string_view{psz, static_cast<std::size_t>(cch)};
+    return FTextSize(lpdc, sz, *lpsize);
 }
 
 BOOL win32::GetTextMetricsA(HDC hdc, LPTEXTMETRICA lptm) {
@@ -1736,16 +1736,16 @@ static void DrawFontRect(COMPATTEXTDRAW *lpdraw, std::int64_t dx, int yTop, int 
         }
 }
 
-static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
-                      const RECT *lprc, const INT *rgdx) {
+static BOOL FDrawText(HDC lpdc, int x, int y, std::string_view sz, UINT options,
+                      const RECT *lprc, std::span<const INT> rgdx) {
     COMPATTEXTDRAW draw;
     SIZE size;
     TEXTMETRICA tm;
     double angle;
-    int i;
+    std::size_t i;
     std::int64_t dx;
     RECT rcDevice;
-    if (!FTextSize(lpdc, psz, cch, &size) || !FClip(lpdc, &draw.rc) ||
+    if (!FTextSize(lpdc, sz, size) || !FClip(lpdc, &draw.rc) ||
         ((options & (win32::ETO_OPAQUE | win32::ETO_CLIPPED)) && !lprc)) return 0;
     if (lprc) { rcDevice = RcDevice(lpdc, *lprc); lprc = &rcDevice; }
     // ETO_OPAQUE uses the DC background color, independent of its selected brush.
@@ -1760,10 +1760,10 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
     angle = (lpdc->lpfont->lf.lfEscapement % 3600) * (3.14159265358979323846 / 1800.0);
     draw.cs = std::cos(angle); draw.sn = std::sin(angle);
     dx = size.cx;
-    if (rgdx) { dx = 0; for (i = 0; i < cch; i++) dx += rgdx[i]; }
+    if (!rgdx.empty()) { dx = 0; for (i = 0; i < rgdx.size(); i++) dx += rgdx[i]; }
     FCompatFontMetrics(lpdc->lpfont->lpFont.get(), &tm);
     if (lpdc->iBkMode == win32::OPAQUE) DrawFontRect(&draw, dx, 0, tm.tmHeight, lpdc->crBk);
-    if (!FCompatFontDrawScaled(lpdc->lpfont->lpFont.get(), psz, cch, rgdx, IDCScale(lpdc),
+    if (!FCompatFontDrawScaled(lpdc->lpfont->lpFont.get(), sz, rgdx, IDCScale(lpdc),
                                DrawFontPixel, &draw)) return 0;
     if (tm.tmUnderlined) DrawFontRect(&draw, dx, tm.tmAscent + 1, tm.tmAscent + 2, lpdc->crText);
     if (tm.tmStruckOut) DrawFontRect(&draw, dx, tm.tmAscent * 2 / 3, tm.tmAscent * 2 / 3 + 1, lpdc->crText);
@@ -1772,14 +1772,23 @@ static BOOL FDrawText(HDC lpdc, int x, int y, LPCSTR psz, int cch, UINT options,
 
 BOOL win32::TextOutA(HDC hdc, int x, int y, LPCSTR psz, int cch) {
     HDC lpdc = LpDC(hdc);
-    return lpdc && FDrawText(lpdc, x, y, psz, cch, 0, nullptr, nullptr);
+    std::string_view sz;
+    if (!lpdc || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return 0;
+    if (cch) sz = std::string_view{psz, static_cast<std::size_t>(cch)};
+    return FDrawText(lpdc, x, y, sz, 0, nullptr, {});
 }
 
 BOOL win32::ExtTextOutA(HDC hdc, int x, int y, UINT options, const RECT *lprc,
                        LPCSTR psz, UINT cch, const INT *rgdx) {
     HDC lpdc = LpDC(hdc);
-    if (!lpdc || cch > std::numeric_limits<int>::max() || (options & ~(win32::ETO_OPAQUE | win32::ETO_CLIPPED))) return 0;
-    return FDrawText(lpdc, x, y, psz, static_cast<int>(cch), options, lprc, rgdx);
+    std::string_view sz;
+    std::span<const INT> rgdxSpan;
+    if (!lpdc || cch > 1024 * 1024 || (!psz && cch != 0) || (options & ~(win32::ETO_OPAQUE | win32::ETO_CLIPPED))) return 0;
+    if (cch) {
+        sz = std::string_view{psz, cch};
+        if (rgdx) rgdxSpan = std::span{rgdx, cch};
+    }
+    return FDrawText(lpdc, x, y, sz, options, lprc, rgdxSpan);
 }
 
 struct COMPATTEXTLINE { int i, cch, dx; };

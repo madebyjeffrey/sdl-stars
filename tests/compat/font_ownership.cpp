@@ -27,7 +27,7 @@ int main() {
     }
     CHECK(FCompatFontSizeUtf8(lpfont.get(), std::string_view{"\xc4\x80", 2}, after));
     CHECK(before.cx == after.cx && before.cy == after.cy);
-    CHECK(FCompatFontDrawScaled(lpfont.get(), "\xc4\x80", 2, NULL, 2, CountGlyph, &cPixels));
+    CHECK(FCompatFontDrawScaled(lpfont.get(), std::string_view{"\xc4\x80", 2}, {}, 2, CountGlyph, &cPixels));
     CHECK(cPixels > 0);
     lpfontRetained = std::move(lpfont); CompatShutdownFonts();
     // Module cleanup drops its root; a live face still owns its library.
