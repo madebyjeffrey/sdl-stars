@@ -86,7 +86,7 @@ std::int16_t FIsPopupHullType(APPSESSION &app, std::int16_t ishdef) {
 }
 
 void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
-    std::array<char, 360> szObjectName{};
+    PLANETNAMERESULT szPlanetName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     COLORREF crBack;
     char     szT[80];
@@ -113,9 +113,9 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
     case grPopupMineral:
         CtrTextOut(hdc, rc.right >> 1, 4, std::string_view{app.state.rgszMinerals[app.lpui->GlobalPD.rgi[0]]});
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        szCatalogPsz = TextIO().pfnCompressed(app, idsMineralConcentration);
+        c = TextIO().pfnCchGetString(app, idsMineralConcentration, std::span{szCatalogPsz});
         psz = szCatalogPsz.data();
-        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 4;
+        dx = LOWORD(GetTextExtent(hdc, psz, c)) + 4;
         RightTextOut(app, hdc, dx, app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsSurface).data(), 0, 0);
         if (app.lpui->GlobalPD.rgi[2] >= 0) {
             c = CchSprintf(app.state.szWork, "%ldkT", app.lpui->GlobalPD.rgi[2]);
@@ -197,18 +197,17 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         win32::SetTextColor(hdc, 0);
         break;
     case grPopupUnknownObj:
-        szCatalogPsz = TextIO().pfnCompressed(app, idsPlanet);
+        c = TextIO().pfnCchGetString(app, idsPlanet, std::span{szCatalogPsz});
         psz = szCatalogPsz.data();
-        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 4;
+        dx = LOWORD(GetTextExtent(hdc, psz, c)) + 4;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        RightTextOut(app, hdc, dx, 4, psz, std::strlen(psz), 0);
+        RightTextOut(app, hdc, dx, 4, psz, c, 0);
         RightTextOut(app, hdc, dx, app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsId).data(), 0, 0);
         RightTextOut(app, hdc, dx, app.state.dyArial8 * 2 + 4, TextIO().pfnCompressed(app, idsX).data(), 0, 0);
         RightTextOut(app, hdc, dx, 3 * app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsY).data(), 0, 0);
-        szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl).rgch;
-        psz = szObjectName.data();
+        szPlanetName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        win32::TextOutA(hdc, dx, 4, psz, std::strlen(psz));
+        win32::TextOutA(hdc, dx, 4, szPlanetName.data(), static_cast<int>(szPlanetName.size()));
         c = CchSprintf(app.state.szWork, app.state.PCTD, app.state.sel.scan.idpl + 1);
         win32::TextOutA(hdc, dx, app.state.dyArial8 + 4, app.state.szWork, c);
         c = CchSprintf(app.state.szWork, app.state.PCTD, app.state.sel.scan.pt.x);
@@ -257,7 +256,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
 }
 
 void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
-    std::array<char, 360> szObjectName{};
+    PLANETNAMERESULT szPlanetName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     PLAYERNAMERESULT szPlayerName{};
     HDC     hdc;
@@ -285,9 +284,9 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
     default:
         break;
     case grPopupMineral:
-        szCatalogPsz = TextIO().pfnCompressed(app, idsMineralConcentration0000000kt);
+        c = TextIO().pfnCchGetString(app, idsMineralConcentration0000000kt, std::span{szCatalogPsz});
         psz = szCatalogPsz.data();
-        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
+        dx = LOWORD(GetTextExtent(hdc, psz, c)) + 8;
         dy = 3 * app.state.dyArial8 + 8;
         if (app.lpui->GlobalPD.rgi[4] < 0)
             break;
@@ -309,9 +308,9 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
         dxDamage = 0;
         dy = app.state.dyArial8 + 8;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        szCatalogPsz = TextIO().pfnCompressed(app, idsShipName);
+        c = TextIO().pfnCchGetString(app, idsShipName, std::span{szCatalogPsz});
         psz = szCatalogPsz.data();
-        dxL = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz)));
+        dxL = LOWORD(GetTextExtent(hdc, psz, c));
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         for (i = 0; i < 16; i++) {
             if (app.lpui->GlobalPD.lpfl->rgcsh[i] > 0 && (app.lpui->GlobalPD.grbit == 0 || FIsPopupHullType(app, i))) {
@@ -323,16 +322,16 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
                 dx = LOWORD(GetTextExtent(hdc, app.state.szWork, c));
                 dxR = dxR <= dx ? dx : dxR;
                 if (app.lpui->GlobalPD.fRedDamage && (app.lpui->GlobalPD.lpfl->rgdv[i].dp >> 7 & 0x1ff) && dxDamage == 0) {
-                    szCatalogPsz = TextIO().pfnCompressed(app, idsN9999999);
+                    c = TextIO().pfnCchGetString(app, idsN9999999, std::span{szCatalogPsz});
                     psz = szCatalogPsz.data();
-                    dxDamage = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 4;
+                    dxDamage = LOWORD(GetTextExtent(hdc, psz, c)) + 4;
                 }
             }
         }
         if (dy == app.state.dyArial8 + 8) {
-            szCatalogPsz = TextIO().pfnCompressed(app, idsShipName);
+            c = TextIO().pfnCchGetString(app, idsShipName, std::span{szCatalogPsz});
             psz = szCatalogPsz.data();
-            dxL = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz)));
+            dxL = LOWORD(GetTextExtent(hdc, psz, c));
         }
         app.lpui->GlobalPD.dxDamage = dxDamage;
         dx = dxL + dxR + 16 + dxDamage;
@@ -340,13 +339,12 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
     case grPopupUnknownObj:
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         dy = app.state.dyArial8 * 4 + 8;
-        szCatalogPsz = TextIO().pfnCompressed(app, idsPlanet);
+        c = TextIO().pfnCchGetString(app, idsPlanet, std::span{szCatalogPsz});
         psz = szCatalogPsz.data();
-        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
-        szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl).rgch;
-        psz = szObjectName.data();
+        dx = LOWORD(GetTextExtent(hdc, psz, c)) + 8;
+        szPlanetName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
-        dxName = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz)));
+        dxName = LOWORD(GetTextExtent(hdc, szPlanetName.data(), static_cast<int>(szPlanetName.size())));
         dxCoord = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsN9999).data(), 4));
         dx += dxName <= dxCoord ? dxCoord : dxName;
         break;
