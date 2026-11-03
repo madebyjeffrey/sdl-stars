@@ -116,6 +116,8 @@ static LPCSTR PszDialogClass(COMPATDLGITEM *lpitem) {
 }
 static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param, BOOL fModal) {
     HRSRC hrsrc;
+    const BYTE *rgbTemplate;
+    DWORD cbTemplate;
     COMPATDLGTEMPLATE dlg = {};
     COMPATDLGCREATE dc = {};
     COMPATDLGITEM *lpitem;
@@ -132,7 +134,9 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     if (!SDL_IsMainThread() || (hwndOwner && !win32::IsWindow(hwndOwner))) return nullptr;
     if (!hinst) hinst = win32::GetModuleHandleA(nullptr);
     hrsrc = win32::FindResourceA(hinst, psz, win32::RT_DIALOG);
-    if (!FCompatDialogTemplate(static_cast<const BYTE *>((win32::LockResource(win32::LoadResource(hinst, hrsrc)))), win32::SizeofResource(hinst, hrsrc), &dlg)) return nullptr;
+    rgbTemplate = static_cast<const BYTE *>(win32::LockResource(win32::LoadResource(hinst, hrsrc)));
+    cbTemplate = win32::SizeofResource(hinst, hrsrc);
+    if (!rgbTemplate || !FCompatDialogTemplate(std::span{rgbTemplate, cbTemplate}, dlg)) return nullptr;
     if (dlg.idClass || (dlg.szClass && !dlg.szClass->empty()) || dlg.idMenu || (dlg.szMenu && !dlg.szMenu->empty())) goto done;
     dc.lpfn = lpfn; dc.fModal = fModal;
     if (!FDialogUnits(&dlg, &dc)) goto done;

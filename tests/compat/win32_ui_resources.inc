@@ -80,7 +80,7 @@ int main(void) {
         if ((UINT_PTR)rgUIManifest[i].pszType == 4) {
             for (ib = 0; ib < cb; ib++) CHECK(!HmenuCompatTemplate(rgb, ib));
         } else if ((UINT_PTR)rgUIManifest[i].pszType == 5) {
-            CHECK(FCompatDialogTemplate(rgb, cb, &dlg));
+            CHECK(FCompatDialogTemplate(std::span{rgb, cb}, dlg));
             CHECK(dlg.szTitle && dlg.szFont && dlg.cPoints == 8);
             for (j = 0; j < dlg.cItems; j++) {
                 CHECK(dlg.rgItems[j].szClass && dlg.rgItems[j].szTitle);
@@ -88,14 +88,14 @@ int main(void) {
             }
             cDialogs++; cControls += dlg.cItems;
             CompatFreeDialogTemplate(&dlg);
-            for (ib = 0; ib < cb; ib++) CHECK(!FCompatDialogTemplate(rgb, ib, &dlg));
+            for (ib = 0; ib < cb; ib++) CHECK(!FCompatDialogTemplate(std::span{rgb, ib}, dlg));
         }
 #endif
     }
     CHECK(cTutorial == 3);
 #ifndef _WIN32
     CHECK(cDialogs == 38 && cControls == 338);
-    CHECK(!FCompatDialogTemplate(rgbExtended, sizeof(rgbExtended), &dlg));
+    CHECK(!FCompatDialogTemplate(std::span{rgbExtended}, dlg));
 #endif
     CHECK(!LoadMenuA(hinst, "missing"));
     CHECK(!LoadAcceleratorsA(hinst, MAKEINTRESOURCE(65000)));

@@ -1,6 +1,7 @@
 #ifndef STARS_COMPAT_INTERNAL_H
 #define STARS_COMPAT_INTERNAL_H
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 #include <windows.h>
@@ -203,7 +204,7 @@ struct COMPATDLGTEMPLATE {
     std::optional<std::string> szMenu, szClass, szTitle, szFont;
     std::vector<COMPATDLGITEM> rgItems;
 };
-BOOL FCompatDialogTemplate(const BYTE *rgb, std::size_t cb, COMPATDLGTEMPLATE *lpdlg);
+BOOL FCompatDialogTemplate(std::span<const BYTE> rgb, COMPATDLGTEMPLATE &dlg);
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg);
 LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatDestroyDialog(HWND hwnd);
