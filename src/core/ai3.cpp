@@ -22,6 +22,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
     std::int16_t  iLatestCruiser;
     std::int16_t  ishLastBattle;
     THING   *lpthWorm;
+    COLONIZABLEPLANETRESULT colonizablePlanet;
     std::int16_t  cFlMineLayers;
     std::int16_t  fShouldColonize;
     std::int16_t  cFlDestroyers;
@@ -636,7 +637,9 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
                     continue;
                 }
             }
-            idPlanDst = IdNearestColonizablePlanet(app, lpfl, &lpthWorm);
+            colonizablePlanet = IdNearestColonizablePlanet(app, lpfl, true);
+            idPlanDst = colonizablePlanet.idPlanet;
+            lpthWorm = colonizablePlanet.lpthWorm;
             if (idPlanDst == idplNone && !lpthWorm) {
                 if (lpfl->idPlanet == idPlanetDeepSpace)
                     continue;

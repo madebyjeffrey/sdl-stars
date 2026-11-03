@@ -280,7 +280,7 @@ std::int16_t FGotoWormholeAiFleet(APPSESSION &app, FLEET *lpfl, THING *lpthWorm)
     return 1;
 }
 
-std::int16_t IdNearestColonizablePlanet(APPSESSION &app, FLEET *lpflCol, THING **plpthWorm) {
+COLONIZABLEPLANETRESULT IdNearestColonizablePlanet(APPSESSION &app, FLEET *lpflCol, bool fFindWorm) {
     PLANET  *lpplMac;
     POINT16  pt;
     std::int32_t  dy;
@@ -294,6 +294,7 @@ std::int16_t IdNearestColonizablePlanet(APPSESSION &app, FLEET *lpflCol, THING *
     std::int32_t  dx;
     std::uint8_t *lpb;
     std::int32_t  d2Cur;
+    THING   *lpthWorm;
 
     if (app.state.rgplr[app.state.idPlayer].idAi != idAiRobotoid && app.state.rgplr[app.state.idPlayer].idAi != idAiMacinti) {
         iVal = 16;
@@ -359,19 +360,19 @@ LFindNearest:
         lpb += 16;
     }
     app.state.fMarkedPlanets = 1;
-    if (plpthWorm) {
-        *plpthWorm = nullptr;
+    lpthWorm = nullptr;
+    if (fFindWorm) {
         if (lpflCol->idPlanet != idPlanetDeepSpace && app.state.game.turn < 120) {
             lppl = LpplFromId(app, lpflCol->idPlanet);
             if (lppl && lppl->iPlayer == app.state.idPlayer) {
-                *plpthWorm = LpthWormFind(app, &pt, d2);
+                lpthWorm = LpthWormFind(app, &pt, d2);
             }
         }
-        if (*plpthWorm) {
+        if (lpthWorm) {
             idBest = idplNone;
         }
     }
-    return idBest;
+    return {idBest, lpthWorm};
 }
 
 THING *LpthWormFind(APPSESSION &app, POINT16 *ppt, std::int32_t d2) {
@@ -448,7 +449,7 @@ std::int16_t IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl, THING **plpthW
     std::int32_t  d2Cur;
 
     if (!app.state.fMarkedPlanets) {
-        IdNearestColonizablePlanet(app, lpfl, nullptr);
+        IdNearestColonizablePlanet(app, lpfl, false);
     }
     lpb = app.state.vlpbAiPlanet + 15;
     d2 = 99999999;

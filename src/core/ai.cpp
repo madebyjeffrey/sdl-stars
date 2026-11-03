@@ -94,6 +94,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
     std::int16_t  cColFleet;
     COLONIZERBUILDRESULT colonizerBuild;
     THING   *lpthWorm;
+    COLONIZABLEPLANETRESULT colonizablePlanet;
     std::int16_t  idPlanDst;
     std::int16_t  j;
     std::uint8_t  rgRecycleShdef[16];
@@ -453,7 +454,9 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
                         continue;
                     }
                 }
-                idPlanDst = IdNearestColonizablePlanet(app, lpfl, &lpthWorm);
+                colonizablePlanet = IdNearestColonizablePlanet(app, lpfl, true);
+                idPlanDst = colonizablePlanet.idPlanet;
+                lpthWorm = colonizablePlanet.lpthWorm;
                 if (idPlanDst == idplNone && !lpthWorm) {
                     if (lpfl->idPlanet != idPlanetDeepSpace) {
                         ChangeMainObjSel(app, grobjFleet, lpfl->id);
@@ -1300,7 +1303,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
             continue;
         } else {
             lpthWorm = nullptr;
-            idPlanDst = IdNearestColonizablePlanet(app, lpfl, nullptr);
+            idPlanDst = IdNearestColonizablePlanet(app, lpfl, false).idPlanet;
             if (lpfl->idPlanet != idPlanetDeepSpace && app.state.sel.pl.iPlayer == app.state.idPlayer) {
                 ChangeMainObjSel(app, grobjFleet, lpfl->id);
                 XferAiSupply(app, grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, 25);

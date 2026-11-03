@@ -214,7 +214,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
         if (!app.state.rglpfl[ifl])
             break;
         if (!app.state.fMarkedPlanets) {
-            IdNearestColonizablePlanet(app, lpfl, nullptr);
+            IdNearestColonizablePlanet(app, lpfl, false);
         }
         if (lpfl->iPlayer != app.state.idPlayer) {
             lpfl->lpflNext = lpflEnemy;
@@ -312,7 +312,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
                         FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
                     } else {
                         if (lpfl->rgcsh[1] > 0) {
-                            idPlanDst = IdNearestColonizablePlanet(app, lpfl, nullptr);
+                            idPlanDst = IdNearestColonizablePlanet(app, lpfl, false).idPlanet;
                             if (idPlanDst == idplNone) {
                                 if (lpfl->lpplord->rgord()[0].grobj != grobjPlanet)
                                     continue;

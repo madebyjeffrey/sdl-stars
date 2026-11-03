@@ -7,6 +7,11 @@ struct COLONIZERBUILDRESULT {
     bool fShouldBuild;
     std::int16_t cColFleet;
 };
+
+struct COLONIZABLEPLANETRESULT {
+    std::int16_t idPlanet;
+    THING *lpthWorm;
+};
 #include <cstdint>
 #include <optional>
 
@@ -28,7 +33,7 @@ std::int16_t  XferAiSupply(APPSESSION &app, GrobjClass grobjSrc, std::int16_t id
 std::int16_t  XferAiTroopers(APPSESSION &app, std::int16_t idSrc, std::int16_t idDst, std::int16_t cQuan);
 std::int16_t  FColonizeAiFleet(APPSESSION &app, FLEET *lpfl, std::int16_t idPlanet);
 std::int16_t  FGotoWormholeAiFleet(APPSESSION &app, FLEET *lpfl, THING *lpthWorm);
-std::int16_t  IdNearestColonizablePlanet(APPSESSION &app, FLEET *lpflCol, THING **plpthWorm);
+COLONIZABLEPLANETRESULT IdNearestColonizablePlanet(APPSESSION &app, FLEET *lpflCol, bool fFindWorm);
 THING   *LpthWormFind(APPSESSION &app, POINT16 *ppt, std::int32_t d2);
 std::uint32_t UlFleetPower(APPSESSION &app, FLEET *lpfl);
 std::int16_t  IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl, THING **plpthWorm);

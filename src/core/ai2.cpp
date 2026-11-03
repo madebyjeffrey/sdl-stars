@@ -361,7 +361,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
             goto LScrapFleet;
         } else {
             lpthWorm = nullptr;
-            idPlanDst = IdNearestColonizablePlanet(app, lpfl, nullptr);
+            idPlanDst = IdNearestColonizablePlanet(app, lpfl, false).idPlanet;
             if (lpfl->idPlanet != idPlanetDeepSpace && app.state.sel.pl.iPlayer == app.state.idPlayer) {
                 ChangeMainObjSel(app, grobjFleet, lpfl->id);
                 XferAiSupply(app, grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, 150);
@@ -516,6 +516,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
     THING   *lpthWorm;
     std::int16_t  fColonyShipInQueue;
     std::int16_t  idPlanDst;
+    COLONIZABLEPLANETRESULT colonizablePlanet;
     std::int16_t  cplBadGuy;
     PLANET  *lpplMac;
     PLANET  *lppl;
@@ -741,7 +742,9 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
             continue;
         } else {
             lpthWorm = nullptr;
-            idPlanDst = IdNearestColonizablePlanet(app, lpfl, app.state.rgshdef[1].hul.rghs[0].iItem <= iengineQuickJump5 ? nullptr : &lpthWorm);
+            colonizablePlanet = IdNearestColonizablePlanet(app, lpfl, app.state.rgshdef[1].hul.rghs[0].iItem > iengineQuickJump5);
+            idPlanDst = colonizablePlanet.idPlanet;
+            lpthWorm = colonizablePlanet.lpthWorm;
             if (lpfl->idPlanet != idPlanetDeepSpace && app.state.sel.pl.iPlayer == app.state.idPlayer) {
                 ChangeMainObjSel(app, grobjFleet, lpfl->id);
                 XferAiSupply(app, grobjPlanet, lpfl->idPlanet, grobjFleet, lpfl->id, Colonists, 25);
