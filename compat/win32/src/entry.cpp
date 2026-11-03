@@ -2,8 +2,9 @@
 #include <windows.h>
 #include <SDL3/SDL.h>
 #include <stars_compat.h>
+#include <algorithm>
 #include <cstdio>
-#include <cstring>
+#include <string_view>
 #include "version.h"
 #ifdef _WIN32
 #include "native_process.h"
@@ -15,20 +16,22 @@ namespace ui { int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR l
 static int ICompatMain(int argc, char **argv) {
     char szCmdLine[1024];
     std::size_t cch = 0, cchArg;
+    std::string_view szArg;
     int i, nResult, cArgs = 0;
     BOOL fHeadless = 0;
     HINSTANCE hInstance;
 
-    if (argc == 2 && !std::strcmp(argv[1], "--version")) {
+    if (argc == 2 && std::string_view{argv[1]} == "--version") {
         std::printf("stars-sdl %s\n", STARS_VERSION_DISPLAY);
         return 0;
     }
     szCmdLine[0] = 0;
     for (i = 1; i < argc; i++) {
-        if (!std::strcmp(argv[i], "--headless")) { fHeadless = 1; continue; }
-        cchArg = std::strlen(argv[i]);
+        szArg = argv[i];
+        if (szArg == "--headless") { fHeadless = 1; continue; }
+        cchArg = szArg.size();
         // ParseCmdLine has no quoting, and its filename destination is 80 bytes.
-        if (cchArg >= 80 || std::strpbrk(argv[i], " \t\r\n")) {
+        if (cchArg >= 80 || szArg.find_first_of(" \t\r\n") != std::string_view::npos) {
             std::fprintf(stderr, "stars-sdl: arguments must be shorter than 80 bytes and contain no whitespace\n");
             return 2;
         }
@@ -38,8 +41,9 @@ static int ICompatMain(int argc, char **argv) {
         }
         if (cArgs != 0) szCmdLine[cch++] = ' ';
         cArgs++;
-        std::copy_n(argv[i], cchArg + 1, szCmdLine + cch);
+        std::copy(szArg.begin(), szArg.end(), szCmdLine + cch);
         cch += cchArg;
+        szCmdLine[cch] = 0;
     }
     if (fHeadless) {
         // Select a real, offscreen SDL renderer before any game initialization.
