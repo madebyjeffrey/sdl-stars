@@ -1993,12 +1993,13 @@ LDone:
     return fEqual;
 }
 
-std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
-                                             const char *pszSource, const char *pszTarget,
-                                             int iplr, std::int32_t lidGame, std::uint16_t turn);
-std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
-                                            const char *pszSource, int iplr,
-                                            std::int32_t lidGame, std::uint16_t turn);
+std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
+                                            std::string_view pszName, std::string_view pszSource,
+                                            std::string_view pszTarget, int iplr, std::int32_t lidGame,
+                                            std::uint16_t turn);
+std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
+                                          std::string_view pszName, std::string_view pszSource, int iplr,
+                                          std::int32_t lidGame, std::uint16_t turn);
 
 static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUniverse, int iplr);
 
@@ -2691,9 +2692,10 @@ std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, std::string_vie
     return FPortableLibraryName(app, szLibraryName) && FLibraryNameAvailable(app, szLibraryRoot, szLibraryName);
 }
 
-std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
-                                             const char *pszSource, const char *pszTarget,
-                                             int iplr, std::int32_t lidGame, std::uint16_t turn) {
+std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
+                                            std::string_view pszName, std::string_view pszSource,
+                                            std::string_view pszTarget, int iplr, std::int32_t lidGame,
+                                            std::uint16_t turn) {
     char szDirectory[512], szStage[512], szHold[512], szBackup[512], szExchangeName[256];
     char szMessage[768];
     int iRemembered;
@@ -2742,9 +2744,9 @@ LDone:
     return 0;
 }
 
-std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName,
-                                            const char *pszSource, int iplr,
-                                            std::int32_t lidGame, std::uint16_t turn) {
+std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
+                                          std::string_view pszName, std::string_view pszSource, int iplr,
+                                          std::int32_t lidGame, std::uint16_t turn) {
     char szDirectory[512], szStage[512], szTarget[512], szExchangeName[256];
     int iRemembered, cch;
     long long lPlayed;
@@ -3318,8 +3320,9 @@ void CloseLibraryUiSession() noexcept {
     continueLibrary = LIBRARYCONTINUE{};
 }
 
-std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszSource,
-                                  const char *szTarget, const char *pszName, int iplr,
+std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
+                                  std::string_view pszSource, std::string_view szTarget,
+                                  std::string_view pszName, int iplr,
                                   std::int32_t lidGame, std::uint16_t turn, std::int16_t fHasTurn) {
     char szOrders[512],szStage[512],szPrevious[512],szMessage[1024];
     int cch;
@@ -3381,7 +3384,8 @@ std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, 
     return 1;
 }
 
-std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &paths, LIBRARYIMPORT &li, const char *szDir) {
+std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &paths, LIBRARYIMPORT &li,
+                                         std::string_view szDir) {
     char szStage[256];
     LibraryPublicationIO().pfnCchSnprintf(std::span{szStage, sizeof(szStage)}, "%s%s.importing.%lld", paths.szLibraryRoot, szDirSep, static_cast<long long>(LibraryPublicationIO().pfnLNativeTime()));
     if (LibraryPublicationIO().pfnCreateNativeDir(szStage) != 0) {

@@ -26,10 +26,13 @@ struct LIBRARYPATHS {
 };
 std::int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget);
 std::int16_t FCopyNativeFileExclusive(std::string_view szSource, std::string_view szTarget);
-std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName, const char *pszSource, const char *pszTarget, int iplr,
-                                       std::int32_t lidGame, std::uint16_t turn);
-std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName, const char *pszSource, int iplr, std::int32_t lidGame,
-                                     std::uint16_t turn);
+std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
+                                            std::string_view pszName, std::string_view pszSource,
+                                            std::string_view pszTarget, int iplr, std::int32_t lidGame,
+                                            std::uint16_t turn);
+std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
+                                          std::string_view pszName, std::string_view pszSource, int iplr,
+                                          std::int32_t lidGame, std::uint16_t turn);
 std::int16_t FInspectImportFile(std::string_view pszFile, DtFileType dt, int iplr, std::int32_t &lidGame, std::uint16_t *pturn, std::uint16_t *pwGen, std::int16_t &fMulti);
 std::int16_t FValidManagedLibraryGame(APPSESSION &app, std::string_view pszName, std::span<char> pszDirectory,
                                       int &iplr, long long &lPlayed, std::span<char> pszExchangeName);
@@ -49,7 +52,10 @@ std::int16_t RemoveLibraryGameTree(APPSESSION &app, std::string_view pszDirector
 std::int16_t CopyImportEntry(APPSESSION &app, void *lpData, std::string_view pszName);
 std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, std::string_view pszName);
 std::int16_t RemoveImportFile(APPSESSION &app, void *lpData, std::string_view pszFile);
-std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszSource, const char *szTarget, const char *pszName, int iplr,
-                               std::int32_t lidGame, std::uint16_t turn, std::int16_t fHasTurn);
-std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &paths, LIBRARYIMPORT &li, const char *szDir);
+std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
+                                    std::string_view pszSource, std::string_view szTarget,
+                                    std::string_view pszName, int iplr, std::int32_t lidGame,
+                                    std::uint16_t turn, std::int16_t fHasTurn);
+std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &paths, LIBRARYIMPORT &li,
+                                         std::string_view szDir);
 #endif
