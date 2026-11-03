@@ -29853,7 +29853,18 @@
       "portal_path_output_pointer_and_capacity_pair_remaining": 0,
       "portal_linux_validation": "Pending: this macOS checkout lacks dbus-1 development headers; require Linux compile and dbus-run-session chooser suite.",
       "private_list_BOOL_state_and_helpers_remaining": 0,
-      "private_list_BOOL_state_and_helpers_converted_in_batch": 1
+      "private_list_BOOL_state_and_helpers_converted_in_batch": 1,
+      "fresh_source_scan": {
+        "source_commit": "f091c67e",
+        "tracked_c_translation_units": 44,
+        "production_c_translation_units": 0,
+        "owned_function_like_macros": 0,
+        "legacy_string_and_numeric_call_spellings": 0,
+        "src_BOOL_spellings": [
+          "src/ui/nativeui.h:24 — Win32 BOOL callback signature for win32::GetCursorPos; retained to match that SDK boundary."
+        ],
+        "result": "Fresh lexical scan of src and compat/win32/include/src; comments/literals not parsed separately by this quick check. Maintained cleanup manifests remain authoritative for full audits."
+      }
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
