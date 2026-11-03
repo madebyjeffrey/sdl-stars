@@ -295,7 +295,8 @@
         "exchange-basename-buffer-owned-by-ui-session",
         "race-library-root-owned-by-ui-session",
         "game-library-root-and-cached-length-owned-by-ui-session",
-        "recursive-import-cleanup-roots-use-string-view"
+        "recursive-import-cleanup-roots-use-string-view",
+        "planet-report-sort-names-use-bounded-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1758,6 +1759,23 @@
           "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
           "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 planet report sort names use bounded views",
+          "source_commit": "44324bd329a28d6c347eacc0551810ee266768bc",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. The first sort key still truncates into the same 80-byte scratch array at complete UTF-8 boundaries; comparison keeps the same lexical ordering and tie results.",
+          "api_audit": "Planet-name sorting uses PLANETNAMERESULT::view and a bounded prefix comparison instead of raw C-string pointers and strcmp.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
         }
       ],
       "bounded_formatting": {
@@ -2184,6 +2202,28 @@
         "allocation_failure": "Parser returns its existing failure result for bad_alloc and length_error; local C++ objects clean themselves up.",
         "verification": "macOS SDL Debug build; desktop units 18/18; host units 29/29; native and host regressions each 519 matches, 25 warnings, zero differences/errors/skips; tutorial smoke 1/1; win32_client_startup_dummy passes.",
         "baseline": "Unchanged."
+      },
+      "report_name_sort_comparison": {
+        "status": "complete; locally verified",
+        "interface": "Planet route, driver and name sorting compare exact PLANETNAMERESULT views. The left name still passes through the original 80-byte scratch destination before comparison.",
+        "behavior": "UTF-8 truncation and string ordering are preserved; no comparator tie behavior or report state changes.",
+        "verification": {
+          "batch": "L05 planet report sort names use bounded views",
+          "source_commit": "44324bd329a28d6c347eacc0551810ee266768bc",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. The first sort key still truncates into the same 80-byte scratch array at complete UTF-8 boundaries; comparison keeps the same lexical ordering and tie results.",
+          "api_audit": "Planet-name sorting uses PLANETNAMERESULT::view and a bounded prefix comparison instead of raw C-string pointers and strcmp.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
+        }
       }
     },
     {
@@ -27781,10 +27821,10 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 battle lookup returns an optional typed view",
-    "status": "Source commit cf4a9687 verified locally; ledger checkpoint pending publication.",
-    "parent": "2f4a68494dd2b9c0c650aa9c833880150023836b",
-    "change": "BtlDataGet returns an optional borrowed battle data view; battle summary helpers consume the typed view.",
+    "batch": "L05 planet report sort names use bounded views",
+    "status": "Source commit 44324bd3 verified locally; ledger checkpoint pending publication.",
+    "parent": "6e1a3579a0b4368a719c71f494aea035949a865d",
+    "change": "Planet report sorting compares bounded name views while preserving the 80-byte UTF-8 prefix key.",
     "verification": {
       "batch": "L06 native file queries return bool",
       "source_commits": [
@@ -28201,7 +28241,7 @@
       }
     ],
     "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "latest_change": "L06 battle lookup returns an optional typed view",
+    "latest_change": "L05 planet report sort names use bounded views",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -28220,12 +28260,12 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "cf4a9687e05a3856c9255f7793de207dd82916fb",
-    "latest_batch_status": "Source commit cf4a9687 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_source_commit": "44324bd329a28d6c347eacc0551810ee266768bc",
+    "latest_batch_status": "Source commit 44324bd3 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
-      "batch": "L06 battle lookup returns an optional typed view",
-      "source_commit": "cf4a9687e05a3856c9255f7793de207dd82916fb",
+      "batch": "L05 planet report sort names use bounded views",
+      "source_commit": "44324bd329a28d6c347eacc0551810ee266768bc",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "native_regression": {
@@ -28235,14 +28275,14 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged. Battle lookup, row rendering, report sorting, click selection and battle summaries produce the same results; packed records are unchanged.",
-      "api_audit": "BtlDataGet returns optional<NATIVEBATTLEDATAVIEW>. CBattleUnits and CBattleKills accept the typed view; report callers no longer pass raw battle-data pointers or rebuild a view at each use.",
+      "baseline": "Unchanged. The first sort key still truncates into the same 80-byte scratch array at complete UTF-8 boundaries; comparison keeps the same lexical ordering and tie results.",
+      "api_audit": "Planet-name sorting uses PLANETNAMERESULT::view and a bounded prefix comparison instead of raw C-string pointers and strcmp.",
       "platform": "Current-source Windows and Linux qualification remains outstanding.",
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L06 battle lookup returns an optional typed view",
-      "source_commit": "cf4a9687e05a3856c9255f7793de207dd82916fb",
+      "batch": "L05 planet report sort names use bounded views",
+      "source_commit": "44324bd329a28d6c347eacc0551810ee266768bc",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "native_regression": {
@@ -28252,11 +28292,11 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; battle report and selection behavior and wire layout remain unchanged.",
-      "api_audit": "BtlDataGet returns optional<NATIVEBATTLEDATAVIEW>; unit/death helpers and report callers use the typed view.",
+      "baseline": "Unchanged; planet-name sort keys retain their prior 80-byte output capacity, UTF-8 truncation and ordering.",
+      "api_audit": "Planet report sorting uses bounded PLANETNAMERESULT views instead of raw C-string pointers and strcmp.",
       "platform": "Current-source Windows and Linux qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit cf4a9687 verified locally; ledger checkpoint pending publication.",
+      "status": "Source commit 44324bd3 verified locally; ledger checkpoint pending publication.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
@@ -28777,8 +28817,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "cf4a9687e05a3856c9255f7793de207dd82916fb",
-  "latest_batch_status": "Source commit cf4a9687 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "44324bd329a28d6c347eacc0551810ee266768bc",
+  "latest_batch_status": "Source commit 44324bd3 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28902,10 +28942,10 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L06 battle lookup returns an optional typed view",
+  "latest_change": "L05 planet report sort names use bounded views",
   "latest_batch_verification": {
-    "batch": "L06 battle lookup returns an optional typed view",
-    "source_commit": "cf4a9687e05a3856c9255f7793de207dd82916fb",
+    "batch": "L05 planet report sort names use bounded views",
+    "source_commit": "44324bd329a28d6c347eacc0551810ee266768bc",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
@@ -28915,14 +28955,14 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. Battle lookup, row rendering, report sorting, click selection and battle summaries produce the same results; packed records are unchanged.",
-    "api_audit": "BtlDataGet returns optional<NATIVEBATTLEDATAVIEW>. CBattleUnits and CBattleKills accept the typed view; report callers no longer pass raw battle-data pointers or rebuild a view at each use.",
+    "baseline": "Unchanged. The first sort key still truncates into the same 80-byte scratch array at complete UTF-8 boundaries; comparison keeps the same lexical ordering and tie results.",
+    "api_audit": "Planet-name sorting uses PLANETNAMERESULT::view and a bounded prefix comparison instead of raw C-string pointers and strcmp.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L06 battle lookup returns an optional typed view",
-    "source_commit": "cf4a9687e05a3856c9255f7793de207dd82916fb",
+    "batch": "L05 planet report sort names use bounded views",
+    "source_commit": "44324bd329a28d6c347eacc0551810ee266768bc",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
@@ -28932,11 +28972,11 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; battle report and selection behavior and wire layout remain unchanged.",
-    "api_audit": "BtlDataGet returns optional<NATIVEBATTLEDATAVIEW>; unit/death helpers and report callers use the typed view.",
+    "baseline": "Unchanged; planet-name sort keys retain their prior 80-byte output capacity, UTF-8 truncation and ordering.",
+    "api_audit": "Planet report sorting uses bounded PLANETNAMERESULT views instead of raw C-string pointers and strcmp.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit cf4a9687 verified locally; ledger checkpoint pending publication.",
+    "status": "Source commit 44324bd3 verified locally; ledger checkpoint pending publication.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
