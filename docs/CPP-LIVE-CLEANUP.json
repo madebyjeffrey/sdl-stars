@@ -2716,7 +2716,8 @@
         "battle-damage-helper-inputs-and-result",
         "macinti-fleet-potency-typed-result",
         "colonizer-build-decision-and-count-result",
-        "colonizable-planet-search-result-and-explicit-worm-search"
+        "colonizable-planet-search-result-and-explicit-worm-search",
+        "ai-ship-design-status-span-and-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces"
@@ -28673,6 +28674,31 @@
       "api_audit": "FReadLegacyRacePlayer now receives a bounded byte span and derives its bounds from the span. The saved player and legacy wire layouts are unchanged.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Return AI ship design status values",
+      "parent": "ed82a3b0",
+      "source_commit": "ec3df37e",
+      "macos_sdl_debug_build": "make test-unit and make test-host rebuilt strict owned source and standalone header checks without new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
+      "api_audit": "CheckAiShdefStatus accepts its fixed 16-byte recycled-design buffer as std::span and returns AISHDEFSTATUSRESULT with the existing count and latest design index instead of a mutable latest-index output pointer. All AI callers consume the returned values; no game state, random-call order, or stored layouts changed.",
+      "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -30152,14 +30178,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "ed82a3b0",
-  "latest_batch_status": "Source commit ed82a3b0 verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "ec3df37e",
+  "latest_batch_status": "Source commit ec3df37e verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "ed82a3b0",
+      "source_commit": "ec3df37e",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -30219,10 +30245,10 @@
         ],
         "result": "Fresh lexical scan of src and compat/win32/include/src; comments/literals not parsed separately by this quick check. Maintained cleanup manifests remain authoritative for full audits."
       },
-      "last_verified_batch": "IdNearestColonizablePlanet typed result with explicit wormhole-search selection; 18 desktop units, 29 host units, both 519-checkpoint regressions and tutorial smoke pass.",
+      "last_verified_batch": "CheckAiShdefStatus span and AISHDEFSTATUSRESULT conversion; 18 desktop units, 29 host units, both 519-checkpoint regressions and tutorial smoke pass.",
       "typed_battle_damage_result": "DAMAGERESULT replaces the mutable beam-damage output and optional mutable torpedo kill-limit pointer.",
       "typed_ai_result": "MACWARFLEETPOTENCYRESULT replaces the nullable cEquiv output pointer.",
-      "typed_ai_results": "MACWARFLEETPOTENCYRESULT, COLONIZERBUILDRESULT and COLONIZABLEPLANETRESULT replace nullable AI output pointers."
+      "typed_ai_results": "MACWARFLEETPOTENCYRESULT, COLONIZERBUILDRESULT, COLONIZABLEPLANETRESULT and AISHDEFSTATUSRESULT replace nullable AI output pointers; CheckAiShdefStatus also takes its fixed recycled-design buffer as std::span."
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -30398,12 +30424,12 @@
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
   },
-  "latest_change": "Return colonizable planet search values",
+  "latest_change": "Return AI ship design status values",
   "latest_batch_verification": {
-    "batch": "Return colonizable planet search values",
-    "parent": "649bd121",
-    "source_commit": "ed82a3b0",
-    "macos_sdl_debug_build": "make test-unit and make test-host rebuild strict owned source and standalone header checks without new warnings.",
+    "batch": "Return AI ship design status values",
+    "parent": "ed82a3b0",
+    "source_commit": "ec3df37e",
+    "macos_sdl_debug_build": "make test-unit and make test-host rebuilt strict owned source and standalone header checks without new warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30420,15 +30446,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
-    "api_audit": "IdNearestColonizablePlanet returns COLONIZABLEPLANETRESULT with the selected planet ID and borrowed wormhole pointer instead of a nullable pointer-to-pointer. The explicit fFindWorm argument preserves whether callers perform LpthWormFind and consume random values. No game state, AI target choices, or stored layouts changed.",
+    "api_audit": "CheckAiShdefStatus accepts its fixed 16-byte recycled-design buffer as std::span and returns AISHDEFSTATUSRESULT with the existing count and latest design index instead of a mutable latest-index output pointer. All AI callers consume the returned values; no game state, random-call order, or stored layouts changed.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Return colonizable planet search values",
-    "parent": "649bd121",
-    "source_commit": "ed82a3b0",
-    "macos_sdl_debug_build": "make test-unit and make test-host rebuild strict owned source and standalone header checks without new warnings.",
+    "batch": "Return AI ship design status values",
+    "parent": "ed82a3b0",
+    "source_commit": "ec3df37e",
+    "macos_sdl_debug_build": "make test-unit and make test-host rebuilt strict owned source and standalone header checks without new warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30445,15 +30471,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
-    "api_audit": "IdNearestColonizablePlanet returns COLONIZABLEPLANETRESULT with the selected planet ID and borrowed wormhole pointer instead of a nullable pointer-to-pointer. The explicit fFindWorm argument preserves whether callers perform LpthWormFind and consume random values. No game state, AI target choices, or stored layouts changed.",
+    "api_audit": "CheckAiShdefStatus accepts its fixed 16-byte recycled-design buffer as std::span and returns AISHDEFSTATUSRESULT with the existing count and latest design index instead of a mutable latest-index output pointer. All AI callers consume the returned values; no game state, random-call order, or stored layouts changed.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit ed82a3b0 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit ec3df37e verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
-    "next": "Continue the L05 text/scratch audits and L06 remaining buffer/length audit, then qualify current develop on Windows and Linux."
+    "next": "Continue the L05 bounded-text and scratch/borrowed-return audits, the L06 remaining buffer/length audit, then qualify current develop on Windows and Linux."
   }
 }
