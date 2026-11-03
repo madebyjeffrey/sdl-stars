@@ -28060,8 +28060,8 @@
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
     "latest_source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
-    "latest_batch_status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
-    "latest_published_head": "f63ff466",
+    "latest_batch_status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
       "batch": "L05 import cleanup roots use string views",
       "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
@@ -28078,7 +28078,8 @@
       "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
       "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass."
+      "diff_check": "Pass.",
+      "ledger_commit": "4155e4b0ee388e05d227dc38ca3b0b845b7141fa"
     },
     "latest_progress_batch": {
       "batch": "L05 import cleanup roots use string views",
@@ -28097,13 +28098,14 @@
       "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification."
+      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification.",
+      "ledger_commit": "4155e4b0ee388e05d227dc38ca3b0b845b7141fa"
     }
   },
   "milestone_d_checkpoint": {
@@ -28564,7 +28566,7 @@
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
     "latest_source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
-    "latest_batch_status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_batch_status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_change": "L05 import cleanup roots use string views",
     "latest_batch_verification": {
       "batch": "L05 import cleanup roots use string views",
@@ -28582,7 +28584,8 @@
       "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
       "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass."
+      "diff_check": "Pass.",
+      "ledger_commit": "4155e4b0ee388e05d227dc38ca3b0b845b7141fa"
     },
     "latest_progress_batch": {
       "batch": "L05 import cleanup roots use string views",
@@ -28601,23 +28604,24 @@
       "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification."
+      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification.",
+      "ledger_commit": "4155e4b0ee388e05d227dc38ca3b0b845b7141fa"
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
-    "latest_published_head": "f63ff466"
+    "latest_published_head": "4155e4b0"
   },
   "latest_source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
-  "latest_batch_status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_batch_status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
