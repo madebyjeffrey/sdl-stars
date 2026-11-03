@@ -71,7 +71,7 @@ LRESULT  MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &rc2, 0);
         crFore = win32::SetTextColor(hdc, app.lpui->crButtonText);
         crBack = win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        cch = std::strlen(app.lpui->szMineralTitle);
+        cch = static_cast<std::int16_t>(app.lpui->cchMineralTitle);
         dxMax = rc2.right - rc2.left - 24;
         while (cch > 0 && LOWORD(GetTextExtent(hdc, app.lpui->szMineralTitle, cch)) > dxMax) {
             cch = static_cast<std::int16_t>(CchUtf8Prefix(app.lpui->szMineralTitle, cch - 1));
@@ -1201,7 +1201,7 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
         CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         psz = szObjectName.data();
     }
-    CchCopyUtf8Prefix(std::span{app.lpui->szMineralTitle}, psz);
+    app.lpui->cchMineralTitle = CchCopyUtf8Prefix(std::span{app.lpui->szMineralTitle}, psz);
     ControlIO().pfnInvalidateRect(hwnd, nullptr, 1);
     if (fVisCB) {
         fVisCB = app.state.lpThings[app.state.sel.scan.ith].ith() == ithMinefield && app.state.lpThings[app.state.sel.scan.ith].thm().iType() == mineStandard && app.state.lpThings[app.state.sel.scan.ith].iplr() == app.state.idPlayer &&
