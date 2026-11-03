@@ -1175,10 +1175,10 @@ void PlanetClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t s
                     } else {
                         tile = prgtile[iCur];
                         if (i < iCur) {
-                            std::memmove(prgtile + (i + 1), prgtile + i, (iCur - i) * sizeof(TILE));
+                            std::move_backward(prgtile + i, prgtile + iCur, prgtile + iCur + 1);
                             iCur++;
                         } else {
-                            std::memmove(prgtile + iCur, prgtile + (iCur + 1), (i - iCur - 1) * sizeof(TILE));
+                            std::move(prgtile + iCur + 1, prgtile + i, prgtile + iCur);
                             i--;
                         }
                         prgtile[i] = tile;
@@ -1774,7 +1774,7 @@ void FillShipDD(APPSESSION &app, std::int16_t idSkip) {
             (idSkip != idflNone && lpfl->id != idSkip && lpfl->pt.x == app.state.sel.fl.pt.x && lpfl->pt.y == app.state.sel.fl.pt.y)) {
             szObjectName = PszGetFleetName(app, lpfl->id);
             CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
-            std::memmove(&app.state.szWork[1], app.state.szWork, 50);
+            std::move_backward(app.state.szWork, app.state.szWork + 50, app.state.szWork + 51);
             app.state.szWork[0] = lpfl->iPlayer == app.state.idPlayer ? 32 : 120;
             ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
         }
@@ -1785,7 +1785,7 @@ void FillShipDD(APPSESSION &app, std::int16_t idSkip) {
         if (lpth->ith() == ithMineralPacket && lpth->pt().x() == ptSel.x && lpth->pt().y() == ptSel.y) {
             szObjectName = PszGetThingName(app, lpth->idFull());
             CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
-            std::memmove(&app.state.szWork[1], app.state.szWork, 50);
+            std::move_backward(app.state.szWork, app.state.szWork + 50, app.state.szWork + 51);
             app.state.szWork[0] = lpth->iplr() == app.state.idPlayer ? 32 : 120;
             ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
         }
