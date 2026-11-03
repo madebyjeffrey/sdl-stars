@@ -1741,7 +1741,7 @@ void SortReportCache(APPSESSION &app, ReportType irpt, std::int16_t icol) {
             return;
         }
         app.lpui->vprptCur->cRows = cRows;
-        qsort16(app, rgidRep, cRows, sizeof(std::uint16_t), reinterpret_cast<APPQSORTCOMPARE>(ICompReport));
+        qsort16(app, std::as_writable_bytes(std::span{rgidRep, static_cast<std::size_t>(cRows)}), sizeof(std::uint16_t), reinterpret_cast<APPQSORTCOMPARE>(ICompReport));
         std::memcpy(app.lpui->vlprgidRep, rgidRep, cRows * 2);
         app.lpui->vprptCur->fCached = 1;
     }

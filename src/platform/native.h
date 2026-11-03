@@ -46,7 +46,7 @@ using POINT16 = tagPOINT16;
 
 // qsort16 sorts like Stars' Win16 CRT qsort, which decides the order of
 // elements with equal keys. Turn generation depends on that order.
-void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, int (*compare)(APPSESSION &, const void *, const void *));
+void qsort16(APPSESSION &app, std::span<std::byte> rgb, std::size_t width, int (*compare)(APPSESSION &, const void *, const void *));
 
 /*
  * Files

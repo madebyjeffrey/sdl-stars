@@ -22,11 +22,15 @@ static void qsortSwap16(unsigned char *a, unsigned char *b, std::size_t width) {
 // Reconstructed from 0024:0866-09c6, matching qsort.asm in C700 and MSVC
 // MLIBCEW.LIB. The initial sorted check, first-element pivot, and strict
 // partition boundaries matter: ICompLong compares planet X coordinates only.
-void qsort16(APPSESSION &app, void *base, std::size_t count, std::size_t width, int (*compare)(APPSESSION &, const void *, const void *)) {
-    if (count < 2 || width == 0)
+void qsort16(APPSESSION &app, std::span<std::byte> rgb, std::size_t width, int (*compare)(APPSESSION &, const void *, const void *)) {
+    if (width == 0)
+        return;
+    assert(rgb.size() % width == 0);
+    std::size_t count = rgb.size() / width;
+    if (count < 2)
         return;
 
-    unsigned char *items = static_cast<unsigned char *>(base);
+    unsigned char *items = reinterpret_cast<unsigned char *>(rgb.data());
     std::size_t         i;
     for (i = 1; i < count; ++i) {
         if (static_cast<std::int16_t>(compare(app, items + i * width, items + (i - 1) * width)) < 0)

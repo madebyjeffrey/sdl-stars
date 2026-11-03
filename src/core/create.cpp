@@ -105,7 +105,7 @@ std::int16_t GenerateWorld(APPSESSION &app, std::int16_t fBatchMode) {
         app.state.rgptPlan[i].x = RandomIO().pfnRandom(app, dy) + dx;
         app.state.rgptPlan[i].y = RandomIO().pfnRandom(app, dy) + dx;
     }
-    qsort16(app, app.state.rgptPlan, iMax, sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
+    qsort16(app, std::as_writable_bytes(std::span{app.state.rgptPlan, static_cast<std::size_t>(iMax)}), sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
     pptMax = &app.state.rgptPlan[iMax];
     for (ppt = app.state.rgptPlan; ppt < pptMax; ppt++) {
         if (ppt->y >= 0) {
@@ -171,7 +171,7 @@ std::int16_t GenerateWorld(APPSESSION &app, std::int16_t fBatchMode) {
                 }
             }
         }
-        qsort16(app, app.state.rgptPlan, cPlanMax, sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
+        qsort16(app, std::as_writable_bytes(std::span{app.state.rgptPlan, static_cast<std::size_t>(cPlanMax)}), sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
     }
     std::ranges::fill(grUsed, 0);
     for (i = 0; i < cPlanMax; i++) {
