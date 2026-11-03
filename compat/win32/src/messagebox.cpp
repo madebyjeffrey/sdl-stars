@@ -140,7 +140,7 @@ static INT_PTR  MessageDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
     return 0;
 }
-static BOOL FMessageKey(HWND hwnd, COMPATMSGBOX *lp, const win32::MSG *lpmsg) {
+static bool FMessageKey(HWND hwnd, COMPATMSGBOX *lp, const win32::MSG *lpmsg) {
     HWND hwndFocus = win32::GetFocus();
     LPCSTR psz;
     int i, id = 0, iFocus = -1;

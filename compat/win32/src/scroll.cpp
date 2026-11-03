@@ -131,7 +131,7 @@ static int ISetScrollPos(HWND hwnd, COMPATSCROLL *lpscr, int iPos, BOOL fRedraw)
     return iOld;
 }
 
-static BOOL FSetScrollRange(HWND hwnd, COMPATSCROLL *lpscr, int iMin, int iMax, BOOL fRedraw) {
+static bool FSetScrollRange(HWND hwnd, COMPATSCROLL *lpscr, int iMin, int iMax, BOOL fRedraw) {
     if (iMin > iMax) iMin = iMax = 0;
     if (static_cast<std::int64_t>(iMax) - iMin > std::numeric_limits<std::int32_t>::max()) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
     lpscr->iMin = iMin; lpscr->iMax = iMax;
@@ -208,7 +208,7 @@ struct SCROLLGEOM {
     int cAxis, cCross, dArrow, dThumb, dTravel, iThumb;
 };
 
-static BOOL FScrollGeom(HWND hwnd, SCROLLGEOM *lpg) {
+static bool FScrollGeom(HWND hwnd, SCROLLGEOM *lpg) {
     HWND lpwin = LpCompatWindow(hwnd);
     COMPATSCROLL *lpscr;
     int iPos;

@@ -39,7 +39,7 @@ static std::string_view SzTrimProfile(std::string_view sz) {
     return sz;
 }
 
-static BOOL FEqualProfileName(std::string_view szLeft, std::string_view szRight) {
+static bool FEqualProfileName(std::string_view szLeft, std::string_view szRight) {
     if (szLeft.size() != szRight.size()) return 0;
     return std::equal(szLeft.begin(), szLeft.end(), szRight.begin(), [](char chLeft, char chRight) {
         return std::tolower(static_cast<unsigned char>(chLeft)) == std::tolower(static_cast<unsigned char>(chRight));

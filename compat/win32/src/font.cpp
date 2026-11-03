@@ -73,7 +73,7 @@ static COMPATGLYPH *LpGlyph(COMPATFONT *lpfont, BYTE ch) {
     return LpLoadGlyph(lpfont, lpfont->face.get(), ch, &lpfont->rgglyph[ch]);
 }
 
-static BOOL FFontConfig(void) {
+static bool FFontConfig(void) {
     if (lpConfig) return 1;
     lpConfig.reset(FcConfigCreate());
     if (!lpConfig || !FcConfigParseAndLoad(lpConfig.get(), nullptr, FcTrue) || !FcConfigBuildFonts(lpConfig.get())) {

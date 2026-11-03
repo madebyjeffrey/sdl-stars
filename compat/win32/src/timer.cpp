@@ -69,7 +69,7 @@ BOOL win32::KillTimer(HWND hwnd, UINT_PTR id) {
     return 0;
 }
 
-static BOOL FTimerMatches(COMPATTIMER *lp, HWND hwnd, UINT msgMin, UINT msgMax) {
+static bool FTimerMatches(COMPATTIMER *lp, HWND hwnd, UINT msgMin, UINT msgMax) {
     return ((msgMin == 0 && msgMax == 0) || (msgMin <= win32::WM_TIMER && msgMax >= win32::WM_TIMER)) &&
            (!hwnd || (reinterpret_cast<INT_PTR>(hwnd) == -1 ? !lp->hwnd : hwnd == lp->hwnd || win32::IsChild(hwnd, lp->hwnd)));
 }

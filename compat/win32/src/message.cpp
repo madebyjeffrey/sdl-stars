@@ -278,7 +278,7 @@ void CompatClearMessages() {
     lpLast = nullptr;
 }
 
-static BOOL FMessageMatches(const win32::MSG *lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
+static bool FMessageMatches(const win32::MSG *lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     if (lpmsg->message == win32::WM_QUIT)
         return 1;
     if (reinterpret_cast<INT_PTR>(hwnd) == -1) {
@@ -289,7 +289,7 @@ static BOOL FMessageMatches(const win32::MSG *lpmsg, HWND hwnd, UINT msgMin, UIN
     return (msgMin == 0 && msgMax == 0) || (lpmsg->message >= msgMin && lpmsg->message <= msgMax);
 }
 
-static BOOL FValidFilter(HWND hwnd, UINT msgMin, UINT msgMax) {
+static bool FValidFilter(HWND hwnd, UINT msgMin, UINT msgMax) {
     if (!SDL_IsMainThread() || (hwnd && reinterpret_cast<INT_PTR>(hwnd) != -1 && !LpCompatWindow(hwnd)) || msgMin > msgMax) {
         SDL_SetError("Invalid window or message filter on Win32 UI thread");
         return 0;
@@ -297,7 +297,7 @@ static BOOL FValidFilter(HWND hwnd, UINT msgMin, UINT msgMax) {
     return 1;
 }
 
-static BOOL FQueuedMessage(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT flags, BOOL fTimer) {
+static bool FQueuedMessage(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT flags, BOOL fTimer) {
     COMPATMESSAGE *lpmsg, *lpPrev = nullptr;
 
     for (lpmsg = lpFirst; lpmsg; lpPrev = lpmsg, lpmsg = lpmsg->lpNext) {

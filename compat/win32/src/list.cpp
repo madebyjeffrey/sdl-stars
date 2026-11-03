@@ -32,8 +32,8 @@ unsigned NCompatListMutation(HWND hwnd) { return hwnd->lplist ? hwnd->lplist->nM
 
 void CompatDestroyList(HWND hwnd) { hwnd->lplist.reset(); }
 
-static BOOL FMulti(HWND hwnd) { return !hwnd->lpcombo && (hwnd->dwStyle & (win32::LBS_MULTIPLESEL | win32::LBS_EXTENDEDSEL)) != 0; }
-static BOOL FOwnerList(HWND hwnd) { return (hwnd->dwStyle & (hwnd->lpcombo ? win32::CBS_OWNERDRAWFIXED : win32::LBS_OWNERDRAWFIXED)) != 0; }
+static bool FMulti(HWND hwnd) { return !hwnd->lpcombo && (hwnd->dwStyle & (win32::LBS_MULTIPLESEL | win32::LBS_EXTENDEDSEL)) != 0; }
+static bool FOwnerList(HWND hwnd) { return (hwnd->dwStyle & (hwnd->lpcombo ? win32::CBS_OWNERDRAWFIXED : win32::LBS_OWNERDRAWFIXED)) != 0; }
 static void NotifyList(HWND hwnd, UINT code) {
     HWND lp = LpCompatWindow(hwnd);
     if (lp && lp->hwndParent && (lp->dwStyle & win32::LBS_NOTIFY))
@@ -201,7 +201,7 @@ static void DragList(HWND hwnd, LPARAM l) {
     } else if (hwnd->dwStyle & win32::LBS_EXTENDEDSEL) ExtendedSelectList(hwnd, i, (lp->grfDrag & win32::MK_CONTROL) != 0, 1, 0);
     else UserSelectList(hwnd, i, FMulti(hwnd), 0);
 }
-static BOOL FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, const RECT *lprcItem) {
+static bool FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, const RECT *lprcItem) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     DRAWITEMSTRUCT ds = {};

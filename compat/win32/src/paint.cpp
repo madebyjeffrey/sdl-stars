@@ -73,7 +73,7 @@ static PALETTEENTRY *RgpeCompatPalette(COMPATOBJECT *lpobj) {
     return lpobj->fStock ? rgpeDefault : lpobj->rgpe.get();
 }
 
-static BOOL FColor(COLORREF cr) {
+static bool FColor(COLORREF cr) {
     return (cr >> 24) <= 2;
 }
 static COLORREF CrPalette(HDC lpdc, COLORREF cr) {
@@ -317,7 +317,7 @@ BOOL FCompatSetDCScale(HDC hdc, int iScale) {
     return 1;
 }
 
-static BOOL FCanvas(HWND hwnd) {
+static bool FCanvas(HWND hwnd) {
     SDL_Surface *lpnew;
     SDL_Texture *lptex;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
@@ -385,7 +385,7 @@ static BOOL FCanvas(HWND hwnd) {
 
 BOOL FCompatCanvas(HWND hwnd) { return FCanvas(hwnd); }
 
-static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, std::int64_t x, std::int64_t y, const RECT *lprcClip, int iScale) {
+static bool FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, std::int64_t x, std::int64_t y, const RECT *lprcClip, int iScale) {
     HWND lp;
     RECT rc, client, clip;
     SDL_Rect src, dst;
@@ -435,7 +435,7 @@ static BOOL FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, std::int64_t x, 
     return 1;
 }
 
-static BOOL FPendingPaintTree(HWND hwnd) {
+static bool FPendingPaintTree(HWND hwnd) {
     HWND lp;
 
     if (hwnd->hdcPaint || hwnd->fUpdate) return 1;
@@ -706,7 +706,7 @@ int win32::ReleaseDC(HWND hwnd, HDC hdc) {
     return fOk;
 }
 
-static BOOL FAddUpdate(std::vector<RECT> &rgrc, RECT rc) {
+static bool FAddUpdate(std::vector<RECT> &rgrc, RECT rc) {
     if (rc.left >= rc.right || rc.top >= rc.bottom) return 1;
     for (const RECT &rcExisting : rgrc)
         if (rc.left >= rcExisting.left && rc.top >= rcExisting.top &&
@@ -717,7 +717,7 @@ static BOOL FAddUpdate(std::vector<RECT> &rgrc, RECT rc) {
     return 1;
 }
 
-static BOOL FSubtractUpdate(std::vector<RECT> &rgrc, RECT rc, const RECT *lprcCut) {
+static bool FSubtractUpdate(std::vector<RECT> &rgrc, RECT rc, const RECT *lprcCut) {
     RECT hit;
     if (!win32::IntersectRect(&hit, &rc, lprcCut)) return FAddUpdate(rgrc, rc);
     return FAddUpdate(rgrc, RECT{rc.left, rc.top, rc.right, hit.top}) &&
@@ -756,7 +756,7 @@ BOOL win32::InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
     return 1;
 }
 
-static BOOL FPaintClip(HDC lpdc, HWND hwnd) {
+static bool FPaintClip(HDC lpdc, HWND hwnd) {
     try { lpdc->rgrcPaint = hwnd->rgrcUpdate; }
     catch (const std::bad_alloc &) { return 0; }
     catch (const std::length_error &) { return 0; }
@@ -855,7 +855,7 @@ static SDL_Surface *LpDCSurface(HDC lpdc) {
     return lpdc->fScreen || lpdc->fMemory || FCanvas(lpdc->hwnd) ? LpDCRasterSurface(lpdc) : nullptr;
 }
 
-static BOOL FClip(HDC lpdc, RECT *lprc) {
+static bool FClip(HDC lpdc, RECT *lprc) {
     RECT rcClient;
     SDL_Surface *lpsurface = LpDCSurface(lpdc);
 
@@ -1013,13 +1013,13 @@ int win32::ExcludeClipRect(HDC hdc, int left, int top, int right, int bottom) {
     return IClipRect(hdc, left, top, right, bottom, 1);
 }
 
-static BOOL FRectPixel(std::span<const RECT> rgrc, std::int64_t x, std::int64_t y) {
+static bool FRectPixel(std::span<const RECT> rgrc, std::int64_t x, std::int64_t y) {
     for (const RECT &rc : rgrc)
         if (x >= rc.left && x < rc.right && y >= rc.top && y < rc.bottom) return 1;
     return 0;
 }
 
-static BOOL FRegionPixel(HDC lpdc, std::int64_t x, std::int64_t y) {
+static bool FRegionPixel(HDC lpdc, std::int64_t x, std::int64_t y) {
     return (!lpdc->fPaint || FRectPixel(lpdc->rgrcPaint, x, y)) &&
            (!lpdc->fRegion || FRectPixel(std::span{lpdc->rgrcRegion.get(), lpdc->crcRegion}, x, y));
 }
@@ -1104,7 +1104,7 @@ HBRUSH win32::CreatePatternBrush(HBITMAP hbmp) {
     return reinterpret_cast<HBRUSH>(lpobj);
 }
 
-static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop);
+static bool FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop);
 
 int win32::FillRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
     HDC lpdc = LpDC(hdc);
@@ -1146,11 +1146,11 @@ int win32::FrameRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
     return win32::FillRect(hdc, &rc, hbr);
 }
 
-static BOOL FUsesSource(BYTE rop) {
+static bool FUsesSource(BYTE rop) {
     return ((rop ^ (rop >> 2)) & 0x33) != 0;
 }
 
-static BOOL FUsesPattern(BYTE rop) {
+static bool FUsesPattern(BYTE rop) {
     return ((rop ^ (rop >> 4)) & 0x0f) != 0;
 }
 
@@ -1181,7 +1181,7 @@ static void ShapePixel(HDC lpdc, const RECT *lprc, std::int64_t x, std::int64_t 
     }
 }
 
-static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop) {
+static bool FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop) {
     RECT rc, rcClip, rcPart, rcPaint;
     SDL_Rect sdlrc;
     SDL_Surface *lpsurface;
@@ -1426,7 +1426,7 @@ static void PenPixel(HDC lpdc, const RECT *lprc, std::int64_t x, std::int64_t y,
 }
 
 // Liang-Barsky clipping bounds work by client size even with INT_MIN/MAX endpoints.
-static BOOL FLineBound(double p, double q, double *lpt0, double *lpt1) {
+static bool FLineBound(double p, double q, double *lpt0, double *lpt1) {
     double t;
 
     if (p == 0)
@@ -1733,7 +1733,7 @@ static void DrawFontRect(COMPATTEXTDRAW *lpdraw, std::int64_t dx, int yTop, int 
         }
 }
 
-static BOOL FDrawText(HDC lpdc, int x, int y, std::string_view sz, UINT options,
+static bool FDrawText(HDC lpdc, int x, int y, std::string_view sz, UINT options,
                       const RECT *lprc, std::span<const INT> rgdx) {
     COMPATTEXTDRAW draw;
     std::optional<SIZE> textSize;
@@ -2005,7 +2005,7 @@ int win32::GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     return static_cast<int>(cCopy);
 }
 
-static BOOL FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, UINT usage, COMPATDIB *lpdib) {
+static bool FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, UINT usage, COMPATDIB *lpdib) {
     struct { BITMAPINFOHEADER bi; RGBQUAD rgq[256]; } info;
     UINT c, i;
     WORD index;

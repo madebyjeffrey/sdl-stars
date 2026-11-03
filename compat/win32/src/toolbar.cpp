@@ -53,7 +53,7 @@ static int IndexButton(COMPATTOOLBAR *lp, int id) {
     return -1;
 }
 
-static BOOL FArrow(COMPATTOOLBAR *lp, TBBUTTON *lpbtn) {
+static bool FArrow(COMPATTOOLBAR *lp, TBBUTTON *lpbtn) {
     return (lpbtn->fsStyle & win32::BTNS_WHOLEDROPDOWN) ||
         ((lpbtn->fsStyle & win32::BTNS_DROPDOWN) && (lp->dwExStyle & win32::TBSTYLE_EX_DRAWDDARROWS));
 }

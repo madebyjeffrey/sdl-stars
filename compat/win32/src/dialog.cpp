@@ -75,7 +75,7 @@ BOOL win32::MapDialogRect(HWND hwnd, LPRECT lprc) {
     lprc->top = win32::MulDiv(lprc->top, lp->cyDlgUnit, 8); lprc->bottom = win32::MulDiv(lprc->bottom, lp->cyDlgUnit, 8);
     return 1;
 }
-static BOOL FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
+static bool FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
     LOGFONTA lf = {};
     HDC hdc;
     HGDIOBJ hold;

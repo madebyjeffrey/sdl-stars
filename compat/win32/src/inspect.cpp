@@ -155,7 +155,7 @@ std::optional<STARSCOMPATSNAPSHOT> StarsCompatCaptureHierarchy() {
     return std::move(rgWindow);
 }
 
-static BOOL FWriteString(NATIVEFILE *lpfile, std::string_view szValue) {
+static bool FWriteString(NATIVEFILE *lpfile, std::string_view szValue) {
     char rgb[4], *lpEnd;
     std::optional<UTF8CHAR> uch;
     if (ChPutNativeFile('"', lpfile) == EOF) return 0;

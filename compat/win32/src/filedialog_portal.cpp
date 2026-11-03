@@ -33,7 +33,7 @@ static DBusHandlerResult SavePortalResponse(DBusConnection *lpBus, DBusMessage *
     else lp->fOverflow = 1;
     return DBUS_HANDLER_RESULT_HANDLED;
 }
-static BOOL FOption(DBusMessageIter *lpOptions, LPCSTR pszKey, LPCSTR pszType,
+static bool FOption(DBusMessageIter *lpOptions, LPCSTR pszKey, LPCSTR pszType,
                     int type, const void *lpValue) {
     DBusMessageIter entry, value;
     return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) &&
@@ -43,7 +43,7 @@ static BOOL FOption(DBusMessageIter *lpOptions, LPCSTR pszKey, LPCSTR pszType,
            dbus_message_iter_close_container(&entry, &value) &&
            dbus_message_iter_close_container(lpOptions, &entry);
 }
-static BOOL FFolderOption(DBusMessageIter *lpOptions, std::string_view szFolder) {
+static bool FFolderOption(DBusMessageIter *lpOptions, std::string_view szFolder) {
     DBusMessageIter entry, value, bytes;
     const char *pszKey = "current_folder";
     const char *pszFolder = szFolder.data();
@@ -57,7 +57,7 @@ static BOOL FFolderOption(DBusMessageIter *lpOptions, std::string_view szFolder)
            dbus_message_iter_close_container(&entry, &value) &&
            dbus_message_iter_close_container(lpOptions, &entry);
 }
-static BOOL FFilter(DBusMessageIter *lpIter, const FILESELECTIONFILTER &filterValue) {
+static bool FFilter(DBusMessageIter *lpIter, const FILESELECTIONFILTER &filterValue) {
     DBusMessageIter filter, patterns, item;
     std::string_view szSourcePattern, szPatternView;
     const char *pszName = filterValue.szName.c_str();
@@ -96,7 +96,7 @@ static BOOL FFilter(DBusMessageIter *lpIter, const FILESELECTIONFILTER &filterVa
 done:
     return fOk;
 }
-static BOOL FFilterOptions(DBusMessageIter *lpOptions, const std::vector<FILESELECTIONFILTER> &rgFilters, std::size_t iFilter) {
+static bool FFilterOptions(DBusMessageIter *lpOptions, const std::vector<FILESELECTIONFILTER> &rgFilters, std::size_t iFilter) {
     DBusMessageIter entry, value, filters;
     const char *pszKey = "filters";
     std::size_t i;
@@ -122,7 +122,7 @@ static int IHex(char ch) {
     if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
     return -1;
 }
-static BOOL FUriPath(LPCSTR pszUri, char *pszPath, std::size_t cbPath) {
+static bool FUriPath(LPCSTR pszUri, char *pszPath, std::size_t cbPath) {
     std::size_t c = 0;
     int hi, lo;
     unsigned char ch;
@@ -181,7 +181,7 @@ static int IResponse(DBusMessage *lpMessage, const std::vector<FILESELECTIONFILT
     }
     return fUri ? 1 : -1;
 }
-static BOOL FPumpChooser(HWND hwndOwner) {
+static bool FPumpChooser(HWND hwndOwner) {
     win32::MSG msg;
     while (win32::PeekMessageA(&msg, nullptr, 0, 0, win32::PM_REMOVE)) {
         if (msg.message == win32::WM_QUIT) { win32::PostQuitMessage(static_cast<int>(msg.wParam)); return 0; }

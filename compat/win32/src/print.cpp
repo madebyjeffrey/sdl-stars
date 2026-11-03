@@ -165,7 +165,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     if (idPrintNext == std::numeric_limits<int>::max()) idPrintNext = 1;
     return idPrintNext++;
 }
-static BOOL FPrintPage(COMPATPRINT *lp, SDL_Surface *lpSource) {
+static bool FPrintPage(COMPATPRINT *lp, SDL_Surface *lpSource) {
     cairo_surface_t *lpImage;
     cairo_t *lpcr;
     BOOL fOk;
@@ -193,7 +193,7 @@ static BOOL FPrintPage(COMPATPRINT *lp, SDL_Surface *lpSource) {
     }
     return fOk;
 }
-static BOOL FPrintMarked(SDL_Surface *lpSurface) {
+static bool FPrintMarked(SDL_Surface *lpSurface) {
     const BYTE *rgb;
     int x, y;
     for (y = 0; y < lpSurface->h; y++) {
@@ -202,7 +202,7 @@ static BOOL FPrintMarked(SDL_Surface *lpSurface) {
     }
     return 0;
 }
-static BOOL FSubmitPrint(COMPATPRINT *lp) {
+static bool FSubmitPrint(COMPATPRINT *lp) {
     const char *rgArgs[16];
     char szCopies[16];
     SDL_Process *lpProcess;

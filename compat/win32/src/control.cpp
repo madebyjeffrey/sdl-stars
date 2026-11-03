@@ -105,7 +105,7 @@ static void ClickControl(HWND hwnd) {
     if (win32::IsWindow(hwnd)) NotifyControl(hwnd, win32::BN_CLICKED);
 }
 
-static BOOL FControlPoint(HWND hwnd, LPARAM l) {
+static bool FControlPoint(HWND hwnd, LPARAM l) {
     RECT rc;
     POINT pt = {static_cast<std::int16_t>(LOWORD(l)), static_cast<std::int16_t>(HIWORD(l))};
     return win32::GetClientRect(hwnd, &rc) && win32::PtInRect(&rc, pt);

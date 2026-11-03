@@ -9,7 +9,7 @@
 #include <string>
 #include <utility>
 
-static BOOL FCombo(HWND hwnd, COMPATCOMBO *lp) { return win32::IsWindow(hwnd) && hwnd->lpcombo.get() == lp; }
+static bool FCombo(HWND hwnd, COMPATCOMBO *lp) { return win32::IsWindow(hwnd) && hwnd->lpcombo.get() == lp; }
 static void SelectCombo(HWND hwnd, int i, BOOL fUser);
 static void HighlightCombo(HWND hwnd, int i) {
     auto lpcomboKeep = hwnd->lpcombo;
@@ -24,7 +24,7 @@ static void HighlightCombo(HWND hwnd, int i) {
     else if (i >= iTop + cVisible) CompatListProc(hwnd, win32::LB_SETTOPINDEX, i - cVisible + 1, 0);
     if (lp->hwndPopup) win32::InvalidateRect(lp->hwndPopup, nullptr, 1);
 }
-static BOOL FOwnerCombo(HWND hwnd) { return (hwnd->dwStyle & win32::CBS_OWNERDRAWFIXED) != 0; }
+static bool FOwnerCombo(HWND hwnd) { return (hwnd->dwStyle & win32::CBS_OWNERDRAWFIXED) != 0; }
 static void NotifyCombo(HWND hwnd, UINT code) {
     if (win32::IsWindow(hwnd) && win32::IsWindow(hwnd->hwndParent))
         win32::SendMessageA(hwnd->hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(hwnd->idChild, code), reinterpret_cast<LPARAM>(hwnd));
@@ -86,7 +86,7 @@ static void CloseCombo(HWND hwnd, BOOL fAccept, BOOL fNotify) {
         if (FCombo(hwnd, lp)) NotifyCombo(hwnd, win32::CBN_CLOSEUP);
     }
 }
-static BOOL FComboDropRect(HWND hwnd, RECT *lprc) {
+static bool FComboDropRect(HWND hwnd, RECT *lprc) {
     auto lpcomboKeep = hwnd->lpcombo;
     COMPATCOMBO *lp = lpcomboKeep.get();
     RECT rc;

@@ -62,7 +62,7 @@ static void InputModifiers(SDL_Keymod mod) {
     rgbInput[win32::VK_SCROLL] = static_cast<BYTE>(((rgbInput[win32::VK_SCROLL] & 0x80) | !!(mod & SDL_KMOD_SCROLL)));
 }
 
-static BOOL FInputPoint(float fx, float fy, int *lpx, int *lpy) {
+static bool FInputPoint(float fx, float fy, int *lpx, int *lpy) {
     if (!std::isfinite(fx) || !std::isfinite(fy) || static_cast<double>(fx) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(fx) > std::numeric_limits<std::int32_t>::max() ||
         static_cast<double>(fy) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(fy) > std::numeric_limits<std::int32_t>::max()) return 0;
     *lpx = static_cast<int>(fx); *lpy = static_cast<int>(fy);
@@ -135,7 +135,7 @@ BOOL win32::GetCursorPos(LPPOINT lppt) {
 
 HWND win32::GetCapture(void) { return LpCompatWindow(hwndCapture); }
 
-static BOOL FCaptureForeground(HWND hwnd) {
+static bool FCaptureForeground(HWND hwnd) {
     HWND hwndRoot = HwndCompatRoot(hwnd);
     HWND hwndFocusRoot = HwndCompatRoot(win32::GetFocus());
 

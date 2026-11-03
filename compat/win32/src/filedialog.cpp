@@ -49,7 +49,7 @@ static thread_local DWORD dwDialogError;
 DWORD win32::CommDlgExtendedError(void) { return dwDialogError; }
 void CompatSetDialogError(DWORD dw) { dwDialogError = dw; }
 
-static BOOL FFilePattern(std::string_view szName, std::string_view szPattern) {
+static bool FFilePattern(std::string_view szName, std::string_view szPattern) {
     std::size_t ichName = 0, ichPattern = 0, ichStar = std::string_view::npos, ichRetry = 0;
     if (szPattern == "*.*") return 1;
     while (ichName < szName.size()) {
@@ -66,7 +66,7 @@ static BOOL FFilePattern(std::string_view szName, std::string_view szPattern) {
     while (ichPattern < szPattern.size() && szPattern[ichPattern] == '*') ichPattern++;
     return ichPattern == szPattern.size();
 }
-static BOOL FFileFilter(COMPATFILEDIALOG *lp, LPCSTR psz) {
+static bool FFileFilter(COMPATFILEDIALOG *lp, LPCSTR psz) {
     std::string_view szPatterns, szPattern;
     std::size_t ichPattern, ichEnd;
     if (lp->cFilter == 0) return 1;
@@ -83,7 +83,7 @@ static BOOL FFileFilter(COMPATFILEDIALOG *lp, LPCSTR psz) {
 static void FreeFileEntries(COMPATFILEDIALOG *lp) {
     lp->rgentry.clear();
 }
-static BOOL FFileEntryBefore(const COMPATFILEENTRY &a, const COMPATFILEENTRY &b) {
+static bool FFileEntryBefore(const COMPATFILEENTRY &a, const COMPATFILEENTRY &b) {
     if (a.fDir != b.fDir) return a.fDir;
     return SDL_strcasecmp(a.szName.c_str(), b.szName.c_str()) < 0;
 }
@@ -112,7 +112,7 @@ static std::optional<std::size_t> CchJoinFile(std::span<char> pszOut, std::strin
     return szPath.size();
 }
 static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(hwnd, psz, "File selection", win32::MB_OK | win32::MB_ICONEXCLAMATION); }
-static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
+static bool FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     const char *pszEntry;
     std::optional<std::string> szEntry;
     NATIVEDIROWNER lpdir{nullptr, ICloseNativeDir};
@@ -153,7 +153,7 @@ static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
     win32::SetWindowTextA(win32::GetDlgItem(hwnd, ID_FILE_PATH), lp->szDir);
     return 1;
 }
-static BOOL FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BOOL fHistory) {
+static bool FChangeFileDirectory(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR psz, BOOL fHistory) {
     char szPath[PATH_MAX], szReal[PATH_MAX], szOld[PATH_MAX];
     std::optional<NATIVEFILEINFO> st;
     std::string szPrevious;
@@ -635,7 +635,7 @@ static DWORD DwFileDialogError(win32::files::FILESELECTIONERROR error) {
     return win32::CDERR_INITIALIZATION;
 }
 
-static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
+static bool FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     DWORD grFlagsAllowed = win32::OFN_HIDEREADONLY | win32::OFN_PATHMUSTEXIST | win32::OFN_FILEMUSTEXIST | win32::OFN_OVERWRITEPROMPT |
                           win32::OFN_NOREADONLYRETURN | win32::OFN_NOCHANGEDIR | win32::OFN_EXPLORER | win32::OFN_EXTENSIONDIFFERENT;
     win32::files::FILESELECTIONREQUEST request;

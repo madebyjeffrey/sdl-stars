@@ -52,7 +52,7 @@ static COMPATMENUITEM *LpItem(HMENU hmenu, UINT id, UINT flags, HMENU *lphmenu, 
     }
     return nullptr;
 }
-static BOOL FMenuDepth(HMENU hmenu, int cDepth) {
+static bool FMenuDepth(HMENU hmenu, int cDepth) {
     HMENU lp = LpMenu(hmenu);
     int i;
     if (!lp || cDepth >= 64) return 0;
@@ -131,7 +131,7 @@ BOOL win32::DestroyMenu(HMENU hmenu) {
     lp->rgitem.reset(); lp->citem = 0; lp->hparent = nullptr;
     return 1;
 }
-static BOOL FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
+static bool FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
     HMENU lp;
     COMPATMENUITEM *lpitem;
     int i;
@@ -499,7 +499,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     win32::InvalidateRect(lppop->hwnd, nullptr, 0); win32::UpdateWindow(lppop->hwnd);
     return 1;
 }
-static BOOL FSelectable(HMENU lp, int i) {
+static bool FSelectable(HMENU lp, int i) {
     return lp && i >= 0 && i < lp->citem && !(lp->rgitem[i].flags & (win32::MF_SEPARATOR | win32::MF_DISABLED | win32::MF_GRAYED));
 }
 static void SelectPopup(COMPATTRACK *lpt, int iLevel, int i, BOOL fMouse) {
@@ -535,7 +535,7 @@ static void ActivatePopup(COMPATTRACK *lpt, int iLevel, BOOL fKeyboard) {
             if (!(lp->rgitem[i].flags & win32::MF_SEPARATOR)) { SelectPopup(lpt, iLevel + 1, i, 0); break; }
     }
 }
-static BOOL FMenuMnemonic(const COMPATMENUITEM *lpitem, WPARAM vk) {
+static bool FMenuMnemonic(const COMPATMENUITEM *lpitem, WPARAM vk) {
     const char *psz = lpitem->psz.get();
     if (!psz || vk > 255) return 0;
     for (; *psz; psz++) if (*psz == '&' && psz[1]) {
@@ -672,7 +672,7 @@ BOOL win32::EndMenu(void) {
     if (!lptrack) return 0;
     lptrack->fDone = 1; return 1;
 }
-static BOOL FMenuTracked(HMENU hmenu) {
+static bool FMenuTracked(HMENU hmenu) {
     COMPATTRACK *lpt;
     int i;
     for (lpt = lptrack; lpt; lpt = lpt->lpPrevious) {

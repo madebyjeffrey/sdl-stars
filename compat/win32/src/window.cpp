@@ -60,13 +60,13 @@ BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, std::string_view psz) {
     return win32::SetWindowTextA(hwnd, std::string{psz}.c_str());
 }
 
-static BOOL FNativePositionable(SDL_Window *lpWindow) {
+static bool FNativePositionable(SDL_Window *lpWindow) {
     const char *pszDriver = CompatInputIO().pfnGetCurrentVideoDriver();
     return !pszDriver || std::strcmp(pszDriver, "wayland") ||
            (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP));
 }
 
-static BOOL FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
+static bool FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
     int x, y;
     std::int64_t xWide = 0, yWide = 0;
 
@@ -367,7 +367,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     // Keep a small handle token until shutdown so stale HWNDs cannot alias a new window.
 }
 
-static BOOL FFullscreenPopup(DWORD dwStyle, DWORD dwExStyle, HMENU hMenu, int x, int y, int dx, int dy) {
+static bool FFullscreenPopup(DWORD dwStyle, DWORD dwExStyle, HMENU hMenu, int x, int y, int dx, int dy) {
     SDL_Rect rc = {x, y, dx, dy}, rcDisplay;
     SDL_DisplayID id;
 
@@ -955,7 +955,7 @@ BOOL CompatGetSurfaceRect(HWND hwnd, RECT *lprc) {
     return win32::SetRect(lprc, 0, 0, dx, dy);
 }
 
-static BOOL FCompatPosition(HWND hwnd, WINDOWPOS *lpwp) {
+static bool FCompatPosition(HWND hwnd, WINDOWPOS *lpwp) {
     RECT rc;
     if (!win32::GetClientRect(hwnd, &rc)) return 0;
     lpwp->cx = rc.right; lpwp->cy = rc.bottom + CyCompatMenuBar(hwnd);
@@ -1003,7 +1003,7 @@ static void KeepCompatOwnedAbove(HWND hwnd) {
     }
 }
 
-static BOOL FCompatInsertAfter(HWND hwnd, HWND hwndAfter) {
+static bool FCompatInsertAfter(HWND hwnd, HWND hwndAfter) {
     HWND lp;
     if (hwndAfter == win32::HWND_TOP || hwndAfter == win32::HWND_BOTTOM ||
         hwndAfter == win32::HWND_TOPMOST || hwndAfter == win32::HWND_NOTOPMOST) return 1;
@@ -1206,7 +1206,7 @@ BOOL win32::GetClientRect(HWND hwnd, LPRECT lprc) {
     return 1;
 }
 
-static BOOL FClientOrigin(HWND hwnd, std::int64_t *lpx, std::int64_t *lpy) {
+static bool FClientOrigin(HWND hwnd, std::int64_t *lpx, std::int64_t *lpy) {
     HWND lpwin = LpCompatWindow(hwnd);
     int x, y;
     if (!lpwin) return 0;
@@ -1221,7 +1221,7 @@ static BOOL FClientOrigin(HWND hwnd, std::int64_t *lpx, std::int64_t *lpy) {
     return 1;
 }
 
-static BOOL FConvertPoint(HWND hwnd, LPPOINT lppt, BOOL fToScreen) {
+static bool FConvertPoint(HWND hwnd, LPPOINT lppt, BOOL fToScreen) {
     std::int64_t x, y;
     if (!lppt || !FClientOrigin(hwnd, &x, &y)) return 0;
     x = static_cast<std::int64_t>(lppt->x) + (fToScreen ? x : -x);

@@ -156,7 +156,7 @@ HICON win32::CopyIcon(HICON hicon) {
     lpNew->fMono = lp->fMono; lpNew->fInvert = lp->fInvert; lpNew->xHot = lp->xHot; lpNew->yHot = lp->yHot;
     return reinterpret_cast<HICON>(lpNew);
 }
-static BOOL FDestroyImage(HICON hicon) {
+static bool FDestroyImage(HICON hicon) {
     COMPATIMAGE *lp = LpCompatImage(hicon);
     if (!lp) return 0;
     if (lp->fShared) return 1; // LoadIcon/LoadCursor handles belong to the module.
@@ -194,7 +194,7 @@ BOOL win32::GetIconInfo(HICON hicon, PICONINFO lpii) {
     *lpii = ii; return 1;
 }
 
-static BOOL FNativeCursor(COMPATIMAGE *lp) {
+static bool FNativeCursor(COMPATIMAGE *lp) {
     BYTE *rg, *data, *mask, *src;
     SDL_Surface *lpColor;
     std::size_t cb;

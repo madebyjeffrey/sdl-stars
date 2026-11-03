@@ -4,7 +4,7 @@
 #include <limits>
 #include <unistd.h>
 
-static BOOL FDisplayRect(BOOL fUsable, LPRECT lprc) {
+static bool FDisplayRect(BOOL fUsable, LPRECT lprc) {
     SDL_Rect rc;
     SDL_DisplayID id;
     if (!FCompatVideo()) return 0;
@@ -15,7 +15,7 @@ static BOOL FDisplayRect(BOOL fUsable, LPRECT lprc) {
     return 1;
 }
 
-static BOOL FVirtualRect(LPRECT lprc, int *lpc) {
+static bool FVirtualRect(LPRECT lprc, int *lpc) {
     SDL_DisplayID *rgid;
     SDL_Rect rc;
     int c, i;

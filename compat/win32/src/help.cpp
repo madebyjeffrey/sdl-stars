@@ -20,7 +20,7 @@
 #include "help_contexts.h"
 #include "installed_data.h"
 
-static BOOL FHelpAssets(const char *pszDirectory) {
+static bool FHelpAssets(const char *pszDirectory) {
     char szFile[PATH_MAX], szStamp[66];
     std::optional<NATIVEFILEINFO> st;
     std::size_t i;

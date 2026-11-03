@@ -16,7 +16,7 @@ static HWND hwndScanInspector;
 static SCANSNAPSHOT snapScanInspector;
 static BOOL fScanInspectorClass;
 
-static BOOL FScannerReady(APPSESSION &app) {
+static bool FScannerReady(APPSESSION &app) {
     if (StarsCompatWindowId(app.lpui->hwndScanner) == 0) return 0;
     return win32::IsWindow(app.lpui->hwndScanner) && win32::IsWindowVisible(app.lpui->hwndScanner) && app.state.game.lid != 0 &&
            app.state.idPlayer >= 0 && app.state.idPlayer < app.state.game.cPlayer && app.state.rglpfl &&
@@ -127,7 +127,7 @@ BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT &snap, std::uint16
     return 1;
 }
 
-static BOOL FWriteScanString(NATIVEFILE *lpfile, std::string_view sz) {
+static bool FWriteScanString(NATIVEFILE *lpfile, std::string_view sz) {
     unsigned ch;
 
     if (!FUtf8Valid(sz) || ChPutNativeFile('"', lpfile) == EOF) return 0;

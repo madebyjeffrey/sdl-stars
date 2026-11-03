@@ -5,7 +5,7 @@
 #include <cstring>
 #include <limits>
 
-static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, std::size_t cbInfo,
+static bool FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, std::size_t cbInfo,
                            const void *lpBits, std::size_t cbBits, COMPATDIB *lpdib) {
     std::size_t i;
 

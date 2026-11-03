@@ -18,7 +18,7 @@ HMODULE win32::GetModuleHandleA(LPCSTR pszName) {
     return reinterpret_cast<HMODULE>(&bModule);
 }
 
-static BOOL FModule(HMODULE hModule) {
+static bool FModule(HMODULE hModule) {
     return SDL_IsMainThread() && (!hModule || hModule == reinterpret_cast<HMODULE>(&bModule));
 }
 
