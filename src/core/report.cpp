@@ -383,7 +383,7 @@ void DumpPlanets(APPSESSION &app) {
                     cchForm = 1;
                     RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(1)));
                 } else {
-                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr).data());
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr).view());
                     RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
                 }
                 if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {

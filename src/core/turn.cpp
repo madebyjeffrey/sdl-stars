@@ -822,7 +822,7 @@ std::int16_t FRunCmdLine(APPSESSION &app) {
                     ich = CchSprintf(szTemp, "%d: ", i + 1);
                 }
                 if (!app.state.gd.fNoHostNames) {
-                    ich += CchSprintf(std::span{szTemp}.subspan(static_cast<std::size_t>(ich)), "\"%s\" ", TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr));
+                    ich += CchSprintf(std::span{szTemp}.subspan(static_cast<std::size_t>(ich)), "\"%s\" ", TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).view());
                 }
                 CchAppendUtf8Prefix(std::span{szTemp}, TextIO().pfnCompressed(app, static_cast<StringId>(idsTurned + app.state.rgOut[i])).data());
                 if (app.state.rgplr[i].fHacker) {

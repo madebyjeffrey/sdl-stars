@@ -584,7 +584,7 @@ void InitScoreDlg(APPSESSION &app, HWND hwnd, std::int16_t fVictory) {
 }
 
 void DrawVCReport(APPSESSION &app, HDC hdc) {
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     std::int16_t  grbitVC;
     std::int16_t  xStart;
     std::int16_t  dxDig;
@@ -613,7 +613,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
     for (i = 0; i < app.state.game.cPlayer; i++) {
         szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
         psz = szPlayerName.data();
-        cch = std::strlen(psz);
+        cch = static_cast<std::int16_t>(szPlayerName.size());
         l = GetTextExtent(hdc, psz, cch);
         dxDig = LOWORD(static_cast<std::int32_t>((static_cast<double>(static_cast<std::uint32_t>(LOWORD(l))) / 1.4142)));
         if (app.state.rgplr[i].fInclude && app.state.rgplr[i].fDead) {
@@ -733,7 +733,7 @@ void DrawVCReport(APPSESSION &app, HDC hdc) {
 
 void DrawScoreReport(APPSESSION &app, HDC hdc) {
     std::string szNumber;
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     std::int16_t  dxDig;
     std::int16_t  yTop;
     POINT16  pt;
@@ -759,7 +759,7 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
     for (i = 0; i < app.state.game.cPlayer; i++) {
         szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr);
         psz = szPlayerName.data();
-        cch = std::strlen(psz);
+        cch = static_cast<std::int16_t>(szPlayerName.size());
         l = GetTextExtent(hdc, psz, cch);
         dx45 = LOWORD(static_cast<std::int32_t>((static_cast<double>(static_cast<std::uint32_t>(LOWORD(l))) / 1.4142)));
         if (app.state.rgplr[i].fInclude && app.state.rgplr[i].fDead) {
@@ -849,7 +849,7 @@ void DrawScoreReport(APPSESSION &app, HDC hdc) {
 }
 
 void DrawHistoryReport(APPSESSION &app, HDC hdc) {
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     char     szT[100];
     RECT     rcChart;
     std::uint16_t dYear;
@@ -988,7 +988,7 @@ void DrawHistoryReport(APPSESSION &app, HDC hdc) {
                 szPlayerName = TextIO().pfnPlayerName(app, i, 1, 1, 0, 0, nullptr);
                 psz = szPlayerName.data();
                 win32::SetTextColor(hdc, i == app.state.idPlayer ? 0xffffff : app.lpui->rgcrPlrHistory[i]);
-                win32::TextOutA(hdc, xCur, yCur, psz, std::strlen(psz));
+                win32::TextOutA(hdc, xCur, yCur, psz, static_cast<int>(szPlayerName.size()));
                 yCur += app.state.dyArial8;
             }
         }

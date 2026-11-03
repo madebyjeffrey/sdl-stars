@@ -559,7 +559,7 @@ void GetVCRStats(APPSESSION &app, std::int16_t itok, std::int32_t *pdpArmor, DV 
 
 void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
     std::array<char, cchCatalogText> szCatalogPsz{};
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     std::int16_t ctok;
     std::int16_t ibmpRace;
     std::int16_t bkMode;
@@ -637,7 +637,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
             y += app.state.dyArial8 + 4;
             szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itok()].iplr, 1, 1, 1, 0, nullptr);
             psz = szPlayerName.data();
-            win32::TextOutA(hdc, x, y, psz, std::strlen(psz));
+            win32::TextOutA(hdc, x, y, psz, static_cast<int>(szPlayerName.size()));
             y += app.state.dyArial8;
             if (BevFromLp(app, app.lpui->vlpbrVCR).itok() == app.lpui->viVCRFocus) {
                 win32::SetTextColor(hdc, 8323072);
@@ -747,7 +747,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                 csh = 0;
                 szPlayerName = TextIO().pfnPlayerName(app, app.state.vrgtok[app.lpui->viVCRFocus].iplr, 1, 1, 1, 0, nullptr);
                 psz = szPlayerName.data();
-                c = std::strlen(psz);
+                c = static_cast<std::int16_t>(szPlayerName.size());
                 win32::TextOutA(hdc, x, y, psz, c);
                 y += app.state.dyArial8;
                 if (app.state.vrgtok[app.lpui->viVCRFocus].grobj == grobjPlanet) {
@@ -1149,7 +1149,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
     fAttack = brc == app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].brc;
     for (i = 0; i < BdvFromLp(app, app.lpui->vlpbdVCR).ctok(); i++) {
         if (app.state.vrgtok[i].brc == brc && app.state.vrgtok[i].csh > 0) {
-            cch = CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr).data());
+            cch = CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr).view());
             if (app.state.vrgtok[i].grobj == grobjPlanet) {
                 lpshdef = app.state.rglpshdefSB[app.state.vrgtok[i].iplr] + (app.state.vrgtok[i].ishdef - 16);
             } else {

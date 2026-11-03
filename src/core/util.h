@@ -25,7 +25,16 @@ std::int32_t  LComputePower(APPSESSION &app, SHDEF *lpshdef);
 void     ComputeShdefPowers(APPSESSION &app);
 std::int32_t  DpShieldOfShdef(APPSESSION &app, SHDEF *lpshdef, std::int16_t iplr);
 std::int16_t  IStargateFromLppl(APPSESSION &app, PLANET *lppl);
-std::array<char, 50> PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr);
+struct PLAYERNAMERESULT {
+    std::array<char, 50> rgch{};
+    std::size_t cch = 0;
+
+    char *data() noexcept { return rgch.data(); }
+    const char *data() const noexcept { return rgch.data(); }
+    std::size_t size() const noexcept { return cch; }
+    std::string_view view() const noexcept { return {rgch.data(), cch}; }
+};
+PLAYERNAMERESULT PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr);
 std::int16_t  FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, std::int32_t *pdmgPeople, std::int32_t *pdmgPeopleMin, std::int32_t *pdmgPeopleSmart, std::int32_t *pdmgBldg, std::int32_t *ppctTerra,
                               std::int16_t *pfMulti);
 void     LinkFleets(APPSESSION &app, std::int16_t fUnused);

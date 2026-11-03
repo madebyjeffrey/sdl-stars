@@ -101,15 +101,15 @@ static int TestLGetFleetStat(APPSESSION &, void *p, int stat) {
     (void)stat;
     return hasCargo;
 }
-static std::array<char, 50> TestPszPlayerName(APPSESSION &, int16_t i, int16_t a, int16_t b, int16_t c, int16_t d, PLAYER *p) {
+static PLAYERNAMERESULT TestPszPlayerName(APPSESSION &, int16_t i, int16_t a, int16_t b, int16_t c, int16_t d, PLAYER *p) {
     (void)i;
     (void)a;
     (void)b;
     (void)c;
     (void)d;
     (void)p;
-    std::array<char, 50> szName{};
-    CchCopyUtf8Prefix(std::span{szName}, szLiteral0);
+    PLAYERNAMERESULT szName{};
+    szName.cch = CchCopyUtf8Prefix(std::span{szName.rgch}, szLiteral0);
     return szName;
 }
 static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &, StringId id) {

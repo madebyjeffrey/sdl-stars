@@ -14,7 +14,7 @@ static std::int16_t dWheelMessages;
 LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     std::array<char, 256> szMessage{};
     std::array<char, cchCatalogText> szCatalogLpsz{};
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
@@ -200,7 +200,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 }
                 if (TextIO().pfnCchGetString(app, idsSCC, std::span{szT}) >= 32) {
                 }
-                cch = CchSprintf(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr), 13, 10);
+                cch = CchSprintf(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}, szT, TextIO().pfnPlayerName(app, lpmsgplr->iPlrFrom, 1, 1, 1, 0, nullptr).view(), 13, 10);
                 if (TextIO().pfnCchGetString(app, idsSCC2, std::span{szT}) >= 32) {
                 }
                 cch += CchSprintf(std::span{reinterpret_cast<char *>(app.lpui->lpb2k), std::size_t{0x800}}.subspan(static_cast<std::size_t>(cch)), szT,

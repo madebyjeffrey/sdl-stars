@@ -299,7 +299,7 @@ std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszForma
     std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPchT{};
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     std::array<char, 360> szLocation{};
     std::int16_t  iMineral;
     std::int16_t  cOut;

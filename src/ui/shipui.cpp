@@ -2421,7 +2421,7 @@ void SetOrdersLbSel(APPSESSION &app, std::int16_t iSel) {
 
 void UpdateOrdersDDs(APPSESSION &app, std::int16_t iLevel) {
     std::array<char, cchCatalogText> szCatalogPsz{};
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     std::int32_t rglSel[3];
     std::int16_t iMin;
     std::int16_t i;

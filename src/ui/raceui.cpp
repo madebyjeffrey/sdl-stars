@@ -122,7 +122,7 @@ LDone:
 
 INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     std::array<char, cchCatalogText> szCatalogPsz{};
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     APPSESSION &app = AppCompatCallbackContext();
 
     std::int16_t     i;

@@ -164,15 +164,15 @@ static void test_PlayerName_owned_results(void) {
     const auto szFirst = TextIO().pfnPlayerName(app, 0, 0, 0, 0, 0, nullptr);
     const auto szSecond = TextIO().pfnPlayerName(app, 1, 0, 0, 0, 0, nullptr);
     TEST_CHECK(!strcmp(app.state.szWork, "outer work"));
-    CchSprintf(szResult, "%s|%s", szFirst, szSecond);
+    CchSprintf(szResult, "%s|%s", szFirst.view(), szSecond.view());
     TEST_CHECK(!strcmp(szResult, "Alpha|Beta"));
     // The host status line writes into the same scratch buffer that used to
     // own the player-name argument.
-    CchSprintf(app.state.szWork, "%s ready", szFirst);
+    CchSprintf(app.state.szWork, "%s ready", szFirst.view());
     TEST_CHECK(!strcmp(app.state.szWork, "Alpha ready"));
-    CchSprintf(szResult, "%s/%s", TextIO().pfnPlayerName(app, 0, 0, 0, 0, 0, nullptr), TextIO().pfnPlayerName(app, 1, 0, 0, 0, 0, nullptr));
+    CchSprintf(szResult, "%s/%s", TextIO().pfnPlayerName(app, 0, 0, 0, 0, 0, nullptr).view(), TextIO().pfnPlayerName(app, 1, 0, 0, 0, 0, nullptr).view());
     TEST_CHECK(!strcmp(szResult, "Alpha/Beta"));
-    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, 0, 1, 1, 1, 0, nullptr), "ready");
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, 0, 1, 1, 1, 0, nullptr).view(), "ready");
     TEST_CHECK(!strcmp(app.state.szWork, "The Alphas are ready.                  "));
 }
 
@@ -207,7 +207,8 @@ static void test_PlayerName_text_contract(void) {
         strcpy(app.state.rgplr[2].szName, item.pszName);
         strcpy(app.state.rgplr[2].szNames, item.pszNames);
         const auto szName = TextIO().pfnPlayerName(app, 2, item.fCapital, item.fPlural, item.fThe, item.grWord, nullptr);
-        TEST_CHECK(!strcmp(szName.data(), item.pszExpected));
+        TEST_CHECK(szName.view() == item.pszExpected);
+        TEST_CHECK(szName.size() == std::strlen(item.pszExpected));
         TEST_CHECK(FUtf8Valid(szName.data()));
     }
 }

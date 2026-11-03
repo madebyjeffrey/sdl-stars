@@ -262,7 +262,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
 void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     HDC     hdc;
     POINT16 pt;
     std::int16_t dy;
@@ -302,7 +302,7 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         szPlayerName = TextIO().pfnPlayerName(app, app.lpui->GlobalPD.iPlayer, 1, 1, 1, 0, nullptr);
         psz = szPlayerName.data();
-        dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
+        dx = LOWORD(GetTextExtent(hdc, psz, static_cast<int>(szPlayerName.size()))) + 8;
         dx2 = LOWORD(GetTextExtent(hdc, "Player #16", 10)) + 8;
         if (dx2 > dx) {
             dx = dx2;

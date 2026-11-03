@@ -132,7 +132,7 @@ std::int16_t InitMDIApp(APPSESSION &app) {
 }
 
 void CreateChildWindows(APPSESSION &app) {
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     char    szData[512];
     char    szNameUtf8[128], szPlayerUtf8[256];
     std::size_t  cch;
@@ -903,7 +903,7 @@ void RestoreSelection(APPSESSION &app) {
 
 void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
     std::array<char, cchCatalogText> szCatalogPsz{};
-    std::array<char, 50> szPlayerName{};
+    PLAYERNAMERESULT szPlayerName{};
     std::array<char, sizeof(app.state.szWork)> szWorkFileFamily{};
     std::string_view szWorkBase;
     std::size_t ichWorkExtension;
@@ -1132,7 +1132,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         y += dyPrint;
                         szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 1, 1, 1, 0, nullptr);
                         psz = szPlayerName.data();
-                        win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, psz, std::strlen(psz));
+                        win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, psz, static_cast<int>(szPlayerName.size()));
                         y += dyPrint;
                         cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsYearD).data(), app.state.game.turn + 2400);
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.szWork, cch);
@@ -1925,7 +1925,7 @@ void DrawHostDialog2(APPSESSION &app, HWND hwnd, HDC hdcIn) {
         if (app.state.gd.fNoHostNames) {
             cch = CchSprintf(app.state.szWork, " %s", szStat);
         } else {
-            cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr), szStat);
+            cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSS).data(), TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).view(), szStat);
         }
         if (app.state.rgplr[i].fHacker) {
             CchAppendUtf8Prefix(std::span{app.state.szWork}, " - HACKER");
