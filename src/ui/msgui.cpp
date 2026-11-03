@@ -38,6 +38,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     COLORREF    crBack;
     RECT        rcActual;
     std::int16_t     cch;
+    std::size_t cchText;
     std::int16_t     iMode;
     char        szT[32];
     MSGPLR     *lpmsgplr;
@@ -238,10 +239,11 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             rcActual = rc;
-            win32::DrawTextA(hdc, lpsz, std::strlen(lpsz), &rcActual, win32::DT_WORDBREAK | win32::DT_CALCRECT | win32::DT_NOPREFIX);
+            cchText = std::strlen(lpsz);
+            win32::DrawTextA(hdc, lpsz, static_cast<int>(cchText), &rcActual, win32::DT_WORDBREAK | win32::DT_CALCRECT | win32::DT_NOPREFIX);
             if (rcActual.bottom <= rc.bottom && rcActual.right <= rc.right) {
                 ui::ShowWindow(app.lpui->hwndMsgScroll, win32::SW_HIDE);
-                win32::DrawTextA(hdc, lpsz, std::strlen(lpsz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
+                win32::DrawTextA(hdc, lpsz, static_cast<int>(cchText), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
             } else {
                 ControlIO().pfnSetWindowText(app.lpui->hwndMsgScroll, lpsz);
                 ExpandRc(&rc, 4, 4);

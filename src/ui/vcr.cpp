@@ -712,9 +712,9 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                     y += app.state.dyArial8;
                 }
                 if ((fJam & 0x40) && dpShields == 0 && dpArmor == 0) {
-                    szCatalogPsz = TextIO().pfnCompressed(app, idsDamage3);
+                    c = TextIO().pfnCchGetString(app, idsDamage3, std::span{szCatalogPsz});
                     psz = szCatalogPsz.data();
-                    win32::TextOutA(hdc, x, y, psz, std::strlen(psz));
+                    win32::TextOutA(hdc, x, y, psz, c);
                     y += app.state.dyArial8;
                 }
                 if (j > 0) {
