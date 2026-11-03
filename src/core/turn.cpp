@@ -1636,7 +1636,7 @@ void MoveFleets(APPSESSION &app) {
                             } else if (!fRanOutOfFuel && GetFuelFree(app, lpfl) > 0) {
                                 lFuelGain = LCalcFuelGainFromRamScoops(app, lpfl, lpord[1].iWarp, dTravel < dActTravel ? dTravel : dActTravel);
                                 if (lFuelGain > 0) {
-                                    lFuelGainAct = ChgCargo(app, grobjFleet, lpfl->id, Fuel, lFuelGain, nullptr);
+                                    lFuelGainAct = ChgCargo(app, grobjFleet, lpfl->id, Fuel, lFuelGain, {});
                                     if (lFuelGain > 32500) {
                                         lFuelGain = 32500;
                                     }

@@ -471,8 +471,8 @@ static void test_Xfer_lookup_and_cargo_fallbacks(void) {
     TEST_ASSERT(FLookupObject(app, grobjOther, id, xf.LpvLookup(grobjOther)));
     TEST_CHECK(xf.idObj() == id && xf.iPlayerObj() == 123);
     TEST_CHECK(ChgCargo(app, static_cast<GrobjClass>(3), id, static_cast<MineralType>(0), 0,
-                        xf.LpvCargo(static_cast<GrobjClass>(3))) == 42);
-    TEST_CHECK(ChgCargo(app, grobjOther, id, static_cast<MineralType>(0), 0, xf.LpvCargo(grobjOther)) == 0);
+                        xf.CargoTarget(static_cast<GrobjClass>(3))) == 42);
+    TEST_CHECK(ChgCargo(app, grobjOther, id, static_cast<MineralType>(0), 0, xf.CargoTarget(grobjOther)) == 0);
     TEST_CHECK(xf.th().idFull() == id && xf.th().pt().x() == 123 && xf.th().pt().y() == 456);
 }
 

@@ -737,7 +737,7 @@ void TransferToOthers(APPSESSION &app) {
             for (i = 0; i < 5; i++) {
                 l2 = lpxfCur->rgcQuan[i];
                 if (l2 != 0) {
-                    l = ChgCargo(app, static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, static_cast<MineralType>(i), l2, nullptr);
+                    l = ChgCargo(app, static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, static_cast<MineralType>(i), l2, {});
                     if (l != l2) {
                         idm = i == 4 ? idmAttemptedTransferColonistsSuccessfullyReceivedRe : idmAttemptedTransferSuccessfullyReceived;
                         idSrc = lpxfCur->id1 | (lpxfCur->grobj1 == 2 ? 0x8000 : 0);
@@ -2071,7 +2071,7 @@ void BreedColonistsInTransit(APPSESSION &app) {
                         continue;
                     lColGain = 1;
                 }
-                lColGainAct = ChgCargo(app, grobjFleet, lpfl->id, Colonists, lColGain, nullptr);
+                lColGainAct = ChgCargo(app, grobjFleet, lpfl->id, Colonists, lColGain, {});
                 if (lColGainAct > 0) {
                     TurnIO().pfnMessage2(app, lpfl->iPlayer, idmColonistsHaveMadeGoodUseTimeIncreasing, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, LOWORD(lColGainAct));
                 }

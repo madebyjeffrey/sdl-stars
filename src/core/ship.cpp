@@ -231,7 +231,7 @@ std::int32_t GetCargoFree(APPSESSION &app, FLEET *lpfl) {
 
 std::int32_t GetFuelFree(APPSESSION &app, FLEET *lpfl) { return ProductionIO().pfnFleetStat(app, lpfl, 1) - lpfl->rgwtMin[4]; }
 
-std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, MineralType iSupply, std::int32_t dChg, void *pobj) {
+std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, MineralType iSupply, std::int32_t dChg, XFER::CARGOTARGET cargoTarget) {
     THING  *pth;
     XFER    xfer;
     std::int16_t i;
@@ -242,8 +242,8 @@ std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, Minera
     switch (grobj) {
     case grobjPlanet:
     case grobjOther:
-        if (pobj) {
-            ppl = static_cast<PLANET *>(pobj);
+        if (!std::holds_alternative<std::monostate>(cargoTarget)) {
+            ppl = std::get<PLANET *>(cargoTarget);
         } else if (grobj == grobjPlanet) {
             PlanetQueryIO().pfnLookup(app, id, &xfer.pl());
             ppl = &xfer.pl();
@@ -263,13 +263,13 @@ std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, Minera
             }
             ppl->rgwtMin[iSupply] += dChg;
         }
-        if (dChg == 0 || pobj || grobj == grobjOther)
+        if (dChg == 0 || !std::holds_alternative<std::monostate>(cargoTarget) || grobj == grobjOther)
             break;
         PlanetQueryIO().pfnLookup(app, idWriteBack, &xfer.pl());
         break;
     case grobjThing:
-        if (pobj) {
-            pth = static_cast<THING *>(pobj);
+        if (!std::holds_alternative<std::monostate>(cargoTarget)) {
+            pth = std::get<THING *>(cargoTarget);
         } else {
             FLookupThing(app, id, &xfer.th());
             pth = &xfer.th();
@@ -293,13 +293,13 @@ std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, Minera
             }
             { const auto rgwtMinForThing = +(LOWORD(dChg)); auto &thForThing = *(pth); thForThing.thp().SetRgwtMin(iSupply, thForThing.thp().rgwtMin(iSupply) + rgwtMinForThing); }
         }
-        if (dChg == 0 || pobj)
+        if (dChg == 0 || !std::holds_alternative<std::monostate>(cargoTarget))
             break;
         FLookupThing(app, idWriteBack, pth);
         break;
     default:
-        if (pobj) {
-            pfl = static_cast<FLEET *>(pobj);
+        if (!std::holds_alternative<std::monostate>(cargoTarget)) {
+            pfl = std::get<FLEET *>(cargoTarget);
         } else {
             FleetQueryIO().pfnLookup(app, id, &xfer.fl());
             pfl = &xfer.fl();
@@ -323,7 +323,7 @@ std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, Minera
             }
             pfl->rgwtMin[iSupply] += dChg;
         }
-        if (dChg != 0 && !pobj) {
+        if (dChg != 0 && std::holds_alternative<std::monostate>(cargoTarget)) {
             FleetQueryIO().pfnLookup(app, idWriteBack, pfl);
         }
     }
@@ -342,16 +342,16 @@ std::int32_t XferSupply(APPSESSION &app, MineralType iSupply, std::int32_t cQuan
     if (iSrc == 0) {
         cQuan = -cQuan;
     }
-    cAvailable = ChgCargo(app, app.state.pxfer[iSrc].grobj, app.state.pxfer[iSrc].id, iSupply, 0, app.state.pxfer[iSrc].LpvCargo(app.state.pxfer[iSrc].grobj));
+    cAvailable = ChgCargo(app, app.state.pxfer[iSrc].grobj, app.state.pxfer[iSrc].id, iSupply, 0, app.state.pxfer[iSrc].CargoTarget(app.state.pxfer[iSrc].grobj));
     if (cQuan > cAvailable) {
         cQuan = cAvailable;
     }
     if (cQuan == 0) {
         return 0;
     }
-    dChg = ChgCargo(app, app.state.pxfer[iSrc == 0].grobj, app.state.pxfer[iSrc == 0].id, iSupply, cQuan, app.state.pxfer[(iSrc == 0)].LpvCargo(app.state.pxfer[(iSrc == 0)].grobj));
+    dChg = ChgCargo(app, app.state.pxfer[iSrc == 0].grobj, app.state.pxfer[iSrc == 0].id, iSupply, cQuan, app.state.pxfer[(iSrc == 0)].CargoTarget(app.state.pxfer[(iSrc == 0)].grobj));
     if (dChg != 0) {
-        ChgCargo(app, app.state.pxfer[iSrc].grobj, app.state.pxfer[iSrc].id, iSupply, -dChg, app.state.pxfer[iSrc].LpvCargo(app.state.pxfer[iSrc].grobj));
+        ChgCargo(app, app.state.pxfer[iSrc].grobj, app.state.pxfer[iSrc].id, iSupply, -dChg, app.state.pxfer[iSrc].CargoTarget(app.state.pxfer[iSrc].grobj));
     }
     return dChg;
 }

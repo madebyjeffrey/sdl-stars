@@ -866,7 +866,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                 if (rgcXfer[i] != 0) {
                     cXfer = rgcXfer[i];
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
-                        l = ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), static_cast<MineralType>(i), cXfer, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())));
+                        l = ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), static_cast<MineralType>(i), cXfer, rgxf[0].CargoTarget(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())));
                         if (l != cXfer) {
                             id = CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1() == grobjFleet ? -32768 : 0;
                             id |= rgxf[0].idObj();
@@ -935,7 +935,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                                 goto DoNext;
                             }
                         StealCargo:
-                            l = ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2(), static_cast<MineralType>(i), -cXfer, rgxf[1].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2())));
+                            l = ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2(), static_cast<MineralType>(i), -cXfer, rgxf[1].CargoTarget(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2())));
                             if (l != -cXfer) {
                                 rgcXfer[i] = -l;
                                 /* Cargo the destination can't hold goes back to
@@ -944,7 +944,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                                    another player's fleet beyond its free hold
                                    space were lost. */
                                 if (cXfer < 0) {
-                                    ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), static_cast<MineralType>(i), -cXfer - l, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())));
+                                    ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), static_cast<MineralType>(i), -cXfer - l, rgxf[0].CargoTarget(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())));
                                 }
                                 if (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() == grobjThing) {
                                     idm = idmDidntGetAttemptedTransferMineralPacketAnother;

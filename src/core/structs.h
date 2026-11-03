@@ -8,6 +8,7 @@ class APPSESSION;
 #include <array>
 #include <bit>
 #include <span>
+#include <variant>
 #include "taskviews.h"
 
 #include "enums.h"
@@ -1827,7 +1828,8 @@ struct _xfer {
         if (kind == grobjPlanet) return &pl();
         return &th();
     }
-    void *LpvCargo(GrobjClass kind) noexcept {
+    using CARGOTARGET = std::variant<std::monostate, PLANET *, THING *, FLEET *>;
+    CARGOTARGET CargoTarget(GrobjClass kind) noexcept {
         if (kind == grobjPlanet || kind == grobjOther) return &pl();
         if (kind == grobjThing) return &th();
         return &fl();

@@ -1487,7 +1487,7 @@ std::int16_t FTrackXfer(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t
                     cNew = ProductionIO().pfnFleetStat(app, &app.state.pxfer[btn.iSide].fl(), 2);
                 }
                 cNew = static_cast<std::int32_t>((static_cast<std::int16_t>((pt.x - btn.rc.left)) * cNew)) / static_cast<std::int16_t>((btn.rc.right - btn.rc.left - 2));
-                cCur = ChgCargo(app, app.state.pxfer[btn.iSide].grobj, app.state.pxfer[btn.iSide].id, static_cast<MineralType>(iVal), 0, app.state.pxfer[btn.iSide].LpvCargo(app.state.pxfer[btn.iSide].grobj));
+                cCur = ChgCargo(app, app.state.pxfer[btn.iSide].grobj, app.state.pxfer[btn.iSide].id, static_cast<MineralType>(iVal), 0, app.state.pxfer[btn.iSide].CargoTarget(app.state.pxfer[btn.iSide].grobj));
                 dChg = cNew - cCur;
                 if (XferSupply(app, static_cast<MineralType>(iVal), btn.iSide == 0 ? dChg : -dChg) != 0) {
                     DrawXferDlg(app, hwnd, nullptr, &rc, static_cast<MineralType>(iVal));
@@ -1545,7 +1545,7 @@ void UpdateXferBtns(APPSESSION &app) {
                     lLeft = app.state.pxfer[iSide == 0].fl().rgcsh[iVal];
                 }
             } else {
-                lLeft = ChgCargo(app, app.state.pxfer[iSide == 0].grobj, app.state.pxfer[iSide == 0].id, static_cast<MineralType>(iVal), 0, app.state.pxfer[(iSide == 0)].LpvCargo(app.state.pxfer[(iSide == 0)].grobj));
+                lLeft = ChgCargo(app, app.state.pxfer[iSide == 0].grobj, app.state.pxfer[iSide == 0].id, static_cast<MineralType>(iVal), 0, app.state.pxfer[(iSide == 0)].CargoTarget(app.state.pxfer[(iSide == 0)].grobj));
                 if (lLeft == 0 || app.state.pxfer[iSide].grobj != grobjFleet) {
                     if (app.state.pxfer[iSide].grobj == grobjPlanet && iVal == 4) {
                         lLeft = 0;

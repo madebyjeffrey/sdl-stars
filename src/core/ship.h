@@ -13,7 +13,7 @@ std::int16_t WtMaxShdefStat(SHDEF *lpshdef, std::int16_t grStat);
 std::int16_t FEnumCalcJettison(APPSESSION &app, std::span<std::uint8_t> rgbRecord, RecordType rt, PLANET &pl, std::int16_t iFleet);
 std::int32_t GetCargoFree(APPSESSION &app, FLEET *lpfl);
 std::int32_t GetFuelFree(APPSESSION &app, FLEET *lpfl);
-std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, MineralType iSupply, std::int32_t dChg, void *pobj);
+std::int32_t ChgCargo(APPSESSION &app, GrobjClass grobj, std::int16_t id, MineralType iSupply, std::int32_t dChg, XFER::CARGOTARGET cargoTarget);
 std::int32_t XferSupply(APPSESSION &app, MineralType iSupply, std::int32_t cQuan);
 void    DeleteWpFar(FLEET *lpfl, std::int16_t iDel, std::int16_t fRecycle);
 std::int32_t EstFuelUse(APPSESSION &app, FLEET *lpfl, std::int16_t iOrd, std::int16_t iWarp, std::int32_t dTravel, std::int16_t fRangeOnly);

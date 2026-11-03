@@ -212,16 +212,16 @@ std::int16_t XferAiSupply(APPSESSION &app, GrobjClass grobjSrc, std::int16_t idS
         idDst = iT;
         cQuan = -cQuan;
     }
-    cAvailable = ChgCargo(app, grobjSrc, idSrc, iSupply, 0, nullptr);
+    cAvailable = ChgCargo(app, grobjSrc, idSrc, iSupply, 0, {});
     if (cQuan > cAvailable) {
         cQuan = LOWORD(cAvailable);
     }
     if (cQuan == 0) {
         return 0;
     }
-    dChg = LOWORD(ChgCargo(app, grobjDst, idDst, iSupply, cQuan, nullptr));
+    dChg = LOWORD(ChgCargo(app, grobjDst, idDst, iSupply, cQuan, {}));
     if (dChg != 0) {
-        ChgCargo(app, grobjSrc, idSrc, iSupply, static_cast<std::int16_t>(-dChg), nullptr);
+        ChgCargo(app, grobjSrc, idSrc, iSupply, static_cast<std::int16_t>(-dChg), {});
     }
     return dChg;
 }
@@ -232,15 +232,15 @@ std::int16_t XferAiTroopers(APPSESSION &app, std::int16_t idSrc, std::int16_t id
     if (cQuan == 0) {
         return 0;
     }
-    cAvailable = ChgCargo(app, grobjFleet, idSrc, Colonists, 0, nullptr);
+    cAvailable = ChgCargo(app, grobjFleet, idSrc, Colonists, 0, {});
     if (cQuan > cAvailable) {
         cQuan = LOWORD(cAvailable);
     }
     if (cQuan == 0) {
         return 0;
     }
-    ChgCargo(app, grobjFleet, idSrc, Colonists, static_cast<std::int16_t>(-cQuan), nullptr);
-    ChgCargo(app, grobjPlanet, idDst, Colonists, cQuan, nullptr);
+    ChgCargo(app, grobjFleet, idSrc, Colonists, static_cast<std::int16_t>(-cQuan), {});
+    ChgCargo(app, grobjPlanet, idDst, Colonists, cQuan, {});
     return cQuan;
 }
 
