@@ -27095,11 +27095,11 @@
     }
   ],
   "restart_checkpoint": {
-    "date": "2026-11-02",
-    "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
+    "date": "2026-11-03",
+    "reason": "Resume the live C++ cleanup after publishing the toolbar ownership batch and accumulated cleanup commits to develop.",
     "branch": "develop",
-    "latest_batch": "L05 typed input and message-buffer copies",
-    "latest_published_head": "595a6f90",
+    "latest_batch": "L05 toolbar collections and label ownership",
+    "latest_published_head": "bdba7844",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -27117,7 +27117,7 @@
       "windows_sdk_matrix": "failure: SDK build subprocess returned exit status 1; detailed SDK artifact log was unavailable.",
       "windows_sdl": "failure: entry.cpp unused argc under -Werror; fixed in 60a94d06.",
       "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
-      "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending."
+      "current_source_rerun": "No run exists for the pushed head bdba7844 (Actions query total_count 0). The connected GitHub tools cannot dispatch a workflow; Windows SDL/Linux desktop qualification remains pending."
     },
     "restart_order": [
       "Continue L05 bounded text destinations, const-text interfaces and scratch/borrowed-return audit.",
@@ -27139,7 +27139,7 @@
     "verification": {
       "batch": "L05 profile text boundaries use views",
       "parent": "d5548fd8",
-      "source_commit": "ce4b1e7a",
+      "source_commit": "595a6f90",
       "macos_debug_build": "make compile passes with strict warnings; profile.cpp rebuilt.",
       "profile_tests": "win32_profile_save, win32_sdl_resource_profile, and win32_utf8_profile pass 3/3.",
       "desktop_unit_tests": "18/18 pass.",
@@ -27500,7 +27500,7 @@
   },
   "current_checkpoint": {
     "batch": "L05 toolbar collections and label ownership",
-    "status": "Source committed as b022c4d4. Strict macOS SDL Debug build, desktop units, native regression and tutorial pass; one focused leak test could not get a macOS task port. Windows/Linux qualification remains outstanding.",
+    "status": "Published to origin/develop through bdba7844 as a fast-forward. Local macOS build, desktop units, native regression and tutorial pass; Windows SDL/Linux desktop qualification remains outstanding. GitHub Actions reports no run for this head, and the available connection cannot dispatch one.",
     "parent": "eaa9db42",
     "change": "COMPATTOOLBAR button/bitmap collections use std::vector; button labels use NATIVEOWNER<char, SDL_free>. Insert/delete no longer manually free or memmove raw records.",
     "verification": {
@@ -27512,7 +27512,7 @@
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
       "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
       "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
-      "platform": "Current-source Windows and Linux qualification remains pending.",
+      "platform": "No GitHub Actions run exists for current published head bdba7844. Workflow dispatch is unavailable through the connected GitHub tools; Windows/Linux qualification remains pending.",
       "diff_check": "Pass."
     },
     "platform_ci": {
@@ -27903,8 +27903,8 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "6a7d2ec49b138782a69027d087f7cd7efe72f4d9",
-    "latest_change": "L06 scanner consumers use required snapshot references",
+    "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+    "latest_change": "L05 toolbar collections and label ownership",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -27923,32 +27923,19 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "6a7d2ec49b138782a69027d087f7cd7efe72f4d9",
-    "latest_batch_status": "Committed as 6a7d2ec4; local verification passes, Windows/Linux qualification remains pending.",
-    "latest_published_head": "ef24142a",
+    "latest_source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+    "latest_batch_status": "Published to origin/develop through bdba7844 as a fast-forward. Local macOS build, desktop units, native regression and tutorial pass; Windows SDL/Linux desktop qualification remains outstanding. GitHub Actions reports no run for this head, and the available connection cannot dispatch one.",
+    "latest_published_head": "bdba7844",
     "latest_batch_verification": {
-      "batch": "Return planet name byte lengths",
-      "parent": "b5dafbada2eb653ce982ed22c6aebc5cca34b8a9",
-      "source_commit": "9b644d089c9aafa692f8c2bc863bc945d8d91a06",
-      "macos_debug_build": "make compile passes with strict warnings and header checks.",
-      "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
-      "native_regression": {
-        "matches": 519,
-        "warnings": 25,
-        "differences_errors": 0,
-        "skipped": 0
-      },
-      "host_regression": {
-        "matches": 519,
-        "warnings": 25,
-        "differences_errors": 0,
-        "skipped": 0
-      },
-      "baseline": "Unchanged; planet labels, UTF-8 bytes, work-buffer effects, and saved data remain unchanged.",
-      "api_audit": "PLANETNAMERESULT returns the label byte count through TEXTIO; the original array-returning PszGetPlanetName remains available for the independent archived observer. Seven report drawing rescans now use result, copy, or format counts.",
-      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
+      "batch": "L05 toolbar collections and label ownership",
+      "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+      "macos_sdl_debug_build": "make compile passes with strict warnings.",
+      "focused_compatibility_tests": "win32_sdl_resource_toolbar passes (1/1). win32_sdl_leaks_toolbar timed out because macOS leaks could not get a task port for the launched process.",
+      "desktop_units": "18/18 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+      "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
+      "platform": "No GitHub Actions run exists for current published head bdba7844. Workflow dispatch is unavailable through the connected GitHub tools; Windows/Linux qualification remains pending.",
       "diff_check": "Pass."
     },
     "latest_source_audits": {
@@ -28003,11 +27990,11 @@
     "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
   ],
   "working_tree_checkpoint": {
-    "date": "2026-11-02",
+    "date": "2026-11-03",
     "branch": "develop",
-    "batch": "L05 typed input and message-buffer copies",
-    "source_commit": "595a6f90",
-    "status": "Committed as 595a6f90. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "batch": "L05 toolbar collections and label ownership",
+    "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+    "status": "Published to origin/develop through bdba7844 as a fast-forward. Local macOS build, desktop units, native regression and tutorial pass; Windows SDL/Linux desktop qualification remains outstanding. GitHub Actions reports no run for this head, and the available connection cannot dispatch one.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -28409,9 +28396,12 @@
       {
         "commit": "08db1856",
         "message": "Parse profile fields as bounded views"
-      }
+      },
+      {"commit":"b022c4d4","message":"Own toolbar collections with vectors"},
+      {"commit":"2e4b61de","message":"Record toolbar ownership cleanup"},
+      {"commit":"bdba7844","message":"Correct toolbar ownership site count"}
     ],
-    "parent": "78860907",
+    "parent": "eaa9db42",
     "c_macro_audit": {
       "source_head": "32deeaff",
       "date": "2026-11-02",
@@ -28429,32 +28419,19 @@
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
-    "latest_source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
-    "latest_batch_status": "Locally committed as e22be817. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "latest_change": "RawLoad16/32 and RawStore16/32 now take byte spans rather than void pointers.",
+    "latest_source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+    "latest_batch_status": "Published to origin/develop through bdba7844 as a fast-forward. Local macOS build, desktop units, native regression and tutorial pass; Windows SDL/Linux desktop qualification remains outstanding. GitHub Actions reports no run for this head, and the available connection cannot dispatch one.",
+    "latest_change": "L05 toolbar collections and label ownership",
     "latest_batch_verification": {
-      "batch": "L06 scalar raw-storage accessors use byte spans",
-      "parent": "e04ce09d",
-      "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
-      "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
-      "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
-      "native_regression": {
-        "matches": 519,
-        "warnings": 25,
-        "differences_errors": 0,
-        "skipped": 0
-      },
-      "host_regression": {
-        "matches": 519,
-        "warnings": 25,
-        "differences_errors": 0,
-        "skipped": 0
-      },
-      "baseline": "Unchanged; memcpy scalar semantics, allocator metadata, wire widths, and output bytes are unchanged.",
-      "api_audit": "RawLoad16/32 and RawStore16/32 now take byte spans instead of void pointers. All 32 callers pass explicit two- or four-byte extents.",
-      "platform": "Windows/Linux current-source qualification remains pending.",
+      "batch": "L05 toolbar collections and label ownership",
+      "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+      "macos_sdl_debug_build": "make compile passes with strict warnings.",
+      "focused_compatibility_tests": "win32_sdl_resource_toolbar passes (1/1). win32_sdl_leaks_toolbar timed out because macOS leaks could not get a task port for the launched process.",
+      "desktop_units": "18/18 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+      "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
+      "platform": "No GitHub Actions run exists for current published head bdba7844. Workflow dispatch is unavailable through the connected GitHub tools; Windows/Linux qualification remains pending.",
       "diff_check": "Pass."
     },
     "latest_source_audits": {
