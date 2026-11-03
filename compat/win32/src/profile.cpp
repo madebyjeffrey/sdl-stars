@@ -169,27 +169,23 @@ static std::optional<std::string> SzProfilePath(LPCSTR pszFile) {
     return std::optional<std::string>{std::move(sz)};
 }
 
-static BOOL FMakeProfileDir(char *szPath) {
-    char *psz;
-    char ch;
+static bool FMakeProfileDir(std::string_view szPath) {
+    std::size_t i;
     int err;
 
-    for (psz = szPath + 1; *psz; psz++) {
-        if (*psz != '/'
+    for (i = 1; i < szPath.size(); i++) {
+        if (szPath[i] != '/'
 #ifdef _WIN32
-            && *psz != '\\'
+            && szPath[i] != '\\'
 #endif
         ) continue;
 #ifdef _WIN32
-        if (psz == szPath + 2 && szPath[1] == ':') continue;
+        if (i == 2 && szPath[1] == ':') continue;
 #endif
-        ch = *psz;
-        *psz = 0;
-        err = ICreateNativeDirectory(szPath, 0700);
-        *psz = ch;
-        if (err != 0 && errno != EEXIST) { win32::SetLastError(DwProfileError()); return 0; }
+        err = ICreateNativeDirectory(szPath.substr(0, i), 0700);
+        if (err != 0 && errno != EEXIST) { win32::SetLastError(DwProfileError()); return false; }
     }
-    return 1;
+    return true;
 }
 
 DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
@@ -331,7 +327,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
         } else lpNew->lpNext = *lplp;
         *lplp = lpNew;
     }
-    if (szInputFile.find('/') == std::string_view::npos && !FMakeProfileDir(szPath->data())) goto LReturn;
+    if (szInputFile.find('/') == std::string_view::npos && !FMakeProfileDir(*szPath)) goto LReturn;
     fRet = FSaveProfile(lpAll, szPath->c_str());
     goto LReturn;
 LMemory:
