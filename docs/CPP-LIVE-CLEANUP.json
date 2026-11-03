@@ -28356,7 +28356,7 @@
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "Seventy-seven redundant UI length rescans have been removed across tracked batches, including popup, report, message, VCR, mine, research, mine-window title and build-list text paths.",
     "source_head": "08815b58",
-    "strlen_occurrence_inventory": "40 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "strlen_occurrence_inventory": "39 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
