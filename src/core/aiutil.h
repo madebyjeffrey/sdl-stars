@@ -17,6 +17,12 @@ struct AISHDEFSTATUSRESULT {
     std::int16_t cExist;
     std::int16_t ishdefLatest;
 };
+
+struct SALVAGETARGETRESULT {
+    bool fSalvage;
+    THING *lpthBest;
+    std::int16_t idBest;
+};
 #include <cstdint>
 #include <optional>
 
@@ -47,8 +53,8 @@ std::int16_t  FFleetInField(FLEET *lpfl, THING *lpth);
 void     SetAiFleetIdealSpeed(APPSESSION &app, FLEET *lpfl, std::int16_t wtFuelMax, std::int16_t cMinefields, THING **rglpth);
 std::int16_t  IdTargetAttack(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans);
 std::int16_t  IdTargetFreighter(APPSESSION &app, FLEET *lpflFr, PLANET *lpplHome);
-std::int16_t  FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16_t fNeedy, std::int16_t iWorst, std::int16_t pctFull, std::int32_t wtCargoMax, std::int32_t scoreBest, THING **plpthBest,
-                                  std::int16_t *pidBest);
+SALVAGETARGETRESULT FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16_t fNeedy, std::int16_t iWorst, std::int16_t pctFull, std::int32_t wtCargoMax, std::int32_t scoreBest,
+                                 THING *lpthBest, std::int16_t idBest);
 std::int16_t  FMoveAiFleet(APPSESSION &app, FLEET *lpfl, ORDER *pord, std::int16_t fAppend);
 void     AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, GrobjClass grobj, AddItemMode mdAddItem);
 AIENSURERESULT IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, bool fEnsureStarbase, std::int16_t pct);

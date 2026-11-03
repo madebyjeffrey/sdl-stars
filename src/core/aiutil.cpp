@@ -829,10 +829,9 @@ std::int16_t IdTargetFreighter(APPSESSION &app, FLEET *lpflFr, PLANET *lpplHome)
     std::uint8_t *lpb;
     std::int16_t  fNeedy;
     ORDER    ord;
-    std::int16_t  fSalvage;
     std::int32_t  l;
+    SALVAGETARGETRESULT salvageTarget;
 
-    fSalvage = 0;
     lpb = app.state.vlpbAiPlanet + 14;
     i = 0;
     while (i < app.state.game.cPlanMax) {
@@ -957,7 +956,10 @@ std::int16_t IdTargetFreighter(APPSESSION &app, FLEET *lpflFr, PLANET *lpplHome)
         }
     }
     lpthBest = nullptr;
-    if (FSalvageTargetFreighter2(app, lpflFr, fNeedy, iWorst, pctFull, wtCargoMax, scoreBest, &lpthBest, &idBest) && GetCargoFree(app, lpflFr) == 0) {
+    salvageTarget = FSalvageTargetFreighter2(app, lpflFr, fNeedy, iWorst, pctFull, wtCargoMax, scoreBest, lpthBest, idBest);
+    lpthBest = salvageTarget.lpthBest;
+    idBest = salvageTarget.idBest;
+    if (salvageTarget.fSalvage && GetCargoFree(app, lpflFr) == 0) {
         lpthBest = nullptr;
         lpplBest = lpplHome;
         idBest = lpplHome->id;
@@ -1046,8 +1048,8 @@ std::int16_t IdTargetFreighter(APPSESSION &app, FLEET *lpflFr, PLANET *lpplHome)
     return idBest;
 }
 
-std::int16_t FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16_t fNeedy, std::int16_t iWorst, std::int16_t pctFull, std::int32_t wtCargoMax, std::int32_t scoreBest, THING **plpthBest,
-                                 std::int16_t *pidBest) {
+SALVAGETARGETRESULT FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16_t fNeedy, std::int16_t iWorst, std::int16_t pctFull, std::int32_t wtCargoMax, std::int32_t scoreBest,
+                                 THING *lpthBest, std::int16_t idBest) {
     POINT16 pt;
     std::int32_t score;
     std::int16_t dy;
@@ -1057,10 +1059,10 @@ std::int16_t FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16
     std::int16_t pctHere;
     std::int16_t dx;
     THING  *lpthMac;
-    std::int16_t fSalvage;
+    SALVAGETARGETRESULT result;
     std::int32_t l;
 
-    fSalvage = 0;
+    result = {false, lpthBest, idBest};
     pt = lpflFr->pt;
     lpth = app.state.lpThings;
     lpthMac = app.state.lpThings + app.state.cThing;
@@ -1079,7 +1081,7 @@ std::int16_t FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16
                         }
                     }
                 }
-                fSalvage = 1;
+                result.fSalvage = true;
                 FleetQueryIO().pfnLookup(app, lpflFr->id, &app.state.sel.fl);
             } else if ((dx <= dy ? dy : dx) <= 200) {
                 if (fNeedy == 2) {
@@ -1107,14 +1109,14 @@ std::int16_t FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16
                     score = static_cast<std::int32_t>((static_cast<std::int16_t>((100 * pctHere)) / l));
                     if (score > scoreBest) {
                         scoreBest = score;
-                        *plpthBest = lpth;
-                        *pidBest = lpth->idFull();
+                        result.lpthBest = lpth;
+                        result.idBest = lpth->idFull();
                     }
                 }
             }
         }
     }
-    return fSalvage;
+    return result;
 }
 
 std::int16_t FMoveAiFleet(APPSESSION &app, FLEET *lpfl, ORDER *pord, std::int16_t fAppend) {
