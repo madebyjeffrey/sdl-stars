@@ -1,5 +1,5 @@
 {
-  "source_parent": "9a84165b",
+  "source_parent": "c5378ae9",
   "scope": [
     "src",
     "compat/win32/include",
@@ -495,8 +495,8 @@
       "id": "70",
       "path": "compat/win32/src/profile.cpp",
       "scope": "WritePrivateProfileStringA",
-      "owner": "releaseProfile scope",
-      "reason": "Native profile operations retain path, owned temporary line and parsed chain owners under the registry lock; Close releases them before unlocking, preserving error and partial-write behavior."
+      "owner": "std::string szLine plus releaseProfile parsed-chain scope",
+      "reason": "Profile update lines are local strings passed to LpProfileLine, which copies them into the owned parsed profile. The cleanup scope still frees the parsed chain under the registry lock and closes before unlocking; formatting, allocation-failure error, and partial-write behavior remain."
     },
     {
       "id": "71",
@@ -1959,56 +1959,6 @@
       "contract": "69"
     },
     {
-      "path": "compat/win32/src/profile.cpp",
-      "line": 274,
-      "scope": "WritePrivateProfileStringA",
-      "operation": "free",
-      "code": "std::free(szLine)",
-      "normalized_call": "std::free(szLine)",
-      "compiler_context": true,
-      "contract": "70"
-    },
-    {
-      "path": "compat/win32/src/profile.cpp",
-      "line": 274,
-      "scope": "WritePrivateProfileStringA",
-      "operation": "free",
-      "code": "std::free(szPath)",
-      "normalized_call": "std::free(szPath)",
-      "compiler_context": true,
-      "contract": "70"
-    },
-    {
-      "path": "compat/win32/src/profile.cpp",
-      "line": 299,
-      "scope": "WritePrivateProfileStringA",
-      "operation": "malloc",
-      "code": "std::malloc(cb)",
-      "normalized_call": "std::malloc(cb)",
-      "compiler_context": true,
-      "contract": "70"
-    },
-    {
-      "path": "compat/win32/src/profile.cpp",
-      "line": 303,
-      "scope": "WritePrivateProfileStringA",
-      "operation": "free",
-      "code": "std::free(szLine)",
-      "normalized_call": "std::free(szLine)",
-      "compiler_context": true,
-      "contract": "70"
-    },
-    {
-      "path": "compat/win32/src/profile.cpp",
-      "line": 309,
-      "scope": "WritePrivateProfileStringA",
-      "operation": "malloc",
-      "code": "std::malloc(cb)",
-      "normalized_call": "std::malloc(cb)",
-      "compiler_context": true,
-      "contract": "70"
-    },
-    {
       "path": "compat/win32/src/timer.cpp",
       "line": 41,
       "scope": "SetTimer",
@@ -2512,6 +2462,14 @@
       "change": "HmenuTemplateItems uses a local string for each decoded UTF-8 label instead of a malloc buffer.",
       "verification": "macOS SDL Debug build; resource-menu test 1/1; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
       "baseline": "Unchanged."
+    },
+    {
+      "batch": "L05 profile update-line ownership",
+      "source_commit": "c5378ae9",
+      "retired_heap_sites": 2,
+      "change": "WritePrivateProfileStringA builds section/key lines in local strings and passes c_str to the profile parser, which copies them into its owned nodes.",
+      "verification": "macOS SDL Debug build; profile save/resource/UTF-8 tests pass; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1. Profile leak instrumentation timed out because the macOS wrapper could not get the process task port.",
+      "baseline": "Unchanged."
     }
   ],
   "retired_path_text_sites": [
@@ -2641,6 +2599,61 @@
       "compiler_context": true,
       "contract": "72",
       "disposition": "L05 per-label scratch moved to std::string in 9a84165b"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 274,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "free",
+      "code": "std::free(szLine)",
+      "normalized_call": "std::free(szLine)",
+      "compiler_context": true,
+      "contract": "70",
+      "disposition": "L05 update-line scratch migrated to std::string in c5378ae9"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 274,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "free",
+      "code": "std::free(szPath)",
+      "normalized_call": "std::free(szPath)",
+      "compiler_context": true,
+      "contract": "70",
+      "disposition": "L06 path result migrated earlier to owned optional path strings in 90f91478"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 299,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": true,
+      "contract": "70",
+      "disposition": "L05 update-line scratch migrated to std::string in c5378ae9"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 303,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "free",
+      "code": "std::free(szLine)",
+      "normalized_call": "std::free(szLine)",
+      "compiler_context": true,
+      "contract": "70",
+      "disposition": "L05 update-line scratch migrated to std::string in c5378ae9"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 309,
+      "scope": "WritePrivateProfileStringA",
+      "operation": "malloc",
+      "code": "std::malloc(cb)",
+      "normalized_call": "std::malloc(cb)",
+      "compiler_context": true,
+      "contract": "70",
+      "disposition": "L05 update-line scratch migrated to std::string in c5378ae9"
     }
   ]
 }

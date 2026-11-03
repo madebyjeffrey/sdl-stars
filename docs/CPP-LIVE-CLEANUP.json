@@ -246,7 +246,8 @@
         "DrawText-scratch-containers",
         "inspector-detail-text-string-owner",
         "inspector-rows-borrow-snapshot-and-copy-prefix",
-        "menu-resource-label-string-lifetime"
+        "menu-resource-label-string-lifetime",
+        "profile-update-lines-local-string"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25456,8 +25457,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L05 menu-resource label ownership",
-    "latest_published_head": "9a84165b",
+    "latest_batch": "L05 profile update-line ownership",
+    "latest_published_head": "c5378ae9",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -25488,15 +25489,15 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 menu-resource label ownership",
-    "source_commit": "9a84165b",
-    "status": "Locally committed as 9a84165b. macOS Debug build, menu resource test, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 profile update-line ownership",
+    "source_commit": "c5378ae9",
+    "status": "Locally committed as c5378ae9. macOS Debug build, profile functional tests, desktop/host units, full native/host regressions and tutorial smoke pass. Leak instrumentation hit the macOS task-port restriction; Windows/Linux qualification remains outstanding.",
     "changes": [
-      "HmenuTemplateItems now owns decoded UTF-8 labels in a local std::string until AppendMenuA copies them. Manual per-label malloc/free is removed."
+      "WritePrivateProfileStringA now owns section/key formatting lines in std::string values through the copying parser call; separate malloc/free scratch handling is removed."
     ],
     "verification": {
-      "macos_debug_build": "make compile passes; resource.cpp rebuilt with strict warnings.",
-      "resource_menu_test": "win32_sdl_resource_menu passes 1/1.",
+      "macos_debug_build": "make compile passes; profile.cpp rebuilt with strict warnings.",
+      "profile_tests": "win32_profile_save, win32_sdl_resource_profile, and win32_utf8_profile pass 3/3; the profile app reported PASS in the leak wrapper before its task-port timeout.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": {
@@ -25512,7 +25513,8 @@
         "skipped": 0
       },
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
-      "baseline": "Unchanged; menu labels and menu failure cleanup are preserved.",
+      "leak_instrumentation": "win32_sdl_leaks_profile timed out after app output PASS because macOS denied task-port access for the launched process.",
+      "baseline": "Unchanged; profile line text, parsed profile chain cleanup, and error delivery are preserved.",
       "platform": "Windows/Linux full-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25525,7 +25527,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 9a84165b.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through c5378ae9.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25536,8 +25538,8 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "9a84165b",
-      "borrowed_return_audit": "The broader L05 scratch and borrowed-return audit remains active; menu labels now use local string ownership."
+      "source_head": "c5378ae9",
+      "borrowed_return_audit": "The broader L05 scratch and borrowed-return audit remains active; profile update lines now use local string ownership."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -25784,10 +25786,14 @@
       {
         "commit": "9a84165b",
         "message": "Own menu resource labels with strings"
+      },
+      {
+        "commit": "c5378ae9",
+        "message": "Own profile update lines with strings"
       }
     ],
-    "latest_source_commit": "9a84165b",
-    "latest_batch_status": "Locally committed as 9a84165b. macOS Debug build, menu resource test, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "c5378ae9",
+    "latest_batch_status": "Locally committed as c5378ae9. macOS Debug build, profile functional tests, desktop/host units, full native/host regressions and tutorial smoke pass. Leak instrumentation hit the macOS task-port restriction; Windows/Linux qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -25801,10 +25807,11 @@
       "current_source_after_9ceadec6": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_7104d20b": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_4ebe2ab5": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
-      "current_source_after_9a84165b": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
+      "current_source_after_9a84165b": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
+      "current_source_after_c5378ae9": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "c_macro_audit": {
-      "source_head": "9a84165b",
+      "source_head": "c5378ae9",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25818,20 +25825,20 @@
       "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through 9a84165b."
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through c5378ae9."
     },
     "borrowed_return_audit": "The remaining text/scratch/borrowed-return audit is active; redundant SDL title duplication and manual chooser/dialog-template allocation paths have been removed."
   },
   "current_checkpoint": {
-    "batch": "L05 menu-resource label ownership",
-    "status": "Locally committed as 9a84165b. macOS Debug build, menu resource test, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "8658386e",
-    "change": "HmenuTemplateItems uses a local std::string for each decoded UTF-8 label until AppendMenuA copies it; menu failure cleanup and resource decoding remain unchanged.",
+    "batch": "L05 profile update-line ownership",
+    "status": "Locally committed as c5378ae9. macOS Debug build, profile functional tests, desktop/host units, full native/host regressions and tutorial smoke pass. Leak instrumentation hit the macOS task-port restriction; Windows/Linux qualification remains outstanding.",
+    "parent": "716cc394",
+    "change": "Profile update section/key lines are operation-scoped std::string values; the parsed profile remains owned by releaseProfile and the existing error/close order is preserved.",
     "verification": {
-      "batch": "L05 menu-resource label ownership",
-      "source_commit": "9a84165b",
-      "macos_debug_build": "make compile passes; resource.cpp rebuilt with strict warnings.",
-      "resource_menu_test": "win32_sdl_resource_menu passes 1/1.",
+      "batch": "L05 profile update-line ownership",
+      "source_commit": "c5378ae9",
+      "macos_debug_build": "make compile passes; profile.cpp rebuilt with strict warnings.",
+      "profile_tests": "win32_profile_save, win32_sdl_resource_profile, and win32_utf8_profile pass 3/3; the profile app reported PASS in the leak wrapper before its task-port timeout.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": {
@@ -25847,7 +25854,8 @@
         "skipped": 0
       },
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
-      "baseline": "Unchanged; menu labels and menu failure cleanup are preserved.",
+      "leak_instrumentation": "win32_sdl_leaks_profile timed out after app output PASS because macOS denied task-port access for the launched process.",
+      "baseline": "Unchanged; profile line text, parsed profile chain cleanup, and error delivery are preserved.",
       "platform": "Windows/Linux full-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25878,7 +25886,8 @@
       "current_source_after_9ceadec6": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_7104d20b": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_4ebe2ab5": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
-      "current_source_after_9a84165b": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
+      "current_source_after_9a84165b": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
+      "current_source_after_c5378ae9": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25893,7 +25902,7 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "Replaced per-menu-label malloc/free with an operation-scoped string."
+      "Replaced two manual profile update-line buffers with local strings."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -25904,7 +25913,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 9a84165b.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through c5378ae9.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25915,7 +25924,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "9a84165b",
+      "source_head": "c5378ae9",
       "raw_copy_call_audit": {
         "source_head": "3670b2be",
         "owned_production_calls": 0,
@@ -25927,7 +25936,7 @@
         ],
         "result": "No owned production call sites found in src and compat/win32 source/header trees."
       },
-      "borrowed_return_audit": "The broader L05 scratch and borrowed-return audit remains active; menu labels now use local string ownership."
+      "borrowed_return_audit": "The broader L05 scratch and borrowed-return audit remains active; profile update lines now use local string ownership."
     },
     "next": [
       "L05: finish bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -26142,12 +26151,16 @@
       {
         "commit": "9a84165b",
         "message": "Own menu resource labels with strings"
+      },
+      {
+        "commit": "c5378ae9",
+        "message": "Own profile update lines with strings"
       }
     ],
-    "source_commit": "9a84165b",
+    "source_commit": "c5378ae9",
     "latest_change": "Private dialog templates now own decoded labels and item records through optional<string> and vector; malformed templates retain the same failure result and valid resource bytes are unchanged.",
     "c_macro_audit": {
-      "source_head": "9a84165b",
+      "source_head": "c5378ae9",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26161,7 +26174,7 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through 9a84165b.",
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through c5378ae9.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     }
   },
