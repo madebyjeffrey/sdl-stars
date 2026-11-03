@@ -252,7 +252,8 @@
         "bounded-help-marker-search",
         "bounded-library-metadata-line-parsing",
         "bounded-library-metadata-line-trimming",
-        "fixed-character-membership-bounded-view-searches"
+        "fixed-character-membership-bounded-view-searches",
+        "profile-text-boundaries-use-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25571,6 +25572,32 @@
       "api_audit": "Fixed-character membership checks now use string_view::find; portable filename validation shares one byte predicate. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 profile text boundaries use views",
+      "parent": "d5548fd8",
+      "source_commit": "ce4b1e7a",
+      "macos_debug_build": "make compile passes with strict warnings; profile.cpp rebuilt.",
+      "profile_tests": "win32_profile_save, win32_sdl_resource_profile, and win32_utf8_profile pass 3/3.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; profile API null handling, delimiter admission, path selection, line formatting, and save order are preserved.",
+      "api_audit": "Profile helpers and WritePrivateProfileStringA now use bounded views for names, delimiters, lengths and path detection. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "platform": "Windows/Linux current-source qualification remains pending.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -25591,8 +25618,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L05 fixed-character membership uses bounded views",
-    "latest_published_head": "256fbb15",
+    "latest_batch": "L05 profile text boundaries use views",
+    "latest_published_head": "ce4b1e7a",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -25623,20 +25650,20 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 fixed-character membership uses bounded views",
-    "source_commit": "256fbb15",
-    "status": "Locally committed as 256fbb15. Strict macOS Debug build, desktop/host units, library-publication witness, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "batch": "L05 profile text boundaries use views",
+    "source_commit": "ce4b1e7a",
+    "status": "Locally committed as ce4b1e7a. Strict macOS Debug build, three profile tests, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
     "changes": [
-      "Fixed-character membership in formatting, URI encoding and portable filename validation now uses bounded views."
+      "Profile helper inputs, delimiter searches, lengths and path checks now use string_view across the Win32 C-string boundary."
     ],
     "verification": {
-      "batch": "L05 fixed-character membership uses bounded views",
-      "parent": "1c8417cb",
-      "source_commit": "256fbb15",
-      "macos_debug_build": "make compile passes with strict warnings; formatter, URI and library validation sources rebuilt.",
+      "batch": "L05 profile text boundaries use views",
+      "parent": "d5548fd8",
+      "source_commit": "ce4b1e7a",
+      "macos_debug_build": "make compile passes with strict warnings; profile.cpp rebuilt.",
+      "profile_tests": "win32_profile_save, win32_sdl_resource_profile, and win32_utf8_profile pass 3/3.",
       "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass, including native formatting tests.",
-      "library_publication_witness": "witness_library-publication passes 1/1.",
+      "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
@@ -25650,8 +25677,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; literal character sets, embedded-NUL stopping rules and URI byte escaping are preserved.",
-      "api_audit": "Fixed-character membership checks now use string_view::find; portable filename validation shares one byte predicate. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "baseline": "Unchanged; profile API null handling, delimiter admission, path selection, line formatting, and save order are preserved.",
+      "api_audit": "Profile helpers and WritePrivateProfileStringA now use bounded views for names, delimiters, lengths and path detection. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25947,10 +25974,14 @@
       {
         "commit": "256fbb15",
         "message": "Use views for character membership checks"
+      },
+      {
+        "commit": "ce4b1e7a",
+        "message": "Use views in profile text validation"
       }
     ],
-    "latest_source_commit": "256fbb15",
-    "latest_batch_status": "Locally committed as 256fbb15. Strict macOS Debug build, desktop/host units, library-publication witness, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "latest_source_commit": "ce4b1e7a",
+    "latest_batch_status": "Locally committed as ce4b1e7a. Strict macOS Debug build, three profile tests, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -25968,7 +25999,7 @@
       "current_source_after_c5378ae9": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "c_macro_audit": {
-      "source_head": "256fbb15",
+      "source_head": "ce4b1e7a",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25982,23 +26013,23 @@
       "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through 256fbb15."
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through ce4b1e7a."
     },
     "borrowed_return_audit": "Packaged help guide body uses local std::string ownership and a bounded marker view; broader L05 scratch and borrowed-return audit remains active."
   },
   "current_checkpoint": {
-    "batch": "L05 fixed-character membership uses bounded views",
-    "status": "Locally committed as 256fbb15. Strict macOS Debug build, desktop/host units, library-publication witness, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
-    "parent": "1c8417cb",
-    "change": "Fixed-character membership checks use bounded view searches; the repeated Windows filename-byte rule is shared without changing accepted bytes.",
+    "batch": "L05 profile text boundaries use views",
+    "status": "Locally committed as ce4b1e7a. Strict macOS Debug build, three profile tests, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "parent": "d5548fd8",
+    "change": "Profile text is represented as string_view after C API admission; profile names, delimiter validation, line lengths and slash checks no longer scan C strings.",
     "verification": {
-      "batch": "L05 fixed-character membership uses bounded views",
-      "parent": "1c8417cb",
-      "source_commit": "256fbb15",
-      "macos_debug_build": "make compile passes with strict warnings; formatter, URI and library validation sources rebuilt.",
+      "batch": "L05 profile text boundaries use views",
+      "parent": "d5548fd8",
+      "source_commit": "ce4b1e7a",
+      "macos_debug_build": "make compile passes with strict warnings; profile.cpp rebuilt.",
+      "profile_tests": "win32_profile_save, win32_sdl_resource_profile, and win32_utf8_profile pass 3/3.",
       "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass, including native formatting tests.",
-      "library_publication_witness": "witness_library-publication passes 1/1.",
+      "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
@@ -26012,8 +26043,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; literal character sets, embedded-NUL stopping rules and URI byte escaping are preserved.",
-      "api_audit": "Fixed-character membership checks now use string_view::find; portable filename validation shares one byte predicate. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "baseline": "Unchanged; profile API null handling, delimiter admission, path selection, line formatting, and save order are preserved.",
+      "api_audit": "Profile helpers and WritePrivateProfileStringA now use bounded views for names, delimiters, lengths and path detection. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -26060,7 +26091,7 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "Fixed-character membership in formatting, URI encoding and portable filename validation now uses bounded views."
+      "Profile helper inputs, delimiter searches, lengths and path checks now use string_view across the Win32 C-string boundary."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -26333,12 +26364,16 @@
       {
         "commit": "256fbb15",
         "message": "Use views for character membership checks"
+      },
+      {
+        "commit": "ce4b1e7a",
+        "message": "Use views in profile text validation"
       }
     ],
-    "source_commit": "256fbb15",
-    "latest_change": "Fixed-character membership checks use bounded view searches; the repeated Windows filename-byte rule is shared without changing accepted bytes.",
+    "source_commit": "ce4b1e7a",
+    "latest_change": "Profile text is represented as string_view after C API admission; profile names, delimiter validation, line lengths and slash checks no longer scan C strings.",
     "c_macro_audit": {
-      "source_head": "256fbb15",
+      "source_head": "ce4b1e7a",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26352,11 +26387,11 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through 256fbb15.",
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through ce4b1e7a.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "256fbb15",
-    "latest_batch_status": "Locally committed as 256fbb15. Strict macOS Debug build, desktop/host units, library-publication witness, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "latest_source_commit": "ce4b1e7a",
+    "latest_batch_status": "Locally committed as ce4b1e7a. Strict macOS Debug build, three profile tests, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
     "latest_published_head": "da8c27bc"
   },
   "milestone_d_checkpoint": {
