@@ -2338,7 +2338,8 @@
         "vcr-damage-value-input",
         "vcr-battle-kill-selector-bool",
         "battle-data-lookup-optional-view",
-        "minefield-counts-value-result"
+        "minefield-counts-value-result",
+        "transport-quantity-value-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -3720,6 +3721,30 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged. Minefield ordinals and totals use the same player-owned traversal and retain the same 16-bit result widths.",
           "api_audit": "GetMineFieldCounts now returns MINEFIELDCOUNTSRESULT rather than writing to two required output pointers.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
+        }
+      },
+      "transport_quantity_result": {
+        "status": "complete; locally verified",
+        "interface": "FTransportQuantityActive returns TRANSPORTQUANTITYRESULT with fActive and iUnit.",
+        "caller": "DrawShipWayPtOrders consumes the named result fields; the focused transport preset witness uses the value result.",
+        "contract": "The quantity activation rule and selected unit are unchanged.",
+        "verification": {
+          "batch": "L06 transport quantity selection returns a value",
+          "source_commit": "c8afadce2afeba42b56955c79dcc63bc9469fdf3",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "focused_witness": "transport_preset witness passes (1/1).",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged; active state and selected unit remain the same.",
+          "api_audit": "FTransportQuantityActive returns TRANSPORTQUANTITYRESULT with fActive and iUnit instead of writing the selected unit through an output pointer.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -28372,6 +28397,29 @@
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
       "next": "Continue remaining L05 bounded-text and scratch/borrowed-return audits, L06 buffer and native file/path results, and L08 Windows/Linux qualification."
+    },
+    "followup": {
+      "batch": "L06 transport quantity selection returns a value",
+      "source_commit": "c8afadce2afeba42b56955c79dcc63bc9469fdf3",
+      "parent": "64d9ce19eb164105f3cd0aa3964ff645c5c6df74",
+      "verification": {
+        "batch": "L06 transport quantity selection returns a value",
+        "source_commit": "c8afadce2afeba42b56955c79dcc63bc9469fdf3",
+        "macos_sdl_debug_build": "make compile passes with strict warnings.",
+        "focused_witness": "transport_preset witness passes (1/1).",
+        "desktop_unit_tests": "18/18 pass.",
+        "native_regression": {
+          "matches": 519,
+          "warnings": 25,
+          "differences_errors": 0,
+          "skipped": 0
+        },
+        "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+        "baseline": "Unchanged; active state and selected unit remain the same.",
+        "api_audit": "FTransportQuantityActive returns TRANSPORTQUANTITYRESULT with fActive and iUnit instead of writing the selected unit through an output pointer.",
+        "platform": "Current-source Windows and Linux qualification remains outstanding.",
+        "diff_check": "Pass."
+      }
     }
   },
   "milestone_d_checkpoint": {
@@ -28886,8 +28934,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "e19247c1c01998cab2967130fa1a9f22c28d379b",
-  "latest_batch_status": "Source commit e19247c1 verified locally. Strict macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "c8afadce2afeba42b56955c79dcc63bc9469fdf3",
+  "latest_batch_status": "Source commit c8afadce verified locally. Strict macOS SDL Debug build, focused transport witness 1/1, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -29011,55 +29059,43 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L06 minefield counts return a value",
+  "latest_change": "L06 transport quantity selection returns a value",
   "latest_batch_verification": {
-    "batch": "L06 minefield counts return a value",
-    "source_commit": "e19247c1c01998cab2967130fa1a9f22c28d379b",
+    "batch": "L06 transport quantity selection returns a value",
+    "source_commit": "c8afadce2afeba42b56955c79dcc63bc9469fdf3",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
+    "focused_witness": "transport_preset witness passes (1/1).",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "29/29 pass.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
-    "host_regression": {
-      "matches": 519,
-      "warnings": 25,
-      "differences_errors": 0,
-      "skipped": 0
-    },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. Minefield ordinals and totals use the same player-owned traversal and retain the same 16-bit result widths.",
-    "api_audit": "GetMineFieldCounts now returns MINEFIELDCOUNTSRESULT rather than writing to two required output pointers.",
+    "baseline": "Unchanged; active state and selected unit remain the same.",
+    "api_audit": "FTransportQuantityActive returns TRANSPORTQUANTITYRESULT with fActive and iUnit instead of writing the selected unit through an output pointer.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L06 minefield counts return a value",
-    "source_commit": "e19247c1c01998cab2967130fa1a9f22c28d379b",
+    "batch": "L06 transport quantity selection returns a value",
+    "source_commit": "c8afadce2afeba42b56955c79dcc63bc9469fdf3",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
+    "focused_witness": "transport_preset witness passes (1/1).",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "29/29 pass.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
-    "host_regression": {
-      "matches": 519,
-      "warnings": 25,
-      "differences_errors": 0,
-      "skipped": 0
-    },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; the same 16-bit minefield ordinal and total are returned.",
-    "api_audit": "GetMineFieldCounts returns two named count fields as one value, removing the output-pointer API.",
+    "baseline": "Unchanged; active state and selected unit remain the same.",
+    "api_audit": "FTransportQuantityActive returns TRANSPORTQUANTITYRESULT with fActive and iUnit instead of writing the selected unit through an output pointer.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit e19247c1 verified locally; ledger checkpoint pending publication.",
+    "status": "Source commit c8afadce verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
