@@ -26,7 +26,7 @@ static void CaptureFileInput(APPSESSION &, std::string_view psz, MdOpenFlags) {
     szFileInputAttempt = psz;
     StarsThrowError(starsErrorFile, idsCantOpenFile);
 }
-static std::int16_t RejectFileInputCreate(APPSESSION &app, DtFileType, std::int16_t, const char *) {
+static std::int16_t RejectFileInputCreate(APPSESSION &app, DtFileType, std::int16_t, std::optional<std::string_view>) {
     ++cFileInputCalls;
     szFileInputAttempt = app.state.szBase;
     return 0;

@@ -911,7 +911,7 @@ RetryAll:
             app.state.game.lid = DwTickCount();
         }
         CchSprintf(app.state.szWork, "%s.xy", app.state.szBase);
-        if (!RecordIO().pfnFCreateFile(app, dtXY, iplrNone, nullptr)) {
+        if (!RecordIO().pfnFCreateFile(app, dtXY, iplrNone, std::nullopt)) {
             AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateUniverseDefinitionFile, {}).data(), win32::MB_ICONHAND);
             DestroyCurGame(app);
             return 0;

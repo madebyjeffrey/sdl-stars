@@ -125,7 +125,7 @@ void WriteRtShDef(APPSESSION &app, SHDEF *lpshdef) {
     RecordIO().pfnWriteRt(app, rtShDef, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(*cb)));
 }
 
-std::int16_t FWriteDataFile(APPSESSION &app, const char *pszFileBase, std::int16_t iPlayer, std::int16_t fAppend) {
+std::int16_t FWriteDataFile(APPSESSION &app, std::string_view pszFileBase, std::int16_t iPlayer, std::int16_t fAppend) {
     PLAYER   plrT;
     std::int16_t  iMax;
     FLEET   *lpflT;
@@ -320,7 +320,7 @@ std::int16_t FWriteDataFile(APPSESSION &app, const char *pszFileBase, std::int16
     try {
         if (fAppend && FAppendFile(app, iPlayer))
             goto LAppend;
-        if (!RecordIO().pfnFCreateFile(app, iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, nullptr))
+        if (!RecordIO().pfnFCreateFile(app, iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, std::nullopt))
             goto LFail;
 LAppend:
         WriteBattles(app, iPlayer);
@@ -915,19 +915,19 @@ void SetSzWorkFromDt(APPSESSION &app, DtFileType dt, std::int16_t iPlayer) {
     return;
 }
 
-std::int16_t FCreateFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, const char *szForceName) {
-    const char *psz;
+std::int16_t FCreateFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std::optional<std::string_view> szForceName) {
+    std::string_view szFile;
 
     if (szForceName) {
-        psz = szForceName;
+        szFile = *szForceName;
     } else {
         SetSzWorkFromDt(app, dt, iPlayer);
-        psz = app.state.szWork;
+        szFile = app.state.szWork;
     }
     StarsRecoveryScope scopeRecovery;
     try {
         StarsFileGuard closeStream(app.state.hf);
-        RecordIO().pfnStreamOpen(app, psz, mdCreate);
+        RecordIO().pfnStreamOpen(app, szFile, mdCreate);
         WriteBOF(app, iPlayer, dt, 0);
         closeStream.Release();
         return 1;

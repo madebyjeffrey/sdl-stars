@@ -26,7 +26,7 @@ void StarsTest_NewGameWizard(APPSESSION &app, HWND hwnd, int16_t fReadOnly) {
     fCreatingGame = 0;
 }
 
-int16_t StarsTest_FCreateFile(APPSESSION &app, DtFileType dt, int16_t iplr, const char *pszBase) {
+int16_t StarsTest_FCreateFile(APPSESSION &app, DtFileType dt, int16_t iplr, std::optional<std::string_view> szForceName) {
     const char *pszFailure = PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE");
     DtFileType dtFailure = pszFailure && !strcmp(pszFailure, "host") ? dtHost : dtXY;
     int16_t fCreated;
@@ -34,7 +34,7 @@ int16_t StarsTest_FCreateFile(APPSESSION &app, DtFileType dt, int16_t iplr, cons
         SetSzWorkFromDt(app, dt, iplr);
         if (!SDL_CreateDirectory(app.state.szWork)) return 0;
     }
-    fCreated = FCreateFile(app, dt, iplr, pszBase);
+    fCreated = FCreateFile(app, dt, iplr, szForceName);
     if (PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE") && fCreated) {
         if (dt == dtLog) cSwitchLogWrites++;
         if (dt == dtHist) cSwitchHistoryWrites++;

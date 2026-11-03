@@ -1368,7 +1368,7 @@ std::int16_t FWriteLogFile(APPSESSION &app, std::string_view pszFileBase, std::i
         }
     }
     CchCopyUtf8(std::span{app.state.szBase}, std::string_view{szBase.data()});
-    if (!RecordIO().pfnFCreateFile(app, dtLog, iPlayer, nullptr)) {
+    if (!RecordIO().pfnFCreateFile(app, dtLog, iPlayer, std::nullopt)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateLogFile, {}).data(), win32::MB_ICONHAND);
         return 0;
     }
@@ -1410,7 +1410,7 @@ std::int16_t FWriteHistFile(APPSESSION &app, std::int16_t iPlayer) {
     std::byte rgbHistHdr[cbWireHistHdr];
     std::uint8_t  *lpb;
 
-    if (!RecordIO().pfnFCreateFile(app, dtHist, iPlayer, nullptr)) {
+    if (!RecordIO().pfnFCreateFile(app, dtHist, iPlayer, std::nullopt)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableCreateHistoryFile, {}).data(), win32::MB_ICONHAND);
         return 0;
     }
