@@ -2233,11 +2233,11 @@ LInvalidSource:
 }
 
 struct LIBRARYGAMEREMOVE {
-    const char *pszDirectory;
+    std::string_view pszDirectory;
     std::int16_t fFailed;
 };
 
-std::int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory);
+std::int16_t RemoveLibraryGameTree(APPSESSION &app, std::string_view pszDirectory);
 
 static std::int16_t RemoveLibraryGameEntry(APPSESSION &app, void *lpData, std::string_view pszName) {
     std::optional<NATIVEPATHINFO> npiPath;
@@ -2264,7 +2264,7 @@ static std::int16_t RemoveLibraryGameEntry(APPSESSION &app, void *lpData, std::s
     return 1;
 }
 
-std::int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory) {
+std::int16_t RemoveLibraryGameTree(APPSESSION &app, std::string_view pszDirectory) {
     std::optional<NATIVEPATHINFO> npiPath;
     LIBRARYGAMEREMOVE lgr;
 

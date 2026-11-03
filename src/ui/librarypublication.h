@@ -42,7 +42,7 @@ std::int16_t FStageConflictingTurn(const char *pszStage, const char *pszName, co
 std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, std::string_view pszName);
 std::int16_t FLibraryNameAvailable(APPSESSION &app, std::string_view pszDirectory, std::string_view pszName);
 std::int16_t FWriteLibraryMetadata(std::string_view pszDir, std::string_view pszName, int iplr);
-std::int16_t RemoveLibraryGameTree(APPSESSION &app, const char *pszDirectory);
+std::int16_t RemoveLibraryGameTree(APPSESSION &app, std::string_view pszDirectory);
 std::int16_t CopyImportEntry(APPSESSION &app, void *lpData, std::string_view pszName);
 std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, std::string_view pszName);
 std::int16_t RemoveImportFile(APPSESSION &app, void *lpData, std::string_view pszFile);

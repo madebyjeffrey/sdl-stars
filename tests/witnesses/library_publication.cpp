@@ -156,7 +156,10 @@ static int removeObject(const char *path, int tree) {
 }
 static int TestRemoveNativeFile(const char *path) { return removeObject(path, 0) ? 0 : -1; }
 static int TestRemoveNativePath(const char *path) { return removeObject(path, 0) ? 0 : -1; }
-static int TestRemoveLibraryGameTree(APPSESSION &, const char *path) { return removeObject(path, 1); }
+static int TestRemoveLibraryGameTree(APPSESSION &, std::string_view path) {
+    const std::string szPath{path};
+    return removeObject(szPath.c_str(), 1);
+}
 static int TestFNativeDirectoryExists(std::string_view path) {
     const std::string szPath{path};
     int p = role(szPath.c_str()), ok = decision() && objects[p] >= 100;
