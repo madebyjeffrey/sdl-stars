@@ -69,7 +69,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
         AivFromLp(app, lpiHistSize).SetValue(app.state.game.cPlanMax * 2 + 2);
     }
     app.state.fMarkedPlanets = 0;
-    iroCur = IroEnsureAi(app, vrgAiCybertronResOrder, cAiCybertronResOrder, &ishdefLatestSB, 17);
+    iroCur = IroEnsureAi(app, std::span<const std::uint8_t>{vrgAiCybertronResOrder, static_cast<std::size_t>(cAiCybertronResOrder)}, &ishdefLatestSB, 17);
     EnsureCyberAiShdefs(app, iroCur);
     MergeAllShdefs(app, 1);
     MergeAllShdefs(app, 48);

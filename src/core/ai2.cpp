@@ -13,7 +13,7 @@ void DoMaidAiTurn(APPSESSION &app, PROD *rgprod) {
     std::int32_t rgResAvail[4];
     std::int16_t iroCur;
 
-    iroCur = IroEnsureAi(app, nullptr, 0, nullptr, app.state.game.turn >= 20 ? 15 : 0);
+    iroCur = IroEnsureAi(app, {}, nullptr, app.state.game.turn >= 20 ? 15 : 0);
     app.state.fMarkedPlanets = 0;
     HandleBasicAiTasks(app, iroCur, rgprod, ishdefNone, rgResAvail, rgResCost);
     FillProductionQueue(app);
@@ -83,7 +83,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
     cplBadGuy = 0;
     cplNegative = 0;
     cplanCol = 0;
-    iroCur = IroEnsureAi(app, vrgAiISResOrder, cAiISResOrder, &ishdefSBLatest, app.state.game.turn >= 10 ? 20 : 0);
+    iroCur = IroEnsureAi(app, std::span<const std::uint8_t>{vrgAiISResOrder, static_cast<std::size_t>(cAiISResOrder)}, &ishdefSBLatest, app.state.game.turn >= 10 ? 20 : 0);
     if (app.state.game.turn > 50) {
         MergeAllShdefs(app, 7692);
         MergeAllShdefs(app, 64);
@@ -538,7 +538,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
     cplanCol = 0;
     fColonyShipInQueue = 0;
     fBomberInQueue = 0;
-    iroCur = IroEnsureAi(app, nullptr, 0, &ishdefSBLatest, app.state.game.turn >= 20 ? 15 : 0);
+    iroCur = IroEnsureAi(app, {}, &ishdefSBLatest, app.state.game.turn >= 20 ? 15 : 0);
     EnsureCAShdefs(iroCur);
     lppl = app.state.lpPlanets;
     lpplMac = app.state.lpPlanets + app.state.cPlanet;

@@ -1185,11 +1185,12 @@ void AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, G
     return;
 }
 
-std::int16_t IroEnsureAi(APPSESSION &app, std::uint8_t *lpbRes, std::int16_t cRes, std::int16_t *pishdefSBLatest, std::int16_t pct) {
+std::int16_t IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, std::int16_t *pishdefSBLatest, std::int16_t pct) {
     std::int16_t iSmallest;
     std::int16_t i;
     std::int16_t pctTech;
     std::int16_t ilvl;
+    std::size_t iResOrder;
 
     if (pishdefSBLatest) {
         EnsureAiStarbaseDesigns(app);
@@ -1204,16 +1205,16 @@ std::int16_t IroEnsureAi(APPSESSION &app, std::uint8_t *lpbRes, std::int16_t cRe
         pctTech = app.state.rgplr[app.state.idPlayer].iTechCur * 256;
         WriteMemResearch(app, pctTech);
     }
-    for (i = 0; i < cRes; i++) {
-        ilvl = app.state.rgplr[app.state.idPlayer].rgTech[lpbRes[i] >> 5];
-        if (ilvl < (lpbRes[i] & 0x1f)) {
-            app.state.rgplr[app.state.idPlayer].SetITechNow(lpbRes[i] >> 5);
-            if (i < cRes - 1 && ilvl + 1 == (lpbRes[i] & 0x1f)) {
-                app.state.rgplr[app.state.idPlayer].SetITechNext(lpbRes[i + 1] >> 5);
+    for (iResOrder = 0; iResOrder < rgResOrder.size(); iResOrder++) {
+        ilvl = app.state.rgplr[app.state.idPlayer].rgTech[rgResOrder[iResOrder] >> 5];
+        if (ilvl < (rgResOrder[iResOrder] & 0x1f)) {
+            app.state.rgplr[app.state.idPlayer].SetITechNow(rgResOrder[iResOrder] >> 5);
+            if (iResOrder + 1 < rgResOrder.size() && ilvl + 1 == (rgResOrder[iResOrder] & 0x1f)) {
+                app.state.rgplr[app.state.idPlayer].SetITechNext(rgResOrder[iResOrder + 1] >> 5);
             }
             pctTech = app.state.rgplr[app.state.idPlayer].pctResearch + app.state.rgplr[app.state.idPlayer].iTechCur * 256;
             WriteMemResearch(app, pctTech);
-            return i;
+            return static_cast<std::int16_t>(iResOrder);
         }
     }
     iSmallest = 0;

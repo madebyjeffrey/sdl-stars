@@ -30,7 +30,7 @@ std::int16_t  FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int1
                                   std::int16_t *pidBest);
 std::int16_t  FMoveAiFleet(APPSESSION &app, FLEET *lpfl, ORDER *pord, std::int16_t fAppend);
 void     AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, GrobjClass grobj, AddItemMode mdAddItem);
-std::int16_t  IroEnsureAi(APPSESSION &app, std::uint8_t *lpbRes, std::int16_t cRes, std::int16_t *pishdefSBLatest, std::int16_t pct);
+std::int16_t  IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, std::int16_t *pishdefSBLatest, std::int16_t pct);
 void     KeepFleetsMoving(APPSESSION &app);
 std::int16_t  FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol);
 std::int16_t  FIsAiAttack(APPSESSION &app, FLEET *lpfl);

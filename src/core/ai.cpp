@@ -133,7 +133,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
 
     iAiLvl = app.state.rgplr[app.state.idPlayer].lvlAi;
     iPlanet = app.state.rgplr[app.state.idPlayer].idPlanetHome;
-    iroCur = IroEnsureAi(app, vrgAiRobotoidResOrder, cAiRobotoidResOrder, &ishdefSBLatest, app.state.game.turn >= 10 ? 15 : 0);
+    iroCur = IroEnsureAi(app, std::span<const std::uint8_t>{vrgAiRobotoidResOrder, static_cast<std::size_t>(cAiRobotoidResOrder)}, &ishdefSBLatest, app.state.game.turn >= 10 ? 15 : 0);
     if (app.state.game.turn > 50) {
         MergeAllShdefs(app, 1788);
         MergeAllShdefs(app, 1);
@@ -883,7 +883,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
     cplNegative = 0;
     cplanCol = 0;
     cplMiners = 0;
-    iroCur = IroEnsureAi(app, vrgAiTurinDroneResOrder, cAiTurinDroneResOrder, &ishdefSBLatest, 15);
+    iroCur = IroEnsureAi(app, std::span<const std::uint8_t>{vrgAiTurinDroneResOrder, static_cast<std::size_t>(cAiTurinDroneResOrder)}, &ishdefSBLatest, 15);
     if (!app.state.rgshdef[13].fFree) {
         MergeAllShdefs(app, -7952);
     }
