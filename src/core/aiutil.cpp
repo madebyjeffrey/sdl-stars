@@ -1276,7 +1276,7 @@ LKeepMovn:
     return;
 }
 
-std::int16_t FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol) {
+COLONIZERBUILDRESULT FShouldWeBuildColonizers(APPSESSION &app) {
     std::int16_t  iMax;
     std::int16_t  cColFl;
     std::uint32_t cBuilt;
@@ -1292,14 +1292,11 @@ std::int16_t FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol) {
     cBuilt = 0;
     iMax = -1;
     iMin = 16;
-    if (pcCol) {
-        *pcCol = 0;
-    }
     if (app.state.rgplr[app.state.idPlayer].lvlAi == lvlAiEasy && (app.state.game.turn & 1)) {
-        return 0;
+        return {false, cColFl};
     }
     if (app.state.game.turn < 30) {
-        return 1;
+        return {true, cColFl};
     }
     for (i = 0; i < 16; i++) {
         if (!app.state.rgshdef[i].fFree && (app.state.rgshdef[i].hul.ihuldef == ihuldefMiniColonyShip || app.state.rgshdef[i].hul.ihuldef == ihuldefColonyShip)) {
@@ -1316,7 +1313,7 @@ std::int16_t FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol) {
     }
     iMax++;
     if (iMax <= 0) {
-        return 0;
+        return {false, cColFl};
     }
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
@@ -1331,11 +1328,8 @@ std::int16_t FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol) {
             }
         }
     }
-    if (pcCol) {
-        *pcCol = cColFl;
-    }
     if (cColFl > 20 * app.state.game.mdSize + 10) {
-        return 0;
+        return {false, cColFl};
     }
     for (i = 0; i < app.state.game.cPlayer; i++) {
         if (app.state.rgplr[i].fInclude) {
@@ -1343,7 +1337,7 @@ std::int16_t FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol) {
         }
     }
     if (cColFl + cColPl > static_cast<std::int16_t>((app.state.game.cPlanMax * 4)) / 5) {
-        return 0;
+        return {false, cColFl};
     }
     cBuilt = 0;
     for (i = iMin; i < iMax; i++) {
@@ -1352,9 +1346,9 @@ std::int16_t FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol) {
         }
     }
     if (cBuilt - static_cast<std::int16_t>((cColPl + cColFl)) > 25 && (cColFl > 4 || RandomIO().pfnRandom(app, 2) != 0)) {
-        return 0;
+        return {false, cColFl};
     }
-    return 1;
+    return {true, cColFl};
 }
 
 std::int16_t FIsAiAttack(APPSESSION &app, FLEET *lpfl) {

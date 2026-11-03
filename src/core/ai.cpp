@@ -92,6 +92,7 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
     std::int16_t  cFlDestroyers;
     std::int16_t  iLatestDestroyer;
     std::int16_t  cColFleet;
+    COLONIZERBUILDRESULT colonizerBuild;
     THING   *lpthWorm;
     std::int16_t  idPlanDst;
     std::int16_t  j;
@@ -201,7 +202,9 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
             cFlDestroyers++;
         }
     }
-    fShouldColonize = FShouldWeBuildColonizers(app, &cColFleet);
+    colonizerBuild = FShouldWeBuildColonizers(app);
+    fShouldColonize = colonizerBuild.fShouldBuild;
+    cColFleet = colonizerBuild.cColFleet;
     UpdateProgressGauge(app, progressStep4);
     lppl = app.state.lpPlanets;
     lpplMac = app.state.lpPlanets + app.state.cPlanet;

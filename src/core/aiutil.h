@@ -2,6 +2,11 @@
 #define STARS_DECOMPILED_AIUTIL_H
 
 #include "common.h"
+
+struct COLONIZERBUILDRESULT {
+    bool fShouldBuild;
+    std::int16_t cColFleet;
+};
 #include <cstdint>
 #include <optional>
 
@@ -38,7 +43,7 @@ std::int16_t  FMoveAiFleet(APPSESSION &app, FLEET *lpfl, ORDER *pord, std::int16
 void     AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, GrobjClass grobj, AddItemMode mdAddItem);
 AIENSURERESULT IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, bool fEnsureStarbase, std::int16_t pct);
 void     KeepFleetsMoving(APPSESSION &app);
-std::int16_t  FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol);
+COLONIZERBUILDRESULT FShouldWeBuildColonizers(APPSESSION &app);
 std::int16_t  FIsAiAttack(APPSESSION &app, FLEET *lpfl);
 std::int16_t  FIsTurinDroneAiAttack(APPSESSION &app, FLEET *lpfl);
 std::int16_t  FIsAiTransport(APPSESSION &app, FLEET *lpfl);

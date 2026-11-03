@@ -12,6 +12,7 @@
 void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
     std::int16_t  iLatestCargo;
     std::int16_t  cColFleet;
+    COLONIZERBUILDRESULT colonizerBuild;
     std::int32_t  rgResCost[4];
     std::int16_t  idPlanDst;
     std::int16_t  j;
@@ -169,7 +170,9 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
     EnsureMacintiShdefs(app);
     EnsureMacintiStarbaseDesigns(app, rgRecycleSBShdef);
     app.state.vAiMacRecycleSB = rgRecycleSBShdef;
-    fShouldColonize = FShouldWeBuildColonizers(app, &cColFleet);
+    colonizerBuild = FShouldWeBuildColonizers(app);
+    fShouldColonize = colonizerBuild.fShouldBuild;
+    cColFleet = colonizerBuild.cColFleet;
     if (app.state.rgshdef[1].hul.rghs[0].iItem == iengineGalaxyScoop) {
         iLatestColony = 1;
     } else if (!app.state.rgshdef[7].fFree && app.state.rgshdef[7].hul.ihuldef == ihuldefColonyShip) {
