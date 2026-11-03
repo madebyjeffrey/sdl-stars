@@ -28320,6 +28320,32 @@
       "api_audit": "Private COMPATLIST selection/scroll state and helper flags use bool; no BOOL spelling remains in list.cpp. Win32 list-box messages and API return contracts remain unchanged.",
       "platform": "Current-source Windows and Linux qualification remains open.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Use bounded C++ scan for DrawText input",
+      "parent": "2eceb2a6",
+      "source_commit": "f5480a4e",
+      "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
+      "api_audit": "DrawTextA now uses std::find over the same 1 MiB + 1 input bound for cch == -1; inputs beyond 1 MiB still fail. No strnlen spelling remains in owned sources.",
+      "remaining": "The other three std::strlen calls remain incoming C-string/API boundaries; L05 text/ownership review remains open.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -29160,8 +29186,8 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "fcb27bc9",
-    "latest_change": "Use bool for private compatibility state",
+    "source_commit": "f5480a4e",
+    "latest_change": "Use bounded C++ scan for DrawText input",
     "c_macro_audit": {
       "source_head": "fcb27bc9",
       "date": "2026-11-03",
@@ -29180,13 +29206,13 @@
       "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "fcb27bc9",
-    "latest_batch_status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
+    "latest_source_commit": "f5480a4e",
+    "latest_batch_status": "Source commit f5480a4e verified locally; ledger checkpoint recorded.",
     "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
-      "batch": "Use bool for private compatibility state",
-      "parent": "a893086a",
-      "source_commit": "fcb27bc9",
+      "batch": "Use bounded C++ scan for DrawText input",
+      "parent": "2eceb2a6",
+      "source_commit": "f5480a4e",
       "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -29204,15 +29230,15 @@
         "skipped": 0
       },
       "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-      "api_audit": "Private compatibility runtime/window state and internal helper flags now use bool. Win32 SDK API declarations, callback contracts, and public BOOL parameters remain unchanged.",
-      "inventory": "44 tracked C translation units remain, all in independent tests/reference/scaffold targets; 0 production C translation units. 0 owned function-like API macros and 0 raw strcpy/strcat/strncpy/strncat calls. Three std::strlen calls remain at incoming C-string/API boundaries.",
-      "platform": "Current-source Windows SDL and Linux desktop qualification remains open; Linux portal code and chooser coverage require that platform.",
+      "api_audit": "DrawTextA now uses std::find over the same 1 MiB + 1 input bound for cch == -1; inputs beyond 1 MiB still fail. No strnlen spelling remains in owned sources.",
+      "remaining": "The other three std::strlen calls remain incoming C-string/API boundaries; L05 text/ownership review remains open.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "Use bool for private compatibility state",
-      "parent": "a893086a",
-      "source_commit": "fcb27bc9",
+      "batch": "Use bounded C++ scan for DrawText input",
+      "parent": "2eceb2a6",
+      "source_commit": "f5480a4e",
       "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -29230,17 +29256,17 @@
         "skipped": 0
       },
       "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-      "api_audit": "Private compatibility runtime/window state and internal helper flags now use bool. Win32 SDK API declarations, callback contracts, and public BOOL parameters remain unchanged.",
-      "inventory": "44 tracked C translation units remain, all in independent tests/reference/scaffold targets; 0 production C translation units. 0 owned function-like API macros and 0 raw strcpy/strcat/strncpy/strncat calls. Three std::strlen calls remain at incoming C-string/API boundaries.",
-      "platform": "Current-source Windows SDL and Linux desktop qualification remains open; Linux portal code and chooser coverage require that platform.",
+      "api_audit": "DrawTextA now uses std::find over the same 1 MiB + 1 input bound for cch == -1; inputs beyond 1 MiB still fail. No strnlen spelling remains in owned sources.",
+      "remaining": "The other three std::strlen calls remain incoming C-string/API boundaries; L05 text/ownership review remains open.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass.",
-      "status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
+      "status": "Source commit f5480a4e verified locally; ledger checkpoint recorded.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
       ],
-      "next": "Continue the five open L05/L06/L08 audit buckets, then qualify current develop on Windows and Linux."
+      "next": "Continue the open bounded-text and scratch/borrowed-return audits, then complete L06 service/path work and Windows/Linux qualification."
     },
     "followup": {
       "batch": "L06 transport quantity selection returns a value",
@@ -29801,8 +29827,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "fcb27bc90f56f2c7b7cd0143ee7812b52a7a7fcc",
-  "latest_batch_status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "f5480a4e5d43ba9e73011f27e81244738b0e5ce7",
+  "latest_batch_status": "Source commit f5480a4e verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -29882,7 +29908,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "fcb27bc90f56f2c7b7cd0143ee7812b52a7a7fcc",
+    "source_head": "f5480a4e5d43ba9e73011f27e81244738b0e5ce7",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -29932,7 +29958,7 @@
     "cocoa_chooser_path_length": "IChooseCocoaFile creates one bounded view for the selected native path and reuses its byte length for capacity admission and copy, removing a duplicate std::strlen scan.",
     "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed.",
     "strlen_occurrence_classification": {
-      "source_head": "fcb27bc90f56f2c7b7cd0143ee7812b52a7a7fcc",
+      "source_head": "f5480a4e5d43ba9e73011f27e81244738b0e5ce7",
       "total": 3,
       "c_string_api_or_input_boundaries": 3,
       "owned_or_fixed_text_length_reads": 0,
@@ -29962,7 +29988,7 @@
     "typed_help_context_calls": "Transfer, custom transport order, and ship designer branches pass named HelpContextId values. The remaining numeric values 1089, 1090, and 13002 are absent from the original help map; compatibility coverage explicitly asserts 13002 is unmapped, so their previous behavior is retained.",
     "library_name_shifts": "Four overlapping character-range std::memmove calls in GetGameLibraryName and GetRaceLibraryStem were replaced by std::move/std::move_backward; byte ranges and NUL movement are unchanged.",
     "owned_text_range_copies": "Four non-overlapping std::memmove copies from catalog/decode scratch and legacy race-name scratch now use std::copy_n; byte counts and explicit terminator writes are unchanged.",
-    "bounded_text_cpp_scans": "Five bounded terminator scans in message, decompressor, scanner snapshot, file-dialog and LOGFONT buffers use C++ ranges/views. Profile BOM comparison uses a three-byte string_view. Encoded compression output copies through std::byte spans.",
+    "bounded_text_cpp_scans": "Six bounded terminator scans in message, decompressor, scanner snapshot, file-dialog, LOGFONT, and DrawText buffers use C++ ranges/views. Profile BOM comparison uses a three-byte string_view. Encoded compression output copies through std::byte spans.",
     "bounded_sdl_string_scans": "All four production SDL_strnlen calls were replaced by bounded std::find scans using the same maximum lengths. No SDL_strnlen or SDL_strlen calls remain; the three std::strlen sites are incoming C-string/API boundaries.",
     "native_stream_predicates": "FNativeStreamError and FNativeStreamEof return bool. All production call sites consume predicates; legacy reference declarations remain int.",
     "ui_scratch_storage": {
@@ -30031,13 +30057,14 @@
         "strncpy",
         "strncat"
       ]
-    }
+    },
+    "strnlen_occurrences": 0
   },
-  "latest_change": "Use bool for private compatibility state",
+  "latest_change": "Use bounded C++ scan for DrawText input",
   "latest_batch_verification": {
-    "batch": "Use bool for private compatibility state",
-    "parent": "a893086a",
-    "source_commit": "fcb27bc9",
+    "batch": "Use bounded C++ scan for DrawText input",
+    "parent": "2eceb2a6",
+    "source_commit": "f5480a4e",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30055,15 +30082,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Private compatibility runtime/window state and internal helper flags now use bool. Win32 SDK API declarations, callback contracts, and public BOOL parameters remain unchanged.",
-    "inventory": "44 tracked C translation units remain, all in independent tests/reference/scaffold targets; 0 production C translation units. 0 owned function-like API macros and 0 raw strcpy/strcat/strncpy/strncat calls. Three std::strlen calls remain at incoming C-string/API boundaries.",
-    "platform": "Current-source Windows SDL and Linux desktop qualification remains open; Linux portal code and chooser coverage require that platform.",
+    "api_audit": "DrawTextA now uses std::find over the same 1 MiB + 1 input bound for cch == -1; inputs beyond 1 MiB still fail. No strnlen spelling remains in owned sources.",
+    "remaining": "The other three std::strlen calls remain incoming C-string/API boundaries; L05 text/ownership review remains open.",
+    "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use bool for private compatibility state",
-    "parent": "a893086a",
-    "source_commit": "fcb27bc9",
+    "batch": "Use bounded C++ scan for DrawText input",
+    "parent": "2eceb2a6",
+    "source_commit": "f5480a4e",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30081,16 +30108,16 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Private compatibility runtime/window state and internal helper flags now use bool. Win32 SDK API declarations, callback contracts, and public BOOL parameters remain unchanged.",
-    "inventory": "44 tracked C translation units remain, all in independent tests/reference/scaffold targets; 0 production C translation units. 0 owned function-like API macros and 0 raw strcpy/strcat/strncpy/strncat calls. Three std::strlen calls remain at incoming C-string/API boundaries.",
-    "platform": "Current-source Windows SDL and Linux desktop qualification remains open; Linux portal code and chooser coverage require that platform.",
+    "api_audit": "DrawTextA now uses std::find over the same 1 MiB + 1 input bound for cch == -1; inputs beyond 1 MiB still fail. No strnlen spelling remains in owned sources.",
+    "remaining": "The other three std::strlen calls remain incoming C-string/API boundaries; L05 text/ownership review remains open.",
+    "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit f5480a4e verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
     ],
-    "next": "Continue the five open L05/L06/L08 audit buckets, then qualify current develop on Windows and Linux."
+    "next": "Continue the open bounded-text and scratch/borrowed-return audits, then complete L06 service/path work and Windows/Linux qualification."
   }
 }
