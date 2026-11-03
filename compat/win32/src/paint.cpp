@@ -195,7 +195,7 @@ HPALETTE win32::CreatePalette(const LOGPALETTE *lppal) {
         return nullptr;
     rgpeOwner.reset(static_cast<PALETTEENTRY *>(std::malloc(static_cast<std::size_t>(lppal->palNumEntries) * sizeof(*rgpe)))); rgpe = rgpeOwner.get();
     if (!rgpe) return nullptr;
-    std::memcpy(rgpe, lppal->palPalEntry, static_cast<std::size_t>(lppal->palNumEntries) * sizeof(*rgpe));
+    std::copy_n(lppal->palPalEntry, lppal->palNumEntries, rgpe);
     lpobj = LpNewObject(objPalette, 0, 0);
     if (!lpobj) return nullptr;
     lpobj->rgpe.reset(rgpeOwner.release()); lpobj->cEntries = lppal->palNumEntries;
@@ -230,7 +230,7 @@ UINT win32::GetPaletteEntries(HPALETTE hpal, UINT iStart, UINT cEntries, LPPALET
     if (!rgpe) return lpobj->cEntries;
     if (iStart >= lpobj->cEntries) return 0;
     cEntries = StarsMin(cEntries, lpobj->cEntries - iStart);
-    std::memcpy(rgpe, RgpeCompatPalette(lpobj) + iStart, static_cast<std::size_t>(cEntries) * sizeof(*rgpe));
+    std::copy_n(RgpeCompatPalette(lpobj) + iStart, cEntries, rgpe);
     return cEntries;
 }
 
@@ -767,7 +767,7 @@ static BOOL FPaintClip(HDC lpdc, HWND hwnd) {
         rgrc = static_cast<RECT *>((std::malloc(hwnd->crcUpdate * sizeof(*rgrc))));
         rgrcOwner.reset(rgrc);
         if (!rgrc) return 0;
-        std::memcpy(rgrc, hwnd->rgrcUpdate.get(), hwnd->crcUpdate * sizeof(*rgrc));
+        std::copy_n(hwnd->rgrcUpdate.get(), hwnd->crcUpdate, rgrc);
     }
     lpdc->rgrcPaint = std::move(rgrcOwner); lpdc->crcPaint = hwnd->crcUpdate;
     lpdc->fPaint = 1; lpdc->fClip = 1; lpdc->rcClip = hwnd->rcUpdate;

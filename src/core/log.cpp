@@ -734,7 +734,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
         }
         return 0;
     case rtLogRelations:
-        std::memcpy(app.state.rgplr[app.state.idPlayer].rgmdRelation, lpb, app.state.game.cPlayer);
+        std::copy_n(lpb, app.state.game.cPlayer, app.state.rgplr[app.state.idPlayer].rgmdRelation);
         break;
     case rtLogPlayerZpq1:
         if (app.state.gd.fGeneratingTurn) {

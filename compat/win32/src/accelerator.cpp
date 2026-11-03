@@ -1,5 +1,6 @@
 /* Accelerator handles own copied entries; module-loaded tables are cached. */
 #include "internal.h"
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -28,7 +29,7 @@ HACCEL win32::CreateAcceleratorTableA(LPACCEL rgaccel, int c) {
     lp->rg = static_cast<ACCEL *>((std::malloc(static_cast<std::size_t>(c) * sizeof(ACCEL))));
     NATIVEARRAYOWNER<ACCEL, std::free> rgOwner(lp->rg);
     if (!lp->rg) return nullptr;
-    std::memcpy(lp->rg, rgaccel, static_cast<std::size_t>(c) * sizeof(ACCEL));
+    std::copy_n(rgaccel, c, lp->rg);
     lp->c = c; lp->fAlive = 1; lp->hnext = haccels; haccels = lpOwner.release();
     rgOwner.release();
     return lp;

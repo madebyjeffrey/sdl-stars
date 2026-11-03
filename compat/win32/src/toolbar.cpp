@@ -103,8 +103,8 @@ static BOOL AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rg
         } else if (rgbtn[i].iString > 0) break;
     }
     if (i != c) return 0;
-    if (iInsert != 0) std::memcpy(rgNew, lp->rgbtn, static_cast<std::size_t>(iInsert) * sizeof(*rgNew));
-    if (lp->c != iInsert) std::memcpy(rgNew + iInsert + c, lp->rgbtn + iInsert, static_cast<std::size_t>((lp->c - iInsert)) * sizeof(*rgNew));
+    if (iInsert != 0) std::copy_n(lp->rgbtn, iInsert, rgNew);
+    if (lp->c != iInsert) std::copy_n(lp->rgbtn + iInsert, lp->c - iInsert, rgNew + iInsert + c);
     std::free(lp->rgbtn); lp->rgbtn = rgNew; rgNew = nullptr; lp->c += static_cast<int>(c);
     lp->iDown = lp->iHot = -1;
     HideTip(hwnd); LayoutToolbar(hwnd);
