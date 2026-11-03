@@ -315,10 +315,10 @@
         "bounded-help-filename-case-comparison",
         "scanner-private-boolean-helper-results",
         "message-format-result-byte-count",
-        "bounded-text-destination-classification"
+        "bounded-text-destination-classification",
+        "snprintf-style-caller-return-audit"
       ],
       "pending_substeps": [
-        "formatter-caller-return-audit",
         "post-migration-scratch-storage-and-borrowed-return-audit"
       ],
       "metadata_scan": {
@@ -1901,6 +1901,24 @@
           "api_audit": "ICompReport carries the first label's copy count, finds the second label terminator inside szWork, and compares explicit suffix views. All reportui.cpp std::strcmp calls are now retired.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 snprintf-style caller-return audit",
+          "source_commit": "8da637d3",
+          "status": "complete by static source review; runtime verification not run for this batch",
+          "scope": "148 production snprintf-style callsites remain: 141 direct CchSnprintf calls and 7 injectable pfnCchSnprintf calls. Of the original 186, 38 display/copy destinations moved to complete-prefix formatting or UTF-8-aware copy helpers.",
+          "result": "All 148 remaining returns are captured or conditionally consumed and checked before destination use. Strict paths, filenames and serialization outputs reject format failure or required length >= capacity. Bounded numeric/config destinations have source-level fit bounds. Display labels, prompts and diagnostics use CchSprintf complete-prefix formatting.",
+          "inventory": "docs/CPP-LIVE-L05-FORMATTER-DESTINATIONS.csv has current source lines, functions, destination expressions/capacities and formatter behavior.",
+          "diff_check": "Pass.",
+          "build_tests_regression_tutorial": "Not run for this audit batch.",
+          "formatter_counts": {
+            "production_calls": 603,
+            "cch_sprintf": 455,
+            "cch_snprintf": 141,
+            "pfn_cch_snprintf": 7,
+            "snprintf_style_calls": 148,
+            "ignored_snprintf_style_returns": 0
+          }
         }
       ],
       "bounded_formatting": {
@@ -29855,7 +29873,7 @@
     "next": "D06 qualify native Windows/Linux adapters and complete remaining platform/full-suite checks; then assess expansion beyond current eight UI callers."
   },
   "remaining_work": [
-    "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
+    "L05: finish the remaining const-text interfaces and post-migration scratch-storage and borrowed-return audit.",
     "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
     "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
   ],
@@ -30350,8 +30368,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "29a731f9",
-  "latest_batch_status": "Source commit 29a731f9 verified locally; L05/L06 reports recorded.",
+  "latest_source_commit": "8da637d3",
+  "latest_batch_status": "Source commits 658fdc6a and 8da637d3 complete the snprintf-style caller-return audit; static review and git diff --check pass. Runtime suites were not run for this audit batch.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -30613,7 +30631,7 @@
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds.",
     "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format C-string arguments remain at null-check, %s/%p and CRT formatting boundaries."
   },
-  "latest_change": "PszFormatString and PszFormatIds now preserve MESSAGETEXTRESULT byte counts through the TEXTIO formatter API.",
+  "latest_change": "All 148 remaining snprintf-style production callsites check their formatter result before use; display destinations use complete-prefix CchSprintf formatting.",
   "latest_batch_verification": {
     "batch": "Return formatted message byte counts",
     "parent": "26f1d628",
@@ -30639,45 +30657,41 @@
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Return formatted message byte counts",
-    "parent": "26f1d628",
-    "source_commit": "29a731f9",
-    "macos_sdl_debug_build": "make test-unit rebuilt strict SDL Debug targets and passed all 18 desktop unit tests.",
-    "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
-    "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "native_regression": {
-      "matches": 519,
-      "warnings": 25,
-      "differences_errors": 0,
-      "skipped": 0
+    "batch": "L05 snprintf-style caller-return audit",
+    "source_commit": "8da637d3",
+    "source_commits": [
+      "658fdc6a",
+      "8da637d3"
+    ],
+    "formatter_inventory": {
+      "production_calls": 603,
+      "cch_sprintf": 455,
+      "cch_snprintf": 141,
+      "pfn_cch_snprintf": 7,
+      "snprintf_style_calls": 148,
+      "ignored_snprintf_style_returns": 0
     },
-    "host_regression": {
-      "matches": 519,
-      "warnings": 25,
-      "differences_errors": 0,
-      "skipped": 0
-    },
-    "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
-    "api_audit": "PszFormatString, PszFormatIds and TEXTIO::pfnFormat preserve MESSAGETEXTRESULT, including its exact UTF-8 byte count. Formatting output and buffer capacity remain unchanged.",
-    "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
+    "report": "docs/CPP-LIVE-L05-REPORT.md",
+    "scan": "docs/CPP-LIVE-L05-DESTINATION-SCAN.md",
+    "inventory": "docs/CPP-LIVE-L05-FORMATTER-DESTINATIONS.csv",
     "diff_check": "Pass.",
-    "status": "Source commit 5988b374 committed after static source review; git diff --check passes. Current L05 build and runtime suites have not been run; L05/L06 reports recorded.",
+    "runtime_verification": "Build, unit tests, tutorial and regressions not run for this audit batch.",
     "remaining_work": [
-      "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
+      "L05: finish the remaining const-text interfaces and post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
-    ],
-    "next": "Use docs/CPP-LIVE-L05-REPORT.md and docs/CPP-LIVE-L06-REPORT.md to close the remaining text/ownership and buffer/length audits, then qualify the current source on Windows/Linux and close chooser coverage."
+    ]
   },
   "latest_l05_destination_scan": {
-    "source_commit": "5988b374",
-    "formatter_destination_callsites": 625,
-    "cch_sprintf_utf8_prefix_sites": 439,
-    "cch_snprintf_bounded_span_sites": 186,
+    "source_commit": "8da637d3",
+    "formatter_destination_callsites": 603,
+    "cch_sprintf_utf8_prefix_sites": 455,
+    "cch_snprintf_bounded_span_sites": 148,
     "legacy_owned_c_string_copy_calls": 0,
+    "ignored_snprintf_style_returns": 0,
     "report": "docs/CPP-LIVE-L05-DESTINATION-SCAN.md",
     "callsite_inventory": "docs/CPP-LIVE-L05-FORMATTER-DESTINATIONS.csv",
-    "status": "Destination classification is complete. Caller-return review remains open for 186 snprintf-style production calls; this pass repaired identified display and strict-path cases. The post-migration scratch/borrowed-return audit remains open.",
-    "formatter_inventory_rows_including_span_wrapper_declarations": 627
+    "status": "Destination classification and snprintf-style caller-return review are complete. All 148 remaining production snprintf-style returns are checked against strict capacity or a source-level fit bound; 38 earlier candidates now use UTF-8-prefix formatting or UTF-8-aware copies. Display destinations use complete-prefix formatting. The post-migration scratch/borrowed-return audit remains open.",
+    "formatter_inventory_rows_including_span_wrapper_declarations": 605
   }
 }
