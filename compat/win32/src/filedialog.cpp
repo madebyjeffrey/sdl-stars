@@ -86,10 +86,11 @@ static BOOL FFileEntryBefore(const COMPATFILEENTRY &a, const COMPATFILEENTRY &b)
     if (a.fDir != b.fDir) return a.fDir;
     return SDL_strcasecmp(a.szName.c_str(), b.szName.c_str()) < 0;
 }
-static BOOL FJoinFile(std::span<char> pszOut, std::string_view szDir, std::string_view szName) {
+static BOOL FJoinFile(std::span<char> pszOut, std::string_view szDir, std::string_view szName, std::size_t *pcchOut = nullptr) {
 #ifdef _WIN32
     char *pch;
 #endif
+    std::string_view szPath;
     if (pszOut.empty()) return 0;
     if (!szName.empty() && (szName[0] == '/'
 #ifdef _WIN32
@@ -105,7 +106,10 @@ static BOOL FJoinFile(std::span<char> pszOut, std::string_view szDir, std::strin
     // The browser splits paths with '/', including native suggestions and input.
     for (pch = pszOut.data(); *pch; pch++) if (*pch == '\\') *pch = '/';
 #endif
-    return FUtf8Valid(std::string_view{pszOut.data()});
+    szPath = std::string_view{pszOut.data()};
+    if (!FUtf8Valid(szPath)) return 0;
+    if (pcchOut) *pcchOut = szPath.size();
+    return 1;
 }
 static void FileError(HWND hwnd, LPCSTR psz) { CompatChoiceIO().pfnMessageBoxA(hwnd, psz, "File selection", win32::MB_OK | win32::MB_ICONEXCLAMATION); }
 static BOOL FRefreshFiles(HWND hwnd, COMPATFILEDIALOG *lp) {
@@ -191,12 +195,11 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     BOOL fExists;
     NATIVEFILE *lpfile;
     if (!*pszName) return 0;
-    if (!FJoinFile(std::span{szPath}, lp->szDir, pszName)) { FileError(hwnd, "The filename is too long."); return 0; }
+    if (!FJoinFile(std::span{szPath}, lp->szDir, pszName, &cch)) { FileError(hwnd, "The filename is too long."); return 0; }
     if ((st = IGetNativeFileInfo(szPath, NATIVELINKMODE::follow)).has_value() && st->fDirectory) return 2;
     pszBase = std::strrchr(szPath, '/'); pszBase = pszBase ? pszBase + 1 : szPath;
     pszExt = std::strrchr(pszBase, '.');
     if (!pszExt && pszDef && *pszDef) {
-        cch = std::strlen(szPath);
         if (!FUtf8Valid(pszDef)) { FileError(hwnd, "The extension is invalid UTF-8."); return 0; }
         if (CchSnprintf(std::span{szPath}.subspan(cch), ".%.*s", static_cast<int>(CchUtf8Prefix(pszDef, 3)), pszDef) >= static_cast<int>((sizeof(szPath) - cch))) {
             FileError(hwnd, "The filename is too long."); return 0;
@@ -209,7 +212,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
         FileError(hwnd, "The destination directory does not exist."); return 0;
     }
     pszBase = std::strrchr(szPath, '/') + 1;
-    if (!FJoinFile(std::span{szParent}, szReal, pszBase)) { FileError(hwnd, "The filename is too long."); return 0; }
+    if (!FJoinFile(std::span{szParent}, szReal, pszBase, &cch)) { FileError(hwnd, "The filename is too long."); return 0; }
     fExists = (st = IGetNativeFileInfo(szParent, NATIVELINKMODE::follow)).has_value();
     if (fExists && !st->fRegular) { FileError(hwnd, "Select a regular file."); return 0; }
     if (!fExists && lp->lpRequest->fMustExist) { FileError(hwnd, "The selected file does not exist."); return 0; }
@@ -228,8 +231,12 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     if (lp->fSave && fExists && lp->lpRequest->fConfirmOverwrite &&
         CompatChoiceIO().pfnMessageBoxA(hwnd, "This file already exists. Replace it?", "Confirm save", win32::MB_YESNO | win32::MB_ICONEXCLAMATION | win32::MB_DEFBUTTON2) != win32::IDYES) return 0;
     if (hwnd && !win32::IsWindow(hwnd)) return 0;
-    CchCopyUtf8(std::span{lp->szResult}, szParent);
-    cch = std::strlen(lp->szResult) + 1;
+    if (CchCopyUtf8(std::span{lp->szResult}, std::string_view{szParent, cch}) < 0) {
+        lp->dwError = win32::FNERR_BUFFERTOOSMALL;
+        lp->cbRequiredPath = cch + 1;
+        return -1;
+    }
+    cch++;
     if (lp->lpRequest->cbPathMax && cch > *lp->lpRequest->cbPathMax) {
         lp->dwError = win32::FNERR_BUFFERTOOSMALL;
         lp->cbRequiredPath = cch;
