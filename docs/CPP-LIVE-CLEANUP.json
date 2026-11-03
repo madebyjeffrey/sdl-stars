@@ -25671,22 +25671,20 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05 profile records keep parsed fields as optional views",
-    "status": "Locally committed as 08db1856. Strict macOS Debug build, desktop/host units, full native/host regressions, tutorial smoke and three functional profile witnesses pass. The separate macOS leaks instrumentation wrapper timed out because it could not get the launched task port. Windows/Linux qualification remains outstanding.",
-    "parent": "78860907",
-    "change": "DrawProductionItem accepts std::string_view rows; the owner-draw callback forwards the list control\u2019s returned text length and fixed metadata reads stay within the view.",
+    "batch": "L05 const-qualified catalog tech levels",
+    "status": "Locally committed as e738f618. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "6e2b5775",
+    "change": "NATIVEPARTCOMMONVIEW::rgTech() returns const std::int8_t*; all callers read catalog tech requirements.",
     "verification": {
-      "macos_sdl_debug": "make compile passes with strict warnings and header checks.",
+      "macos_sdl_debug": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
-      "tutorial": "1/1 available SDL tutorial smoke passes.",
-      "baseline": "Unchanged.",
-      "diff_check": "Pass.",
-      "windows_linux": "Current-source Windows/Linux qualification remains pending.",
-      "profile_functional_witnesses": "win32_profile_save, win32_sdl_resource_profile and win32_utf8_profile pass 3/3.",
-      "profile_leak_instrumentation": "win32_sdl_leaks_profile times out after 60 seconds; macOS leaks reports it cannot obtain the launched process task port. The profile program itself reports its profile checks passed."
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "baseline": "Unchanged; catalog tech levels remain in their existing fixed-width records.",
+      "diff_check": "git diff --check passes.",
+      "windows_linux": "Windows/Linux qualification remains pending for current develop."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -25895,12 +25893,28 @@
       {
         "commit": "08db1856",
         "message": "Parse profile fields as bounded views"
+      },
+      {
+        "commit": "6e2b5775",
+        "message": "Const-qualify catalog part names"
+      },
+      {
+        "commit": "fe5e2f10",
+        "message": "Record const catalog name verification"
+      },
+      {
+        "commit": "e738f618",
+        "message": "Expose catalog tech levels as read-only"
+      },
+      {
+        "commit": "13f232ce",
+        "message": "Record catalog tech view verification"
       }
     ],
-    "source_commit": "08db1856",
-    "latest_change": "COMPATPROFILE now owns its source/parsed lines and represents section, key and value as optional string_views into the stable parsed line. Parsing preserves embedded-NUL termination, whitespace trimming, and the distinction between absent and empty fields.",
+    "source_commit": "e738f618",
+    "latest_change": "NATIVEPARTCOMMONVIEW::rgTech() returns const std::int8_t*; all callers read catalog tech requirements.",
     "c_macro_audit": {
-      "source_head": "4983e9ac",
+      "source_head": "e738f618",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25911,10 +25925,10 @@
         "precision_scaffold": 2
       },
       "owned_function_like_api_macros": 0,
-      "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
+      "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification is current."
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Current local macOS/host verification passes through e738f618."
     }
   },
   "milestone_d_checkpoint": {
