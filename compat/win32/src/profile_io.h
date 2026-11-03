@@ -45,5 +45,5 @@ public:
     PROFILEIOSCOPE &operator=(const PROFILEIOSCOPE &) = delete;
 };
 DWORD DwProfileError();
-BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io = ProfileIO());
+bool FSaveProfile(COMPATPROFILE *lp, std::string_view pszPath, const PROFILEIO &io = ProfileIO());
 #endif

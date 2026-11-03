@@ -28,23 +28,23 @@ std::optional<std::string> SzProfileTempTemplate(std::string_view szPath) {
     return std::nullopt;
 }
 
-BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
+bool FSaveProfile(COMPATPROFILE *lp, std::string_view pszPath, const PROFILEIO &io) {
     std::optional<std::string> szTemplate;
     NATIVEFILETEMPRESULT nft;
     NATIVEFILE *fp = nullptr;
-    BOOL fRet = 0;
-    BOOL fTemporary = 0;
+    bool fRet = false;
+    bool fTemporary = false;
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
         if (fp) io.pfnClose(std::exchange(fp, nullptr));
-        if (!fRet && fTemporary) io.pfnUnlink(nft.szPath.c_str());
+        if (!fRet && fTemporary) io.pfnUnlink(nft.szPath);
     });
 
     szTemplate = io.pfnTempTemplate(pszPath);
-    if (!szTemplate) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0; }
+    if (!szTemplate) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return false; }
     nft = io.pfnCreateTemp(*szTemplate);
     fp = nft.lpfile.release();
     if (!fp) { win32::SetLastError(DwProfileError()); goto LReturn; }
-    fTemporary = 1;
+    fTemporary = true;
     if (io.pfnCopyPermissions(fp, pszPath) != 0) {
         win32::SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
     }
@@ -57,8 +57,8 @@ BOOL FSaveProfile(COMPATPROFILE *lp, const char *pszPath, const PROFILEIO &io) {
     if (lp || io.pfnFlush(fp) != 0 || io.pfnSync(fp) != 0) {
         win32::SetLastError(DwProfileError()); io.pfnClose(std::exchange(fp, nullptr)); goto LReturn;
     }
-    if (io.pfnClose(std::exchange(fp, nullptr)) != 0 || io.pfnRename(nft.szPath.c_str(), pszPath, 1, 1) != 0) { win32::SetLastError(DwProfileError()); goto LReturn; }
-    fRet = 1;
+    if (io.pfnClose(std::exchange(fp, nullptr)) != 0 || io.pfnRename(nft.szPath, pszPath, 1, 1) != 0) { win32::SetLastError(DwProfileError()); goto LReturn; }
+    fRet = true;
 LReturn:
     return fRet;
 }

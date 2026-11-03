@@ -328,7 +328,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
         *lplp = lpNew;
     }
     if (szInputFile.find('/') == std::string_view::npos && !FMakeProfileDir(*szPath)) goto LReturn;
-    fRet = FSaveProfile(lpAll, szPath->c_str());
+    fRet = FSaveProfile(lpAll, *szPath);
     goto LReturn;
 LMemory:
     win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY);
