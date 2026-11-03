@@ -1,5 +1,6 @@
 #include "win.h"
 #include <algorithm>
+#include <string_view>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -1177,7 +1178,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
     std::uint8_t *lpbd;
     char     szT[100];
     char     chT;
-    const char *lpsz;
+    std::string_view szClass;
     PLANET  *lppl;
     std::int16_t  j;
     std::int16_t  i;
@@ -1208,11 +1209,11 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         switch (icol) {
         case colPlanetStarbase:
             if (!lppl->fStarbase) {
-                lpsz = app.state.szDblDash;
+                szClass = app.state.szDblDash;
             } else {
-                lpsz = app.state.rglpshdefSB[app.state.idPlayer][lppl->isb].hul.szClass;
+                szClass = SzvPartName(app.state.rglpshdefSB[app.state.idPlayer][lppl->isb].hul.szClass);
             }
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, lpsz, std::strlen(lpsz), nullptr);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, szClass.data(), static_cast<int>(szClass.size()), nullptr);
             break;
         case colPlanetRoutingDest:
             if (lppl->idRoute == 0) {
@@ -1446,8 +1447,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 win32::SetTextColor(hdc, 0xff);
             }
             prc->right -= 6 * dx;
-            psz = app.state.rgshdef[i].hul.szClass;
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            szClass = SzvPartName(app.state.rgshdef[i].hul.szClass);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, szClass.data(), static_cast<int>(szClass.size()), nullptr);
             psz = szT;
             cch = CchSprintf(szT, app.state.PCTD, lpfl->rgcsh[i]);
             chT = '+';
@@ -1585,8 +1586,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             case colEnemyFleetComposition:
                 i = IshdefPrimaryFromLpfl(app, lpfl, &j);
                 prc->right -= 6 * dx;
-                lpsz = app.state.rglpshdef[lpfl->iPlayer][i].hul.szClass;
-                win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, lpsz, std::strlen(lpsz), nullptr);
+                szClass = SzvPartName(app.state.rglpshdef[lpfl->iPlayer][i].hul.szClass);
+                win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, szClass.data(), static_cast<int>(szClass.size()), nullptr);
                 psz = szT;
                 cch = CchSprintf(szT, app.state.PCTD, lpfl->rgcsh[i]);
                 chT = '+';
