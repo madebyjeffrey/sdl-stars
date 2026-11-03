@@ -2754,7 +2754,8 @@ std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &p
     cch = LibraryPublicationIO().pfnCchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", paths.szLibraryRoot, szDirSep, paths.szLibraryName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) ||
         !LibraryPublicationIO().pfnFLibraryNameAvailable(app, paths.szLibraryRoot, paths.szLibraryName) ||
-        LibraryPublicationIO().pfnPathLength(paths.szLibraryRoot) + 2 * LibraryPublicationIO().pfnPathLength(paths.szLibraryName) + 18 >= sizeof(app.state.szBase) ||
+        LibraryPublicationIO().pfnPathLength(std::string_view{paths.szLibraryRoot}) +
+            2 * LibraryPublicationIO().pfnPathLength(std::string_view{paths.szLibraryName}) + 18 >= sizeof(app.state.szBase) ||
         !LibraryPublicationIO().pfnFCreateLibraryGameStagePath(std::span{szStage})) return 0;
     if (!LibraryPublicationIO().pfnFCreateLibraryGameStage(app, szDirectory, pszName, paths.szLibraryName, szStage,
                                  iplr, 0, szExchangeName) ||

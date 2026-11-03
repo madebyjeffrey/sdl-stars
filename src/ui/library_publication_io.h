@@ -3,7 +3,7 @@
 #include "librarypublication.h"
 
 struct LIBRARYPUBLICATIONIO {
-    std::size_t (*pfnPathLength)(const char *) = std::strlen;
+    std::size_t (*pfnPathLength)(std::string_view) = [](std::string_view szPath) { return szPath.size(); };
     NATIVEFORMATTER                        pfnCchSnprintf;
     decltype(&DwTickCount)                   pfnDwTickCount = DwTickCount;
     decltype(&LNativeTime)                   pfnLNativeTime = LNativeTime;

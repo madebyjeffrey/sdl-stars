@@ -229,16 +229,16 @@ static int TestFLibraryNameAvailable(APPSESSION &, const char *root, const char 
     event("probe", 7, 1, ok, 0);
     return ok;
 }
-static size_t TestNativeStrlen(const char *s) {
+static size_t TestNativeStrlen(std::string_view szPath) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    if (s == szLibraryRoot) {
+    if (szPath.data() == szLibraryRoot) {
         int ok = decision();
         event("probe", 8, 1, ok, 0);
         if (!ok)
             return sizeof(app.state.szBase);
     }
-    return strlen(s);
+    return szPath.size();
 }
 // Family enumeration is a declared stage-only provider; cleanup aggregates the
 // source enumeration plus final TestRemoveNativePath, including possible remnants.
