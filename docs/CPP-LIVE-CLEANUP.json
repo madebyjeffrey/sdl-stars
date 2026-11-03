@@ -258,7 +258,8 @@
         "owned-menu-labels-use-borrowed-tab-slices",
         "bounded-help-path-and-folder-name-validation-views",
         "font-style-and-compression-character-searches-use-views",
-        "scanner-distance-caption-tracks-destination-lengths"
+        "scanner-distance-caption-tracks-destination-lengths",
+        "library-path-separator-uses-optional-index"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -270,6 +271,17 @@
         "invalid_destinations": "Reject missing, mismatched or null fields with EINVAL before consuming that field; old varargs had undefined behavior."
       },
       "verification": [
+        {
+          "batch": "L05 library path separator returns an optional index",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "library_publication_witness": "pass",
+          "baseline": "Path parsing and in-place separator/extension handling retain the previous rules; behavior and regression baselines are unchanged."
+        },
         {
           "batch": "L05a typed metadata scanning",
           "desktop": "151/151; includes available tutorial, 29 leak checks, 88 ownership checks and linked witnesses. Final scanner range and destination-error cases also executed directly.",
@@ -3416,7 +3428,7 @@
         "qualified_by": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41357206253"
       },
       "current_source_checkpoint": {
-        "source_head": "7b8e00e1",
+        "source_head": "16de2d5f",
         "tracked_c_translation_units": 44,
         "production_c_translation_units": 0,
         "application_api_function_like_macros": 0,
@@ -3456,7 +3468,7 @@
         "c_language_boundary": "CMake declares C++ as the project language; C is enabled only when independent tests or Windows SDK reference tests are built."
       },
       "latest_local_verification": {
-        "source_head": "7b8e00e1",
+        "source_head": "16de2d5f",
         "macos_sdl_debug_build": "pass",
         "desktop_units": "18/18",
         "host_units": "29/29",
