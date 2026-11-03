@@ -78,7 +78,7 @@ using FNativeDirectoryEntryProc = std::function<bool(APPSESSION &, std::string_v
 bool FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, const FNativeDirectoryEntryProc &pfnEntry);
 template<class TContext>
 bool FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir,
-                               std::int16_t (*pfnEntry)(APPSESSION &, TContext, std::string_view), std::type_identity_t<TContext> context) {
+                               bool (*pfnEntry)(APPSESSION &, TContext, std::string_view), std::type_identity_t<TContext> context) {
     FNativeDirectoryEntryProc pfnBound = [pfnEntry, context](APPSESSION &appEntry, std::string_view pszEntry) {
         return pfnEntry(appEntry, context, pszEntry);
     };

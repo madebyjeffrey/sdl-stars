@@ -94,14 +94,14 @@ static std::int16_t FZipNameUtf8Supported(std::string_view pszName, std::uint16_
     return 1;
 }
 
-static std::int16_t FCollectZipFiles(APPSESSION &app, ZIPFILES *pz, std::string_view pszName) try {
+static bool FCollectZipFiles(APPSESSION &app, ZIPFILES *pz, std::string_view pszName) try {
     std::optional<NATIVEPATHINFO> npiPath;
     char szPath[512];
 
     ZIPFILES zfChild{};
-    if (pszName == "." || pszName == "..") return 1;
+    if (pszName == "." || pszName == "..") return true;
     if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
-        !(npiPath = FNativePathInfo(szPath)) || npiPath->fLink) { pz->fBad = 1; return 0; }
+        !(npiPath = FNativePathInfo(szPath)) || npiPath->fLink) { pz->fBad = 1; return false; }
     if (npiPath->fDirectory) {
         /* Game export stages contain only regular files and backup directories. */
         zfChild.pszRoot = szPath;
@@ -117,7 +117,7 @@ static std::int16_t FCollectZipFiles(APPSESSION &app, ZIPFILES *pz, std::string_
         return !pz->fBad;
     }
     pz->rgpsz.emplace_back(pszName);
-    return 1;
+    return true;
 } catch (const std::bad_alloc &) {
     pz->fBad = 1;
     errno = ENOMEM;

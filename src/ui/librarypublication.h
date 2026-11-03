@@ -49,9 +49,9 @@ std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, std::string_vie
 std::int16_t FLibraryNameAvailable(APPSESSION &app, std::string_view pszDirectory, std::string_view pszName);
 std::int16_t FWriteLibraryMetadata(std::string_view pszDir, std::string_view pszName, int iplr);
 std::int16_t RemoveLibraryGameTree(APPSESSION &app, std::string_view pszDirectory);
-std::int16_t CopyImportEntry(APPSESSION &app, LIBRARYIMPORT *pli, std::string_view pszName);
-std::int16_t CopyBackupDirectory(APPSESSION &app, LIBRARYIMPORT *pli, std::string_view pszName);
-std::int16_t RemoveImportFile(APPSESSION &app, const char *pszRoot, std::string_view pszFile);
+bool CopyImportEntry(APPSESSION &app, LIBRARYIMPORT *pli, std::string_view pszName);
+bool CopyBackupDirectory(APPSESSION &app, LIBRARYIMPORT *pli, std::string_view pszName);
+bool RemoveImportFile(APPSESSION &app, const char *pszRoot, std::string_view pszFile);
 std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd,
                                     std::string_view pszSource, std::string_view szTarget,
                                     std::string_view pszName, int iplr, std::int32_t lidGame,
