@@ -228,7 +228,8 @@
         "bounded-right-text-output-view-interface",
         "native-bounded-format-interface-uses-only-string-view",
         "bounded-library-name-availability-and-chooser-views",
-        "bounded-library-tree-removal-path-view"
+        "bounded-library-tree-removal-path-view",
+        "bounded-library-staging-backup-and-conflict-turn-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25053,6 +25054,32 @@
       "api_audit": "RemoveLibraryGameTree and its borrowed traversal state use string_view for the duration of synchronous recursive enumeration.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 bounded library staging and conflict path views",
+      "parent": "1da6a723",
+      "source_commit": "e15831ee",
+      "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "The publication witness compiles and links with string_view staging, backup and conflict-turn callbacks.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; this changes UI library workflow path and name interfaces only.",
+      "api_audit": "Library staging, backup and conflict-turn services use string_view. Recursive copy state borrows views only during synchronous directory enumeration.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -25073,7 +25100,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded library tree removal path view",
+    "latest_batch": "L05 bounded library staging and conflict path views",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25105,12 +25132,13 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 bounded library tree removal path view",
-    "source_commit": "b931f9c8",
-    "status": "Locally committed as b931f9c8. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 bounded library staging and conflict path views",
+    "source_commit": "e15831ee",
+    "status": "Locally committed as e15831ee. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "RemoveLibraryGameTree accepts string_view, and recursive enumeration carries a borrowed directory view for the duration of the synchronous walk.",
-      "Updated its publication witness adapter to accept a bounded view."
+      "FCreateLibraryGameStage, FBackupConflictingPlayerFiles and FStageConflictingTurn accept string_view inputs.",
+      "Recursive library-copy state stores bounded views for the duration of synchronous directory enumeration.",
+      "Updated the family-path formatter and publication witness callbacks for bounded inputs."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25302,10 +25330,14 @@
       {
         "commit": "b931f9c8",
         "message": "Pass library removal paths as views"
+      },
+      {
+        "commit": "e15831ee",
+        "message": "Pass library staging names as bounded views"
       }
     ],
-    "latest_source_commit": "b931f9c8",
-    "latest_batch_status": "Locally committed as b931f9c8. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "e15831ee",
+    "latest_batch_status": "Locally committed as e15831ee. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
@@ -25524,12 +25556,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded library tree removal path view",
-    "source_commit": "b931f9c8",
-    "status": "Locally committed as b931f9c8. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 bounded library staging and conflict path views",
+    "source_commit": "e15831ee",
+    "status": "Locally committed as e15831ee. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "RemoveLibraryGameTree accepts string_view, and recursive enumeration carries a borrowed directory view for the duration of the synchronous walk.",
-      "Updated its publication witness adapter to accept a bounded view."
+      "FCreateLibraryGameStage, FBackupConflictingPlayerFiles and FStageConflictingTurn accept string_view inputs.",
+      "Recursive library-copy state stores bounded views for the duration of synchronous directory enumeration.",
+      "Updated the family-path formatter and publication witness callbacks for bounded inputs."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25846,6 +25879,10 @@
       {
         "commit": "b931f9c8",
         "message": "Pass library removal paths as views"
+      },
+      {
+        "commit": "e15831ee",
+        "message": "Pass library staging names as bounded views"
       }
     ],
     "parent": "4867b0c5"
