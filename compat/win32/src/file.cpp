@@ -9,6 +9,7 @@
 #include <cstring>
 #include <limits>
 #include <sys/stat.h>
+#include <string_view>
 #include <unistd.h>
 
 static thread_local decltype(&CbReadNativeFile) pfnReadFile = CbReadNativeFile;
@@ -48,6 +49,7 @@ static DWORD DwFileError(void) {
 
 HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     char szPath[PATH_MAX], szCwd[PATH_MAX];
+    std::string_view szFile, szPathView;
     COMPATFILE *lp, *lpNew = nullptr;
     std::optional<NATIVEFILEINFO> st;
     UINT grAccess, grShare, share = flags & 0x70;
@@ -61,7 +63,9 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
 
     if (!lpof) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::HFILE_ERROR; }
     if (flags & win32::OF_REOPEN) pszFile = lpof->szPathName;
-    if (!pszFile || !*pszFile || !FUtf8Valid(pszFile) || (flags & 3) == 3 ||
+    if (!pszFile) { dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn; }
+    szFile = pszFile;
+    if (szFile.empty() || !FUtf8Valid(szFile) || (flags & 3) == 3 ||
         (share != win32::OF_SHARE_COMPAT && share != win32::OF_SHARE_EXCLUSIVE && share != win32::OF_SHARE_DENY_WRITE &&
          share != win32::OF_SHARE_DENY_READ && share != win32::OF_SHARE_DENY_NONE)) {
         dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn;
@@ -69,24 +73,25 @@ HFILE win32::OpenFile(LPCSTR pszFile, LPOFSTRUCT lpof, UINT flags) {
     if (flags & ~(3u | 0x70u | win32::OF_PARSE | win32::OF_DELETE | win32::OF_CREATE | win32::OF_EXIST | win32::OF_REOPEN | win32::OF_CANCEL)) {
         dwError = win32::ERROR_NOT_SUPPORTED; goto LReturn;
     }
-    if (*pszFile == '/'
+    if (szFile[0] == '/'
 #ifdef _WIN32
-        || *pszFile == '\\' || (pszFile[0] && pszFile[1] == ':')
+        || szFile[0] == '\\' || (szFile.size() > 1 && szFile[1] == ':')
 #endif
     ) {
-        if (std::strlen(pszFile) >= sizeof(szPath)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
-        CchCopyUtf8(std::span{szPath}, pszFile);
+        if (szFile.size() >= sizeof(szPath)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
+        CchCopyUtf8(std::span{szPath}, szFile);
     } else {
         if (!CchNativeCwd(std::span{szCwd})) { dwError = DwFileError(); goto LReturn; }
-        if (CchCopyUtf8(std::span{szPath}, szCwd) < 0 || !FAppendUtf8(std::span{szPath}, "/") || !FAppendUtf8(std::span{szPath}, pszFile)) {
+        if (CchCopyUtf8(std::span{szPath}, szCwd) < 0 || !FAppendUtf8(std::span{szPath}, "/") || !FAppendUtf8(std::span{szPath}, szFile)) {
             dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn;
         }
     }
-    if (!FUtf8Valid(szPath)) { dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn; }
-    if (std::strlen(szPath) >= sizeof(lpof->szPathName)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
+    szPathView = szPath;
+    if (!FUtf8Valid(szPathView)) { dwError = win32::ERROR_INVALID_PARAMETER; goto LReturn; }
+    if (szPathView.size() >= sizeof(lpof->szPathName)) { dwError = win32::ERROR_FILENAME_EXCED_RANGE; goto LReturn; }
     *lpof = {};
     lpof->cBytes = sizeof(*lpof); lpof->fFixedDisk = 1;
-    CchCopyUtf8(std::span{lpof->szPathName}, szPath);
+    CchCopyUtf8(std::span{lpof->szPathName}, szPathView);
     if (flags & win32::OF_PARSE) return 0;
     grAccess = flags & win32::OF_CREATE ? 3 : (flags & 3) == win32::OF_READ ? 1 : (flags & 3) == win32::OF_WRITE ? 2 : 3;
     grShare = share == win32::OF_SHARE_EXCLUSIVE ? 0 : share == win32::OF_SHARE_DENY_WRITE ? 1 : share == win32::OF_SHARE_DENY_READ ? 2 : 3;
