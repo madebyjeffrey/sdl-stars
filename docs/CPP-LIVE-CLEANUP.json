@@ -28389,6 +28389,31 @@
         "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
       ]
+    },
+    {
+      "batch": "Use spans for compatibility resources",
+      "parent": "665a5080",
+      "source_commit": "7ab50e82",
+      "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
+      "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -29229,8 +29254,8 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "d39aa295",
-    "latest_change": "Use bool for private drawing state",
+    "source_commit": "7ab50e82",
+    "latest_change": "Use spans for compatibility resources",
     "c_macro_audit": {
       "source_head": "fcb27bc9",
       "date": "2026-11-03",
@@ -29249,13 +29274,13 @@
       "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "d39aa295",
-    "latest_batch_status": "Source commit d39aa295 verified locally; ledger checkpoint recorded.",
+    "latest_source_commit": "7ab50e82",
+    "latest_batch_status": "Source commit 7ab50e82 verified locally; ledger checkpoint recorded.",
     "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
-      "batch": "Use bool for private drawing state",
-      "parent": "69024c18",
-      "source_commit": "d39aa295",
+      "batch": "Use spans for compatibility resources",
+      "parent": "665a5080",
+      "source_commit": "7ab50e82",
       "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -29273,15 +29298,14 @@
         "skipped": 0
       },
       "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-      "api_audit": "Ten private drawing-state fields, five private helper parameters and local predicate flags use bool. Win32-compatible entry points and their BOOL contracts remain unchanged.",
-      "c_cleanup": "Removed the last owned strnlen call from DrawTextA in f5480a4e; its 1 MiB + 1 bound and oversized-input rejection remain.",
+      "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "Use bool for private drawing state",
-      "parent": "69024c18",
-      "source_commit": "d39aa295",
+      "batch": "Use spans for compatibility resources",
+      "parent": "665a5080",
+      "source_commit": "7ab50e82",
       "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -29299,17 +29323,16 @@
         "skipped": 0
       },
       "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-      "api_audit": "Ten private drawing-state fields, five private helper parameters and local predicate flags use bool. Win32-compatible entry points and their BOOL contracts remain unchanged.",
-      "c_cleanup": "Removed the last owned strnlen call from DrawTextA in f5480a4e; its 1 MiB + 1 bound and oversized-input rejection remain.",
+      "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass.",
-      "status": "Source commit d39aa295 verified locally; ledger checkpoint recorded.",
+      "status": "Source commit 7ab50e82 verified locally; ledger checkpoint recorded.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-        "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
-        "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
+        "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
+        "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
       ],
-      "next": "Continue the L05 bounded-text and scratch/borrowed-return audits and L06 buffer/path audits; then qualify current develop on Windows and Linux."
+      "next": "Continue auditing owned APIs for pointer-plus-length/output-pointer shapes; finish L05 scratch/text and L08 platform qualification."
     },
     "followup": {
       "batch": "L06 transport quantity selection returns a value",
@@ -29870,8 +29893,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "d39aa295b9c86c0e9c1c5ad4a85c6f8e520fbeed",
-  "latest_batch_status": "Source commit d39aa295 verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "7ab50e824580a5d4a6069f231613d07da4868e0f",
+  "latest_batch_status": "Source commit 7ab50e82 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -29951,7 +29974,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "d39aa295b9c86c0e9c1c5ad4a85c6f8e520fbeed",
+    "source_head": "7ab50e824580a5d4a6069f231613d07da4868e0f",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -30001,7 +30024,7 @@
     "cocoa_chooser_path_length": "IChooseCocoaFile creates one bounded view for the selected native path and reuses its byte length for capacity admission and copy, removing a duplicate std::strlen scan.",
     "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed.",
     "strlen_occurrence_classification": {
-      "source_head": "d39aa295b9c86c0e9c1c5ad4a85c6f8e520fbeed",
+      "source_head": "7ab50e824580a5d4a6069f231613d07da4868e0f",
       "total": 3,
       "c_string_api_or_input_boundaries": 3,
       "owned_or_fixed_text_length_reads": 0,
@@ -30109,13 +30132,14 @@
       "caller_buffers": "Canonical-path and current-directory outputs accept std::span<char> and return optional exact byte counts.",
       "owned_values": "Canonical paths, cwd, directory entries, file metadata, identity and open metadata return std::optional owned/value results.",
       "platform_boundary": "Raw Win32/POSIX path calls remain only inside the platform service and Win32 chooser adapters; no application-owned output-pointer path interface remains."
-    }
+    },
+    "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain."
   },
-  "latest_change": "Use bool for private drawing state",
+  "latest_change": "Use spans for compatibility resources",
   "latest_batch_verification": {
-    "batch": "Use bool for private drawing state",
-    "parent": "69024c18",
-    "source_commit": "d39aa295",
+    "batch": "Use spans for compatibility resources",
+    "parent": "665a5080",
+    "source_commit": "7ab50e82",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30133,15 +30157,14 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Ten private drawing-state fields, five private helper parameters and local predicate flags use bool. Win32-compatible entry points and their BOOL contracts remain unchanged.",
-    "c_cleanup": "Removed the last owned strnlen call from DrawTextA in f5480a4e; its 1 MiB + 1 bound and oversized-input rejection remain.",
+    "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use bool for private drawing state",
-    "parent": "69024c18",
-    "source_commit": "d39aa295",
+    "batch": "Use spans for compatibility resources",
+    "parent": "665a5080",
+    "source_commit": "7ab50e82",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30159,16 +30182,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Ten private drawing-state fields, five private helper parameters and local predicate flags use bool. Win32-compatible entry points and their BOOL contracts remain unchanged.",
-    "c_cleanup": "Removed the last owned strnlen call from DrawTextA in f5480a4e; its 1 MiB + 1 bound and oversized-input rejection remain.",
+    "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit d39aa295 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit 7ab50e82 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
-    "next": "Finish the general buffer/length and bounded-text/scratch audits, then qualify current develop on Windows and Linux."
+    "next": "Continue auditing owned APIs for pointer-plus-length/output-pointer shapes; finish L05 scratch/text and L08 platform qualification."
   }
 }
