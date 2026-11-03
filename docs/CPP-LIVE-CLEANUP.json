@@ -289,7 +289,8 @@
         "race-import-name-override-passed-as-local-argument",
         "current-race-library-path-owned-by-ui-session",
         "race-save-staging-path-owned-by-local-operation",
-        "race-library-name-buffer-owned-by-ui-session"
+        "race-library-name-buffer-owned-by-ui-session",
+        "pending-library-path-owned-by-ui-session-and-span"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -27668,7 +27669,7 @@
       "fleet_destination_results": "PszGetDestName returns REPORTTEXTRESULT with the existing owned 360-byte label and exact UTF-8 byte count; drawing and serialization use bounded views.",
       "fleet_task_results": "PszGetTaskName carries REPORTTEXTRESULT and its UTF-8 byte count; report drawing and dump serialization use the bounded result."
     },
-    "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the five remaining library path/name arrays; then continue L06 service interfaces and L08 platform qualification.",
+    "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the four shared library path/name arrays; then continue L06 service interfaces and L08 platform qualification.",
     "post_checkpoint_commits": [
       {
         "commit": "75767e02",
@@ -27963,8 +27964,8 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "8571b1787ef1eb1a36726ec3fe4ff4875a93a28a",
-    "latest_batch_status": "Source commit 8571b178 and ledger checkpoint e8397da8 are published on origin/develop. macOS SDL Debug build, focused race/startup/file workflow tests, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
+    "latest_batch_status": "Source commit af80ed26 is verified locally; ledger checkpoint and push pending. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_published_head": "e8397da8",
     "latest_batch_verification": {
       "batch": "L05 retire lstrlenA and bound UI text measurement",
@@ -27985,10 +27986,10 @@
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L05 move race library name into UI session state",
-      "source_commit": "8571b1787ef1eb1a36726ec3fe4ff4875a93a28a",
+      "batch": "L05 move pending library path into UI session state",
+      "source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_workflow_tests": "win32_client_race_library_dummy, win32_client_startup_dummy and win32_client_fileworkflow_dummy pass.",
+      "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass.",
       "desktop_unit_tests": "18/18 pass.",
       "native_regression": {
         "matches": 519,
@@ -27997,8 +27998,8 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; the existing 256-byte capacity and prompted/imported names are preserved.",
-      "api_audit": "APPUISTATE owns the race-library name buffer used by filename prompts and race imports. Session close clears it.",
+      "baseline": "Unchanged; pending-directory creation, asynchronous game completion, rollback and metadata publication retain the same path and capacity.",
+      "api_audit": "APPUISTATE owns the pending game-library path across game generation. LIBRARYPATHS carries it as a fixed-extent span; the remove callback reads the same session owner.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
     }
@@ -28113,7 +28114,7 @@
       "current_source_after_e9c023c2": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_08db1856": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
-    "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the five remaining library path/name arrays; then continue L06 service interfaces and L08 platform qualification.",
+    "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the four shared library path/name arrays; then continue L06 service interfaces and L08 platform qualification.",
     "untracked_user_assets": [
       "title-modernized.png and prompt",
       "title-modernized-v2.png and prompt",
@@ -28460,8 +28461,8 @@
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
-    "latest_source_commit": "8571b1787ef1eb1a36726ec3fe4ff4875a93a28a",
-    "latest_batch_status": "Source commit 8571b178 and ledger checkpoint e8397da8 are published on origin/develop. macOS SDL Debug build, focused race/startup/file workflow tests, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
+    "latest_batch_status": "Source commit af80ed26 is verified locally; ledger checkpoint and push pending. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_change": "L05 retire lstrlenA and bound UI text measurement",
     "latest_batch_verification": {
       "batch": "L05 retire lstrlenA and bound UI text measurement",
@@ -28482,10 +28483,10 @@
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L05 move race library name into UI session state",
-      "source_commit": "8571b1787ef1eb1a36726ec3fe4ff4875a93a28a",
+      "batch": "L05 move pending library path into UI session state",
+      "source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_workflow_tests": "win32_client_race_library_dummy, win32_client_startup_dummy and win32_client_fileworkflow_dummy pass.",
+      "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass.",
       "desktop_unit_tests": "18/18 pass.",
       "native_regression": {
         "matches": 519,
@@ -28494,8 +28495,8 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; the existing 256-byte capacity and prompted/imported names are preserved.",
-      "api_audit": "APPUISTATE owns the race-library name buffer used by filename prompts and race imports. Session close clears it.",
+      "baseline": "Unchanged; pending-directory creation, asynchronous game completion, rollback and metadata publication retain the same path and capacity.",
+      "api_audit": "APPUISTATE owns the pending game-library path across game generation. LIBRARYPATHS carries it as a fixed-extent span; the remove callback reads the same session owner.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
     },
@@ -28506,8 +28507,8 @@
     ],
     "latest_published_head": "e8397da8"
   },
-  "latest_source_commit": "8571b1787ef1eb1a36726ec3fe4ff4875a93a28a",
-  "latest_batch_status": "Source commit 8571b178 and ledger checkpoint e8397da8 are published on origin/develop. macOS SDL Debug build, focused race/startup/file workflow tests, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
+  "latest_batch_status": "Source commit af80ed26 is verified locally; ledger checkpoint and push pending. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28607,24 +28608,25 @@
     "bounded_sdl_string_scans": "All four production SDL_strnlen calls were replaced by bounded std::find scans using the same maximum lengths. No SDL_strnlen or SDL_strlen calls remain; the three std::strlen sites are incoming C-string/API boundaries.",
     "native_stream_predicates": "FNativeStreamError and FNativeStreamEof return bool. All production call sites consume predicates; legacy reference declarations remain int.",
     "ui_scratch_storage": {
-      "source_head": "8571b178",
+      "source_head": "af80ed26",
       "completed": [
         "Race-file suggestion cache is stored in APPUISTATE and cleared during that app session teardown.",
         "Sixteen new-game library race filename buffers are stored in APPUISTATE and reset at new-game wizard entry.",
         "The race-import name override is passed as an optional string_view to a local implementation; the process-global borrowed view and its reset were removed.",
         "The current selected race-library path is a 512-byte std::array in APPUISTATE; session-aware query/accessor APIs and shutdown clearing use that owner.",
         "The race-save staging path is a local std::array owned by FSaveLibraryRace for the duration of the synchronous operation.",
-        "The prompted/imported race-library filename is a 256-byte std::array in APPUISTATE and is cleared at session shutdown."
+        "The prompted/imported race-library filename is a 256-byte std::array in APPUISTATE and is cleared at session shutdown.",
+        "The pending game-library directory is a 256-byte std::array in APPUISTATE, retained across game generation and passed through LIBRARYPATHS as a fixed-extent span."
       ],
-      "remaining_observed": "Five shared library path/name arrays remain in libraryui.cpp: szLibraryRoot, szLibraryPending, szLibraryName, szLibraryExchangeName and szRaceLibraryRoot. Their operation and session lifetimes remain under review."
+      "remaining_observed": "Four shared library path/name arrays remain in libraryui.cpp: szLibraryRoot, szLibraryName, szLibraryExchangeName and szRaceLibraryRoot. Their operation and session lifetimes remain under review."
     }
   },
-  "latest_change": "L05 move race library name into UI session state",
+  "latest_change": "L05 move pending library path into UI session state",
   "latest_batch_verification": {
-    "batch": "L05 move race library name into UI session state",
-    "source_commit": "8571b1787ef1eb1a36726ec3fe4ff4875a93a28a",
+    "batch": "L05 move pending library path into UI session state",
+    "source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_workflow_tests": "win32_client_race_library_dummy, win32_client_startup_dummy and win32_client_fileworkflow_dummy pass.",
+    "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass.",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
       "matches": 519,
@@ -28633,10 +28635,9 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; the existing 256-byte capacity and prompted/imported names are preserved.",
-    "api_audit": "APPUISTATE owns the race-library name buffer used by filename prompts and race imports. Session close clears it.",
+    "baseline": "Unchanged; pending-directory creation, asynchronous game completion, rollback and metadata publication retain the same path and capacity.",
+    "api_audit": "APPUISTATE owns the pending game-library path across game generation. LIBRARYPATHS carries it as a fixed-extent span; the remove callback reads the same session owner.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-    "diff_check": "Pass.",
-    "ledger_commit": "e8397da8"
+    "diff_check": "Pass."
   }
 }
