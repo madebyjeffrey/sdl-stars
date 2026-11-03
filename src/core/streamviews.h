@@ -10,8 +10,8 @@ public:
     std::uint16_t cb() const noexcept { return GetBits<0, 0, 10>(); }
     std::uint16_t rt() const noexcept { return GetBits<0, 10, 6>(); }
 };
-inline NATIVEHEADERVIEW HdvFromPrefix(std::uint8_t *lp) noexcept {
-    return {std::as_writable_bytes(std::span(lp, cbWireHdr)), 0};
+inline NATIVEHEADERVIEW HdvFromPrefix(std::span<std::uint8_t, cbWireHdr> rgb) noexcept {
+    return {std::as_writable_bytes(rgb), 0};
 }
 
 class NATIVEBOFVIEW : public NATIVEBYTEWINDOW {

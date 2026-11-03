@@ -593,8 +593,8 @@ int main() {
         CHECK(FDecodeHdr(golden, hdr) && hdr.cb == w % 1024 && hdr.rt == w / 1024);
         CHECK(FEncodeHdr(hdr, std::span(rgb).subspan(1, 2)));
         CHECK(rgb[0] == std::byte{0xa5} && rgb[3] == std::byte{0xa5} && std::memcmp(rgb.data() + 1, golden.data(), 2) == 0);
-        CHECK(HdvFromPrefix(reinterpret_cast<std::uint8_t *>(rgb.data() + 1)).cb() == w % 1024);
-        CHECK(HdvFromPrefix(reinterpret_cast<std::uint8_t *>(rgb.data() + 1)).rt() == w / 1024);
+        CHECK(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{reinterpret_cast<std::uint8_t *>(rgb.data() + 1), cbWireHdr}).cb() == w % 1024);
+        CHECK(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{reinterpret_cast<std::uint8_t *>(rgb.data() + 1), cbWireHdr}).rt() == w / 1024);
         for (std::size_t cb = 0; cb < 2; cb++) {
             hdr.cb = 999; hdr.rt = 61;
             CHECK(!FDecodeHdr(std::span(golden).first(cb), hdr) && hdr.cb == 999 && hdr.rt == 61);

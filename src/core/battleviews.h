@@ -162,9 +162,9 @@ inline NATIVEBATTLETOKENVIEW BtvFromLp(APPSESSION &app, void *lp) noexcept { ret
 inline NATIVEBATTLEEVENTVIEW BevFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEBATTLEEVENTVIEW(BbwFromLp(app, lp)); }
 // Producers and isolated core callers already require these complete prefixes.
 // No view is kept across a callback or a change to the global write cursor.
-inline NATIVEBATTLEKILLVIEW BkvFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireKill)), 0}; }
-inline NATIVEBATTLEEVENTVIEW BevFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireBattleRecord)), 0}; }
-inline NATIVEBATTLEDATAVIEW BdvFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireBattleData)), 0}; }
+inline NATIVEBATTLEKILLVIEW BkvFromPrefix(std::span<std::uint8_t, cbWireKill> rgb) noexcept { return {std::as_writable_bytes(rgb), 0}; }
+inline NATIVEBATTLEEVENTVIEW BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord> rgb) noexcept { return {std::as_writable_bytes(rgb), 0}; }
+inline NATIVEBATTLEDATAVIEW BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData> rgb) noexcept { return {std::as_writable_bytes(rgb), 0}; }
 
 // Deletion logs have only the first two bytes. Accessors read their own field
 // bytes so owner/plan/deletion decisions do not require the full prefix.

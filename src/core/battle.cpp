@@ -1752,7 +1752,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                             if (FDamageTok(app, ptokE, itok, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
                                 if (!fSetItok) {
                                     fSetItok = 1;
-                                    BevFromPrefix(lpbtlrec).SetItokAttack(itok);
+                                    BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itok);
                                 }
                                 ctokDamaged++;
                             }
@@ -1876,7 +1876,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                         dpT = dp;
                         if (FDamageTok(app, ptokTarget, itokTarget, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
                             if (!fSetItok) {
-                                BevFromPrefix(lpbtlrec).SetItokAttack(itokTarget);
+                                BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itokTarget);
                                 fSetItok = 1;
                             }
                             ctokDamaged++;
@@ -1942,7 +1942,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                         ctokDamaged++;
                         if (!fSetItok) {
                             fSetItok = 1;
-                            BevFromPrefix(lpbtlrec).SetItokAttack(itokTarget);
+                            BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itokTarget);
                         }
                         cTorpsLeft -= cTorpFire + cTorpMiss;
                     }
@@ -1952,7 +1952,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
             }
         }
     }
-    BevFromPrefix(lpbtlrec).SetCtok(ctokDamaged);
+    BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetCtok(ctokDamaged);
     if (ctokDamaged != 0) {
         return 1;
     }
@@ -2081,30 +2081,30 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
 
     dp = *pdpBeam;
     std::fill_n(app.state.lpbBattleCur, 8, 0);
-    BkvFromPrefix(app.state.lpbBattleCur).SetItok(itok);
-    BkvFromPrefix(app.state.lpbBattleCur).SetGrfWeapon(grfWeapon);
+    BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetItok(itok);
+    BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetGrfWeapon(grfWeapon);
     if (ptok->dpShield != 0) {
         dpOrig = static_cast<std::uint32_t>(ptok->dpShield);
         dpT = static_cast<std::uint32_t>(ptok->dpShield) - dpOrig;
         dpOrig = static_cast<std::uint32_t>((dpOrig * static_cast<std::uint32_t>(ptok->csh)));
         if (dpOrig > dp) {
             dpOrig -= dp;
-            BkvFromPrefix(app.state.lpbBattleCur).SetDpShield(WPackLong(dp));
+            BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetDpShield(WPackLong(dp));
             ptok->dpShield = LOWORD(static_cast<std::int32_t>((dpOrig / static_cast<std::int32_t>(ptok->csh)))) + LOWORD(dpT);
             dp = 0;
         } else {
             dp -= dpOrig;
-            BkvFromPrefix(app.state.lpbBattleCur).SetDpShield(WPackLong(dpOrig));
+            BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetDpShield(WPackLong(dpOrig));
             ptok->dpShield = 0;
         }
     } else if (fShieldsOnly) {
         return 0;
     }
     if ((dp == 0 || fShieldsOnly) && dpTorp == 0) {
-        BkvFromPrefix(app.state.lpbBattleCur).dv().SetDp(ptok->dv.dp);
+        BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().SetDp(ptok->dv.dp);
         *pdpBeam = dp;
-        if (BkvFromPrefix(app.state.lpbBattleCur).grfWeapon() & bitFTorp) {
-            BkvFromPrefix(app.state.lpbBattleCur).SetGrfWeapon(BkvFromPrefix(app.state.lpbBattleCur).grfWeapon() | (bitFNoHit | bitFDeflected));
+        if (BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).grfWeapon() & bitFTorp) {
+            BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetGrfWeapon(BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).grfWeapon() | (bitFNoHit | bitFDeflected));
         }
         app.state.lpbBattleCur += 8;
         return 1;
@@ -2125,8 +2125,8 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
             dp += static_cast<std::int32_t>((dpShdef * dv.pctDp())) / 500;
         }
         if (dp >= dpShdef) {
-            BkvFromPrefix(app.state.lpbBattleCur).dv().SetPctDp(500);
-            BkvFromPrefix(app.state.lpbBattleCur).SetCshKill(1);
+            BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().SetPctDp(500);
+            BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetCshKill(1);
             ptok->fActive = 0;
             ptok->csh = 0;
             app.state.fStarbaseDied = 1;
@@ -2142,12 +2142,12 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
             } else {
                 lppl->pctDp++;
             }
-            BkvFromPrefix(app.state.lpbBattleCur).dv().SetPctDp(lppl->pctDp);
+            BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().SetPctDp(lppl->pctDp);
             app.state.fStarbaseDamaged = 1;
         }
-        if (BkvFromPrefix(app.state.lpbBattleCur).dv().pctDp() != 0) {
-            BkvFromPrefix(app.state.lpbBattleCur).dv().SetPctSh(100);
-            ptok->dv.dp = BkvFromPrefix(app.state.lpbBattleCur).dv().dp();
+        if (BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().pctDp() != 0) {
+            BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().SetPctSh(100);
+            ptok->dv.dp = BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().dp();
         }
         *pdpBeam = 0;
         app.state.lpbBattleCur += 8;
@@ -2223,9 +2223,9 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
         pctSh = 0;
         pctDp = 0;
     }
-    BkvFromPrefix(app.state.lpbBattleCur).SetCshKill(ptok->csh - csh);
+    BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetCshKill(ptok->csh - csh);
     if (csh != ptok->csh) {
-        KillShips(app, ptok, BkvFromPrefix(app.state.lpbBattleCur).cshKill(), ishdef, lpfl, 1);
+        KillShips(app, ptok, BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).cshKill(), ishdef, lpfl, 1);
     }
     if (csh != 0) {
         if (pctDp > 499) {
@@ -2243,7 +2243,7 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
         *pdpBeam = 0;
     }
     dpOrig -= *pdpBeam;
-    BkvFromPrefix(app.state.lpbBattleCur).dv().SetDp(ptok->dv.dp);
+    BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().SetDp(ptok->dv.dp);
     app.state.lpbBattleCur += 8;
     if (pcTorp) {
         *pcTorp = cKillMax;
@@ -2354,11 +2354,11 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
         }
     }
     InitializeBoard(app, lpfl, static_cast<std::int16_t>(((cplr - 1) * cplr)) / 2, grfPlayer, rgfInit, &initMin, &initMac);
-    BdvFromPrefix(lpbtldata).SetCplr(cplr);
-    BdvFromPrefix(lpbtldata).SetCtok(app.state.vctok);
-    BdvFromPrefix(lpbtldata).SetIdPlanet(lpfl->idPlanet);
-    BdvFromPrefix(lpbtldata).SetPt(lpfl->pt);
-    BdvFromPrefix(lpbtldata).SetId(app.state.idBattle++);
+    BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetCplr(cplr);
+    BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetCtok(app.state.vctok);
+    BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetIdPlanet(lpfl->idPlanet);
+    BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetPt(lpfl->pt);
+    BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetId(app.state.idBattle++);
     for (iRound = 0; iRound < 16; iRound++) {
         grplrLeft = 0;
         for (itok = 0; itok < app.state.vctok; itok++) {
@@ -2408,16 +2408,16 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
                             if (static_cast<std::int16_t>(ptok->dMovesLeft) >= j) {
                                 lpbtlrec = static_cast<std::uint8_t *>(app.state.lpbBattleCur);
                                 app.state.lpbBattleCur += 6;
-                                BevFromPrefix(lpbtlrec).SetItok(itok);
-                                BevFromPrefix(lpbtlrec).SetCtok(0);
-                                BevFromPrefix(lpbtlrec).SetItokAttack(itok);
-                                BevFromPrefix(lpbtlrec).SetIRound(iRound);
-                                BevFromPrefix(lpbtlrec).SetDzDis(ptok->dzDis);
+                                BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItok(itok);
+                                BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetCtok(0);
+                                BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itok);
+                                BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetIRound(iRound);
+                                BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetDzDis(ptok->dzDis);
                                 brcOrig = app.state.vrgtok[itok].brc;
                                 if (ptok->mdTactic == mdTacticDisengage) {
                                     brcOrig = 0xff;
                                     if (ptok->dzDis == 0) {
-                                        BevFromPrefix(lpbtlrec).SetBrcDest(0xff);
+                                        BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetBrcDest(0xff);
                                         ptok->fActive = 0;
                                         continue;
                                     }
@@ -2426,7 +2426,7 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
                                 DxyMoveTokTo(app, ptok, j, rggrfAttack[ptok->iplr]);
                                 ptok->dMovesLeft += 3;
                                 if (ptok->grobj != grobjPlanet && (brcOrig != ptok->brc || ptok->initMin == 0xff)) {
-                                    BevFromPrefix(lpbtlrec).SetBrcDest(ptok->brc);
+                                    BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetBrcDest(ptok->brc);
                                 } else {
                                     app.state.lpbBattleCur -= 6;
                                 }
@@ -2467,12 +2467,12 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
                         if (ptok->fActive) {
                             lpbtlrec = static_cast<std::uint8_t *>(app.state.lpbBattleCur);
                             app.state.lpbBattleCur += 6;
-                            BevFromPrefix(lpbtlrec).SetItok(itok);
-                            BevFromPrefix(lpbtlrec).SetCtok(0);
-                            BevFromPrefix(lpbtlrec).SetIRound(iRound);
-                            BevFromPrefix(lpbtlrec).SetBrcDest(ptok->brc);
-                            BevFromPrefix(lpbtlrec).SetItokAttack(itok);
-                            BevFromPrefix(lpbtlrec).SetDzDis(ptok->dzDis);
+                            BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItok(itok);
+                            BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetCtok(0);
+                            BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetIRound(iRound);
+                            BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetBrcDest(ptok->brc);
+                            BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itok);
+                            BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetDzDis(ptok->dzDis);
                             if (!FAttack(app, itok, init, lpbtlrec, rggrfAttack[ptok->iplr])) {
                                 app.state.lpbBattleCur -= 6;
                             } else {
@@ -2486,17 +2486,17 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
         if (!((grplrLeft - 1) & grplrLeft))
             break;
     }
-    BdvFromPrefix(lpbtldata).SetCbData(app.state.lpbBattleCur - static_cast<std::uint8_t *>(lpbtldata));
-    SendBattleMessages(app, lpfl, cplr, BdvFromPrefix(lpbtldata).id(), rgPlrLosses, grfPlayer, cShipsInvolved, cShdefsInvolved, grfSpectator);
-    BdvFromPrefix(lpbtldata).SetGrfPlr(grfPlayer);
+    BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetCbData(app.state.lpbBattleCur - static_cast<std::uint8_t *>(lpbtldata));
+    SendBattleMessages(app, lpfl, cplr, BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).id(), rgPlrLosses, grfPlayer, cShipsInvolved, cShdefsInvolved, grfSpectator);
+    BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetGrfPlr(grfPlayer);
     /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
     lphb = LphbFromLpHt(app, lpbSav, htBattle);
-    if (0xffc8 - static_cast<std::uint32_t>((lpbSav - reinterpret_cast<std::uint8_t *>(lphb) - sizeof(HB) + 16)) < static_cast<std::uint32_t>(BdvFromPrefix(lpbtldata).cbData())) {
+    if (0xffc8 - static_cast<std::uint32_t>((lpbSav - reinterpret_cast<std::uint8_t *>(lphb) - sizeof(HB) + 16)) < static_cast<std::uint32_t>(BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).cbData())) {
         RawStore16(lpbSav, 0xffff);
         app.state.lpbBattleT = nullptr;
     } else {
-        std::memmove(lpbSav, lpbtldata, BdvFromPrefix(lpbtldata).cbData());
-        app.state.lpbBattleCur = lpbSav + BdvFromPrefix(lpbtldata).cbData();
+        std::memmove(lpbSav, lpbtldata, BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).cbData());
+        app.state.lpbBattleCur = lpbSav + BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).cbData();
     }
     return 1;
 }

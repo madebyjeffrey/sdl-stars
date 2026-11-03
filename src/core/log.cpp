@@ -640,9 +640,9 @@ std::int16_t FRunLogFile(APPSESSION &app) {
         return 1;
     }
     app.state.fLogOff = 1;
-    for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+    for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb() + 2) {
         lprts = app.state.lpLog + iCur;
-        fRet &= FRunLogRecord(app, static_cast<RecordType>(HdvFromPrefix(lprts).rt()), HdvFromPrefix(lprts).cb(), app.state.lpLog + (2 + iCur));
+        fRet &= FRunLogRecord(app, static_cast<RecordType>(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).rt()), HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb(), app.state.lpLog + (2 + iCur));
     }
     app.state.fLogOff = fLogOld;
     app.state.gd.fFleetLinkValid = 0;
@@ -1379,9 +1379,9 @@ std::int16_t FWriteLogFile(APPSESSION &app, std::string_view pszFileBase, std::i
         std::ranges::fill(rtlh.rgbUnused, 0);
         FEncodeLogHdr(rtlh, std::as_writable_bytes(std::span(rgbLogHdr)));
         RecordIO().pfnWriteRt(app, static_cast<RecordType>(9), std::as_bytes(std::span{rgbLogHdr}).first(static_cast<std::size_t>(cbWireLogHdr)));
-        for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+        for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb() + 2) {
             lprts = app.state.lpLog + iCur;
-            RecordIO().pfnWriteRt(app, static_cast<RecordType>(HdvFromPrefix(lprts).rt()), std::span<const std::byte>{LbwFromLp(app, app.state.lpLog + (2 + iCur)).Rgb()}.first(static_cast<std::size_t>(HdvFromPrefix(lprts).cb())));
+            RecordIO().pfnWriteRt(app, static_cast<RecordType>(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).rt()), std::span<const std::byte>{LbwFromLp(app, app.state.lpLog + (2 + iCur)).Rgb()}.first(static_cast<std::size_t>(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb())));
         }
         iCur = app.state.vcmsgplrOut;
         lpmp = app.state.vlpmsgplrOut;
@@ -1491,10 +1491,10 @@ void EnumLogRts(APPSESSION &app, const ENUMLOGRTCALLBACK &pfn, std::int16_t iPas
 
     iCur = 0;
     if (app.state.imemLogCur != 0) {
-        for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(lprts).cb() + 2) {
+        for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb() + 2) {
             lprts = app.state.lpLog + iCur;
-            if (pfn(app, std::span(app.state.lpLog + (2 + iCur), static_cast<std::size_t>(HdvFromPrefix(lprts).cb())),
-                    static_cast<RecordType>(HdvFromPrefix(lprts).rt()), iPass) == 0)
+            if (pfn(app, std::span(app.state.lpLog + (2 + iCur), static_cast<std::size_t>(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb())),
+                    static_cast<RecordType>(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).rt()), iPass) == 0)
                 break;
         }
     }

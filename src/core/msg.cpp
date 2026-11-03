@@ -144,7 +144,7 @@ std::int16_t PackageUpMsg(APPSESSION &app, std::uint8_t *pb, std::int16_t iPlr, 
     i = 0;
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
-            MtvFromPrefix(lpmt).msghdr().SetGrWord(MtvFromPrefix(lpmt).msghdr().grWord() | grbit);
+            MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{lpmt, cbWireMsgTurn}).msghdr().SetGrWord(MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{lpmt, cbWireMsgTurn}).msghdr().grWord() | grbit);
             SetMsgParam(lpb, *pi);
             lpb += 2;
         } else {
@@ -155,7 +155,7 @@ std::int16_t PackageUpMsg(APPSESSION &app, std::uint8_t *pb, std::int16_t iPlr, 
         pi++;
         grbit *= 2;
     }
-    MtvFromPrefix(lpmt).SetCbParams((lpb - lpbBase) & 0xf);
+    MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{lpmt, cbWireMsgTurn}).SetCbParams((lpb - lpbBase) & 0xf);
     return lpb - pb;
 }
 
@@ -188,7 +188,7 @@ std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId 
     i = 0;
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
-            MhvFromPrefix(pmsghdr).SetGrWord(MhvFromPrefix(pmsghdr).grWord() | grbit);
+            MhvFromPrefix(std::span<std::uint8_t, cbWireMsgHdr>{pmsghdr, cbWireMsgHdr}).SetGrWord(MhvFromPrefix(std::span<std::uint8_t, cbWireMsgHdr>{pmsghdr, cbWireMsgHdr}).grWord() | grbit);
             SetMsgParam(pb, *pi);
             pb += 2;
         } else {

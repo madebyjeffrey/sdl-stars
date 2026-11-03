@@ -41,7 +41,7 @@ public:
 };
 inline NATIVEMESSAGEHEADERVIEW MhvFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEMESSAGEHEADERVIEW(MbwFromLp(app, lp)); }
 inline NATIVEMESSAGETURNVIEW MtvFromLp(APPSESSION &app, void *lp) noexcept { return NATIVEMESSAGETURNVIEW(MbwFromLp(app, lp)); }
-inline NATIVEMESSAGEHEADERVIEW MhvFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireMsgHdr)), 0}; }
-inline NATIVEMESSAGETURNVIEW MtvFromPrefix(std::uint8_t *lp) noexcept { return {std::as_writable_bytes(std::span(lp, cbWireMsgTurn)), 0}; }
+inline NATIVEMESSAGEHEADERVIEW MhvFromPrefix(std::span<std::uint8_t, cbWireMsgHdr> rgb) noexcept { return {std::as_writable_bytes(rgb), 0}; }
+inline NATIVEMESSAGETURNVIEW MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn> rgb) noexcept { return {std::as_writable_bytes(rgb), 0}; }
 
 #endif
