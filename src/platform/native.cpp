@@ -209,7 +209,7 @@ bool FFileExists(std::string_view szFile) { return IAccessNativePath(szFile, 0) 
 bool FFileReadOnly(std::string_view szFile) { return IAccessNativePath(szFile, 2) != 0; }
 void MakeDir(std::string_view szDir) { ICreateNativeDirectory(szDir, 0777); }
 int CreateNativeDir(std::string_view pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
-std::int16_t FEnsureNativeDir(std::string_view pszDir) { return FEnsureNativeDirectory(pszDir); }
+bool FEnsureNativeDir(std::string_view pszDir) { return FEnsureNativeDirectory(pszDir); }
 std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, const FNativeDirectoryEntryProc &pfnEntry) {
     std::optional<std::string> szEntry;
     if (!pfnEntry) return 0;
@@ -228,9 +228,9 @@ std::optional<std::int64_t> FNativeFileSize(std::string_view pszFile) {
     if (!info || !info->fRegular) return std::nullopt;
     return info->cb;
 }
-std::int16_t FNativeDirectoryExists(std::string_view pszDir) {
+bool FNativeDirectoryExists(std::string_view pszDir) {
     const auto info = IGetNativeFileInfo(pszDir, NATIVELINKMODE::follow);
-    return info && info->fDirectory;
+    return info && info->fDirectory != 0;
 }
 std::optional<NATIVEPATHINFO> FNativePathInfo(std::string_view psz) {
     const auto info = IGetNativeFileInfo(psz, NATIVELINKMODE::inspect);

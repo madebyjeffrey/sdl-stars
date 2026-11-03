@@ -130,7 +130,7 @@ int IUnlinkNativePath(std::string_view szPath);
 std::optional<NATIVEFILEINFO> IGetNativeFileInfo(std::string_view szPath, NATIVELINKMODE mode);
 int IAccessNativePath(std::string_view szPath, int md);
 int ICreateNativeDirectory(std::string_view szPath, unsigned md);
-int FEnsureNativeDirectory(std::string_view szPath);
+bool FEnsureNativeDirectory(std::string_view szPath);
 int IRemoveNativePath(std::string_view szPath, int fDirectory);
 int IRenameNativePath(std::string_view szOldPath, std::string_view szNewPath, int fReplace, int fSync);
 std::optional<std::string> SzCanonicalNativePath(std::string_view szPath);

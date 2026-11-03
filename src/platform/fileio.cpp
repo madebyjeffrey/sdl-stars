@@ -533,13 +533,13 @@ int ICreateNativeDirectory(std::string_view szPath, unsigned md) {
         return -1;
     });
 }
-int FEnsureNativeDirectory(std::string_view szPath) {
-    if (!FPath(szPath)) return 0;
-    return FileCall(nullptr, 0, [&] {
+bool FEnsureNativeDirectory(std::string_view szPath) {
+    if (!FPath(szPath)) return false;
+    return FileCall(nullptr, false, [&] {
         std::error_code ec; fs::path pth = PathFromUtf8(szPath);
         fs::create_directories(pth, ec);
-        if (ec) { SetError(ec); return 0; }
-        return fs::is_directory(pth, ec) && !ec ? 1 : 0;
+        if (ec) { SetError(ec); return false; }
+        return fs::is_directory(pth, ec) && !ec;
     });
 }
 int IRemoveNativePath(std::string_view szPath, int directory) {

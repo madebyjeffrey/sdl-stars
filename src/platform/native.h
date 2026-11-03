@@ -85,11 +85,11 @@ std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir,
     return FNativeEnumerateDirectory(app, pszDir, pfnBound);
 }
 std::optional<std::int64_t> FNativeFileSize(std::string_view pszFile);
-std::int16_t FNativeDirectoryExists(std::string_view pszDir);
+bool FNativeDirectoryExists(std::string_view pszDir);
 // Inspect the final component without following links or Windows reparse points.
 struct NATIVEPATHINFO { bool fDirectory, fLink; };
 std::optional<NATIVEPATHINFO> FNativePathInfo(std::string_view psz);
-std::int16_t FEnsureNativeDir(std::string_view pszDir);
+bool FEnsureNativeDir(std::string_view pszDir);
 int     RemoveNativeFile(std::string_view psz);
 int     RemoveNativePath(std::string_view psz);
 int     ReplaceNativeFile(std::string_view pszOld, std::string_view pszNew);
