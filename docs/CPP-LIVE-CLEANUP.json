@@ -26737,6 +26737,31 @@
       "api_audit": "PLANETNAMERESULT returns the label byte count through TEXTIO; the original array-returning PszGetPlanetName remains available for the independent archived observer. Seven report drawing rescans now use result, copy, or format counts.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Return fleet name byte lengths",
+      "parent": "9b644d089c9aafa692f8c2bc863bc945d8d91a06",
+      "source_commit": "07282594ecc8b961b8a665c4d1eea0a1a1ed5533",
+      "macos_debug_build": "make compile passes with strict warnings and header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; fleet names, UTF-8 bytes, work-buffer effects, and saved data remain unchanged.",
+      "api_audit": "PszGetFleetNameResult returns the exact formatted UTF-8 byte count. Report drawing uses it in the owned-fleet and enemy-fleet name columns; the original array-returning API remains available for the archived C observer.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -28137,8 +28162,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "9b644d089c9aafa692f8c2bc863bc945d8d91a06",
-  "latest_batch_status": "Source committed as 9b644d08. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "07282594ecc8b961b8a665c4d1eea0a1a1ed5533",
+  "latest_batch_status": "Source committed as 07282594. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28154,9 +28179,9 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Fifty-four redundant UI length rescans have been removed across tracked batches. Recent batches covered player/fleet/planet result APIs, fixed report placeholders, static mineral/planet labels, and fleet-order text copied into bounded buffers.",
-    "source_head": "9b644d089c9aafa692f8c2bc863bc945d8d91a06",
-    "strlen_occurrence_inventory": "68 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources; these raw counts are not actionable replacement counts because many uses are C-string or ABI boundaries.",
+    "ui_text_lengths": "Fifty-six redundant UI length rescans have been removed across tracked batches, including the latest report fleet-name result API change.",
+    "source_head": "07282594ecc8b961b8a665c4d1eea0a1a1ed5533",
+    "strlen_occurrence_inventory": "64 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28166,6 +28191,7 @@
     "fixed_report_placeholder_length": "reportui.cpp uses the compile-time byte length for both fixed \"-- \" placeholder drawing paths.",
     "fixed_ui_label_lengths": "APPGAMESTATE owns compile-time string_view values for static mineral and planet attribute labels; its existing C-string pointer arrays retain their layout and point to those values.",
     "fleet_order_text_lengths": "Fleet-order catalog labels and the composed mine-laying message use exact CchGetString/CchSprintf byte counts for drawing.",
-    "planet_name_results": "PszGetPlanetNameResult and TEXTIO::pfnPlanetName now return PLANETNAMERESULT with fixed owned storage, exact UTF-8 byte count, data(), size(), and view(). The original array-returning PszGetPlanetName wrapper remains for the archived C observer."
+    "planet_name_results": "PszGetPlanetNameResult and TEXTIO::pfnPlanetName now return PLANETNAMERESULT with fixed owned storage, exact UTF-8 byte count, data(), size(), and view(). The original array-returning PszGetPlanetName wrapper remains for the archived C observer.",
+    "fleet_name_results": "PszGetFleetNameResult returns FLEETNAMERESULT with the existing 360-byte owned storage and exact formatted UTF-8 byte count; report drawing uses the count. The original array-returning PszGetFleetName wrapper remains for the archived C observer."
   }
 }
