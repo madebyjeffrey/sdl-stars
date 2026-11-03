@@ -28337,8 +28337,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "99ac9576",
-  "latest_batch_status": "Source committed as 99ac9576. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Exact strlen inventory corrected to individual occurrences; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "3d772575",
+  "latest_batch_status": "Source committed as 3d772575. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Exact string scan inventory uses occurrence counts; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28354,9 +28354,9 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Eighty-eight UI/compatibility text and path rescans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library paths, planet search, list search and new-game file handling.",
-    "source_head": "99ac9576",
-    "strlen_occurrence_inventory": "33 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. Counts are individual matches from rg -o, not matching lines. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "ui_text_lengths": "Ninety-three redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path and print-name paths.",
+    "source_head": "3d772575",
+    "strlen_occurrence_inventory": "28 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources (30 calls total). Counts are individual matches from rg -o, not matching lines. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28388,12 +28388,13 @@
     "library_recent_key_length": "FDeleteLibraryGameRecentPaths uses the byte count returned by CchGetString for idsFile1 when replacing the numeric suffix.",
     "game_file_path_length": "FOpenGame carries CchCopyUtf8\u2019s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
     "new_game_filename_length": "NewGameWizard uses CchCopyUtf8\u2019s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
-    "strlen_inventory_method": "Individual call counts use rg -o and wc -l; rg -c counts matching lines and undercounts when a line has multiple calls."
+    "strlen_inventory_method": "Individual call counts use rg -o and wc -l; rg -c counts matching lines and undercounts when a line has multiple calls.",
+    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8\u2019s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper."
   },
-  "latest_change": "NewGameWizard reuses the bounded basename copy count when removing .xy and safely cancels if the copy cannot contain the suffix.",
+  "latest_change": "HglobPrintNames reuses bounded source views and copy counts for DEVNAMES allocation and field advancement.",
   "latest_batch_verification": {
-    "batch": "L05 NewGameWizard reuses bounded filename length",
-    "source_commit": "99ac9576",
+    "batch": "L05 HglobPrintNames carries DEVNAMES copy lengths",
+    "source_commit": "3d772575",
     "macos_debug_build": "make compile passes with strict warnings and header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -28410,7 +28411,7 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged for valid filenames; malformed short copies now cancel safely before suffix indexing.",
+    "baseline": "Unchanged; DEVNAMES offsets, strings and terminators retain the same bytes.",
     "platform": "Windows/Linux current-source qualification remains pending.",
     "diff_check": "Pass."
   }
