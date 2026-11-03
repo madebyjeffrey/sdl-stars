@@ -22,7 +22,7 @@ struct LIBRARYIMPORT {
 struct LIBRARYPATHS {
     char (&szLibraryRoot)[256];
     std::span<char, 256> szLibraryPending;
-    char (&szLibraryName)[256];
+    std::span<char, 256> szLibraryName;
 };
 std::int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget);
 std::int16_t FCopyNativeFileExclusive(std::string_view szSource, std::string_view szTarget);
