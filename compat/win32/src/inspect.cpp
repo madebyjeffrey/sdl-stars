@@ -23,61 +23,64 @@ void StarsCompatSetObjectInspector(HWND (*pfnShow)(void)) {
 static BOOL fInspectorClass;
 static STARSCOMPATSNAPSHOT snapInspector;
 
-static void AppendStyle(std::span<char> rgch, const char *pszName) {
+static void AppendStyle(std::span<char> rgch, std::size_t &cch, std::string_view pszName) {
     if (rgch.empty()) return;
-    if (rgch[0]) FAppendUtf8(rgch, " | ");
-    FAppendUtf8(rgch, pszName);
+    if (cch != 0) cch += CchCopyUtf8Prefix(rgch.subspan(cch), " | ");
+    cch += CchCopyUtf8Prefix(rgch.subspan(cch), pszName);
 }
 
 template<std::size_t c>
-static void DecodeStyles(std::span<char> rgch, DWORD *lpdw, const STYLEFIELD (&rg)[c]) {
+static void DecodeStyles(std::span<char> rgch, std::size_t &cch, DWORD *lpdw, const STYLEFIELD (&rg)[c]) {
     std::size_t i;
     DWORD dwFields = 0, dwOriginal = *lpdw;
     for (i = 0; i < c; i++) {
         if (!(dwFields & rg[i].dwMask) && (dwOriginal & rg[i].dwMask) == rg[i].dwValue) {
-            AppendStyle(rgch, rg[i].psz);
+            AppendStyle(rgch, cch, rg[i].psz);
             dwFields |= rg[i].dwMask;
         }
     }
     *lpdw &= ~dwFields;
 }
 
-static void FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, std::span<char> rgch) {
+static std::size_t FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, std::span<char> rgch) {
     DWORD dw = fExtended ? lp->dwExStyle : lp->dwStyle;
     char szUnknown[32];
-    if (rgch.empty()) return;
+    std::size_t cch = 0;
+    int cchUnknown;
+    if (rgch.empty()) return cch;
     rgch[0] = 0;
     if (fExtended) {
-        DecodeStyles(rgch, &dw, rgstyleExtended);
+        DecodeStyles(rgch, cch, &dw, rgstyleExtended);
     } else {
-        if (!(dw & (win32::WS_CHILD | win32::WS_POPUP))) AppendStyle(rgch, "WS_OVERLAPPED");
-        DecodeStyles(rgch, &dw, rgstyleWindow);
-        if (dw & win32::WS_GROUP) AppendStyle(rgch, lp->dwStyle & win32::WS_CHILD ? "WS_GROUP" : "WS_MINIMIZEBOX");
-        if (dw & win32::WS_TABSTOP) AppendStyle(rgch, lp->dwStyle & win32::WS_CHILD ? "WS_TABSTOP" : "WS_MAXIMIZEBOX");
+        if (!(dw & (win32::WS_CHILD | win32::WS_POPUP))) AppendStyle(rgch, cch, "WS_OVERLAPPED");
+        DecodeStyles(rgch, cch, &dw, rgstyleWindow);
+        if (dw & win32::WS_GROUP) AppendStyle(rgch, cch, lp->dwStyle & win32::WS_CHILD ? "WS_GROUP" : "WS_MINIMIZEBOX");
+        if (dw & win32::WS_TABSTOP) AppendStyle(rgch, cch, lp->dwStyle & win32::WS_CHILD ? "WS_TABSTOP" : "WS_MAXIMIZEBOX");
         dw &= ~(win32::WS_GROUP | win32::WS_TABSTOP);
-        if (lp->fDialog) { DecodeStyles(rgch, &dw, rgstyleDialog); }
+        if (lp->fDialog) { DecodeStyles(rgch, cch, &dw, rgstyleDialog); }
         else switch (lp->iControl) {
-        case 1: DecodeStyles(rgch, &dw, rgstyleButton); break;
-        case 2: DecodeStyles(rgch, &dw, rgstyleStatic); break;
-        case 3: DecodeStyles(rgch, &dw, rgstyleEdit); break;
-        case 4: DecodeStyles(rgch, &dw, rgstyleList); break;
+        case 1: DecodeStyles(rgch, cch, &dw, rgstyleButton); break;
+        case 2: DecodeStyles(rgch, cch, &dw, rgstyleStatic); break;
+        case 3: DecodeStyles(rgch, cch, &dw, rgstyleEdit); break;
+        case 4: DecodeStyles(rgch, cch, &dw, rgstyleList); break;
         case 5:
-            DecodeStyles(rgch, &dw, rgstyleScroll);
-            if (dw & win32::SBS_TOPALIGN) AppendStyle(rgch, lp->dwStyle & win32::SBS_SIZEBOX ?
+            DecodeStyles(rgch, cch, &dw, rgstyleScroll);
+            if (dw & win32::SBS_TOPALIGN) AppendStyle(rgch, cch, lp->dwStyle & win32::SBS_SIZEBOX ?
                 "SBS_SIZEBOXTOPLEFTALIGN" : lp->dwStyle & win32::SBS_VERT ? "SBS_LEFTALIGN" : "SBS_TOPALIGN");
-            if (dw & win32::SBS_BOTTOMALIGN) AppendStyle(rgch, lp->dwStyle & win32::SBS_SIZEBOX ?
+            if (dw & win32::SBS_BOTTOMALIGN) AppendStyle(rgch, cch, lp->dwStyle & win32::SBS_SIZEBOX ?
                 "SBS_SIZEBOXBOTTOMRIGHTALIGN" : lp->dwStyle & win32::SBS_VERT ? "SBS_RIGHTALIGN" : "SBS_BOTTOMALIGN");
             dw &= ~(win32::SBS_TOPALIGN | win32::SBS_BOTTOMALIGN);
             break;
-        case 6: DecodeStyles(rgch, &dw, rgstyleCombo); break;
-        case 7: DecodeStyles(rgch, &dw, rgstyleToolbar); break;
+        case 6: DecodeStyles(rgch, cch, &dw, rgstyleCombo); break;
+        case 7: DecodeStyles(rgch, cch, &dw, rgstyleToolbar); break;
         }
     }
     if (dw) {
-        CchSnprintf(std::span{szUnknown}, "0x%08x", static_cast<unsigned>(dw));
-        AppendStyle(rgch, szUnknown);
+        cchUnknown = CchSnprintf(std::span{szUnknown}, "0x%08x", static_cast<unsigned>(dw));
+        AppendStyle(rgch, cch, std::string_view{szUnknown, static_cast<std::size_t>(cchUnknown)});
     }
-    if (!rgch[0]) CchCopyUtf8(rgch, "0");
+    if (cch == 0) cch = CchCopyUtf8Prefix(rgch, "0");
+    return cch;
 }
 
 static std::string_view SzvControlKind(UINT iControl) {
@@ -220,14 +223,14 @@ static void InspectDetails(HWND hwnd) {
     const STARSCOMPATWINDOW *lp;
     std::string szDetails;
     char szStyle[2048], szExStyle[2048];
-    std::size_t cb;
+    std::size_t cb, cchStyle, cchExStyle;
     if (i == win32::LB_ERR) return;
     iItem = win32::SendMessageA(hwndList, win32::LB_GETITEMDATA, static_cast<WPARAM>(i), 0);
     if (iItem < 0 || static_cast<std::size_t>(iItem) >= snapInspector.cWindow) return;
     lp = &snapInspector.rgWindow[iItem];
-    FormatStyles(lp, 0, std::span{szStyle});
-    FormatStyles(lp, 1, std::span{szExStyle});
-    cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + std::strlen(szStyle) + std::strlen(szExStyle);
+    cchStyle = FormatStyles(lp, 0, std::span{szStyle});
+    cchExStyle = FormatStyles(lp, 1, std::span{szExStyle});
+    cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + cchStyle + cchExStyle;
     if (cb > std::numeric_limits<std::size_t>::max() - 640) return;
     try {
         szDetails.resize(cb + 640);
