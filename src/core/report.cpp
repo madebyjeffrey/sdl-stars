@@ -13,9 +13,12 @@ std::uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32,
 
 // Report labels may come from catalog values, game fields or work storage.
 // Copy at this boundary so callers retain one value through sorting/drawing.
-static std::array<char, 360> SzReportLabel(std::string_view sz) {
+static std::array<char, 360> SzReportLabel(std::string_view sz, std::int16_t *pcch = nullptr) {
     std::array<char, 360> szResult{};
-    CchCopyUtf8Prefix(std::span{szResult}, sz);
+    const auto cch = CchCopyUtf8Prefix(std::span{szResult}, sz);
+    if (pcch) {
+        *pcch = static_cast<std::int16_t>(cch);
+    }
     return szResult;
 }
 
@@ -92,6 +95,7 @@ std::int16_t FDestIsWP0(FLEET *lpfl) {
 FLEETETARESULT PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl) {
     POINT16 pt;
     std::int16_t c;
+    std::int16_t cch;
     std::int16_t i;
     ORDER   ord;
     char   *psz;
@@ -131,10 +135,10 @@ FLEETETARESULT PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl) {
         if (c == 0) {
             c = 32000;
         }
-        return {SzReportLabel(app.state.szWork), c};
+        return {SzReportLabel(std::string_view{app.state.szWork, static_cast<std::size_t>(c)}, &cch), c, cch};
     }
 LNoETA:
-    return {SzReportLabel(app.state.szDblDash), 0};
+    return {SzReportLabel(app.state.szDblDash, &cch), 0, cch};
 }
 
 TASKNAMERESULT PszGetTaskName(APPSESSION &app, FLEET *lpfl) {

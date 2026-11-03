@@ -148,21 +148,21 @@ static void test_ETALabel_contract(void) {
     CchCopyUtf8Prefix(std::span{app.state.szWork}, "untouched");
     fl.cord = 1;
     const auto etaNone = PszGetETA(app, nullptr, &fl);
-    TEST_CHECK(SzLabelBytes(etaNone.sz.data()) == "-- " && etaNone.cYears == 0);
+    TEST_CHECK(etaNone.view() == "-- " && etaNone.cYears == 0 && etaNone.cch == 3);
     TEST_CHECK(std::string_view(app.state.szWork) == "untouched");
     fl.cord = 2;
     storage.rgord[1].pt.x = 100; storage.rgord[1].iWarp = 5;
     const auto etaTravel = PszGetETA(app, nullptr, &fl);
-    TEST_CHECK(SzLabelBytes(etaTravel.sz.data()) == "4y" && etaTravel.cYears == 4);
+    TEST_CHECK(etaTravel.view() == "4y" && etaTravel.cYears == 4 && etaTravel.cch == 2);
     const auto szETA = PszGetETA(app, nullptr, &fl);
     storage.rgord[1].iWarp = 0;
     const auto etaNever = PszGetETA(app, nullptr, &fl);
-    TEST_CHECK(SzLabelBytes(etaNever.sz.data()) == "Never" && etaNever.cYears == 32000);
+    TEST_CHECK(etaNever.view() == "Never" && etaNever.cYears == 32000 && etaNever.cch == 5);
     storage.rgord[0].fValidTask = 1;
     for (const auto task : {grTaskMerge, grTaskScrap, grTaskLayMines}) {
         storage.rgord[0].grTask = task;
         const auto etaBlocked = PszGetETA(app, nullptr, &fl);
-        TEST_CHECK(SzLabelBytes(etaBlocked.sz.data()) == "-- " && etaBlocked.cYears == 0);
+        TEST_CHECK(etaBlocked.view() == "-- " && etaBlocked.cYears == 0 && etaBlocked.cch == 3);
         TEST_CHECK(std::string_view(app.state.szWork) == "Never");
     }
     TEST_CHECK(std::string_view(szETA.sz.data()) == "4y");

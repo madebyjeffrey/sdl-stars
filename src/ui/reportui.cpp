@@ -1419,11 +1419,11 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
         }
-        case colFleetEta:
-            szDisplayLabel = PszGetETA(app, hdc, lpfl).sz;
-            psz = szDisplayLabel.data();
-            RightTextOut(app, hdc, prc->right, prc->top, psz, std::strlen(psz), 0);
+        case colFleetEta: {
+            const auto eta = PszGetETA(app, hdc, lpfl);
+            RightTextOut(app, hdc, prc->right, prc->top, eta.sz.data(), eta.cch, 0);
             break;
+        }
         case colFleetCargo:
             xCur = dx * 4 + prc->left;
             for (i = 0; i <= 3; i++) {

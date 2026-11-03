@@ -12,6 +12,9 @@ std::int16_t FDestIsWP0(FLEET *lpfl);
 struct FLEETETARESULT {
     std::array<char, 360> sz;
     std::int16_t cYears;
+    std::int16_t cch;
+
+    std::string_view view() const noexcept { return {sz.data(), static_cast<std::size_t>(cch)}; }
 };
 struct TASKNAMERESULT {
     std::array<char, 360> sz;
