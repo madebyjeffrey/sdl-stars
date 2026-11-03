@@ -3323,7 +3323,7 @@
     ],
     "reason": "No production caller remains after the fitting-copy migrations. Both unused unbounded entry points and their declarations are retired. Shared .inc SDK-fixture assertions for those APIs are removed; all still-supported comparison/lowercase vectors retain their bytes through direct literal initialization. The maintained raw-copy policy keeps rejecting reintroduction.",
     "lexical_spellings_removed": 6,
-    "remaining": "285 migrated initial copy sites; 23 actual raw-copy call spellings remain, with no extra unused SDK declarations/definitions. Other active cleanup stages remain open.",
+    "remaining": "306 copy migrations are recorded complete; the current owned-production raw-copy audit finds zero call sites. Remaining L05/L06 work concerns bounded service interfaces and scratch/borrowed text, not strcpy/strcat-family calls.",
     "discovery": "The first full build found the shared .inc consumer missed by the initial extension-filtered search. The inventory was broadened to include fragments; both independent SDK and wrapper consumers are requalified after retiring the obsolete assertions.",
     "verification": {
       "batch": "L06w bounded text fitting and unused copy-API retirement",
@@ -3625,7 +3625,7 @@
     ]
   },
   "current_source_audit": {
-    "source_head": "e14499cd",
+    "source_head": "7b8e00e1",
     "scope": "Owned production source and compatibility implementation/header trees: src, compat/win32/src and compat/win32/include.",
     "raw_copy_calls": 0,
     "spellings_checked": [
@@ -3634,7 +3634,7 @@
       "strncpy",
       "strncat"
     ],
-    "evidence": "A current rg scan found no owned production call sites. The maintained lexical manifest still enforces the empty raw-copy inventory against reintroduction.",
+    "evidence": "The current source was rebuilt and the maintained lexical manifest passed; no owned production call sites were found. The manifest enforces the empty raw-copy inventory against reintroduction.",
     "remaining_work": "Borrowed scratch return and other bounded text/service interfaces remain in L05/L06; Windows/Linux qualification remains open.",
     "historical_counts": "Per-batch remaining-site counts below record their original checkpoints; this current source audit supersedes them."
   }
