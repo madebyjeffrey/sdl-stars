@@ -251,7 +251,8 @@
         "owned-packaged-help-document-body",
         "bounded-help-marker-search",
         "bounded-library-metadata-line-parsing",
-        "bounded-library-metadata-line-trimming"
+        "bounded-library-metadata-line-trimming",
+        "fixed-character-membership-bounded-view-searches"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25544,6 +25545,32 @@
       "api_audit": "FReadLibraryMetadata now uses CchGetNativeLine byte counts and bounded views; both strcspn scans are removed. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 fixed-character membership uses bounded views",
+      "parent": "1c8417cb",
+      "source_commit": "256fbb15",
+      "macos_debug_build": "make compile passes with strict warnings; formatter, URI and library validation sources rebuilt.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass, including native formatting tests.",
+      "library_publication_witness": "witness_library-publication passes 1/1.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; literal character sets, embedded-NUL stopping rules and URI byte escaping are preserved.",
+      "api_audit": "Fixed-character membership checks now use string_view::find; portable filename validation shares one byte predicate. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "platform": "Windows/Linux current-source qualification remains pending.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -25564,8 +25591,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded library metadata line trimming",
-    "latest_published_head": "9fdaa4bc",
+    "latest_batch": "L05 fixed-character membership uses bounded views",
+    "latest_published_head": "256fbb15",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -25596,20 +25623,20 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 bounded library metadata line trimming",
-    "source_commit": "9fdaa4bc",
-    "status": "Locally committed as 9fdaa4bc. Strict macOS Debug build, focused library-publication witness, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "batch": "L05 fixed-character membership uses bounded views",
+    "source_commit": "256fbb15",
+    "status": "Locally committed as 256fbb15. Strict macOS Debug build, desktop/host units, library-publication witness, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
     "changes": [
-      "FReadLibraryMetadata now bounds both line trims using CchGetNativeLine byte counts instead of strcspn."
+      "Fixed-character membership in formatting, URI encoding and portable filename validation now uses bounded views."
     ],
     "verification": {
-      "batch": "L05 bounded library metadata line trimming",
-      "parent": "bee5c2de",
-      "source_commit": "9fdaa4bc",
-      "macos_debug_build": "make compile passes with strict warnings; libraryui.cpp rebuilt.",
-      "focused_witness": "witness_library-publication passes 1/1.",
+      "batch": "L05 fixed-character membership uses bounded views",
+      "parent": "1c8417cb",
+      "source_commit": "256fbb15",
+      "macos_debug_build": "make compile passes with strict warnings; formatter, URI and library validation sources rebuilt.",
       "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
+      "host_unit_tests": "29/29 pass, including native formatting tests.",
+      "library_publication_witness": "witness_library-publication passes 1/1.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
@@ -25623,8 +25650,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; both library metadata text lines retain the former NUL/CR/LF trimming and validation behavior.",
-      "api_audit": "FReadLibraryMetadata now uses CchGetNativeLine byte counts and bounded views; both strcspn scans are removed. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "baseline": "Unchanged; literal character sets, embedded-NUL stopping rules and URI byte escaping are preserved.",
+      "api_audit": "Fixed-character membership checks now use string_view::find; portable filename validation shares one byte predicate. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25916,10 +25943,14 @@
       {
         "commit": "9fdaa4bc",
         "message": "Trim library metadata from bounded lines"
+      },
+      {
+        "commit": "256fbb15",
+        "message": "Use views for character membership checks"
       }
     ],
-    "latest_source_commit": "9fdaa4bc",
-    "latest_batch_status": "Locally committed as 9fdaa4bc. Strict macOS Debug build, focused library-publication witness, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "latest_source_commit": "256fbb15",
+    "latest_batch_status": "Locally committed as 256fbb15. Strict macOS Debug build, desktop/host units, library-publication witness, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -25937,7 +25968,7 @@
       "current_source_after_c5378ae9": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "c_macro_audit": {
-      "source_head": "9fdaa4bc",
+      "source_head": "256fbb15",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25951,23 +25982,23 @@
       "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through 9fdaa4bc."
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through 256fbb15."
     },
     "borrowed_return_audit": "Packaged help guide body uses local std::string ownership and a bounded marker view; broader L05 scratch and borrowed-return audit remains active."
   },
   "current_checkpoint": {
-    "batch": "L05 bounded library metadata line trimming",
-    "status": "Locally committed as 9fdaa4bc. Strict macOS Debug build, focused library-publication witness, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
-    "parent": "bee5c2de",
-    "change": "FReadLibraryMetadata uses bounded line lengths for both metadata trims, replacing unbounded strcspn scans while preserving NUL/CR/LF behavior.",
+    "batch": "L05 fixed-character membership uses bounded views",
+    "status": "Locally committed as 256fbb15. Strict macOS Debug build, desktop/host units, library-publication witness, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "parent": "1c8417cb",
+    "change": "Fixed-character membership checks use bounded view searches; the repeated Windows filename-byte rule is shared without changing accepted bytes.",
     "verification": {
-      "batch": "L05 bounded library metadata line trimming",
-      "parent": "bee5c2de",
-      "source_commit": "9fdaa4bc",
-      "macos_debug_build": "make compile passes with strict warnings; libraryui.cpp rebuilt.",
-      "focused_witness": "witness_library-publication passes 1/1.",
+      "batch": "L05 fixed-character membership uses bounded views",
+      "parent": "1c8417cb",
+      "source_commit": "256fbb15",
+      "macos_debug_build": "make compile passes with strict warnings; formatter, URI and library validation sources rebuilt.",
       "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
+      "host_unit_tests": "29/29 pass, including native formatting tests.",
+      "library_publication_witness": "witness_library-publication passes 1/1.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
@@ -25981,8 +26012,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; both library metadata text lines retain the former NUL/CR/LF trimming and validation behavior.",
-      "api_audit": "FReadLibraryMetadata now uses CchGetNativeLine byte counts and bounded views; both strcspn scans are removed. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "baseline": "Unchanged; literal character sets, embedded-NUL stopping rules and URI byte escaping are preserved.",
+      "api_audit": "Fixed-character membership checks now use string_view::find; portable filename validation shares one byte predicate. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -26029,7 +26060,7 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "FReadLibraryMetadata now bounds both line trims using CchGetNativeLine byte counts instead of strcspn."
+      "Fixed-character membership in formatting, URI encoding and portable filename validation now uses bounded views."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -26298,12 +26329,16 @@
       {
         "commit": "9fdaa4bc",
         "message": "Trim library metadata from bounded lines"
+      },
+      {
+        "commit": "256fbb15",
+        "message": "Use views for character membership checks"
       }
     ],
-    "source_commit": "9fdaa4bc",
-    "latest_change": "FReadLibraryMetadata uses bounded line lengths for both metadata trims, replacing unbounded strcspn scans while preserving NUL/CR/LF behavior.",
+    "source_commit": "256fbb15",
+    "latest_change": "Fixed-character membership checks use bounded view searches; the repeated Windows filename-byte rule is shared without changing accepted bytes.",
     "c_macro_audit": {
-      "source_head": "9fdaa4bc",
+      "source_head": "256fbb15",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26317,11 +26352,11 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through 9fdaa4bc.",
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through 256fbb15.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "9fdaa4bc",
-    "latest_batch_status": "Locally committed as 9fdaa4bc. Strict macOS Debug build, focused library-publication witness, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "latest_source_commit": "256fbb15",
+    "latest_batch_status": "Locally committed as 256fbb15. Strict macOS Debug build, desktop/host units, library-publication witness, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
     "latest_published_head": "da8c27bc"
   },
   "milestone_d_checkpoint": {
