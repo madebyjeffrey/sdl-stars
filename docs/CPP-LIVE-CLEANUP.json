@@ -272,7 +272,8 @@
         "carry-generated-inspector-style-lengths",
         "bounded-cocoa-chooser-result-path-length",
         "carry-owned-toolbar-label-lengths",
-        "owned-toolbar-collections-with-vectors"
+        "owned-toolbar-collections-with-vectors",
+        "retire-lstrlenA-compatibility-shim"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -27098,7 +27099,7 @@
     "date": "2026-11-03",
     "reason": "Resume the live C++ cleanup after publishing the toolbar ownership batch and accumulated cleanup commits to develop.",
     "branch": "develop",
-    "latest_batch": "L05 toolbar collections and label ownership",
+    "latest_batch": "L05 retire lstrlenA and bound UI text measurement",
     "latest_published_head": "bdba7844",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -27460,8 +27461,8 @@
         "message": "Use views in profile text validation"
       }
     ],
-    "latest_source_commit": "ce4b1e7a",
-    "latest_batch_status": "Locally committed as ce4b1e7a. Strict macOS Debug build, three profile tests, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
+    "latest_batch_status": "Committed as 5a62be5e. Strict macOS SDL Debug build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -27499,27 +27500,33 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L05 toolbar collections and label ownership",
-    "status": "Published to origin/develop through bdba7844 as a fast-forward. Local macOS build, desktop units, native regression and tutorial pass; Windows SDL/Linux desktop qualification remains outstanding. GitHub Actions reports no run for this head, and the available connection cannot dispatch one.",
-    "parent": "eaa9db42",
-    "change": "COMPATTOOLBAR button/bitmap collections use std::vector; button labels use NATIVEOWNER<char, SDL_free>. Insert/delete no longer manually free or memmove raw records.",
+    "batch": "L05 retire lstrlenA and bound UI text measurement",
+    "status": "Committed locally as 5a62be5e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. This commit is not yet published; Windows/Linux qualification remains open.",
+    "parent": "0719d5f6",
+    "change": "Retired win32::lstrlenA. RightTextOut measures NUL termination only inside its mutable span; DrawScannerSBar uses the count returned by its UTF-8 copy.",
     "verification": {
-      "batch": "L05 toolbar collections and label ownership",
-      "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+      "batch": "L05 retire lstrlenA and bound UI text measurement",
+      "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_compatibility_tests": "win32_sdl_resource_toolbar passes (1/1). win32_sdl_leaks_toolbar timed out because macOS leaks could not get a task port for the launched process.",
-      "desktop_units": "18/18 pass.",
+      "focused_compatibility_test": "win32_services passes (1/1); obsolete lstrlenA assertion removed with the retired shim.",
+      "desktop_unit_tests": "18/18 pass.",
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
-      "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
-      "platform": "No GitHub Actions run exists for current published head bdba7844. Workflow dispatch is unavailable through the connected GitHub tools; Windows/Linux qualification remains pending.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged for valid terminated UI strings; scanner output consumes the exact copied byte count. Unterminated RightTextOut spans now stop at the span boundary.",
+      "api_audit": "Removed win32::lstrlenA declaration/implementation. RightTextOut finds a terminator only inside its supplied span; DrawScannerSBar reuses the UTF-8 copy count.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
     },
     "platform_ci": {
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
-      "status": "Completed with failures on stale source head 028c1dac; this run does not qualify current develop.",
+      "status": "Committed as 5a62be5e. Strict macOS SDL Debug build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open.",
       "linux_host": "success",
       "linked_independent_witnesses": "success",
       "resource_sanitizers": "success",
@@ -27903,8 +27910,8 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
-    "latest_change": "L05 toolbar collections and label ownership",
+    "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
+    "latest_change": "L05 retire lstrlenA and bound UI text measurement",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -27923,19 +27930,25 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
-    "latest_batch_status": "Published to origin/develop through bdba7844 as a fast-forward. Local macOS build, desktop units, native regression and tutorial pass; Windows SDL/Linux desktop qualification remains outstanding. GitHub Actions reports no run for this head, and the available connection cannot dispatch one.",
+    "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
+    "latest_batch_status": "Committed as 5a62be5e. Strict macOS SDL Debug build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open.",
     "latest_published_head": "bdba7844",
     "latest_batch_verification": {
-      "batch": "L05 toolbar collections and label ownership",
-      "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+      "batch": "L05 retire lstrlenA and bound UI text measurement",
+      "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_compatibility_tests": "win32_sdl_resource_toolbar passes (1/1). win32_sdl_leaks_toolbar timed out because macOS leaks could not get a task port for the launched process.",
-      "desktop_units": "18/18 pass.",
+      "focused_compatibility_test": "win32_services passes (1/1); obsolete lstrlenA assertion removed with the retired shim.",
+      "desktop_unit_tests": "18/18 pass.",
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
-      "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
-      "platform": "No GitHub Actions run exists for current published head bdba7844. Workflow dispatch is unavailable through the connected GitHub tools; Windows/Linux qualification remains pending.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged for valid terminated UI strings; scanner output consumes the exact copied byte count. Unterminated RightTextOut spans now stop at the span boundary.",
+      "api_audit": "Removed win32::lstrlenA declaration/implementation. RightTextOut finds a terminator only inside its supplied span; DrawScannerSBar reuses the UTF-8 copy count.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
     },
     "latest_source_audits": {
@@ -27992,9 +28005,9 @@
   "working_tree_checkpoint": {
     "date": "2026-11-03",
     "branch": "develop",
-    "batch": "L05 toolbar collections and label ownership",
-    "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
-    "status": "Published to origin/develop through bdba7844 as a fast-forward. Local macOS build, desktop units, native regression and tutorial pass; Windows SDL/Linux desktop qualification remains outstanding. GitHub Actions reports no run for this head, and the available connection cannot dispatch one.",
+    "batch": "L05 retire lstrlenA and bound UI text measurement",
+    "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
+    "status": "Committed locally as 5a62be5e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. This commit is not yet published; Windows/Linux qualification remains open.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -28091,7 +28104,7 @@
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
       "url": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41422617389",
-      "status": "Completed with failures on stale source head 028c1dac; this run does not qualify current develop.",
+      "status": "Committed as 5a62be5e. Strict macOS SDL Debug build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open.",
       "linux_host": "success",
       "linked_independent_witnesses": "success",
       "resource_sanitizers": "success",
@@ -28401,7 +28414,7 @@
       {"commit":"2e4b61de","message":"Record toolbar ownership cleanup"},
       {"commit":"bdba7844","message":"Correct toolbar ownership site count"}
     ],
-    "parent": "eaa9db42",
+    "parent": "0719d5f6",
     "c_macro_audit": {
       "source_head": "32deeaff",
       "date": "2026-11-02",
@@ -28419,19 +28432,25 @@
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
-    "latest_source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
-    "latest_batch_status": "Published to origin/develop through bdba7844 as a fast-forward. Local macOS build, desktop units, native regression and tutorial pass; Windows SDL/Linux desktop qualification remains outstanding. GitHub Actions reports no run for this head, and the available connection cannot dispatch one.",
-    "latest_change": "L05 toolbar collections and label ownership",
+    "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
+    "latest_batch_status": "Committed locally as 5a62be5e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. This commit is not yet published; Windows/Linux qualification remains open.",
+    "latest_change": "L05 retire lstrlenA and bound UI text measurement",
     "latest_batch_verification": {
-      "batch": "L05 toolbar collections and label ownership",
-      "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+      "batch": "L05 retire lstrlenA and bound UI text measurement",
+      "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_compatibility_tests": "win32_sdl_resource_toolbar passes (1/1). win32_sdl_leaks_toolbar timed out because macOS leaks could not get a task port for the launched process.",
-      "desktop_units": "18/18 pass.",
+      "focused_compatibility_test": "win32_services passes (1/1); obsolete lstrlenA assertion removed with the retired shim.",
+      "desktop_unit_tests": "18/18 pass.",
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
-      "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
-      "platform": "No GitHub Actions run exists for current published head bdba7844. Workflow dispatch is unavailable through the connected GitHub tools; Windows/Linux qualification remains pending.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged for valid terminated UI strings; scanner output consumes the exact copied byte count. Unterminated RightTextOut spans now stop at the span boundary.",
+      "api_audit": "Removed win32::lstrlenA declaration/implementation. RightTextOut finds a terminator only inside its supplied span; DrawScannerSBar reuses the UTF-8 copy count.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
     },
     "latest_source_audits": {
@@ -28442,8 +28461,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
-  "latest_batch_status": "Source committed as b022c4d4. Strict macOS SDL Debug build, desktop units, native regression and tutorial pass; one focused leak test could not get a macOS task port. Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
+  "latest_batch_status": "Committed as 5a62be5e. Strict macOS SDL Debug build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28460,7 +28479,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "b022c4d4",
+    "source_head": "5a62be5e",
     "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. This raw count is not a replacement count: four measure C-string API/input boundaries and seven measure text already held in owned or fixed storage; those seven are candidates for carried lengths, subject to confirming that extra state is worthwhile.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28534,16 +28553,16 @@
     "font_size_service": "FCompatFontSizeUtf8 returns std::optional<SIZE>; text sizing keeps the Win32 SIZE pointer only at GetTextExtentPoint32A.",
     "font_metrics_service": "FCompatFontMetrics returns std::optional<TEXTMETRICA>; only GetTextMetricsA copies the value into the Win32 output pointer.",
     "scanner_snapshot_result": "RgCaptureScanner returns std::optional<SCANSNAPSHOT>; FWriteScannerSnapshot and FSelectScannerObject take required const references. FreeScannerSnapshot and nullable snapshot handoffs are removed.",
-    "toolbar_owned_collections": "COMPATTOOLBAR button/bitmap arrays use std::vector and labels use NATIVEOWNER<char, SDL_free>; count fields derive from collection sizes."
+    "toolbar_owned_collections": "COMPATTOOLBAR button/bitmap arrays use std::vector and labels use NATIVEOWNER<char, SDL_free>; count fields derive from collection sizes.",
+    "win32_length_helper": "win32::lstrlenA is retired; UI spans are measured within their bounds, and scanner labels reuse copied UTF-8 byte counts."
   },
-  "latest_change": "L05 toolbar collections and label ownership",
+  "latest_change": "L05 retire lstrlenA and bound UI text measurement",
   "latest_batch_verification": {
-    "batch": "L05 toolbar collections and label ownership",
-    "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+    "batch": "L05 retire lstrlenA and bound UI text measurement",
+    "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_compatibility_tests": "win32_sdl_resource_toolbar passes (1/1). win32_sdl_leaks_toolbar timed out because macOS leaks could not get a task port for the launched process.",
+    "focused_compatibility_test": "win32_services passes (1/1); obsolete lstrlenA assertion removed with the retired shim.",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "Not required; this is a UI compatibility change.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
       "matches": 519,
@@ -28551,10 +28570,9 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "host_regression": "Not required; no core/game code changed.",
-    "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
-    "api_audit": "No C translation units, application API macros, or std::strlen occurrences changed.",
-    "platform": "Current-source Windows and Linux qualification remains pending.",
+    "baseline": "Unchanged for valid terminated UI strings; scanner output consumes the exact copied byte count. Unterminated RightTextOut spans now stop at the span boundary.",
+    "api_audit": "Removed win32::lstrlenA declaration/implementation. RightTextOut finds a terminator only inside its supplied span; DrawScannerSBar reuses the UTF-8 copy count.",
+    "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass."
   }
 }
