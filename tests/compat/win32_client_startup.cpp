@@ -1712,7 +1712,7 @@ static BOOL FTestRaceCancellation(APPSESSION &app) {
     fRejectRacePassword = 1;
     app.state.lSaltLast = -5;
     fOkay = !FLoadLibraryRace(app, 0, "Protected.r1") && !memcmp(&app.state.vplr, &plrSav, sizeof(app.state.vplr)) &&
-            PszCurrentLibraryRaceName() == "Managed.r1";
+            PszCurrentLibraryRaceName(app) == "Managed.r1";
     app.state.lSaltLast = -5;
     fOkay = fOkay && !FEditLibraryRace(app, 0, "Protected.r1");
     app.state.lSaltLast = -5;
@@ -1723,7 +1723,7 @@ static BOOL FTestRaceCancellation(APPSESSION &app) {
     fOkay = fOkay && !FImportLibraryRaceAs(app, 0, szProtected, "Cancelled.r1");
     fRejectRacePassword = 0;
     fOkay = fOkay && !memcmp(&app.state.vplr, &plrSav, sizeof(app.state.vplr)) &&
-            PszCurrentLibraryRaceName() == "Managed.r1" && FTestFilesEqual(szProtected, szSnapshot) &&
+            PszCurrentLibraryRaceName(app) == "Managed.r1" && FTestFilesEqual(szProtected, szSnapshot) &&
             !FFileExists(szExport) && !FFileExists(szImport) && !FFileExists(szDuplicate);
     RemoveNativeFile(szProtected);
     RemoveNativeFile(szSnapshot);

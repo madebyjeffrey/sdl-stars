@@ -160,7 +160,7 @@ void FreeStuff(APPSESSION &app) noexcept {
         // their borrowed application values and stable heaps are still alive.
         StarsCompatProcessExit();
         ResetScannerInspectorSession();
-        CloseLibraryUiSession();
+        CloseLibraryUiSession(app);
         ResetRaceUiSession(app);
         ResetScannerInputSession();
         ResetMessageInputSession();

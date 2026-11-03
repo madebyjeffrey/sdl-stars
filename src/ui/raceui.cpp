@@ -103,7 +103,7 @@ Finish:
     if (!FCheckPassword(app))
         goto Step1;
     if (!fDontWrite) {
-        if (FHasCurrentLibraryRace()) {
+        if (FHasCurrentLibraryRace(app)) {
             if (!FSaveCurrentLibraryRace(app, app.lpui->hwndRaceParent, &app.state.vplr)) goto Step1;
         } else if (!FSaveRace(app, app.state.szRaceFile[0] == 0 ? "stars.r1" : app.state.szRaceFile, &app.state.vplr)) goto Step1;
     }

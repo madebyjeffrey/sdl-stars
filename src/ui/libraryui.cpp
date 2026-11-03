@@ -37,7 +37,6 @@ static char szLibraryPending[256];
 static char szLibraryName[256];
 static char szLibraryExchangeName[256];
 static char szRaceLibraryRoot[256];
-static char szRaceLibraryPath[512];
 static char szRaceLibraryName[256];
 static char szRaceLibraryTemp[512];
 struct LIBRARYGAMELISTITEM {
@@ -84,7 +83,7 @@ struct RACESTATE {
     PLAYER plr;
     char szPass[sizeof(APPGAMESTATE::szRacePass)];
     char szFile[sizeof(APPGAMESTATE::szRaceFile)];
-    char szPath[sizeof(szRaceLibraryPath)];
+    char szPath[512];
     std::int16_t fNew;
 };
 
@@ -99,7 +98,7 @@ static void SaveRaceState(APPSESSION &app, RACESTATE *prs) {
     prs->fNew = fNewLibraryRace;
     std::copy_n(app.state.szRacePass, sizeof(prs->szPass), prs->szPass);
     std::copy_n(app.state.szRaceFile, sizeof(prs->szFile), prs->szFile);
-    std::copy_n(szRaceLibraryPath, sizeof(prs->szPath), prs->szPath);
+    std::copy_n(app.lpui->szRaceLibraryPath.data(), sizeof(prs->szPath), prs->szPath);
 }
 
 static void RestoreRaceState(APPSESSION &app, const RACESTATE *prs, std::int16_t fRestoreRace, std::int16_t fRestorePath) {
@@ -109,7 +108,7 @@ static void RestoreRaceState(APPSESSION &app, const RACESTATE *prs, std::int16_t
         std::copy_n(prs->szFile, sizeof(prs->szFile), app.state.szRaceFile);
     }
     if (fRestorePath) {
-        std::copy_n(prs->szPath, sizeof(prs->szPath), szRaceLibraryPath);
+        std::copy_n(prs->szPath, sizeof(prs->szPath), app.lpui->szRaceLibraryPath.data());
         fNewLibraryRace = prs->fNew;
     }
 }
@@ -694,7 +693,7 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszNa
         return 0;
     }
     RemoveNativePath(szTempDir);
-    CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s", szPath);
+    CchSnprintf(std::span{app.lpui->szRaceLibraryPath}, "%s", szPath);
     SetSzRaceFile(app, szName);
     fNewLibraryRace = 0;
     return 1;
@@ -836,11 +835,11 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
     std::string_view pszExisting;
     int iChoice;
 
-    if (!FHasCurrentLibraryRace() || !FInitRaceLibrary()) return 0;
+    if (!FHasCurrentLibraryRace(app) || !FInitRaceLibrary()) return 0;
     rv.pplr = pplr;
     GetRaceLibraryStem(app, pplr->szName, std::span{rv.szStem});
     if (!FNativeEnumerateDirectory(app, szRaceLibraryRoot, FindRaceVersion, &rv)) return 0;
-    pszExisting = !fNewLibraryRace && szRaceLibraryPath[0] ? PszCurrentLibraryRaceName() : std::string_view{rv.szLatest};
+    pszExisting = !fNewLibraryRace && app.lpui->szRaceLibraryPath[0] ? PszCurrentLibraryRaceName(app) : std::string_view{rv.szLatest};
     if (!pszExisting.empty()) {
         CchSnprintf(std::span{szName, sizeof(szName)}, "%s", pszExisting);
         CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
@@ -867,7 +866,7 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
     }
     return FSaveLibraryRace(app, hwnd, szName, pplr);
 LReuse:
-    CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+    CchSnprintf(std::span{app.lpui->szRaceLibraryPath}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
     SetSzRaceFile(app, szName);
     fNewLibraryRace = 0;
     return 1;
@@ -876,8 +875,8 @@ LFail:
     return 0;
 }
 
-std::int16_t FHasCurrentLibraryRace(void) {
-    return fNewLibraryRace || szRaceLibraryPath[0] != 0;
+std::int16_t FHasCurrentLibraryRace(APPSESSION &app) {
+    return fNewLibraryRace || app.lpui->szRaceLibraryPath[0] != 0;
 }
 
 std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName) {
@@ -896,14 +895,14 @@ std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszNa
         if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceOpenFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
-    CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s", szPath);
+    CchSnprintf(std::span{app.lpui->szRaceLibraryPath}, "%s", szPath);
     SetSzRaceFile(app, szName);
     fNewLibraryRace = 0;
     return 1;
 }
 
-std::string_view PszCurrentLibraryRaceName(void) {
-    const std::string_view szPath{szRaceLibraryPath};
+std::string_view PszCurrentLibraryRaceName(APPSESSION &app) {
+    const std::string_view szPath{app.lpui->szRaceLibraryPath.data()};
     const std::size_t ichSeparator = szPath.find_last_of(chDirSep);
     return ichSeparator == std::string_view::npos ? szPath : szPath.substr(ichSeparator + 1);
 }
@@ -919,16 +918,16 @@ std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 2
     if (pszName[0]) {
         if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName.data())) return 0;
         CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName.data());
-        CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s", szPath);
+        CchSnprintf(std::span{app.lpui->szRaceLibraryPath}, "%s", szPath);
         SetSzRaceFile(app, pszName.data());
         fNewLibraryRace = 0;
     } else {
         if (!FInitRaceLibrary()) return 0;
-        szRaceLibraryPath[0] = 0;
+        app.lpui->szRaceLibraryPath[0] = 0;
         fNewLibraryRace = 1;
     }
     fResult = RaceCreationWizard(app, hwnd, 0, 0);
-    if (fResult) CchSnprintf(pszName, "%s", PszCurrentLibraryRaceName());
+    if (fResult) CchSnprintf(pszName, "%s", PszCurrentLibraryRaceName(app));
     RestoreRaceState(app, &rsSav, !fResult, 1);
     return fResult;
 }
@@ -938,7 +937,7 @@ std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd) {
     std::int16_t fResult;
     SaveRaceState(app, &rsSav);
     if (!FInitRaceLibrary()) return 0;
-    szRaceLibraryPath[0] = 0;
+    app.lpui->szRaceLibraryPath[0] = 0;
     fNewLibraryRace = 1;
     app.state.vplr = vrgplrDef[0];
     CchCopyUtf8Prefix(std::span{app.state.vplr.szName}, TextIO().pfnCompressed(app, idsHumanoid).data());
@@ -1249,7 +1248,7 @@ std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, std::string_view psz
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDeleteFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
-    if (!std::strcmp(szRaceLibraryPath, szPath)) szRaceLibraryPath[0] = 0;
+    if (!std::strcmp(app.lpui->szRaceLibraryPath.data(), szPath)) app.lpui->szRaceLibraryPath[0] = 0;
     return 1;
 }
 
@@ -1308,7 +1307,7 @@ static std::int16_t FImportLibraryRaceImpl(APPSESSION &app, HWND hwnd, std::opti
         RemoveNativeFile(szPath);
         goto LRestore;
     }
-    CchSnprintf(std::span{szRaceLibraryPath, sizeof(szRaceLibraryPath)}, "%s", szPath);
+    CchSnprintf(std::span{app.lpui->szRaceLibraryPath}, "%s", szPath);
     SetSzRaceFile(app, std::strrchr(szPath, chDirSep) + 1);
     return 1;
 LRestore:
@@ -1328,9 +1327,9 @@ std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, std::optional<std:
 std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
     const char *pszName;
     if (!FImportLibraryRace(app, hwnd, pszSource)) return 0;
-    pszName = std::strrchr(szRaceLibraryPath, chDirSep);
+    pszName = std::strrchr(app.lpui->szRaceLibraryPath.data(), chDirSep);
     if (pszName) pszName++;
-    else pszName = szRaceLibraryPath;
+    else pszName = app.lpui->szRaceLibraryPath.data();
     /* Import remains successful when the user cancels customization. */
     FEditLibraryRace(app, hwnd, pszName);
     return 1;
@@ -3321,11 +3320,11 @@ void RememberLibraryGame(APPSESSION &app) {
         ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", nullptr, TextIO().pfnCompressed(app, idsStarsIni).data());
 }
 
-void CloseLibraryUiSession() noexcept {
+void CloseLibraryUiSession(APPSESSION &app) noexcept {
     ClearLibraryGameList();
     szLibraryRoot[0] = szLibraryPending[0] = szLibraryName[0] = szLibraryExchangeName[0] = 0;
     cchLibraryRoot = 0;
-    szRaceLibraryRoot[0] = szRaceLibraryPath[0] = szRaceLibraryName[0] = szRaceLibraryTemp[0] = 0;
+    szRaceLibraryRoot[0] = app.lpui->szRaceLibraryPath[0] = szRaceLibraryName[0] = szRaceLibraryTemp[0] = 0;
     fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = 0;
     continueLibrary = LIBRARYCONTINUE{};
 }

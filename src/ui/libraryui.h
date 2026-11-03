@@ -75,9 +75,9 @@ std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, std::optional<std:
 std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
 std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName, PLAYER *pplr);
 std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr);
-std::int16_t FHasCurrentLibraryRace(void);
+std::int16_t FHasCurrentLibraryRace(APPSESSION &app);
 std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName);
-std::string_view PszCurrentLibraryRaceName(void);
+std::string_view PszCurrentLibraryRaceName(APPSESSION &app);
 std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 256> pszName);
 std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd);
 std::int16_t FEditLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName);
