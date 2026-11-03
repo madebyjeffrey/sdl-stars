@@ -166,11 +166,13 @@ static int  TestLUiDialogBox(int instance, int resource, HWND hwnd, int proc) {
     app.state.gd.fChgZipOrd = 1;
     return outerResult;
 }
-static int TestPopupMenu(APPSESSION &, HWND hwnd, int x, int y, int count, void *p, const char *const *labels, int selected, int flag) {
+static int TestPopupMenu(APPSESSION &, HWND hwnd, int x, int y, int count,
+                         std::span<const std::int32_t> ids, std::span<const char *const> labels,
+                         int selected, int flag) {
     (void)hwnd;
     (void)x;
     (void)y;
-    (void)p;
+    (void)ids;
     (void)labels;
     (void)selected;
     (void)flag;

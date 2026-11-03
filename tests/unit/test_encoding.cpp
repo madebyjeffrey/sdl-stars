@@ -575,9 +575,10 @@ static int16_t CchHistoryCatalog(APPSESSION &, StringId ids, std::span<char> sz)
                                  "\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9 ";
     return static_cast<int16_t>(CchCopyUtf8Prefix(sz, ids == idsHistory ? "History " : szLong));
 }
-static int16_t CheckHistoryRows(APPSESSION &app, HWND, int16_t, int16_t, int16_t cString, int32_t *,
-                                const char *const *rgsz, int16_t, int16_t) {
-    TEST_CHECK(cString == 8);
+static int16_t CheckHistoryRows(APPSESSION &app, HWND, int16_t, int16_t, int16_t cString,
+                                std::span<const int32_t>, std::span<const char *const> rgsz,
+                                int16_t, int16_t) {
+    TEST_CHECK(cString == 8 && rgsz.size() >= static_cast<std::size_t>(cString));
     for (int i = 0; i < cString; i++) {
         TEST_CHECK(rgsz[i] == app.state.szWork + i * 40);
         TEST_CHECK(strlen(rgsz[i]) == 36 && FUtf8Valid(std::string_view{rgsz[i], 36}));

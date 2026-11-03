@@ -66,7 +66,7 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     POINT16            pt;
     std::int16_t            cMax;
     char               sz255[2];
-    char              *rgszZip[6];
+    const char        *rgszZip[6];
     HCURSOR            hcs;
 
     switch (message) {
@@ -186,7 +186,7 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rgszZip[cMax++] = sz255;
         szCatalogMenuText = TextIO().pfnCompressed(app, idsCustomize);
         rgszZip[cMax++] = szCatalogMenuText.data();
-        i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, nullptr, rgszZip, -1, 1);
+        i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, {}, rgszZip, -1, 1);
         if (i == cMax - 1) {
             CustomizeProductionPresets(app, hwnd);
             break;

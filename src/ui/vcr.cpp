@@ -1133,7 +1133,7 @@ void AnimateAttack(APPSESSION &app, HDC hdc) {
 
 std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::uint8_t brc) {
     std::int16_t fAttack;
-    char   *rgsz[40];
+    const char *rgsz[40];
     std::int16_t i;
     std::int16_t c;
     char    rgch[1536];
@@ -1186,7 +1186,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
     if (c == 0) {
         return -1;
     }
-    iSel = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, nullptr, rgsz, iChecked, 1);
+    iSel = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, {}, rgsz, iChecked, 1);
     if (iSel == -1) {
         return -1;
     }

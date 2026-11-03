@@ -2085,7 +2085,8 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::in
                     rgid[c++] = static_cast<std::uint32_t>(static_cast<std::uint16_t>(lpth->idFull())) | 0x20000000;
                 }
             }
-            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, c, rgid, nullptr, iChecked, 1);
+            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, c,
+                                         std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, {}, iChecked, 1);
             idFirst = rgid[0];
             idSel = i >= 0 ? rgid[i] : 0;
             HeapIO().pfnFree(app, rgid, htMisc);
@@ -2584,7 +2585,7 @@ void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
             }
             szCatalogMenuText = TextIO().pfnCompressed(app, idsCustomize);
             rgszZip[cMax++] = szCatalogMenuText.data();
-            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, nullptr, rgszZip, -1, 1);
+            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, {}, rgszZip, -1, 1);
             if (i == cMax - 1) {
                 std::memcpy(rgzo, app.state.vrgZip, 96);
                 fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), app.lpui->hwndFrame, ZipOrderDlg, 0);

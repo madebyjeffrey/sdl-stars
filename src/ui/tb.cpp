@@ -303,7 +303,7 @@ static POINT16 PtToolbarMenu(APPSESSION &app, ToolbarButton itb) {
 void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
     std::uint16_t grbitNew;
     POINT16  pt;
-    char    *rgszScan[12];
+    const char *rgszScan[12];
     std::int16_t  c;
     std::int16_t  i;
     std::uint16_t grbit;
@@ -379,7 +379,8 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
             rgszScan[c++] = &app.state.szWork[i * 30];
         }
         pt = PtToolbarMenu(app, itb);
-        iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c, rgid, rgszScan, -2, 0);
+        iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c,
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
         if (iSel == -1)
             return;
         if (iSel >= 3) {
@@ -419,7 +420,8 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
             grbitSh *= 2;
         }
         pt = PtToolbarMenu(app, itb);
-        iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c, rgid, rgszScan, -2, 0);
+        iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c,
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
         if (iSel == -1)
             return;
         if (iSel < 4) {
@@ -469,7 +471,8 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
             rgszScan[c++] = &app.state.szWork[i * 25];
         }
         pt = PtToolbarMenu(app, itb);
-        iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c, rgid, rgszScan, -2, 0);
+        iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c,
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
         if (iSel == -1)
             return;
         if (iSel < 4) {
@@ -502,7 +505,8 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
             rgszScan[c++] = &app.state.szWork[i * 8];
         }
         pt = PtToolbarMenu(app, itb);
-        iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c, rgid, rgszScan, -2, 0);
+        iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c,
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
         if (iSel != -1) {
             CommandHandler(app, app.lpui->hwndFrame, iSel + 3901);
         }

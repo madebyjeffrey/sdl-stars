@@ -439,7 +439,7 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     POINT16     pt;
     char        szT[40];
     std::int16_t     cchHistory;
-    char       *rgszScan[20];
+    const char *rgszScan[20];
     std::int16_t     c;
     std::int32_t     rgid[12];
     char       *psz;
@@ -497,7 +497,8 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             rgid[c] = static_cast<std::uint32_t>((app.state.gd.iCurGraph == i));
             rgszScan[c++] = &app.state.szWork[i * 40];
         }
-        iSel = ControlIO().pfnPopupMenu(app, hwnd, LOWORD(lParam), HIWORD(lParam), c, rgid, rgszScan, -2, 0);
+        iSel = ControlIO().pfnPopupMenu(app, hwnd, LOWORD(lParam), HIWORD(lParam), c,
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
         if (iSel == -1) {
             return 0;
         }
@@ -2340,7 +2341,7 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
     std::int16_t rgcol[32];
     char    szColTitle[50];
     std::int16_t cItems;
-    char   *psz[32];
+    const char *psz[32];
     std::int16_t cch;
     std::int16_t iRet;
     std::int16_t iHide;
@@ -2417,7 +2418,7 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
             psz[i] = nullptr;
         }
     }
-    iRet = ControlIO().pfnPopupMenu(app, app.lpui->hwndReportDlg, pt.x, pt.y, cItems, nullptr, psz, -1, fRightBtn);
+    iRet = ControlIO().pfnPopupMenu(app, app.lpui->hwndReportDlg, pt.x, pt.y, cItems, {}, psz, -1, fRightBtn);
     if (iRet >= 0) {
         app.state.gd.fChgReports = 1;
         if (iRet < iSortLast) {

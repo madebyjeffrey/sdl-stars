@@ -883,7 +883,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
     HtMineType ht;
     PART       part;
     char       rgsz[16][32];
-    char      *rgpsz[16];
+    const char *rgpsz[16];
     std::int16_t    c;
     FLEET     *lpfl;
     std::int16_t    rgid[16];
@@ -898,7 +898,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
     SCAN       scan;
     std::int16_t    rgi[9];
     std::int16_t    iChecked;
-    char      *psz[9];
+    const char *psz[9];
     std::int32_t    rglQuan[3];
     std::int32_t    rglT[3];
     std::int16_t    ifl;
@@ -943,7 +943,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                     }
                 }
                 if (c > 1) {
-                    c = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, c, nullptr, rgpsz, -1, 1);
+                    c = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, c, {}, rgpsz, -1, 1);
                     if (c == -1)
                         break;
                 } else {
@@ -1114,7 +1114,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                     iChecked = i;
                 }
             }
-            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, 9, nullptr, psz, iChecked, 1);
+            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, 9, {}, psz, iChecked, 1);
             if (i == -1 || rgi[i] == app.lpui->cMinGrafMax)
                 break;
             app.lpui->cMinGrafMax = rgi[i];
@@ -1328,7 +1328,8 @@ void PopupMineralScanChoices(APPSESSION &app, HWND hwnd, std::int16_t x, std::in
             rgid[c++] = static_cast<std::uint32_t>(static_cast<std::uint16_t>(lpth->idFull())) | 0x20000000;
         }
     }
-    i = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, rgid, nullptr, iChecked, 1);
+    i = ControlIO().pfnPopupMenu(app, hwnd, x, y, c,
+                                 std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, {}, iChecked, 1);
     if (i >= 0) {
         scan = app.state.sel.scan;
         if (rgid[i] & 0x80000000) {

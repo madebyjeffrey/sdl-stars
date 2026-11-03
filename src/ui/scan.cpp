@@ -243,7 +243,8 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
             }
             LogicalToScan(app, &pt);
-            iSel = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, c, rgid, nullptr, iChecked, 1);
+            iSel = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, c,
+                                            std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, {}, iChecked, 1);
             idSel = iSel >= 0 ? rgid[iSel] : 0;
             HeapIO().pfnFree(app, rgid, htMisc);
             if (iSel < 0)

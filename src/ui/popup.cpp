@@ -403,7 +403,9 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
     return;
 }
 
-std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t cString, std::int32_t *rgids, const char *const *rgsz, std::int16_t iChecked, std::int16_t fRightBtn) {
+std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t cString,
+                       std::span<const std::int32_t> rgids, std::span<const char *const> rgsz,
+                       std::int16_t iChecked, std::int16_t fRightBtn) {
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     const char *pszTitle;
@@ -419,6 +421,9 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
     std::int16_t fChecked;
     std::int16_t fCheckedCur;
 
+    if (cString < 0 || (cString > 0 && rgids.empty() && rgsz.empty()) ||
+        (!rgids.empty() && static_cast<std::size_t>(cString) > rgids.size()) ||
+        (!rgsz.empty() && static_cast<std::size_t>(cString) > rgsz.size())) return -1;
     hmenuSub = nullptr;
     pt.x = x;
     pt.y = y;
@@ -426,7 +431,7 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
     hmenuPopup = win32::CreatePopupMenu();
     app.lpui->iPopMenuSel = -1;
     for (i = 0; i < cString; i++) {
-        if (rgids && (iChecked != -2 || !rgsz)) {
+        if (!rgids.empty() && (iChecked != -2 || rgsz.empty())) {
             if (rgids[i] == -1) {
                 win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, nullptr);
             } else {
@@ -456,10 +461,10 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
             }
         } else if (!rgsz[i]) {
             pszTitle = rgsz[i + 1];
-            fChecked = !rgids ? 0 : LOWORD(rgids[i + 1]);
+            fChecked = rgids.empty() ? 0 : LOWORD(rgids[i + 1]);
             hmenuSub = win32::CreatePopupMenu();
             for (i += 2; i < cString && rgsz[i]; i++) {
-                if (!rgids) {
+                if (rgids.empty()) {
                     fCheckedCur = i == iChecked;
                     fChecked |= fCheckedCur;
                 } else {
