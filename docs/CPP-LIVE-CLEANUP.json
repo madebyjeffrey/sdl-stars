@@ -220,7 +220,8 @@
         "bounded-race-library-save-load-edit-duplicate-name-views",
         "bounded-managed-library-game-validator-name-view",
         "optional-immediate-button-caption-view",
-        "bounded-wrap-text-view-prefix-operations"
+        "bounded-wrap-text-view-prefix-operations",
+        "bounded-preset-path-view-interfaces"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -24837,6 +24838,32 @@
       "api_audit": "WrapTextOut uses a bounded string_view prefix and safe empty-view pointer at the Win32 text boundary. Removed three pointer-to-pointer helpers used only by this function.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 bounded preset path view interfaces",
+      "parent": "97a8731f",
+      "source_commit": "2e967045",
+      "macos_debug_build": "make compile passes; strict warnings and standalone header checks pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "S02 presets witness is rebuilt; desktop and host suites pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; path interface cleanup does not affect game behavior.",
+      "api_audit": "ReadIniPresets and WriteIniPresets accept string_view. Each materializes a NUL-terminated std::string only at the Win32 profile API boundary.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -24857,7 +24884,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded WrapTextOut string-view prefix operations",
+    "latest_batch": "L05 bounded preset path view interfaces",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25058,10 +25085,14 @@
       {
         "commit": "372a353e",
         "message": "Wrap UI text from bounded views"
+      },
+      {
+        "commit": "2e967045",
+        "message": "Pass preset paths as bounded views"
       }
     ],
-    "latest_source_commit": "372a353e",
-    "latest_batch_status": "Locally committed as 372a353e. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "2e967045",
+    "latest_batch_status": "Locally committed as 2e967045. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
@@ -25280,11 +25311,11 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded WrapTextOut string-view prefix operations",
-    "source_commit": "372a353e",
-    "status": "Locally committed as 372a353e. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 bounded preset path view interfaces",
+    "source_commit": "2e967045",
+    "status": "Locally committed as 2e967045. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "WrapTextOut now walks bounded string_view prefixes; removed AddBackTrailingSpaces, ChopLastWord and ChopTrailingSpaces, which were used only there."
+      "ReadIniPresets and WriteIniPresets accept bounded string_view paths; they materialize a NUL-terminated owner at the profile API boundary."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
