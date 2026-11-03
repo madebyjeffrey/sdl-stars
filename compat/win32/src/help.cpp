@@ -10,6 +10,7 @@
 #include <new>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -53,12 +54,12 @@ static std::optional<std::string> PszHelpDocument(const char *pszDirectory, cons
     static const char szMarker[] = "__STARS_HELP_START__";
     char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
     char *pszBase;
-    const char *pszMarker;
     NATIVEFILE *lpSource = nullptr, *lpTarget = nullptr;
     NATIVEFILETEMPRESULT nft;
     std::optional<std::string> szResult;
     std::string szBody;
-    std::size_t cbPrefix, cbRead;
+    std::string_view szBodyView;
+    std::size_t cbPrefix, cbRead, cchBody;
     int cch;
     BOOL fOk;
     NATIVEOWNER<char, SDL_free> baseOwner;
@@ -69,7 +70,7 @@ static std::optional<std::string> PszHelpDocument(const char *pszDirectory, cons
     lpSource = PfNativeOpen(szSource, NATIVEFILEMODE::read);
     sourceOwner.reset(lpSource);
     if (!lpSource) goto fail;
-    try { szBody.resize(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE) + 1); }
+    try { szBody.resize(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)); }
     catch (const std::bad_alloc &) { goto fail; }
     cbRead = CReadNative(std::span{szBody.data(), static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}, lpSource);
     fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;
@@ -77,9 +78,11 @@ static std::optional<std::string> PszHelpDocument(const char *pszDirectory, cons
     if (!fOk || static_cast<std::uint32_t>(crc32(0, reinterpret_cast<const BYTE *>(szBody.data()), static_cast<uInt>(cbRead))) != STARS_HELP_BUNDLE_CRC) {
         win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
-    szBody[cbRead] = 0;
-    pszMarker = std::strstr(szBody.c_str(), szMarker);
-    if (!pszMarker || std::strstr(pszMarker + sizeof(szMarker) - 1, szMarker)) {
+    szBodyView = std::string_view{szBody.data(), cbRead};
+    cchBody = szBodyView.find('\0');
+    if (cchBody != std::string_view::npos) szBodyView = szBodyView.substr(0, cchBody);
+    cbPrefix = szBodyView.find(szMarker);
+    if (cbPrefix == std::string_view::npos || szBodyView.find(szMarker, cbPrefix + sizeof(szMarker) - 1) != std::string_view::npos) {
         win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
     // Put the requested context inside the exported file: OpenFile portals
@@ -96,7 +99,6 @@ static std::optional<std::string> PszHelpDocument(const char *pszDirectory, cons
     lpTarget = nft.lpfile.release();
     targetOwner.reset(lpTarget);
     if (!lpTarget) goto fail;
-    cbPrefix = static_cast<std::size_t>((pszMarker - szBody.data()));
     fOk = CWriteNative(std::span{szBody.data(), static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}.first(cbPrefix), lpTarget) == cbPrefix &&
           IPutNativeString(pszPage, lpTarget) >= 0 &&
           CWriteNative(std::span{szBody.data(), cbRead}.subspan(cbPrefix + sizeof(szMarker) - 1), lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
