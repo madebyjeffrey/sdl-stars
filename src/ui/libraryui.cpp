@@ -2490,15 +2490,15 @@ LDone:
     }
     if (!fResult) {
         if (fRestoreFailed) {
-            cchTarget = CchSnprintf(std::span{szMessage, sizeof(szMessage)},
+            cchTarget = CchSprintf(std::span{szMessage, sizeof(szMessage)},
                                     TextIO().pfnCompressed(app, idsLibraryRenameFailedOriginalAt).data(), szHold);
-            if (cchTarget <= 0 || static_cast<std::size_t>(cchTarget) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+            if (cchTarget <= 0) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         } else CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
     } else if (fHoldCleanupFailed) {
-        cchTarget = CchSnprintf(std::span{szMessage, sizeof(szMessage)},
+        cchTarget = CchSprintf(std::span{szMessage, sizeof(szMessage)},
                                 TextIO().pfnCompressed(app, idsLibraryRenameSucceededCleanupPath).data(), szHold);
-        if (cchTarget <= 0 || static_cast<std::size_t>(cchTarget) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        if (cchTarget <= 0) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONEXCLAMATION);
     }
     return fResult;
@@ -2562,8 +2562,8 @@ std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, std::string_view psz
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMetadata) ||
         !FReadLibraryMetadata(szDirectory, std::span{szMetadataName}, iplr, lPlayed,
                               std::span{szExchangeName}) || std::string_view{szMetadataName} != std::string_view{szName}) return 0;
-    cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt).data(), szName);
-    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
+    cch = CchSprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt).data(), szName);
+    if (cch <= 0) return 0;
     if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(),
                    win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
     fContinueTarget = FFindContinueLibraryGame(app) && std::string_view{continueLibrary.szName} == std::string_view{szName};
@@ -2677,9 +2677,9 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget)) return 0;
     if (FNativeFileSize(szTarget)) {
         if (FFilesEqual(*pszSource, szTarget)) return 1;
-        cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)},
+        cch = CchSprintf(std::span{szMessage, sizeof(szMessage)},
                           TextIO().pfnCompressed(app, idsLibraryOrdersReplacePrompt).data(), iplr + 1, szName);
-        if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
+        if (cch <= 0) return 0;
         if (AlertIO().pfnAlertSz(app, szMessage, win32::MB_YESNO | win32::MB_ICONQUESTION) != win32::IDYES) return 0;
     }
     dwTick = DwTickCount();
@@ -2806,8 +2806,8 @@ std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS 
     fHeld = 0;
     if (!LibraryPublicationIO().pfnRemoveLibraryGameTree(app, szHold)) fCleanupFailed = 1;
     if (fCleanupFailed) {
-        cch = LibraryPublicationIO().pfnCchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryTurnCleanupFailed).data(), szHold);
-        if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        cch = CchSprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryTurnCleanupFailed).data(), szHold);
+        if (cch <= 0) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         AlertIO().pfnAlertSz(app, szMessage, win32::MB_ICONEXCLAMATION);
     }
     static_cast<void>(hwnd);
@@ -2820,8 +2820,8 @@ LDone:
         else fRestoreFailed = 1;
     }
     if (fRestoreFailed) {
-        cch = LibraryPublicationIO().pfnCchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryGameRestoreFailed).data(), szHold);
-        if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+        cch = CchSprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryGameRestoreFailed).data(), szHold);
+        if (cch <= 0) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         AlertIO().pfnAlertSz(app, szMessage, win32::MB_ICONHAND);
     } else AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnReplaceFailed).data(), win32::MB_ICONHAND);
     static_cast<void>(hwnd);
@@ -3471,10 +3471,10 @@ std::int16_t FPublishSubsequentTurn(APPSESSION &app, const LIBRARYPATHS &paths, 
     }
     if (fHasOrders && RemoveNativeFile(szOrders) != 0) {
         if (ReplaceNativeFile(szPrevious, szTarget) != 0) {
-            cch = LibraryPublicationIO().pfnCchSnprintf(std::span{szMessage, sizeof(szMessage)},
+            cch = CchSprintf(std::span{szMessage, sizeof(szMessage)},
                         TextIO().pfnCompressed(app, idsLibraryTurnRestoreFailed).data(),
                         szPrevious);
-            if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
+            if (cch <= 0) CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
             AlertIO().pfnAlertSz(app, szMessage, win32::MB_ICONHAND);
             return 0;
         }

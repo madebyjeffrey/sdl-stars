@@ -229,7 +229,7 @@ static void InspectDetails(HWND hwnd) {
     } catch (const std::length_error &) {
         return;
     }
-    cch = CchSnprintf(std::span{szDetails},
+    cch = CchSprintf(std::span{szDetails},
         "ID: %" PRIu64 "\r\nParent: %" PRIu64 "\r\nOwner: %" PRIu64 "\r\nControl ID: %" PRIdPTR
         "\r\nClass: %s\r\nControl kind: %u (%s)\r\nDialog: %d\r\nVisible: %d\r\nEnabled: %d\r\nFocus: %d"
         "\r\nCapture: %d\r\nStyle: 0x%08x\r\n%s\r\nExStyle: 0x%08x\r\n%s"
@@ -240,7 +240,7 @@ static void InspectDetails(HWND hwnd) {
         static_cast<unsigned>(lp->dwStyle), szStyle, static_cast<unsigned>(lp->dwExStyle), szExStyle,
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
         lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->szText.c_str());
-    if (cch <= 0 || static_cast<std::size_t>(cch) >= szDetails.size()) return;
+    if (cch <= 0) return;
     win32::SetWindowTextA(win32::GetDlgItem(hwnd, 2), szDetails.c_str());
 }
 
