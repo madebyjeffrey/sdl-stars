@@ -1680,11 +1680,11 @@
     },
     {
       "path": "compat/win32/src/message.cpp",
-      "line": 507,
+      "line": 509,
       "scope": "DefWindowProcA",
       "operation": "SDL_strdup",
-      "code": "SDL_strdup(reinterpret_cast<const char *>(lParam))",
-      "normalized_call": "SDL_strdup(reinterpret_cast<constchar*>(lParam))",
+      "code": "SDL_strdup(szText.data())",
+      "normalized_call": "SDL_strdup(szText.data())",
       "compiler_context": true,
       "contract": "54"
     },
