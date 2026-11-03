@@ -161,27 +161,25 @@ std::int16_t PackageUpMsg(APPSESSION &app, std::span<std::uint8_t> rgb, std::int
 }
 
 std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2) {
-    std::uint8_t  rgb[64];
+    std::array<std::uint8_t, 64> rgb{};
     std::int16_t *pi;
     std::int16_t  i;
     std::uint16_t grbit;
-    std::uint8_t *pb;
     std::uint16_t cSize;
-    std::uint8_t *pmsghdr;
+    std::size_t ib;
+    std::span<std::uint8_t, cbWireMsgHdr> rgbMsgHdr{rgb.data(), cbWireMsgHdr};
     MSGHDR mh{};
     std::int16_t  rgArgs[2];
 
     if (static_cast<std::uint16_t>((app.state.imemMsgCur + 20)) > 0xffc8) {
         return 0;
     }
-    pb = rgb;
-    pmsghdr = pb;
     mh.iMsg = iMsg;
     app.state.bitfMsgSent[iMsg >> 3] = (app.state.bitfMsgSent[iMsg >> 3] & ~(1 << (iMsg & 7))) | 1 << (iMsg & 7);
     mh.grWord = 0;
     mh.wGoto = iObj;
-    FEncodeMsgHdr(mh, std::as_writable_bytes(std::span(pb, cbWireMsgHdr)));
-    pb += 4;
+    FEncodeMsgHdr(mh, std::as_writable_bytes(rgbMsgHdr));
+    ib = cbWireMsgHdr;
     grbit = 1;
     rgArgs[0] = p1;
     rgArgs[1] = p2;
@@ -189,23 +187,23 @@ std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId 
     i = 0;
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
-            MhvFromPrefix(std::span<std::uint8_t, cbWireMsgHdr>{pmsghdr, cbWireMsgHdr}).SetGrWord(MhvFromPrefix(std::span<std::uint8_t, cbWireMsgHdr>{pmsghdr, cbWireMsgHdr}).grWord() | grbit);
-            SetMsgParam(std::span<std::uint8_t, 2>{pb, 2}, *pi);
-            pb += 2;
+            MhvFromPrefix(rgbMsgHdr).SetGrWord(MhvFromPrefix(rgbMsgHdr).grWord() | grbit);
+            SetMsgParam(std::span<std::uint8_t, 2>{rgb.data() + ib, 2}, *pi);
+            ib += 2;
         } else {
-            *pb = *pi;
-            pb++;
+            rgb[ib] = static_cast<std::uint8_t>(*pi);
+            ib++;
         }
         i++;
         pi++;
         grbit *= 2;
     }
-    cSize = pb - rgb;
+    cSize = static_cast<std::uint16_t>(ib);
     if (fPrepend) {
         std::memmove(static_cast<std::uint8_t *>(app.state.lpMsg) + cSize, app.state.lpMsg, app.state.imemMsgCur);
-        std::memmove(app.state.lpMsg, rgb, cSize);
+        std::memmove(app.state.lpMsg, rgb.data(), cSize);
     } else {
-        std::memmove(static_cast<std::uint8_t *>(app.state.lpMsg) + app.state.imemMsgCur, rgb, cSize);
+        std::memmove(static_cast<std::uint8_t *>(app.state.lpMsg) + app.state.imemMsgCur, rgb.data(), cSize);
     }
     app.state.imemMsgCur += cSize;
     app.state.cMsg++;
@@ -247,7 +245,7 @@ std::int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb) {
         iMax = rgcMsgArgs[MhvFromLp(app, lpmh).iMsg()];
         for (i = 0; i < iMax; i++) {
             if (iMsg == idmColonistsDroppedMassacredGroundTroops) {
-                pmb->rgParam[i] = !(u & 1) ? *lpb : WMsgParam(lpb);
+                pmb->rgParam[i] = !(u & 1) ? *lpb : WMsgParam(std::span<const std::uint8_t, 2>{lpb, 2});
             }
             lpb += 1 + ((u & 1) == 1);
             u >>= 1;
@@ -619,7 +617,7 @@ void MarkPlanetsPlayerLost(APPSESSION &app, std::int16_t iPlayer) {
             case 0x8f:
                 w = MtvFromLp(app, lpb).msghdr().grWord();
                 lpbT = lpb + (((w & 1) == 1) + 6);
-                w = !(w & 2) ? *lpbT : WMsgParam(lpbT);
+                w = !(w & 2) ? *lpbT : WMsgParam(std::span<const std::uint8_t, 2>{lpbT, 2});
                 goto LLookupPlanet;
             case 7:
             case 0x23:

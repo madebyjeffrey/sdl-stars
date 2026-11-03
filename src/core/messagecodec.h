@@ -52,9 +52,9 @@ inline bool FEncodeMsgTurn(MSGTURN mt, std::span<std::byte> rgb) noexcept {
     rgb[0] = static_cast<std::byte>(mt.iPlr | (mt.cbParams << 4));
     return FEncodeMsgHdr(mt.msghdr, rgb.subspan(1, cbWireMsgHdr));
 }
-inline std::uint16_t WMsgParam(const std::uint8_t *lpb) noexcept {
+inline std::uint16_t WMsgParam(std::span<const std::uint8_t, 2> lpb) noexcept {
     std::uint16_t w = 0;
-    NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadU16Le(w);
+    NATIVEBYTEREADER(std::as_bytes(lpb)).FReadU16Le(w);
     return w;
 }
 inline void SetMsgParam(std::span<std::uint8_t, 2> lpb, std::uint16_t w) noexcept {
