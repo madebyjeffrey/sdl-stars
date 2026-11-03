@@ -26411,6 +26411,31 @@
       "api_audit": "Removed five redundant strlen rescans in production, VCR menu, popup, survey, and production-item UI paths. The neutral survey fallback retains its scan because it reads a different pre-existing label buffer.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Return compact numeric labels as owned strings",
+      "parent": "34f2deff",
+      "source_commit": "b2602a77728fb34e7ee192cf63786837fc2d3655",
+      "macos_debug_build": "make compile passes with strict warnings.",
+      "desktop_unit_tests": "18/18 pass, including the signed -32768 numeric-format case.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; the PCTD signed 16-bit formatting, compact k/M suffixes and rounding/clamping behavior are preserved.",
+      "api_audit": "PszFromLongK now returns its exact owned std::string; both report consumers use size() instead of rescanning the fixed char array.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -26832,10 +26857,10 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "Carry bounded UI copy and lookup lengths into drawing",
-    "status": "UI copy/lookup length cleanup committed; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
+    "batch": "Return compact numeric labels as owned strings",
+    "status": "Compact numeric labels now return owned strings; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
     "parent": "52529827",
-    "change": "Removed five redundant strlen rescans in production, VCR menu, popup, survey, and production-item UI paths. The neutral survey fallback retains its scan because it reads a different pre-existing label buffer.",
+    "change": "PszFromLongK now returns its exact owned std::string; both report consumers use size() instead of rescanning the fixed char array.",
     "verification": {
       "batch": "L06 heap copy and move hooks accept byte spans",
       "parent": "52529827",
@@ -26926,7 +26951,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remain outstanding; local macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass through 34f2deff.",
+      "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remain outstanding; local macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass through b2602a77.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -26937,7 +26962,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "34f2deff",
+      "source_head": "b2602a77",
       "raw_copy_call_audit": {
         "source_head": "3670b2be",
         "owned_production_calls": 0,
@@ -27221,12 +27246,16 @@
       {
         "commit": "34f2deff",
         "message": "Carry UI copy lengths into drawing"
+      },
+      {
+        "commit": "b2602a77",
+        "message": "Return numeric compact labels as strings"
       }
     ],
-    "source_commit": "34f2deffb97456340af5eb0dd676520a65e72b58",
+    "source_commit": "b2602a77728fb34e7ee192cf63786837fc2d3655",
     "latest_change": "Removed the remaining strlen rescan in ZipOrderDlg transport preset drawing by passing the formatter result to TextOutA.",
     "c_macro_audit": {
-      "source_head": "34f2deff",
+      "source_head": "b2602a77",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -27240,18 +27269,18 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local verification passes through 34f2deff.",
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local verification passes through b2602a77.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "34f2deffb97456340af5eb0dd676520a65e72b58",
-    "latest_batch_status": "UI copy/lookup length cleanup committed; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "b2602a77728fb34e7ee192cf63786837fc2d3655",
+    "latest_batch_status": "Compact numeric labels now return owned strings; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
     "latest_published_head": "ef24142a",
     "latest_batch_verification": {
-      "batch": "Carry bounded UI copy and lookup lengths into drawing",
-      "parent": "b6ec8168",
-      "source_commit": "34f2deffb97456340af5eb0dd676520a65e72b58",
+      "batch": "Return compact numeric labels as owned strings",
+      "parent": "34f2deff",
+      "source_commit": "b2602a77728fb34e7ee192cf63786837fc2d3655",
       "macos_debug_build": "make compile passes with strict warnings.",
-      "desktop_unit_tests": "18/18 pass.",
+      "desktop_unit_tests": "18/18 pass, including the signed -32768 numeric-format case.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
@@ -27266,8 +27295,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; copy, lookup, and formatter results supply the same UTF-8 byte lengths previously obtained by strlen.",
-      "api_audit": "Removed five redundant strlen rescans in production, VCR menu, popup, survey, and production-item UI paths. The neutral survey fallback retains its scan because it reads a different pre-existing label buffer.",
+      "baseline": "Unchanged; the PCTD signed 16-bit formatting, compact k/M suffixes and rounding/clamping behavior are preserved.",
+      "api_audit": "PszFromLongK now returns its exact owned std::string; both report consumers use size() instead of rescanning the fixed char array.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -27286,9 +27315,9 @@
         "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
       },
       "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-      "ui_text_lengths": "Thirteen redundant strlen rescans removed from bounded UI text arrays across the latest three batches.",
-      "source_head": "34f2deffb97456340af5eb0dd676520a65e72b58",
-      "strlen_occurrence_inventory": "104 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this is an occurrence count, not a replaceable-site count, because many are real C-string or ABI boundaries."
+      "ui_text_lengths": "Thirteen redundant UI strlen rescans removed from bounded UI text buffers, plus two rescans removed by the PszFromLongK owned-string result.",
+      "source_head": "b2602a77728fb34e7ee192cf63786837fc2d3655",
+      "strlen_occurrence_inventory": "102 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this is an occurrence count, not a replaceable-site count, because many are real C-string or ABI boundaries."
     }
   },
   "milestone_d_checkpoint": {
@@ -27775,8 +27804,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "34f2deffb97456340af5eb0dd676520a65e72b58",
-  "latest_batch_status": "UI copy/lookup length cleanup committed; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "b2602a77728fb34e7ee192cf63786837fc2d3655",
+  "latest_batch_status": "Compact numeric labels now return owned strings; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -27792,8 +27821,8 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Thirteen redundant strlen rescans removed from bounded UI text arrays across the latest three batches.",
-    "source_head": "34f2deffb97456340af5eb0dd676520a65e72b58",
-    "strlen_occurrence_inventory": "104 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this is an occurrence count, not a replaceable-site count, because many are real C-string or ABI boundaries."
+    "ui_text_lengths": "Thirteen redundant UI strlen rescans removed from bounded UI text buffers, plus two rescans removed by the PszFromLongK owned-string result.",
+    "source_head": "b2602a77728fb34e7ee192cf63786837fc2d3655",
+    "strlen_occurrence_inventory": "102 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this is an occurrence count, not a replaceable-site count, because many are real C-string or ABI boundaries."
   }
 }
