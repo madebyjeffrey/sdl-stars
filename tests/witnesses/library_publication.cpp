@@ -216,15 +216,15 @@ static int TestFStageConflictingTurn(const char *stage, const char *name, const 
     assert(role(stage) == 3 && !strcmp(name, profile == 2 ? "Game" : "Copy") && role(source) == 0 && player == 0 && id == 123 && turn == 11);
     return build(3);
 }
-static int TestFChooseSeparateCopyName(APPSESSION &, HWND hwnd, const char *name) {
+static int TestFChooseSeparateCopyName(APPSESSION &, HWND hwnd, std::string_view name) {
     (void)hwnd;
-    assert(!strcmp(name, "Game"));
+    assert(name == "Game");
     int ok = decision();
     event("probe", 6, 1, ok, 0);
     return ok;
 }
-static int TestFLibraryNameAvailable(APPSESSION &, const char *root, const char *name) {
-    assert(root == szLibraryRoot && !strcmp(name, "Copy"));
+static int TestFLibraryNameAvailable(APPSESSION &, std::string_view root, std::string_view name) {
+    assert(root.data() == szLibraryRoot && name == "Copy");
     int ok = decision();
     event("probe", 7, 1, ok, 0);
     return ok;

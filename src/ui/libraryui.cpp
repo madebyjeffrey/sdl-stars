@@ -89,8 +89,8 @@ struct RACESTATE {
 };
 
 struct LIBRARYNAMECHECK {
-    const char *pszDirectory;
-    const char *pszName;
+    std::string_view pszDirectory;
+    std::string_view pszName;
     std::int16_t fFound;
 };
 
@@ -116,15 +116,16 @@ static void RestoreRaceState(APPSESSION &app, const RACESTATE *prs, std::int16_t
 
 static std::int16_t FindLibraryName(APPSESSION &, void *lpData, std::string_view pszFile) {
     LIBRARYNAMECHECK *plnc = static_cast<LIBRARYNAMECHECK *>(lpData);
+    const std::string szName{plnc->pszName};
     const std::string szFile{pszFile};
-    if (!SDL_strcasecmp(plnc->pszName, szFile.c_str())) {
+    if (!SDL_strcasecmp(szName.c_str(), szFile.c_str())) {
         plnc->fFound = 1;
         return 0;
     }
     return 1;
 }
 
-std::int16_t FLibraryNameAvailable(APPSESSION &app, const char *pszDirectory, const char *pszName) {
+std::int16_t FLibraryNameAvailable(APPSESSION &app, std::string_view pszDirectory, std::string_view pszName) {
     LIBRARYNAMECHECK lnc;
     lnc.pszDirectory = pszDirectory;
     lnc.pszName = pszName;
@@ -133,7 +134,7 @@ std::int16_t FLibraryNameAvailable(APPSESSION &app, const char *pszDirectory, co
     return !lnc.fFound;
 }
 
-static std::int16_t FRaceLibraryNameAvailable(APPSESSION &app, const char *pszName) {
+static std::int16_t FRaceLibraryNameAvailable(APPSESSION &app, std::string_view pszName) {
     return FLibraryNameAvailable(app, szRaceLibraryRoot, pszName);
 }
 
@@ -1470,13 +1471,15 @@ static std::int16_t FReadLibraryMetadata(std::string_view pszDirectory, std::spa
            iplr >= -1 && iplr < 16 && lPlayed >= 0 && !pszExchangeName.empty() && pszExchangeName[0];
 }
 
-static std::int16_t FLibraryNameAvailableExcept(APPSESSION &app, const char *pszName, const char *pszExcept) {
+static std::int16_t FLibraryNameAvailableExcept(APPSESSION &app, std::string_view pszName,
+                                                std::optional<std::string_view> pszExcept) {
     LIBRARYNAMECHECK lnc;
     lnc.pszDirectory = szLibraryRoot;
     lnc.pszName = pszName;
     lnc.fFound = 0;
     if (!FNativeEnumerateDirectory(app, szLibraryRoot, FindLibraryName, &lnc)) return 0;
-    if (lnc.fFound && pszExcept && !SDL_strcasecmp(pszName, pszExcept)) return 1;
+    const std::string szName{pszName};
+    if (lnc.fFound && pszExcept && !SDL_strcasecmp(szName.c_str(), std::string{*pszExcept}.c_str())) return 1;
     return !lnc.fFound;
 }
 
@@ -2354,7 +2357,7 @@ std::int16_t FDuplicateLibraryGame(APPSESSION &app, HWND hwnd, std::string_view 
     szCopyName[pszCopyName.size()] = 0;
     if (!FValidManagedLibraryGame(app, pszName, std::span{szSource}, iplr, lPlayed,
                                                   std::span{szExchangeName}) ||
-        !FLibraryNameAvailableExcept(app, szCopyName, nullptr) ||
+        !FLibraryNameAvailableExcept(app, szCopyName, std::nullopt) ||
         (cchTarget = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", szLibraryRoot, szDirSep, szCopyName)) <= 0 ||
         static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || std::strlen(szLibraryRoot) + 2 * pszCopyName.size() + 18 >= sizeof(app.state.szBase) ||
         !FCreateLibraryGameStagePath(std::span{szStage})) return 0;
@@ -2383,7 +2386,7 @@ std::int16_t FRenameLibraryGame(APPSESSION &app, HWND hwnd, std::string_view psz
     szNewName[pszNewName.size()] = 0;
     if (!FValidManagedLibraryGame(app, pszName, std::span{szSource}, iplr, lPlayed,
                                                  std::span{szExchangeName}) ||
-        !FLibraryNameAvailableExcept(app, szNewName, szSourceName) ||
+        !FLibraryNameAvailableExcept(app, szNewName, std::string_view{szSourceName}) ||
         (cchTarget = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", szLibraryRoot, szDirSep, szNewName)) <= 0 ||
         static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || std::strlen(szLibraryRoot) + 2 * pszNewName.size() + 18 >= sizeof(app.state.szBase) ||
         !FCreateLibraryGameStagePath(std::span{szStage})) return 0;
@@ -2680,7 +2683,7 @@ std::int16_t FStageConflictingTurn(const char *pszStage, const char *pszName,
     return 1;
 }
 
-std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, const char *pszName) {
+std::int16_t FChooseSeparateCopyName(APPSESSION &app, HWND hwnd, std::string_view pszName) {
     if (!FInitLibrary()) return 0;
     CchSnprintf(std::span{szLibraryName, sizeof(szLibraryName)}, "%s", pszName);
     SuggestLibraryName(app, std::span{szLibraryName}, 0);
