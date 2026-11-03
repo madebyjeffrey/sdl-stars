@@ -5532,7 +5532,7 @@
     "status": "complete; verified",
     "interface": "NftNativeCreateTemp takes a readonly UTF-8 string view ending in XXXXXX and returns a move-only NATIVEFILETEMPRESULT with its owned candidate path and NATIVEFILEOWNER stream. The caller input is unchanged; a successful stream closes automatically until explicitly adopted. Attempted candidate paths remain available on open failure. Old mutable char* factory and profile raw allocation-provider protocol removed.",
     "native_creation": "Windows retains six BCrypt bytes per candidate, the same alphabet/128-attempt retry bound, exclusive read/write noninheritable binary creation and deny-sharing policy. POSIX retains mkstemp and its 0600 mode; post-create path-allocation failure still unlinks before unwinding. Accepted file owners are published only after path state is ready.",
-    "temporary_stream": "PfNativeTemporary adopts the same result. Windows keeps delete-on-close; POSIX still unlinks immediately, closes on unlink failure and transfers the accepted stream only afterward.",
+    "temporary_stream": "NfoNativeTemporary returns NATIVEFILEOWNER. Windows keeps delete-on-close; POSIX still unlinks immediately, closes on unlink failure and returns the owner only after successful unlink. Callers keep the owner through use and cleanup.",
     "callers": "Help still validates its bounded template before creation and closes before rename/unlink. Printing retains the same fixed path field and request limits; it copies the same-length ASCII-substituted UTF-8 result through a bounded helper before Cairo setup/abort paths. Profile saves retain the candidate until close/unlink/rename cleanup.",
     "profile_stages": "SzProfileTempTemplate returns the owned path-plus-.XXXXXX request. PROFILEIO has actual typed template/create providers. Its Allocate/Temporary/Mode/BOM/row/newline/flush/sync/close/rename stages, LastError mappings, close-before-unlink and rollback behavior remain. The test provider delegates successful template construction to production and gives its fake stream the matching close deleter before caller adoption.",
     "old_invocations": 9,
@@ -5540,7 +5540,7 @@
     "pre_migration_characterization_calls": 3,
     "actual_provider_invocations": 2,
     "actual_provider_callbacks": 2,
-    "ownership": "NATIVEFILEOWNER is a unique_ptr with an explicit close policy; result moves/adoption do not allocate. Profile template/candidate strings replace its raw allocated path slot; contract 71 and the active heap allowlist are updated. Persistent printer path storage and all saved record/handle widths remain unchanged.",
+    "ownership": "NATIVEFILEOWNER is a unique_ptr with an explicit close policy; result moves/adoption do not allocate. Profile template/candidate strings replace its raw allocated path slot; contract 71 and the active heap allowlist are updated. Persistent printer path storage and all saved record/handle widths remain unchanged. The temporary-stream convenience API now returns that owner directly instead of releasing a raw NATIVEFILE pointer; early exits in migrated callers close automatically.",
     "reference_tests": "Before migration host Release and Windows under Wine passed malformed-template EINVAL without input mutation, invalid UTF-8 EILSEQ, missing-parent ENOENT, actual Unicode creation/read/write/identity and temporary-stream behavior. The typed contract additionally asserts the original readonly request and candidate length are preserved.",
     "calls": [
       {
@@ -5638,7 +5638,8 @@
       "ownership": "Unadopted streams carry an explicit close policy. Help/print/profile callers release into their existing close policy before subsequent effects. Profile paths/templates are owned strings; its raw allocation/free site is retired. The fake stage provider also carries a matching deleter, and all original close/unlink/rename failure vectors remain passing.",
       "baseline": "Behavior-neutral for game behavior and valid IO. Exclusive creation, permissions/sharing, retry limits, system RNG use, candidate substitution length, POSIX unlink/Windows delete-on-close, template/path limits and publication stages retained. No saved layout/handle width, native/frozen-original baseline, unit golden, wire byte, game RNG or canonical model changed; no scenario/checkpoint moved and no regression export required.",
       "remaining": "Other buffer/service interfaces, memory-source/batch audits, the text-writer boundary and Milestone D remain active. L05 text cleanup and L08 final qualification remain open.",
-      "receipts": "dist/verification/live-cpp/l06k/"
+      "receipts": "dist/verification/live-cpp/l06k/",
+      "latest_api_cleanup": "23aa5a11: strict macOS Debug build, 18/18 desktop unit tests, 29/29 host unit tests, native and host regressions each 519 matches with 25 existing warnings and zero differences/errors/skips, and tutorial smoke 1/1. File formats and temporary-file policies are unchanged."
     }
   },
   "text_writer": {
