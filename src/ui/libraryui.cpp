@@ -740,12 +740,13 @@ struct RACEVERSIONS {
     int iMax, iLatest, iSame;
 };
 
-static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, std::span<char, 240> pszStem) {
+static void GetRaceLibraryStem(APPSESSION &app, std::string_view pszName, std::span<char, 240> pszStem) {
     std::size_t i, cch;
     char szTest[256];
 
-    CchSnprintf(pszStem, "%s", pszName);
-    cch = std::string_view(pszStem.data()).size();
+    cch = (std::min)(pszName.size(), pszStem.size() - 1);
+    std::copy_n(pszName.begin(), cch, pszStem.begin());
+    pszStem[cch] = 0;
     for (i = 0; i < cch; i++)
         if (static_cast<unsigned char>(pszStem[i]) < 32 || pszStem[i] == 127 || FInvalidPortableFilenameByte(static_cast<unsigned char>(pszStem[i]))) pszStem[i] = '_';
     while (cch != 0 && (pszStem[cch - 1] == ' ' || pszStem[cch - 1] == '.')) pszStem[--cch] = 0;
@@ -826,12 +827,14 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
     RACESTATE rsSav;
     PLAYER plr;
     char szName[256], szPath[512];
+    char *pchNameEnd;
     std::string_view pszExisting;
     int iChoice;
 
     if (!FHasCurrentLibraryRace(app) || !FInitRaceLibrary(app)) return 0;
     rv.pplr = pplr;
-    GetRaceLibraryStem(app, pplr->szName, std::span{rv.szStem});
+    pchNameEnd = std::find(pplr->szName, pplr->szName + sizeof(pplr->szName), '\0');
+    GetRaceLibraryStem(app, std::string_view{pplr->szName, static_cast<std::size_t>(pchNameEnd - pplr->szName)}, std::span{rv.szStem});
     if (!FNativeEnumerateDirectory(app, app.lpui->szRaceLibraryRoot.data(), FindRaceVersion, &rv)) return 0;
     pszExisting = !fNewLibraryRace && app.lpui->szRaceLibraryPath[0] ? PszCurrentLibraryRaceName(app) : std::string_view{rv.szLatest};
     if (!pszExisting.empty()) {
