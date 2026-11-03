@@ -109,11 +109,7 @@ int CchNativePrintf(NATIVEFILE *pf, std::string_view szFormat, ARGS... args) {
     const std::array<NATIVEFORMATARG, sizeof...(ARGS)> rgArgs = {NATIVEFORMATARG{args}...};
     return CchNativePrintfFields(pf, szFormat, rgArgs);
 }
-template<class... ARGS>
-int CchNativePrintf(NATIVEFILE *pf, const char *pszFormat, ARGS... args) {
-    if (!pszFormat) { errno = EINVAL; return -1; }
-    return CchNativePrintf(pf, std::string_view{pszFormat}, args...);
-}
+inline int CchNativePrintf(NATIVEFILE *, std::nullptr_t) { errno = EINVAL; return -1; }
 // Metadata's ASCII integer fields: %d and %lld, with scanf whitespace rules.
 using NATIVEINTEGERFIELD = std::variant<int *, long long *>;
 int CNativeScanFields(NATIVEFILE *pf, std::string_view szFormat, std::span<const NATIVEINTEGERFIELD> rgFields);
