@@ -28338,7 +28338,7 @@
     }
   },
   "latest_source_commit": "99ac9576",
-  "latest_batch_status": "Source committed as 99ac9576. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_batch_status": "Source committed as 99ac9576. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Exact strlen inventory corrected to individual occurrences; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28356,7 +28356,7 @@
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "Eighty-eight UI/compatibility text and path rescans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library paths, planet search, list search and new-game file handling.",
     "source_head": "99ac9576",
-    "strlen_occurrence_inventory": "28 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "strlen_occurrence_inventory": "33 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. Counts are individual matches from rg -o, not matching lines. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28387,7 +28387,8 @@
     "compat_list_search_length": "COMPATLIST owns cchSearch alongside szSearch; ResetList clears both and WM_CHAR updates the count on every append/restart, removing the repeated buffer scan.",
     "library_recent_key_length": "FDeleteLibraryGameRecentPaths uses the byte count returned by CchGetString for idsFile1 when replacing the numeric suffix.",
     "game_file_path_length": "FOpenGame carries CchCopyUtf8\u2019s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
-    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8\u2019s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md."
+    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8\u2019s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
+    "strlen_inventory_method": "Individual call counts use rg -o and wc -l; rg -c counts matching lines and undercounts when a line has multiple calls."
   },
   "latest_change": "NewGameWizard reuses the bounded basename copy count when removing .xy and safely cancels if the copy cannot contain the suffix.",
   "latest_batch_verification": {
