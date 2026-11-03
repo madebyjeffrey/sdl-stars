@@ -3625,7 +3625,7 @@
     ]
   },
   "current_source_audit": {
-    "source_head": "229ef1fe429102f4d87153188659fca5dd95dc00",
+    "source_head": "f1748d2ddb9e162c0232f77cae66cdf1eb873fe5",
     "scope": "Owned production source and compatibility implementation/header trees: src, compat/win32/src and compat/win32/include.",
     "raw_copy_calls": 0,
     "spellings_checked": [
@@ -3655,5 +3655,11 @@
     "interface": "FChooseLibraryGameActionName receives the current game name as std::string_view.",
     "copying": "Both destination operations use bounded UTF-8 spans and retain the 256-byte application/caller capacities.",
     "verification": "Strict macOS Debug build, game/race-library workflows 3/3, desktop units 18/18, native regression 519 matches with zero differences/errors, tutorial smoke 1/1. See docs/CPP-LIVE-CLEANUP.json."
+  },
+  "library_game_list_owned_name": {
+    "status": "complete; locally verified; current-source Windows/Linux qualification pending",
+    "interface": "FAddLibraryGameListItem takes const std::string& and retains it through the synchronous list-box C API call.",
+    "destination": "The fixed game-list row receives the validated name through CchCopyUtf8; formatted C-string copying was removed.",
+    "verification": "Strict macOS Debug build, game-library/file-workflow checks 2/2, desktop units 18/18, native regression 519 matches with zero differences/errors, tutorial smoke 1/1. See docs/CPP-LIVE-CLEANUP.json."
   }
 }
