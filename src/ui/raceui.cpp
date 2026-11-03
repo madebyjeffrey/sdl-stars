@@ -1420,7 +1420,7 @@ std::int16_t FSaveRace(APPSESSION &app, std::string_view szFileSuggest, PLAYER *
     std::size_t ichFileName;
 
     if (szFileSuggest.data() == app.state.szRaceFile && app.state.szRaceFile[0] && szRaceFileSuggest[0] &&
-        std::strncmp(app.state.szRaceFile, szRaceFileSuggest, std::strlen(app.state.szRaceFile)) == 0) szFileSuggest = szRaceFileSuggest;
+        std::string_view{szRaceFileSuggest}.starts_with(std::string_view{app.state.szRaceFile})) szFileSuggest = szRaceFileSuggest;
     if (!szFileSuggest.empty()) {
         CchCopyUtf8(std::span{szFile}, szFileSuggest);
     } else {
