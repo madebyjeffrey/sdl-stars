@@ -2083,7 +2083,8 @@
         "research-cargo-battle-prefix-views-use-spans",
         "fixed-extent-message-battle-and-header-prefix-spans",
         "raw-scalar-memory-accessors-use-byte-spans",
-        "heap-storage-lifetime-helpers-accept-byte-spans"
+        "heap-storage-lifetime-helpers-accept-byte-spans",
+        "qsort16-accepts-bounded-byte-span"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2797,6 +2798,31 @@
           },
           "baseline": "Unchanged; allocator extents, object representations, wire widths, and game behavior are unchanged.",
           "api_audit": "LpStartPl and LpStartHeapArray now accept byte spans. All list, heap allocation, UI, unit-test and witness callers pass the exact byte extents they previously supplied as pointer/length pairs.",
+          "platform": "Windows/Linux current-source qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 qsort16 accepts a bounded byte span",
+          "parent": "9d761cd5",
+          "source_commit": "525298279566c03db8b1713fd5f9c5b2cdde24a2",
+          "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "baseline": "Unchanged; qsort16 partitioning, comparator invocation order, and equal-key tie behavior are unchanged.",
+          "api_audit": "qsort16 now receives a byte span and derives its element count from the bounded extent and width. All three world-generation and report-cache call sites pass their exact active ranges.",
           "platform": "Windows/Linux current-source qualification remains pending.",
           "diff_check": "Pass."
         }
@@ -26376,14 +26402,14 @@
     "borrowed_return_audit": "Packaged help guide body uses local std::string ownership and a bounded marker view; broader L05 scratch and borrowed-return audit remains active."
   },
   "current_checkpoint": {
-    "batch": "L06 heap storage lifetime helpers accept byte spans",
-    "status": "Locally committed as 9d761cd5. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "parent": "e22be817",
-    "change": "LpStartPl and LpStartHeapArray take byte spans with all production and test callers migrated.",
+    "batch": "L06 qsort16 accepts a bounded byte span",
+    "status": "Locally committed as 52529827. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "parent": "9d761cd5",
+    "change": "qsort16 accepts a bounded byte span and derives count from its extent; Win16 sort operations and comparator order are unchanged.",
     "verification": {
-      "batch": "L06 heap storage lifetime helpers accept byte spans",
-      "parent": "e22be817",
-      "source_commit": "9d761cd5451abcee1fdc5090d99cd3556bcdc58e",
+      "batch": "L06 qsort16 accepts a bounded byte span",
+      "parent": "9d761cd5",
+      "source_commit": "525298279566c03db8b1713fd5f9c5b2cdde24a2",
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -26400,8 +26426,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; allocator extents, object representations, wire widths, and game behavior are unchanged.",
-      "api_audit": "LpStartPl and LpStartHeapArray now accept byte spans. All list, heap allocation, UI, unit-test and witness callers pass the exact byte extents they previously supplied as pointer/length pairs.",
+      "baseline": "Unchanged; qsort16 partitioning, comparator invocation order, and equal-key tie behavior are unchanged.",
+      "api_audit": "qsort16 now receives a byte span and derives its element count from the bounded extent and width. All three world-generation and report-cache call sites pass their exact active ranges.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -26822,9 +26848,9 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 heap storage lifetime helpers accept byte spans",
-    "source_commit": "9d761cd5451abcee1fdc5090d99cd3556bcdc58e",
-    "status": "Locally committed as 9d761cd5. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "batch": "L06 qsort16 accepts a bounded byte span",
+    "source_commit": "525298279566c03db8b1713fd5f9c5b2cdde24a2",
+    "status": "Locally committed as 52529827. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -26844,7 +26870,8 @@
       "All 61 pointer-only call sites now provide spans whose type carries the wire extent.",
       "RawLoad16/32 and RawStore16/32 now take byte spans rather than void pointers.",
       "All 32 allocator, battle, bitmap, and test callers pass explicit scalar extents.",
-      "LpStartPl and LpStartHeapArray accept byte spans, and all production, unit-test and witness call sites provide their prior physical byte extents."
+      "LpStartPl and LpStartHeapArray accept byte spans, and all production, unit-test and witness call sites provide their prior physical byte extents.",
+      "qsort16 now accepts a byte span instead of a void pointer and separate count; all three callers pass the exact active sort range."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -26875,7 +26902,8 @@
       "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "9d761cd5"
+      "source_head": "52529827",
+      "qsort16": "qsort16 accepts a bounded byte span and derives count from extent/width; the Win16 partition implementation and comparator order are unchanged."
     },
     "platform_ci": {
       "run_id": 41422617389,
