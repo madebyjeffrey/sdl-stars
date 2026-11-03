@@ -26335,6 +26335,32 @@
       "api_audit": "Removed four strlen rescans from enemy ship labels, new-game player labels and the MDI game title; TextOutA receives the same written byte count and formatted suffixes use the exact previously measured tail.",
       "platform": "Current-source Windows/Linux qualification remains pending.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Transport preset formatting returns its written byte length",
+      "parent": "ef24142a",
+      "source_commit": "38dd4fd257ad9ebc5cad5247967bb281ab2438a8",
+      "macos_debug_build": "make compile passes with strict warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "transport_preset_witness": "1/1 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; FormatTransportPresetAction returns the exact number of bytes produced, including the existing optional quantity suffix.",
+      "api_audit": "Removed the remaining strlen rescan in ZipOrderDlg transport preset drawing by passing the formatter result to TextOutA.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -26756,10 +26782,10 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 heap copy and move hooks accept byte spans",
-    "status": "Locally committed as f07a0378. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "batch": "Transport preset formatting returns its written byte length",
+    "status": "Transport preset label length cleanup committed; macOS/host verification passes, Windows/Linux qualification remains outstanding.",
     "parent": "52529827",
-    "change": "HEAPIO copy/move hooks and all production callers use byte spans; memcpy/memmove semantics and operation lengths remain unchanged.",
+    "change": "FormatTransportPresetAction returns its bounded byte count and ZipOrderDlg passes that count directly to TextOutA.",
     "verification": {
       "batch": "L06 heap copy and move hooks accept byte spans",
       "parent": "52529827",
@@ -26850,7 +26876,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass through ef24142a.",
+      "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remain outstanding; local macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass through 38dd4fd2.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -26861,7 +26887,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "ef24142a",
+      "source_head": "38dd4fd2",
       "raw_copy_call_audit": {
         "source_head": "3670b2be",
         "owned_production_calls": 0,
@@ -27133,12 +27159,16 @@
       {
         "commit": "ef24142a",
         "message": "Carry UI text lengths through formatting"
+      },
+      {
+        "commit": "38dd4fd2",
+        "message": "Return formatted transport label length"
       }
     ],
-    "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
-    "latest_change": "UI text drawing and append sites now carry byte lengths from bounded copy/format results instead of rescanning arrays with strlen.",
+    "source_commit": "38dd4fd257ad9ebc5cad5247967bb281ab2438a8",
+    "latest_change": "Removed the remaining strlen rescan in ZipOrderDlg transport preset drawing by passing the formatter result to TextOutA.",
     "c_macro_audit": {
-      "source_head": "ef24142a",
+      "source_head": "38dd4fd2",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -27152,19 +27182,20 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local verification passes through ef24142a.",
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local verification passes through 38dd4fd2.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "ef24142a",
-    "latest_batch_status": "Locally committed as ef24142a. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "38dd4fd257ad9ebc5cad5247967bb281ab2438a8",
+    "latest_batch_status": "Transport preset label length cleanup committed; macOS/host verification passes, Windows/Linux qualification remains outstanding.",
     "latest_published_head": "ef24142a",
     "latest_batch_verification": {
-      "batch": "Carry bounded UI text lengths through formatting",
-      "parent": "e4cc0084",
-      "source_commit": "ef24142a",
+      "batch": "Transport preset formatting returns its written byte length",
+      "parent": "ef24142a",
+      "source_commit": "38dd4fd257ad9ebc5cad5247967bb281ab2438a8",
       "macos_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
+      "transport_preset_witness": "1/1 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
@@ -27178,9 +27209,9 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; each UI path carries the byte count already returned by CchCopyUtf8Prefix, CchGetString, or CchSprintf. UTF-8 truncation and suffix placement are unchanged.",
-      "api_audit": "Removed four strlen rescans from enemy ship labels, new-game player labels and the MDI game title; TextOutA receives the same written byte count and formatted suffixes use the exact previously measured tail.",
-      "platform": "Current-source Windows/Linux qualification remains pending.",
+      "baseline": "Unchanged; FormatTransportPresetAction returns the exact number of bytes produced, including the existing optional quantity suffix.",
+      "api_audit": "Removed the remaining strlen rescan in ZipOrderDlg transport preset drawing by passing the formatter result to TextOutA.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
     },
     "latest_source_audits": {
@@ -27198,7 +27229,8 @@
         "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
       },
       "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-      "ui_text_lengths": "Four strlen rescans removed from bounded UI text arrays by carrying existing CchCopyUtf8Prefix, CchGetString and CchSprintf byte counts."
+      "ui_text_lengths": "Five strlen rescans removed from bounded UI text arrays by carrying existing copy, lookup, and formatting byte counts.",
+      "source_head": "38dd4fd257ad9ebc5cad5247967bb281ab2438a8"
     }
   },
   "milestone_d_checkpoint": {
@@ -27685,8 +27717,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "ef24142a",
-  "latest_batch_status": "Locally committed as ef24142a. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "38dd4fd257ad9ebc5cad5247967bb281ab2438a8",
+  "latest_batch_status": "Transport preset label length cleanup committed; macOS/host verification passes, Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -27702,6 +27734,7 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Four strlen rescans removed from bounded UI text arrays by carrying existing CchCopyUtf8Prefix, CchGetString and CchSprintf byte counts."
+    "ui_text_lengths": "Five strlen rescans removed from bounded UI text arrays by carrying existing copy, lookup, and formatting byte counts.",
+    "source_head": "38dd4fd257ad9ebc5cad5247967bb281ab2438a8"
   }
 }
