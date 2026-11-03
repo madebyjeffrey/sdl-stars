@@ -55,7 +55,6 @@ static std::int16_t fNewLibraryRace;
 static std::uint32_t idLibraryExportStage;
 static std::uint32_t idLibraryZipStage;
 static std::int16_t fHostLibraryView;
-static std::optional<std::string_view> pszRaceLibraryNameOverride;
 
 struct LibraryContinue {
     char szName[256];
@@ -1254,7 +1253,8 @@ std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, std::string_view psz
     return 1;
 }
 
-std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
+static std::int16_t FImportLibraryRaceImpl(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource,
+                                           std::optional<std::string_view> pszName) {
     char szSource[512], szName[256], szStem[256], szPath[512], szStage[512], szStageDir[512];
     char *pch, *pchSlash, *pchExt;
     RACESTATE rsSav;
@@ -1285,9 +1285,9 @@ std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, std::optional<std::s
     pchExt = std::strrchr(szStem, '.');
     if (pchExt) *pchExt = 0;
     CchSnprintf(std::span{szName, sizeof(szName)}, "%s.r1", szStem);
-    if (pszRaceLibraryNameOverride) {
-        if (!FInitRaceLibrary() || !FPortableRaceFilename(app, *pszRaceLibraryNameOverride)) goto LRestore;
-        CchSnprintf(std::span{szRaceLibraryName, sizeof(szRaceLibraryName)}, "%s", *pszRaceLibraryNameOverride);
+    if (pszName) {
+        if (!FInitRaceLibrary() || !FPortableRaceFilename(app, *pszName)) goto LRestore;
+        CchSnprintf(std::span{szRaceLibraryName, sizeof(szRaceLibraryName)}, "%s", *pszName);
         if (!FRaceLibraryNameAvailable(app, szRaceLibraryName)) goto LRestore;
         CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szRaceLibraryName);
     } else if (!FChooseLibraryRaceName(app, hwnd, szName, std::span{szPath})) goto LRestore;
@@ -1316,13 +1316,13 @@ LRestore:
     return 0;
 }
 
+std::int16_t FImportLibraryRace(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
+    return FImportLibraryRaceImpl(app, hwnd, pszSource, std::nullopt);
+}
+
 std::int16_t FImportLibraryRaceAs(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource,
                                  std::optional<std::string_view> pszName) {
-    std::int16_t fResult;
-    pszRaceLibraryNameOverride = pszName;
-    fResult = FImportLibraryRace(app, hwnd, pszSource);
-    pszRaceLibraryNameOverride.reset();
-    return fResult;
+    return FImportLibraryRaceImpl(app, hwnd, pszSource, pszName);
 }
 
 std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
@@ -3327,7 +3327,6 @@ void CloseLibraryUiSession() noexcept {
     cchLibraryRoot = 0;
     szRaceLibraryRoot[0] = szRaceLibraryPath[0] = szRaceLibraryName[0] = szRaceLibraryTemp[0] = 0;
     fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = 0;
-    pszRaceLibraryNameOverride.reset();
     continueLibrary = LIBRARYCONTINUE{};
 }
 
