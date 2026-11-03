@@ -638,8 +638,7 @@ void ReadIniSettings(APPSESSION &app) {
     TextIO().pfnCchGetString(app, idsFonts, std::span{szSection});
     for (i = 0; i < 4; i++) {
         TextIO().pfnCchGetString(app, static_cast<StringId>(idsArial + i), std::span{szEntry});
-        ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFile);
-        cch = std::strlen(app.state.szWork);
+        cch = ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFile);
         if (cch >= 5 && cch <= 31) {
             CchCopyUtf8Prefix(std::span{app.lpui->rgszArial[i]}, app.state.szWork);
         }
