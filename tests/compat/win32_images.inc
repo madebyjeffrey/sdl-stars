@@ -95,7 +95,7 @@ int main(void) {
         // cursor files contain harmless trailing padding after their planes.
         lp = LpCompatImage(hicon); CHECK(lp);
         for (cb = 0; cb < (rgImageManifest[i].fCursor ? 308u : 744u); cb++)
-            CHECK(!HiconCompatResource(rgb, cb, rgImageManifest[i].fCursor));
+            CHECK(!HiconCompatResource(std::span{rgb, cb}, rgImageManifest[i].fCursor));
 #endif
     }
     CHECK(!LoadIconA(hinst, "missing") && !LoadCursorA(hinst, "missing"));

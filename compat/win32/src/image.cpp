@@ -30,7 +30,7 @@ static COMPATIMAGE *LpNewImage(SDL_Surface *lpXor, BYTE *rgbAnd, bool fCursor) {
     lp->lpNext = lpImages; lpImages = lp;
     return lp;
 }
-HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, bool fCursor) {
+HICON HiconCompatResource(std::span<const BYTE> rgb, bool fCursor) {
     BITMAPINFOHEADER bi;
     COMPATDIB dib;
     COMPATIMAGE *lp;
@@ -45,13 +45,13 @@ HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, bool fCursor) {
     NATIVEOWNER<BYTE, std::free> rgbAndOwner;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
 
-    if (!SDL_IsMainThread() || !rgb) return nullptr;
+    if (!SDL_IsMainThread()) return nullptr;
     if (fCursor) {
-        if (cb < 4) return nullptr;
-        xHot = WImage(rgb); yHot = WImage(rgb + 2); rgb += 4; cb -= 4;
+        if (rgb.size() < 4) return nullptr;
+        xHot = WImage(rgb.data()); yHot = WImage(rgb.data() + 2); rgb = rgb.subspan(4);
     }
-    if (cb < cbWireDibHeader) return nullptr;
-    FDecodeDibHeader(std::as_bytes(std::span(rgb, cbWireDibHeader)), bi);
+    if (rgb.size() < cbWireDibHeader) return nullptr;
+    FDecodeDibHeader(std::as_bytes(rgb.first(cbWireDibHeader)), bi);
     if (bi.biSize != cbWireDibHeader || bi.biHeight <= 0 || bi.biHeight % 2 || bi.biWidth <= 0 || bi.biWidth > 256 || bi.biHeight > 512)
         return nullptr;
     bi.biHeight /= 2;
@@ -59,12 +59,12 @@ HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, bool fCursor) {
     cColors = bi.biClrUsed ? bi.biClrUsed : (bi.biBitCount <= 8 ? static_cast<std::size_t>(1) << bi.biBitCount : 0);
     if (cColors > 256) return nullptr;
     cbInfo = cbWireDibHeader + cColors * cbWireRgbQuad;
-    if (cbInfo > cb) return nullptr;
-    std::memcpy(rgInfo, rgb, cbInfo); FEncodeDibHeader(bi, std::as_writable_bytes(std::span(rgInfo)));
-    if (!FCompatDib(std::span{rgInfo, cbInfo}, std::span{rgb + cbInfo, cb - cbInfo}, dib)) return nullptr;
+    if (cbInfo > rgb.size()) return nullptr;
+    std::memcpy(rgInfo, rgb.data(), cbInfo); FEncodeDibHeader(bi, std::as_writable_bytes(std::span(rgInfo)));
+    if (!FCompatDib(std::span{rgInfo, cbInfo}, rgb.subspan(cbInfo), dib)) return nullptr;
     cbMaskRow = ((static_cast<std::size_t>(dib.cx) + 31) / 32) * 4; cbMask = cbMaskRow * static_cast<std::size_t>(dib.cy);
-    if (dib.cbBits > cb - cbInfo || cbMask > cb - cbInfo - dib.cbBits) return nullptr;
-    lpAnd = rgb + cbInfo + dib.cbBits;
+    if (dib.cbBits > rgb.size() - cbInfo || cbMask > rgb.size() - cbInfo - dib.cbBits) return nullptr;
+    lpAnd = rgb.data() + cbInfo + dib.cbBits;
     lpsurfaceOwner.reset(LpCompatDibSurface(&dib)); lpSurface = lpsurfaceOwner.get();
     if (!lpSurface) return nullptr;
     rgbAndOwner.reset(static_cast<BYTE *>(std::malloc(static_cast<std::size_t>(dib.cx) * dib.cy))); rgAnd = rgbAndOwner.get();
@@ -99,7 +99,7 @@ static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, bool fCursor) {
     if (!hrsrc) return nullptr;
     for (lp = lpImages; lp; lp = lp->lpNext) if (lp->hrsrc == hrsrc && lp->fCursor == fCursor) return reinterpret_cast<HICON>(lp);
     rgb = static_cast<const BYTE *>((win32::LockResource(win32::LoadResource(hInstance, hrsrc)))); cb = win32::SizeofResource(hInstance, hrsrc);
-    h = HiconCompatResource(rgb, cb, fCursor);
+    h = rgb ? HiconCompatResource(std::span{rgb, static_cast<std::size_t>(cb)}, fCursor) : nullptr;
     if (h) {
         lp = LpCompatImage(h); lp->fShared = 1; lp->hrsrc = hrsrc;
         lp->fAppIcon = !fCursor && reinterpret_cast<UINT_PTR>(psz) > std::numeric_limits<std::uint16_t>::max() &&

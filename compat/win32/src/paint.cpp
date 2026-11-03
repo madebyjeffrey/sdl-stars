@@ -1917,7 +1917,7 @@ LReturn:
     return nReturn;
 }
 
-HBITMAP HbmpCompatResource(const BYTE *rgb, std::size_t cb) {
+HBITMAP HbmpCompatResource(std::span<const BYTE> rgb) {
     BITMAPINFOHEADER bi;
     COMPATDIB dib;
     COMPATOBJECT *lpobj;
@@ -1925,14 +1925,14 @@ HBITMAP HbmpCompatResource(const BYTE *rgb, std::size_t cb) {
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     std::size_t cbInfo, cColors;
 
-    if (!rgb || cb < cbWireDibHeader)
+    if (rgb.size() < cbWireDibHeader)
         return nullptr;
-    FDecodeDibHeader(std::as_bytes(std::span(rgb, cbWireDibHeader)), bi);
+    FDecodeDibHeader(std::as_bytes(rgb.first(cbWireDibHeader)), bi);
     cColors = bi.biClrUsed ? bi.biClrUsed : (bi.biBitCount <= 8 ? 1u << bi.biBitCount : 0);
     if (cColors > 256)
         return nullptr;
     cbInfo = cbWireDibHeader + cColors * cbWireRgbQuad;
-    if (cbInfo > cb || !FCompatDib(std::span{rgb, cbInfo}, std::span{rgb + cbInfo, cb - cbInfo}, dib))
+    if (cbInfo > rgb.size() || !FCompatDib(rgb.first(cbInfo), rgb.subspan(cbInfo), dib))
         return nullptr;
     lpsurfaceOwner.reset(LpCompatDibSurface(&dib)); lpsurface = lpsurfaceOwner.get();
     if (!lpsurface)

@@ -94,7 +94,7 @@ int TestInvalidDibs(void) {
     CHECK(!FCompatDib(rgbInfo, std::span{rgb}, dib));
     info.bi.biBitCount = 1; info.bi.biSize = 12;
     CHECK(!FCompatDib(rgbInfo, std::span{rgb}, dib));
-    CHECK(!HbmpCompatResource((const BYTE *)&info, sizeof(info)));
-    CHECK(!HbmpCompatResource(NULL, sizeof(info)));
+    CHECK(!HbmpCompatResource(std::span{reinterpret_cast<const BYTE *>(&info), sizeof(info)}));
+    CHECK(!HbmpCompatResource(std::span<const BYTE>{}));
     return 0;
 }

@@ -176,7 +176,7 @@ struct COMPATIMAGE {
     struct COMPATIMAGE *lpNext;
 };
 COMPATIMAGE *LpCompatImage(HICON hicon);
-HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, bool fCursor);
+HICON HiconCompatResource(std::span<const BYTE> rgb, bool fCursor);
 HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, bool fMono);
 void CompatSetWindowIcon(SDL_Window *lpWindow, HICON hicon);
 extern const BYTE rgbCompatAppIcon[];
@@ -185,7 +185,7 @@ void CompatShutdownImages(void);
 void CompatCursorPoint(HWND hwnd, int x, int y);
 void CompatCursorLeave(HWND hwnd);
 void CompatDrawCursor(HWND hwnd, SDL_Surface *lpSurface);
-HMENU HmenuCompatTemplate(const BYTE *rgb, std::size_t cb);
+HMENU HmenuCompatTemplate(std::span<const BYTE> rgb);
 struct COMPATDLGITEM {
     DWORD dwStyle, dwExStyle;
     std::int16_t x, y, cx, cy;
@@ -225,7 +225,7 @@ struct COMPATDIB {
 bool FCompatDib(std::span<const BYTE> rgbInfo, std::span<const BYTE> rgbBits, COMPATDIB &dib);
 bool FCompatNativeDib(const BITMAPINFOHEADER &bi, const BYTE *rgbInfo, const BYTE *lpBits, COMPATDIB &dib);
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib);
-HBITMAP HbmpCompatResource(const BYTE *rgb, std::size_t cb);
+HBITMAP HbmpCompatResource(std::span<const BYTE> rgb);
 
 bool FCompatControlClass(LPCSTR pszClass, HINSTANCE hInstance);
 bool FCompatVideo(void);

@@ -85,7 +85,7 @@ BOOL win32::FreeResource(HGLOBAL hres) {
 
 HBITMAP win32::LoadBitmapA(HINSTANCE hInstance, LPCSTR pszName) {
     const COMPATRESOURCE *lpres = LpResource(win32::FindResourceA(hInstance, pszName, win32::RT_BITMAP));
-    return lpres ? HbmpCompatResource(lpres->rgb, lpres->cb) : nullptr;
+    return lpres ? HbmpCompatResource(std::span{lpres->rgb, lpres->cb}) : nullptr;
 }
 
 /* Normal MENU templates contain WORDs, UTF-16 strings and recursive popups.
@@ -153,27 +153,26 @@ fail:
     win32::DestroyMenu(hmenu);
     return nullptr;
 }
-HMENU HmenuCompatTemplate(const BYTE *rgb, std::size_t cb) {
+HMENU HmenuCompatTemplate(std::span<const BYTE> rgbTemplate) {
     WORD offset;
     std::optional<WORD> wVersion, wOffset;
-    std::span<const BYTE> rgbTemplate;
     std::size_t ib = 0;
     HMENU hmenu;
 
-    if (!SDL_IsMainThread() || !rgb) return nullptr;
-    rgbTemplate = std::span{rgb, cb};
+    if (!SDL_IsMainThread()) return nullptr;
     wVersion = WMenuWord(rgbTemplate, ib);
     if (!wVersion || *wVersion != 0) return nullptr;
     wOffset = WMenuWord(rgbTemplate, ib);
     if (!wOffset) return nullptr;
     offset = *wOffset;
-    if (offset > cb - ib) return nullptr;
+    if (offset > rgbTemplate.size() - ib) return nullptr;
     ib += offset;
     hmenu = HmenuTemplateItems(rgbTemplate, ib, 0);
-    if (hmenu && ib != cb) { win32::DestroyMenu(hmenu); return nullptr; }
+    if (hmenu && ib != rgbTemplate.size()) { win32::DestroyMenu(hmenu); return nullptr; }
     return hmenu;
 }
 HMENU win32::LoadMenuA(HINSTANCE hInstance, LPCSTR pszName) {
     HRSRC hrsrc = win32::FindResourceA(hInstance, pszName, win32::RT_MENU);
-    return HmenuCompatTemplate(static_cast<const BYTE *>((win32::LockResource(win32::LoadResource(hInstance, hrsrc)))), win32::SizeofResource(hInstance, hrsrc));
+    const auto *rgb = static_cast<const BYTE *>((win32::LockResource(win32::LoadResource(hInstance, hrsrc))));
+    return rgb ? HmenuCompatTemplate(std::span{rgb, static_cast<std::size_t>(win32::SizeofResource(hInstance, hrsrc))}) : nullptr;
 }
