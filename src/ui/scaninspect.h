@@ -28,12 +28,12 @@ struct SCANSNAPSHOT {
     std::size_t cObject;
 };
 std::optional<SCANSNAPSHOT> RgCaptureScanner(APPSESSION &app);
-BOOL FWriteScannerSnapshot(const SCANSNAPSHOT &snap, NATIVEFILE *lpfile);
+bool FWriteScannerSnapshot(const SCANSNAPSHOT &snap, NATIVEFILE *lpfile);
 /* Select the secondary scanner object through ChangeScanSel; optionally pan.
  * No orders are issued and the main object/waypoint editing mode is untouched.
  * Fail for a stale game/turn/player or absent object, including host data.
  */
-BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT &snap, std::uint16_t grType, std::uint16_t id, BOOL fReveal);
+bool FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT &snap, std::uint16_t grType, std::uint16_t id, bool fReveal);
 HWND ShowScannerInspector(void);
 void CloseScannerInspector(void);
 

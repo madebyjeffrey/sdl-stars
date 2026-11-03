@@ -377,10 +377,10 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     }
     if (cPlanetFound != (size_t)app.state.game.cPlanMax || app.state.game.fDirty != fDirty || memcmp(&app.state.sel, &selSav, sizeof(app.state.sel))) goto LDone;
     snap->turn++;
-    if (FSelectScannerObject(app, *snap, grobjPlanet, 0, 1)) goto LDone;
+    if (FSelectScannerObject(app, *snap, grobjPlanet, 0, true)) goto LDone;
     snap->turn--;
-    if (FSelectScannerObject(app, *snap, grobjPlanet, std::numeric_limits<std::uint16_t>::max(), 1) ||
-        !FSelectScannerObject(app, *snap, grobjPlanet, 0, 1) || app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 0) goto LDone;
+    if (FSelectScannerObject(app, *snap, grobjPlanet, std::numeric_limits<std::uint16_t>::max(), true) ||
+        !FSelectScannerObject(app, *snap, grobjPlanet, 0, true) || app.state.sel.scan.grobj != grobjPlanet || app.state.sel.scan.idpl != 0) goto LDone;
     fresh = RgCaptureScanner(app);
     if (!fresh || !fresh->rgobj[0].fOnScreen || !fresh->rgobj[0].fScanSelected || app.state.game.fDirty != fDirty) goto LDone;
     memcpy(szNameSav, fresh->rgobj[0].szName, sizeof(szNameSav));

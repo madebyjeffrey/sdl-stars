@@ -96,24 +96,24 @@ std::optional<SCANSNAPSHOT> RgCaptureScanner(APPSESSION &app) {
     return snap;
 }
 
-BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT &snap, std::uint16_t grType, std::uint16_t id, BOOL fReveal) {
+bool FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT &snap, std::uint16_t grType, std::uint16_t id, bool fReveal) {
     SCAN scan;
     std::int16_t i;
     POINT16 pt;
-    if (!FScannerReady(app) || snap.lidGame != app.state.game.lid || snap.turn != app.state.game.turn || snap.idPlayer != app.state.idPlayer) return 0;
+    if (!FScannerReady(app) || snap.lidGame != app.state.game.lid || snap.turn != app.state.game.turn || snap.idPlayer != app.state.idPlayer) return false;
     scan = {}; scan.idpl = idplNone; scan.ifl = iflNone; scan.ith = ithNone; scan.iwp = iwpNone;
     if (grType == grobjPlanet) {
-        if (id >= static_cast<std::uint16_t>(app.state.game.cPlanMax)) return 0;
+        if (id >= static_cast<std::uint16_t>(app.state.game.cPlanMax)) return false;
         scan.idpl = static_cast<std::int16_t>(id); pt = app.state.rgptPlan[id];
     } else if (grType == grobjFleet) {
         for (i = 0; i < app.state.cFleet && app.state.rglpfl[i]; i++) if (static_cast<std::uint16_t>(app.state.rglpfl[i]->id) == id && !app.state.rglpfl[i]->fDead) break;
-        if (i == app.state.cFleet || !app.state.rglpfl[i]) return 0;
+        if (i == app.state.cFleet || !app.state.rglpfl[i]) return false;
         scan.ifl = i; pt = app.state.rglpfl[i]->pt;
     } else if (grType == grobjThing) {
         for (i = 0; app.state.lpThings && i < app.state.cThing; i++) if (app.state.lpThings[i].idFull() == id) break;
-        if (!app.state.lpThings || i == app.state.cThing) return 0;
+        if (!app.state.lpThings || i == app.state.cThing) return false;
         scan.ith = i; pt = app.state.lpThings[i].pt();
-    } else return 0;
+    } else return false;
     /* Find co-located categories, then override the object identity: multiple
        fleets at one planet must not all resolve to the nearest fleet. */
     FFindNearestObject(app, pt, static_cast<GrobjClass>(grobjPlanet | grobjFleet | grobjThing | mdExact), &scan);
@@ -124,7 +124,7 @@ BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT &snap, std::uint16
     ChangeScanSel(app, &scan, 2);
     if (fReveal) FEnsurePointOnScreen(app, pt, 1);
     ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, nullptr, 0);
-    return 1;
+    return true;
 }
 
 static bool FWriteScanString(NATIVEFILE *lpfile, std::string_view sz) {
@@ -140,23 +140,23 @@ static bool FWriteScanString(NATIVEFILE *lpfile, std::string_view sz) {
     return ChPutNativeFile('"', lpfile) != EOF;
 }
 
-BOOL FWriteScannerSnapshot(const SCANSNAPSHOT &snap, NATIVEFILE *lpfile) {
+bool FWriteScannerSnapshot(const SCANSNAPSHOT &snap, NATIVEFILE *lpfile) {
     std::size_t i;
     const SCANOBJECT *lp;
-    if (!lpfile || (snap.cObject != 0 && !snap.rgobj)) return 0;
+    if (!lpfile || (snap.cObject != 0 && !snap.rgobj)) return false;
     if (CchNativePrintf(lpfile, "{\"schema\":1,\"game\":%ld,\"turn\":%u,\"player\":%d,\"zoom\":%d,\"viewport\":[%ld,%ld,%ld,%ld],\"objects\":[\n",
         static_cast<long>(snap.lidGame), snap.turn, snap.idPlayer, snap.iZoom,
-        static_cast<long>(snap.rcViewport.left),static_cast<long>(snap.rcViewport.top),static_cast<long>(snap.rcViewport.right),static_cast<long>(snap.rcViewport.bottom)) < 0) return 0;
+        static_cast<long>(snap.rcViewport.left),static_cast<long>(snap.rcViewport.top),static_cast<long>(snap.rcViewport.right),static_cast<long>(snap.rcViewport.bottom)) < 0) return false;
     for (i = 0; i < snap.cObject; i++) {
         const char *pchNameEnd;
         lp = &snap.rgobj[i];
         pchNameEnd = std::find(std::begin(lp->szName), std::end(lp->szName), 0);
-        if (pchNameEnd == std::end(lp->szName)) return 0;
+        if (pchNameEnd == std::end(lp->szName)) return false;
         if (CchNativePrintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"owner\":%d,\"detail\":%d,\"thingType\":%d,\"universe\":[%ld,%ld],\"client\":[%ld,%ld],\"screen\":[%ld,%ld],"
             "\"onScreen\":%s,\"filtered\":%s,\"scanSelected\":%s,\"mainSelected\":%s,\"name\":", i ? ",\n" : "", lp->grType,lp->id,lp->iPlayer,lp->det,lp->ith,
             static_cast<long>(lp->ptUniverse.x),static_cast<long>(lp->ptUniverse.y),static_cast<long>(lp->ptClient.x),static_cast<long>(lp->ptClient.y),static_cast<long>(lp->ptScreen.x),static_cast<long>(lp->ptScreen.y),
             lp->fOnScreen ? "true":"false",lp->fFiltered ? "true":"false",lp->fScanSelected ? "true":"false",lp->fMainSelected ? "true":"false") < 0 ||
-            !FWriteScanString(lpfile, std::string_view{lp->szName, static_cast<std::size_t>(pchNameEnd - std::begin(lp->szName))}) || ChPutNativeFile('}',lpfile) == EOF) return 0;
+            !FWriteScanString(lpfile, std::string_view{lp->szName, static_cast<std::size_t>(pchNameEnd - std::begin(lp->szName))}) || ChPutNativeFile('}',lpfile) == EOF) return false;
     }
     return IPutNativeString("\n]}\n",lpfile) != EOF && !FNativeStreamError(lpfile);
 }
@@ -227,7 +227,7 @@ static LRESULT  ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             i = static_cast<int>(ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_GETCURSEL, 0, 0));
             if (i >= 0 && static_cast<std::size_t>(i) < snapScanInspector.cObject) {
                 lp = &snapScanInspector.rgobj[i];
-                if (!FSelectScannerObject(app, snapScanInspector, lp->grType, lp->id, 1)) ControlIO().pfnMessageBeep(win32::MB_ICONEXCLAMATION);
+                if (!FSelectScannerObject(app, snapScanInspector, lp->grType, lp->id, true)) ControlIO().pfnMessageBeep(win32::MB_ICONEXCLAMATION);
                 RefreshScannerInspector(app, hwnd);
                 ControlIO().pfnSendMessage(ControlIO().pfnGetDlgItem(hwnd, 1), win32::LB_SETCURSEL, i, 0);
                 ScannerInspectDetails(hwnd);
