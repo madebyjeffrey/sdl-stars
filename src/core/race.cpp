@@ -656,7 +656,8 @@ std::int16_t FWasRaceFile(APPSESSION &app, std::string_view szFile, std::int16_t
                         }
                         RecordIO().pfnReadRt(app);
                         icksum = IRaceChecksum(&plr);
-                        if (app.state.hdrCur.rt == rtEOF && app.state.hdrCur.cb == 2 && WFromStreamBytes(app.state.rgbCur) == icksum) {
+                        if (app.state.hdrCur.rt == rtEOF && app.state.hdrCur.cb == 2 &&
+                            WFromStreamBytes(std::as_bytes(std::span(app.state.rgbCur)).first<2>()) == icksum) {
                             fProtected = fLegacy && plr.lSalt != 0;
                             if (fLegacy && (fConvert = FConvertLegacyRaceNames(app, &plr, fPlural)) <= 0) {
                                 idsError = fConvert < 0 ? -1 : idsGameFileAppearsCorruptUnableLoadFile;

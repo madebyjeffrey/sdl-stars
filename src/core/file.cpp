@@ -390,7 +390,7 @@ std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::strin
                 }
             }
             if (app.state.hdrCur.rt == rtThing) {
-                app.state.cThing = std::bit_cast<std::int16_t>(WFromStreamBytes(app.state.rgbCur));
+                app.state.cThing = std::bit_cast<std::int16_t>(WFromStreamBytes(std::as_bytes(std::span(app.state.rgbCur)).first<2>()));
                 app.state.cThingAlloc = app.state.cThing + 10;
                 if (app.state.cThingAlloc > 4050) {
                     app.state.cThingAlloc = 4050;
@@ -676,7 +676,7 @@ LNextTurn:
         }
         if (app.state.hdrCur.rt == rtThing) {
             fHist = app.state.cThing > 0;
-            cThingFile = std::bit_cast<std::int16_t>(WFromStreamBytes(app.state.rgbCur));
+            cThingFile = std::bit_cast<std::int16_t>(WFromStreamBytes(std::as_bytes(std::span(app.state.rgbCur)).first<2>()));
             app.state.cThingAlloc = 10 <= cThingFile ? cThingFile : 10;
             if (!app.state.lpThings) {
                 app.state.lpThings = LpAlloc<THING>(app, app.state.cThingAlloc * sizeof(THING), htThings);
@@ -690,10 +690,10 @@ LNextTurn:
             for (i = 0; i < cThingFile; i++) {
                 fHaveHistoryData = 0;
                 if (fHist) {
-                    for (; j < app.state.cThing && WFromStreamBytes(app.state.rgbCur) > lpth->idFull(); lpth++) {
+                    for (; j < app.state.cThing && WFromStreamBytes(std::as_bytes(std::span(app.state.rgbCur)).first<2>()) > lpth->idFull(); lpth++) {
                         j++;
                     }
-                    if (j < app.state.cThing && WFromStreamBytes(app.state.rgbCur) == lpth->idFull()) {
+                    if (j < app.state.cThing && WFromStreamBytes(std::as_bytes(std::span(app.state.rgbCur)).first<2>()) == lpth->idFull()) {
                         fHaveHistoryData = 1;
                         goto LFoundThing;
                     }
@@ -950,7 +950,7 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
             }
         }
         if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer() != iplrNone) {
-            lppl->SetUGuesses(WFromStreamBytes(pb));
+            lppl->SetUGuesses(WFromStreamBytes(std::as_bytes(std::span{pb, 2}).first<2>()));
             pb += 2;
         }
         if (lppl->det <= detSome)
@@ -970,11 +970,11 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
                     lppl->rgwtMin[i] = static_cast<std::uint32_t>(*pb++);
                     break;
                 case 2:
-                    lppl->rgwtMin[i] = static_cast<std::uint32_t>(WFromStreamBytes(pb));
+                    lppl->rgwtMin[i] = static_cast<std::uint32_t>(WFromStreamBytes(std::as_bytes(std::span{pb, 2}).first<2>()));
                     pb += 2;
                     break;
                 case 3:
-                    lppl->rgwtMin[i] = LFromStreamBytes(pb);
+                    lppl->rgwtMin[i] = LFromStreamBytes(std::as_bytes(std::span{pb, 4}).first<4>());
                     pb += 4;
                 }
                 i++;
@@ -995,12 +995,12 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
         }
         if (lppl->iPlayer != iplrNone) {
             if (lppl->fStarbase) {
-                lppl->SetLStarbase(LFromStreamBytes(pb));
+                lppl->SetLStarbase(LFromStreamBytes(std::as_bytes(std::span{pb, 4}).first<4>()));
                 lppl->fNoHeal = 0;
                 pb += 4;
             }
             if (fRouting) {
-                lppl->SetWRouting(WFromStreamBytes(pb));
+                lppl->SetWRouting(WFromStreamBytes(std::as_bytes(std::span{pb, 2}).first<2>()));
             }
         }
         return 1;
@@ -1011,7 +1011,7 @@ LFinishBRecord:
         pb++;
     }
     if (fHistory) {
-        lppl->turn = WFromStreamBytes(pb);
+        lppl->turn = WFromStreamBytes(std::as_bytes(std::span{pb, 2}).first<2>());
         pb += 2;
     } else if (fFirstYear) {
         if (lppl->iPlayer != iplrNone) {
@@ -1301,7 +1301,7 @@ std::int16_t FOpenFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std
                     RecordIO().pfnReadRt(app);
                     if (app.state.hdrCur.rt != rtEOF && app.state.hdrCur.cb != 2)
                         goto LBadFile;
-                    rtbof.turn = WFromStreamBytes(app.state.rgbCur);
+                    rtbof.turn = WFromStreamBytes(std::as_bytes(std::span(app.state.rgbCur)).first<2>());
                     app.state.game.wGen = rtbof.wGen;
                 }
                 if (app.state.game.turn == 0 && app.state.game.turn != rtbof.turn) {

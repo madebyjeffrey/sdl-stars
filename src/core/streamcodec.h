@@ -49,15 +49,15 @@ inline bool FEncodeBof(const RTBOF &bof, std::span<std::byte> rgb) noexcept {
 
 // Callers already own the physical two-byte scalar prefix. Logical record
 // admission remains at the existing call site.
-inline std::uint16_t WFromStreamBytes(const void *lp) noexcept {
+inline std::uint16_t WFromStreamBytes(std::span<const std::byte, 2> rgb) noexcept {
     std::uint16_t w = 0;
-    NATIVEBYTEREADER(std::span(static_cast<const std::byte *>(lp), 2)).FReadU16Le(w);
+    NATIVEBYTEREADER(rgb).FReadU16Le(w);
     return w;
 }
 
-inline std::int32_t LFromStreamBytes(const void *lp) noexcept {
+inline std::int32_t LFromStreamBytes(std::span<const std::byte, 4> rgb) noexcept {
     std::int32_t l = 0;
-    NATIVEBYTEREADER(std::span(static_cast<const std::byte *>(lp), 4)).FReadI32Le(l);
+    NATIVEBYTEREADER(rgb).FReadI32Le(l);
     return l;
 }
 

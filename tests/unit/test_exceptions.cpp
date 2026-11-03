@@ -304,7 +304,7 @@ static void TestRecordFramingBytes() {
     TEST_CHECK(CbReadFile(hfRead, std::as_writable_bytes(std::span{written}).first(static_cast<std::size_t>(sizeof(written)))) == 4);
     CloseFile(hfRead);
     TEST_CHECK(written[0] == 2 && written[1] == 0 && written[2] == 0xff && written[3] == 0x80);
-    TEST_CHECK(WFromStreamBytes(written + 2) == 0x80ff);
+    TEST_CHECK(WFromStreamBytes(std::as_bytes(std::span{written + 2, 2}).first<2>()) == 0x80ff);
     TEST_CHECK(RemoveNativeFile(szFile) == 0);
 }
 
