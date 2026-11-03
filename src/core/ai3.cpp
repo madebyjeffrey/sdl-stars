@@ -403,7 +403,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
                         for (ifl = 0; ifl < app.state.cFleet && (lpfl = app.state.rglpfl[ifl]); ifl++) {
                             if (lpfl->idPlanet != id || lpfl->iPlayer != app.state.idPlayer)
                                 continue;
-                            if (!FPotentMacWarFleet(app, lpfl, nullptr))
+                            if (!FPotentMacWarFleet(app, lpfl).fPotent)
                                 continue;
 
                             if (iLatestBomber == ishdefNone || lpfl->rgcsh[8] + lpfl->rgcsh[9] >= app.state.vrgAiArmadaPotency[2])
@@ -1036,7 +1036,7 @@ void TargetMacArmada(APPSESSION &app, FLEET *lpfl) {
         }
     }
 LTryNewTarget:
-    FPotentMacWarFleet(app, lpfl, &cshWar);
+    cshWar = FPotentMacWarFleet(app, lpfl).cEquiv;
     cshBomb = lpfl->rgcsh[8] + lpfl->rgcsh[9];
     lpfl->fMark = 1;
     ChangeMainObjSel(app, grobjFleet, lpfl->id);
@@ -1093,7 +1093,7 @@ LTryNewTarget:
     }
 }
 
-std::int16_t FPotentMacWarFleet(APPSESSION &app, FLEET *lpfl, std::int16_t *pcEquiv) {
+MACWARFLEETPOTENCYRESULT FPotentMacWarFleet(APPSESSION &app, FLEET *lpfl) {
     std::int16_t ish;
     std::int16_t cEquiv;
 
@@ -1114,15 +1114,9 @@ std::int16_t FPotentMacWarFleet(APPSESSION &app, FLEET *lpfl, std::int16_t *pcEq
     }
     if (cEquiv > app.state.vrgAiArmadaPotency[0]) {
     Success:
-        if (pcEquiv) {
-            *pcEquiv = cEquiv;
-        }
-        return 1;
+        return {true, cEquiv};
     }
 
     /* The original returned without storing, leaving TargetMacArmada's cshWar uninitialized. */
-    if (pcEquiv) {
-        *pcEquiv = cEquiv;
-    }
-    return 0;
+    return {false, cEquiv};
 }
