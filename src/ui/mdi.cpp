@@ -1788,7 +1788,7 @@ LGotFileName:
     fRet = FWasRaceFile(app, &szFile[ichFileName], fRaceOnly == 0);
     if (fRaceOnly) {
         if (fRet > 0) {
-            if (!FIsManagedLibraryRaceFile(szFile)) return FImportLibraryRace(app, hwnd, szFile);
+            if (!FIsManagedLibraryRaceFile(app, szFile)) return FImportLibraryRace(app, hwnd, szFile);
             pch = szFile + cchFile;
             while (pch > szFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
             return FLoadLibraryRace(app, hwnd, pch);

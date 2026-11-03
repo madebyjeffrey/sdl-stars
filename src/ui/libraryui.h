@@ -60,7 +60,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
 std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
 std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource);
 std::int16_t FIsManagedLibraryGameFile(std::string_view pszFile);
-std::int16_t FIsManagedLibraryRaceFile(std::string_view pszFile);
+std::int16_t FIsManagedLibraryRaceFile(APPSESSION &app, std::string_view pszFile);
 std::int16_t FExportLibraryGame(APPSESSION &app, HWND hwnd, std::string_view pszName, std::optional<std::string_view> pszTarget);
 std::int16_t FExportSelectedLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszTarget);
 void ShowLibraryExportFolderPicker(HWND hwnd);

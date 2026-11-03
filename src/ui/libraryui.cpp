@@ -34,7 +34,6 @@
  * is listed only after its complete generated family and metadata are saved. */
 static char szLibraryRoot[256];
 static std::size_t cchLibraryRoot;
-static char szRaceLibraryRoot[256];
 struct LIBRARYGAMELISTITEM {
     char szName[256];
     int iplr;
@@ -129,7 +128,7 @@ std::int16_t FLibraryNameAvailable(APPSESSION &app, std::string_view pszDirector
 }
 
 static std::int16_t FRaceLibraryNameAvailable(APPSESSION &app, std::string_view pszName) {
-    return FLibraryNameAvailable(app, szRaceLibraryRoot, pszName);
+    return FLibraryNameAvailable(app, app.lpui->szRaceLibraryRoot.data(), pszName);
 }
 
 static bool FInvalidPortableFilenameByte(unsigned char ch) {
@@ -161,32 +160,32 @@ static std::int16_t FPortableRaceFilename(APPSESSION &app, std::string_view pszN
         const auto uch = static_cast<unsigned char>(ch);
         if (uch < 32 || uch == 127 || FInvalidPortableFilenameByte(uch)) return 0;
     }
-    if (std::string_view(szRaceLibraryRoot).size() + cch + 2 >= sizeof(app.state.szBase)) return 0;
+    if (std::string_view(app.lpui->szRaceLibraryRoot.data()).size() + cch + 2 >= sizeof(app.state.szBase)) return 0;
     return 1;
 }
 
 /* The Windows CRT environment uses its code page; SDL supplies UTF-8 paths. */
-static std::int16_t FInitRaceLibrary(void) {
+static std::int16_t FInitRaceLibrary(APPSESSION &app) {
     const char *pszOverride = SDL_getenv("STARS_LIBRARY_DIR");
     const char *pszSettings = SDL_getenv("STARS_SETTINGS_DIR");
     char *pszRoot = pszOverride || pszSettings ? nullptr : CompatPathIO().pfnGetPrefPath("", "Stars!");
     int cch;
     NATIVEOWNER<char, SDL_free> rootPath(pszRoot);
     if (!pszOverride && !pszSettings && !pszRoot) return 0;
-    cch = CchSnprintf(std::span{szRaceLibraryRoot, sizeof(szRaceLibraryRoot)}, "%s%sRace Designs",
+    cch = CchSnprintf(std::span{app.lpui->szRaceLibraryRoot}, "%s%sRace Designs",
                       pszOverride ? pszOverride : pszSettings ? pszSettings : pszRoot,
                       pszOverride || pszSettings ? szDirSep : "");
     rootPath.reset();
-    return cch > 0 && cch < static_cast<int>(sizeof(szRaceLibraryRoot)) && FEnsureNativeDir(szRaceLibraryRoot);
+    return cch > 0 && cch < static_cast<int>(app.lpui->szRaceLibraryRoot.size()) && FEnsureNativeDir(app.lpui->szRaceLibraryRoot.data());
 }
 
-static std::int16_t FCreateRaceStagePath(std::span<char> pszDirectory, std::span<char> pszFile) {
+static std::int16_t FCreateRaceStagePath(APPSESSION &app, std::span<char> pszDirectory, std::span<char> pszFile) {
     std::uint32_t dwTick = DwTickCount();
     int i;
     int cch;
     for (i = 0; i < 1000; i++) {
         cch = CchSnprintf(pszDirectory, "%s%s.stars-race-stage-%u-%u",
-                          szRaceLibraryRoot, szDirSep, dwTick, idRaceStage++);
+                          app.lpui->szRaceLibraryRoot.data(), szDirSep, dwTick, idRaceStage++);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= pszDirectory.size()) return 0;
         if (CreateNativeDir(pszDirectory.data()) != 0) {
             if (FNativeDirectoryExists(pszDirectory.data())) continue;
@@ -284,8 +283,8 @@ std::int16_t FIsManagedLibraryGameFile(std::string_view pszFile) {
     return FInitLibrary() && LibraryPathIO().pfnUnder(szLibraryRoot, pszFile);
 }
 
-std::int16_t FIsManagedLibraryRaceFile(std::string_view pszFile) {
-    return FInitRaceLibrary() && LibraryPathIO().pfnUnder(szRaceLibraryRoot, pszFile);
+std::int16_t FIsManagedLibraryRaceFile(APPSESSION &app, std::string_view pszFile) {
+    return FInitRaceLibrary(app) && LibraryPathIO().pfnUnder(app.lpui->szRaceLibraryRoot.data(), pszFile);
 }
 
 static std::int16_t FPortableLibraryName(APPSESSION &app, std::string_view pszName) {
@@ -487,7 +486,7 @@ static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, std::stri
                                            std::span<char> pszPath) {
     char szMessage[256];
     int cch;
-    if (!FInitRaceLibrary()) return 0;
+    if (!FInitRaceLibrary(app)) return 0;
     CchSnprintf(std::span{app.lpui->szRaceLibraryName}, "%s", pszSuggested);
     SuggestRaceFilename(app, std::span{app.lpui->szRaceLibraryName});
     if (!app.lpui->szRaceLibraryName[0]) return 0;
@@ -497,7 +496,7 @@ static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, std::stri
         return 0;
     }
     fRaceLibraryNameDialog = 0;
-    cch = CchSnprintf(pszPath, "%s%s%s", szRaceLibraryRoot, szDirSep, app.lpui->szRaceLibraryName.data());
+    cch = CchSnprintf(pszPath, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, app.lpui->szRaceLibraryName.data());
     if (cch <= 0 || !FRaceLibraryNameAvailable(app, app.lpui->szRaceLibraryName.data())) {
         CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
@@ -668,11 +667,11 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszNa
     std::array<char, 512> szRaceLibraryTemp = {};
     std::uint16_t icksum;
     std::int16_t fOkay;
-    if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
+    if (!FInitRaceLibrary(app) || !FPortableRaceFilename(app, pszName)) return 0;
     std::copy(pszName.begin(), pszName.end(), szName);
     szName[pszName.size()] = 0;
-    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
-    if (!FCreateRaceStagePath(std::span{szTempDir}, std::span{szRaceLibraryTemp})) return 0;
+    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, szName);
+    if (!FCreateRaceStagePath(app, std::span{szTempDir}, std::span{szRaceLibraryTemp})) return 0;
     if (!RecordIO().pfnFCreateFile(app, dtRace, iplrNone, szRaceLibraryTemp.data())) {
         RemoveNativeFile(szRaceLibraryTemp.data());
         RemoveNativePath(szTempDir);
@@ -782,7 +781,7 @@ static bool FindRaceVersion(APPSESSION &app, RACEVERSIONS *prv, std::string_view
     if (result.ec != std::errc{} || result.ptr != szName.data() + szName.size()) return true;
     if (ichExt == cch && !SDL_strncasecmp(szName.data(), prv->szStem, cch))
         prv->iMax = StarsMax(prv->iMax, iVersion);
-    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, pszName);
     if (!FReadManagedRace(app, szPath, &plr)) return true;
     // Versions follow the stored race name, including older/imported filenames.
     // Distinct names can sanitize to the same stem without sharing a design.
@@ -832,14 +831,14 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
     std::string_view pszExisting;
     int iChoice;
 
-    if (!FHasCurrentLibraryRace(app) || !FInitRaceLibrary()) return 0;
+    if (!FHasCurrentLibraryRace(app) || !FInitRaceLibrary(app)) return 0;
     rv.pplr = pplr;
     GetRaceLibraryStem(app, pplr->szName, std::span{rv.szStem});
-    if (!FNativeEnumerateDirectory(app, szRaceLibraryRoot, FindRaceVersion, &rv)) return 0;
+    if (!FNativeEnumerateDirectory(app, app.lpui->szRaceLibraryRoot.data(), FindRaceVersion, &rv)) return 0;
     pszExisting = !fNewLibraryRace && app.lpui->szRaceLibraryPath[0] ? PszCurrentLibraryRaceName(app) : std::string_view{rv.szLatest};
     if (!pszExisting.empty()) {
         CchSnprintf(std::span{szName, sizeof(szName)}, "%s", pszExisting);
-        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, szName);
         if (!FReadManagedRace(app, szPath, &plr)) goto LFail;
         if (FSameLibraryRace(pplr, &plr)) goto LReuse;
     }
@@ -863,7 +862,7 @@ std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr) {
     }
     return FSaveLibraryRace(app, hwnd, szName, pplr);
 LReuse:
-    CchSnprintf(std::span{app.lpui->szRaceLibraryPath}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+    CchSnprintf(std::span{app.lpui->szRaceLibraryPath}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, szName);
     SetSzRaceFile(app, szName);
     fNewLibraryRace = 0;
     return 1;
@@ -881,10 +880,10 @@ std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszNa
     char szName[256];
     RACESTATE rsSav;
     std::int16_t fResult;
-    if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
+    if (!FInitRaceLibrary(app) || !FPortableRaceFilename(app, pszName)) return 0;
     std::copy(pszName.begin(), pszName.end(), szName);
     szName[pszName.size()] = 0;
-    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, szName);
     SaveRaceState(app, &rsSav);
     fResult = FWasRaceFile(app, szPath, 1);
     if (fResult <= 0) {
@@ -913,13 +912,13 @@ std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 2
 
     SaveRaceState(app, &rsSav);
     if (pszName[0]) {
-        if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName.data())) return 0;
-        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName.data());
+        if (!FInitRaceLibrary(app) || !FPortableRaceFilename(app, pszName.data())) return 0;
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, pszName.data());
         CchSnprintf(std::span{app.lpui->szRaceLibraryPath}, "%s", szPath);
         SetSzRaceFile(app, pszName.data());
         fNewLibraryRace = 0;
     } else {
-        if (!FInitRaceLibrary()) return 0;
+        if (!FInitRaceLibrary(app)) return 0;
         app.lpui->szRaceLibraryPath[0] = 0;
         fNewLibraryRace = 1;
     }
@@ -933,7 +932,7 @@ std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd) {
     RACESTATE rsSav;
     std::int16_t fResult;
     SaveRaceState(app, &rsSav);
-    if (!FInitRaceLibrary()) return 0;
+    if (!FInitRaceLibrary(app)) return 0;
     app.lpui->szRaceLibraryPath[0] = 0;
     fNewLibraryRace = 1;
     app.state.vplr = vrgplrDef[0];
@@ -963,10 +962,10 @@ std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, std::string_view 
     char szSource[512], szName[256], szPath[512] = "";
     const char *pch;
     RACESTATE rsSav;
-    if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
+    if (!FInitRaceLibrary(app) || !FPortableRaceFilename(app, pszName)) return 0;
     std::copy(pszName.begin(), pszName.end(), szName);
     szName[pszName.size()] = 0;
-    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, szName);
     SaveRaceState(app, &rsSav);
     if (FWasRaceFile(app, szSource, 1) <= 0) {
         RestoreRaceState(app, &rsSav, 1, 1);
@@ -975,7 +974,7 @@ std::int16_t FDuplicateLibraryRace(APPSESSION &app, HWND hwnd, std::string_view 
     pch = std::strrchr(szName, '.');
     if (pch) szName[pch - szName] = 0;
     SuggestRaceFilename(app, std::span{szName});
-    if (!szName[0] || CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName) <= 0) {
+    if (!szName[0] || CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, szName) <= 0) {
         RestoreRaceState(app, &rsSav, 1, 1);
         if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDuplicateFailed).data(), win32::MB_ICONEXCLAMATION);
         return 0;
@@ -1042,8 +1041,8 @@ std::int16_t FExportLibraryRace(APPSESSION &app, HWND hwnd, std::string_view psz
     if (pszName.size() >= sizeof(szName) || pszName.find('\0') != std::string_view::npos) return 0;
     std::copy(pszName.begin(), pszName.end(), szName);
     szName[pszName.size()] = 0;
-    if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
-    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+    if (!FInitRaceLibrary(app) || !FPortableRaceFilename(app, pszName)) return 0;
+    CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, szName);
     if (!pszTarget) {
         szTarget[0] = 0;
         CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s", szName);
@@ -1236,8 +1235,8 @@ std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, std::string_view psz
     if (pszName.size() >= sizeof(szName) || pszName.find('\0') != std::string_view::npos) return 0;
     std::copy(pszName.begin(), pszName.end(), szName);
     szName[pszName.size()] = 0;
-    if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
-    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
+    if (!FInitRaceLibrary(app) || !FPortableRaceFilename(app, pszName)) return 0;
+    CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, szName);
     if (!(cbFile = FNativeFileSize(szPath)) || (*cbFile) <= 0) return 0;
     CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryRaceDeletePrompt).data(), szName);
     if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryTitle).data(), win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
@@ -1282,10 +1281,10 @@ static std::int16_t FImportLibraryRaceImpl(APPSESSION &app, HWND hwnd, std::opti
     if (pchExt) *pchExt = 0;
     CchSnprintf(std::span{szName, sizeof(szName)}, "%s.r1", szStem);
     if (pszName) {
-        if (!FInitRaceLibrary() || !FPortableRaceFilename(app, *pszName)) goto LRestore;
+        if (!FInitRaceLibrary(app) || !FPortableRaceFilename(app, *pszName)) goto LRestore;
         CchSnprintf(std::span{app.lpui->szRaceLibraryName}, "%s", *pszName);
         if (!FRaceLibraryNameAvailable(app, app.lpui->szRaceLibraryName.data())) goto LRestore;
-        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, app.lpui->szRaceLibraryName.data());
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", app.lpui->szRaceLibraryRoot.data(), szDirSep, app.lpui->szRaceLibraryName.data());
     } else if (!FChooseLibraryRaceName(app, hwnd, szName, std::span{szPath})) goto LRestore;
     /* Legacy reads convert names and credentials in memory; retain that state,
      * never the original CP1252 bytes or password hash. */
@@ -1293,7 +1292,7 @@ static std::int16_t FImportLibraryRaceImpl(APPSESSION &app, HWND hwnd, std::opti
         if (!FSaveLibraryRace(app, hwnd, app.lpui->szRaceLibraryName.data(), &app.state.vplr)) goto LRestore;
         return 1;
     }
-    if (!FCreateRaceStagePath(std::span{szStageDir}, std::span{szStage})) goto LRestore;
+    if (!FCreateRaceStagePath(app, std::span{szStageDir}, std::span{szStage})) goto LRestore;
     if (!FCopyNativeFile(szSource, szStage) || ReplaceNativeFile(szStage, szPath) != 0) {
         RemoveNativeFile(szStage);
         RemoveNativePath(szStageDir);
@@ -3008,11 +3007,11 @@ void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc) {
 }
 
 bool FEnumerateLibraryRaces(APPSESSION &app, const FNativeDirectoryEntryProc &pfnEntry) {
-    return FInitRaceLibrary() && FNativeEnumerateDirectory(app, szRaceLibraryRoot, [&pfnEntry](APPSESSION &appEntry, std::string_view pszName) {
+    return FInitRaceLibrary(app) && FNativeEnumerateDirectory(app, app.lpui->szRaceLibraryRoot.data(), [&pfnEntry](APPSESSION &appEntry, std::string_view pszName) {
         char szPath[512];
         std::optional<std::int64_t> cbFile;
         if (!FPortableRaceFilename(appEntry, pszName)) return true;
-        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
+        CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", appEntry.lpui->szRaceLibraryRoot.data(), szDirSep, pszName);
         if (!(cbFile = FNativeFileSize(szPath)) || (*cbFile) <= 0) return true;
         return pfnEntry(appEntry, pszName);
     });
@@ -3321,7 +3320,7 @@ void CloseLibraryUiSession(APPSESSION &app) noexcept {
     ClearLibraryGameList();
     szLibraryRoot[0] = app.lpui->szLibraryPending[0] = app.lpui->szLibraryName[0] = app.lpui->szLibraryExchangeName[0] = 0;
     cchLibraryRoot = 0;
-    szRaceLibraryRoot[0] = app.lpui->szRaceLibraryPath[0] = app.lpui->szRaceLibraryName[0] = 0;
+    app.lpui->szRaceLibraryRoot[0] = app.lpui->szRaceLibraryPath[0] = app.lpui->szRaceLibraryName[0] = 0;
     fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = 0;
     continueLibrary = LIBRARYCONTINUE{};
 }
