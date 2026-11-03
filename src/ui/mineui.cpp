@@ -406,11 +406,10 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 c = CchSprintf(std::span{app.state.szWork}, szT, lpth->thp().iWarp() + 4);
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
                 yTop += app.state.dyArial8 + 2;
-                TextIO().pfnCchGetString(app, idsDestination, std::span{szT});
+                c = TextIO().pfnCchGetString(app, idsDestination, std::span{szT});
                 szObjectName = TextIO().pfnPlanetName(app, lpth->thp().idPlanet());
-                psz = szObjectName.data();
-                CchAppendUtf8Prefix(std::span{szT}, psz);
-                win32::TextOutA(hdc, xLeft, yTop, szT, std::strlen(szT));
+                c += CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), szObjectName.data());
+                win32::TextOutA(hdc, xLeft, yTop, szT, c);
             }
             yTop += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
             xLeft += LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[2], std::strlen(app.state.rgszMinerals[2])));
