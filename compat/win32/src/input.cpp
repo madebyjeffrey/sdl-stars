@@ -19,10 +19,10 @@ static HWND hwndCursor;
 static BOOL fCursor, fInputKeys;
 
 void CompatCopyInput(BYTE *rgb, LPPOINT lppt) {
-    std::memcpy(rgb, rgbInput, sizeof(rgbInput));
+    std::copy_n(rgbInput, sizeof(rgbInput), rgb);
     if (fCursor) *lppt = ptCursor;
 }
-void CompatReadInput(const BYTE *rgb) { std::memcpy(rgbRead, rgb, sizeof(rgbRead)); }
+void CompatReadInput(const BYTE *rgb) { std::copy_n(rgb, sizeof(rgbRead), rgbRead); }
 BOOL win32::SetKeyboardState(BYTE *rgb) {
     if (!SDL_IsMainThread() || !rgb) return 0;
     CompatReadInput(rgb);

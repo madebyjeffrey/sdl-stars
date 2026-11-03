@@ -1,5 +1,7 @@
 /* Source-level message boxes use the same controls and modal queue as dialogs. */
 #include "cleanup.h"
+#include <algorithm>
+#include <iterator>
 #include <new>
 #include <stars_compat.h>
 #include <cstdlib>
@@ -202,7 +204,7 @@ int win32::MessageBoxA(HWND hwndOwner, LPCSTR pszText, LPCSTR pszCaption, UINT t
     if (!pszText) pszText = "";
     if (SDL_strnlen(pszText, 65537) > 65536) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0; }
     box.pszText = pszText; box.type = type; box.format = win32::DT_WORDBREAK | win32::DT_NOPREFIX | (type & win32::MB_RIGHT ? win32::DT_RIGHT : win32::DT_LEFT);
-    std::memcpy(box.rgid, rgrid[type & 0xf], sizeof(box.rgid));
+    std::copy_n(rgrid[type & 0xf], std::size(box.rgid), box.rgid);
     for (i = 0; i < 3 && box.rgid[i] != 0; i++) { box.cButtons++; if (box.rgid[i] == win32::IDCANCEL) box.idCancel = win32::IDCANCEL; }
     if (box.cButtons == 1) box.idCancel = win32::IDOK;
     box.iDefault = (type >> 8) & 3;

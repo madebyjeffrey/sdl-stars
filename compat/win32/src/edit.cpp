@@ -642,7 +642,7 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (!l || ich == std::numeric_limits<unsigned int>::max()) return 0;
         std::memcpy(&cchMax, reinterpret_cast<void *>(l), sizeof(cchMax));
         cLine = static_cast<UINT>(CchUtf8Prefix(lp->pszTitle + ich, (((cchMax) < (IchLineEnd(hwnd, ich) - ich)) ? (cchMax) : (IchLineEnd(hwnd, ich) - ich))));
-        std::memcpy(reinterpret_cast<void *>(l), lp->pszTitle + ich, cLine); return cLine;
+        std::copy_n(lp->pszTitle + ich, cLine, reinterpret_cast<char *>(l)); return cLine;
     case win32::WM_SETTEXT:
         result = win32::DefWindowProcA(hwnd, msg, w, l ? l : reinterpret_cast<LPARAM>(""));
         if (result) {
