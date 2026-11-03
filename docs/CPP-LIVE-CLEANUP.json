@@ -28337,8 +28337,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "b9ccd4cf",
-  "latest_batch_status": "Source committed as b9ccd4cf. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Exact string scan inventory uses occurrence counts; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "43ee823d2ee7a9be78a3cc3d732348ac281db0a4",
+  "latest_batch_status": "Source committed as 43ee823d. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28354,9 +28354,9 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Ninety-five redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name and menu-label paths.",
-    "source_head": "b9ccd4cf",
-    "strlen_occurrence_inventory": "26 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources (28 calls total). Counts are individual matches from rg -o, not matching lines. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "ui_text_lengths": "Ninety-six redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label and compatibility-list item paths.",
+    "source_head": "43ee823d2ee7a9be78a3cc3d732348ac281db0a4",
+    "strlen_occurrence_inventory": "25 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources (27 calls total). Counts are individual matches from rg -o, not matching lines. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28390,12 +28390,14 @@
     "new_game_filename_length": "NewGameWizard uses CchCopyUtf8\u2019s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
     "strlen_inventory_method": "Individual call counts use rg -o and wc -l; rg -c counts matching lines and undercounts when a line has multiple calls.",
     "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8\u2019s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
-    "compat_menu_label_lengths": "COMPATMENUITEM records the byte count when it owns its label; GetMenuStringA and popup sizing reuse that count."
+    "compat_menu_label_lengths": "COMPATMENUITEM records the byte count when it owns its label; GetMenuStringA and popup sizing reuse that count.",
+    "compat_list_item_lengths": "COMPATLISTITEM records the UTF-8 byte length at AddList ownership transfer; LB_GETTEXTLEN and LB_GETTEXT reuse it, removing the owned-item strlen scan and an implicit string_view length scan. Input search text remains a C-string ABI boundary.",
+    "strlen_occurrence_inventory_method": "rg -o confirms 25 std::strlen and 2 SDL_strlen occurrences after this source batch."
   },
-  "latest_change": "COMPATMENUITEM carries label byte counts for string retrieval and popup sizing.",
+  "latest_change": "COMPATLISTITEM carries owned text byte counts for LB_GETTEXTLEN and LB_GETTEXT.",
   "latest_batch_verification": {
-    "batch": "L05 compatibility menu carries owned label lengths",
-    "source_commit": "b9ccd4cf",
+    "batch": "L05 compatibility list caches owned item lengths",
+    "source_commit": "43ee823d2ee7a9be78a3cc3d732348ac281db0a4",
     "macos_debug_build": "make compile passes with strict warnings and header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -28412,7 +28414,7 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; menu labels, copied byte counts and popup text extents retain the same values.",
+    "baseline": "Unchanged; list item text bytes, retrieval lengths, and search behavior retain their prior values.",
     "platform": "Windows/Linux current-source qualification remains pending.",
     "diff_check": "Pass."
   }
