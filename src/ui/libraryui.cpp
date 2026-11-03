@@ -703,7 +703,7 @@ static std::int16_t FSameLibraryRace(const PLAYER *pplrLeft, const PLAYER *pplrR
            !std::strcmp(plrLeft.szName, plrRight.szName) && !std::strcmp(plrLeft.szNames, plrRight.szNames);
 }
 
-static std::int16_t FReadManagedRace(APPSESSION &app, char *pszPath, PLAYER *pplr) {
+static std::int16_t FReadManagedRace(APPSESSION &app, std::string_view pszPath, PLAYER *pplr) {
     std::optional<NATIVEPATHINFO> npiPath;
     NATIVEFILE *pf;
     HDR hdr;
