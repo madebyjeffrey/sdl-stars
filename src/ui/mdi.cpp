@@ -942,6 +942,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
     std::int16_t  dSize;
     std::int16_t  yPage;
     std::int16_t  cch;
+    std::size_t cchGameName;
     std::int32_t  ldy;
     std::int16_t  dyDPI;
     std::int16_t  yOff;
@@ -1114,6 +1115,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 cch = TextIO().pfnCchGetString(app, idsStarsUniverseMap, std::span{app.state.szWork});
                 iPrintResult = win32::Escape(pd.hDC, win32::STARTDOC, cch, app.state.szWork, nullptr);
                 if (iPrintResult <= 0) goto LPrintMapCleanup;
+                cchGameName = static_cast<std::size_t>(std::find(std::begin(app.state.game.szName), std::end(app.state.game.szName), '\0') - std::begin(app.state.game.szName));
                 for (xPage = 0; xPage < cPageX; xPage++) {
                     for (yPage = 0; yPage < cPageY; yPage++) {
                         xOff = -dxMax * xPage;
@@ -1128,7 +1130,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                         cch = TextIO().pfnCchGetString(app, idsStarsUniverseMap, std::span{app.state.szWork});
                         win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.szWork, cch);
                         y += dyPrint;
-                        win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.game.szName, std::strlen(app.state.game.szName));
+                        win32::TextOutA(pd.hDC, ptLegendA.x + xOff, y, app.state.game.szName, static_cast<int>(cchGameName));
                         y += dyPrint;
                         szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 1, 1, 1, 0, nullptr);
                         psz = szPlayerName.data();
