@@ -297,7 +297,8 @@
         "game-library-root-and-cached-length-owned-by-ui-session",
         "recursive-import-cleanup-roots-use-string-view",
         "planet-report-sort-names-use-bounded-views",
-        "imported-turn-path-views"
+        "imported-turn-path-views",
+        "race-library-bounded-name-view"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -2246,6 +2247,30 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged; only path representation and extension parsing changed. No game state, records, saved bytes or turn behavior changed.",
           "api_audit": "FImportLibraryGame passes its validated source string_view through FImportSubsequentTurn; FInspectImportPlayer accepts string_view. Turn suffix parsing uses bounded basename/extension views instead of strrchr and pointer walks.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
+        }
+      },
+      "race_library_bounded_name_view": {
+        "status": "complete; locally verified",
+        "interface": "GetRaceLibraryStem accepts std::string_view and writes into the existing fixed 240-byte destination span.",
+        "input_bound": "FSaveCurrentLibraryRace bounds the input view to PLAYER::szName, stopping at NUL or the field end.",
+        "contract": "Filename byte sanitization, trimming, fallback label and reserved-device prefix behavior are unchanged for valid stored race names.",
+        "verification": {
+          "batch": "L05 race library names use a bounded field view",
+          "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "focused_workflows": "witness_library-publication, win32_client_race_library_dummy, and win32_client_race_dummy pass (3/3).",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged for valid player names; the field is copied and sanitized identically, with the source read bounded by its fixed 32-byte storage.",
+          "api_audit": "GetRaceLibraryStem accepts string_view. FSaveCurrentLibraryRace bounds the name view at the NUL or end of PLAYER::szName, then copies into the existing 240-byte stem span.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -28485,14 +28510,14 @@
       }
     },
     "latest_followup": {
-      "batch": "L05 imported-turn paths remain bounded views",
-      "source_commit": "a250299b7ff5a51c9cbc7c036f1d48d49ebc6ce5",
-      "parent": "1ff85fdc4b8ac8e04956d12b0e91533c6b7ee324",
+      "batch": "L05 race library names use a bounded field view",
+      "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
+      "parent": "0e730376822bdde9d566ff6e84b9043df69e23ee",
       "verification": {
-        "batch": "L05 imported-turn paths remain bounded views",
-        "source_commit": "a250299b7ff5a51c9cbc7c036f1d48d49ebc6ce5",
+        "batch": "L05 race library names use a bounded field view",
+        "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
         "macos_sdl_debug_build": "make compile passes with strict warnings.",
-        "focused_workflows": "witness_library-publication and win32_client_fileworkflow_dummy pass (2/2).",
+        "focused_workflows": "witness_library-publication, win32_client_race_library_dummy, and win32_client_race_dummy pass (3/3).",
         "desktop_unit_tests": "18/18 pass.",
         "native_regression": {
           "matches": 519,
@@ -28501,8 +28526,8 @@
           "skipped": 0
         },
         "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-        "baseline": "Unchanged; only path representation and extension parsing changed. No game state, records, saved bytes or turn behavior changed.",
-        "api_audit": "FImportLibraryGame passes its validated source string_view through FImportSubsequentTurn; FInspectImportPlayer accepts string_view. Turn suffix parsing uses bounded basename/extension views instead of strrchr and pointer walks.",
+        "baseline": "Unchanged for valid player names; the field is copied and sanitized identically, with the source read bounded by its fixed 32-byte storage.",
+        "api_audit": "GetRaceLibraryStem accepts string_view. FSaveCurrentLibraryRace bounds the name view at the NUL or end of PLAYER::szName, then copies into the existing 240-byte stem span.",
         "platform": "Current-source Windows and Linux qualification remains outstanding.",
         "diff_check": "Pass."
       }
@@ -29020,8 +29045,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "a250299b7ff5a51c9cbc7c036f1d48d49ebc6ce5",
-  "latest_batch_status": "Source commit a250299b verified locally. Strict macOS SDL Debug build, focused library workflows 2/2, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
+  "latest_batch_status": "Source commit eecad5ed verified locally. Strict macOS SDL Debug build, focused race-library workflows 3/3, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -29145,12 +29170,12 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L05 imported-turn paths remain bounded views",
+  "latest_change": "L05 race library names use a bounded field view",
   "latest_batch_verification": {
-    "batch": "L05 imported-turn paths remain bounded views",
-    "source_commit": "a250299b7ff5a51c9cbc7c036f1d48d49ebc6ce5",
+    "batch": "L05 race library names use a bounded field view",
+    "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_workflows": "witness_library-publication and win32_client_fileworkflow_dummy pass (2/2).",
+    "focused_workflows": "witness_library-publication, win32_client_race_library_dummy, and win32_client_race_dummy pass (3/3).",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
       "matches": 519,
@@ -29159,16 +29184,16 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; only path representation and extension parsing changed. No game state, records, saved bytes or turn behavior changed.",
-    "api_audit": "FImportLibraryGame passes its validated source string_view through FImportSubsequentTurn; FInspectImportPlayer accepts string_view. Turn suffix parsing uses bounded basename/extension views instead of strrchr and pointer walks.",
+    "baseline": "Unchanged for valid player names; the field is copied and sanitized identically, with the source read bounded by its fixed 32-byte storage.",
+    "api_audit": "GetRaceLibraryStem accepts string_view. FSaveCurrentLibraryRace bounds the name view at the NUL or end of PLAYER::szName, then copies into the existing 240-byte stem span.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L05 imported-turn paths remain bounded views",
-    "source_commit": "a250299b7ff5a51c9cbc7c036f1d48d49ebc6ce5",
+    "batch": "L05 race library names use a bounded field view",
+    "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_workflows": "witness_library-publication and win32_client_fileworkflow_dummy pass (2/2).",
+    "focused_workflows": "witness_library-publication, win32_client_race_library_dummy, and win32_client_race_dummy pass (3/3).",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
       "matches": 519,
@@ -29177,11 +29202,11 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; only path representation and extension parsing changed. No game state, records, saved bytes or turn behavior changed.",
-    "api_audit": "FImportLibraryGame passes its validated source string_view through FImportSubsequentTurn; FInspectImportPlayer accepts string_view. Turn suffix parsing uses bounded basename/extension views instead of strrchr and pointer walks.",
+    "baseline": "Unchanged for valid player names; the field is copied and sanitized identically, with the source read bounded by its fixed 32-byte storage.",
+    "api_audit": "GetRaceLibraryStem accepts string_view. FSaveCurrentLibraryRace bounds the name view at the NUL or end of PLAYER::szName, then copies into the existing 240-byte stem span.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit a250299b verified locally; ledger checkpoint recorded.",
+    "status": "Source commit eecad5ed verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
