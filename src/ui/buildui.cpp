@@ -1539,12 +1539,13 @@ void DrawDlgLBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t in
     COLORREF crForeSav;
     std::int16_t  ibmp;
     std::int16_t  bkSav;
+    int cch;
     RECT     rc;
 
     win32::CopyRect(&rc, &lpdis->rcItem);
     win32::FillRect(lpdis->hDC, &lpdis->rcItem, static_cast<HBRUSH>(win32::GetStockObject(!(lpdis->itemState & win32::ODS_FOCUS) ? win32::WHITE_BRUSH : win32::BLACK_BRUSH)));
     win32::InflateRect(&rc, -2, -1);
-    ControlIO().pfnSendMessage(lpdis->hwndItem, win32::LB_GETTEXT, lpdis->itemID, reinterpret_cast<LPARAM>(app.state.szWork));
+    cch = static_cast<int>(ControlIO().pfnSendMessage(lpdis->hwndItem, win32::LB_GETTEXT, lpdis->itemID, reinterpret_cast<LPARAM>(app.state.szWork)));
     win32::SelectPalette(lpdis->hDC, app.lpui->vhpal, 0);
     win32::RealizePalette(lpdis->hDC);
     ibmp = app.state.szWork[2] - 'A' + (app.state.szWork[3] - 'A') * 26;
@@ -1552,7 +1553,7 @@ void DrawDlgLBEntireItem(APPSESSION &app, DRAWITEMSTRUCT *lpdis, std::int16_t in
     cr = (lpdis->itemState & win32::ODS_FOCUS) ? app.lpui->crWindow : app.lpui->crWindow == 0 ? 0xffffff : 0;
     crForeSav = win32::SetTextColor(lpdis->hDC, cr);
     bkSav = win32::SetBkMode(lpdis->hDC, win32::TRANSPARENT);
-    win32::TextOutA(lpdis->hDC, rc.left + 66, rc.top + 0x20 - (app.state.dyArial8 >> 1), &app.state.szWork[4], std::strlen(&app.state.szWork[4]));
+    win32::TextOutA(lpdis->hDC, rc.left + 66, rc.top + 0x20 - (app.state.dyArial8 >> 1), &app.state.szWork[4], cch - 4);
     win32::SetTextColor(lpdis->hDC, crForeSav);
     win32::SetBkMode(lpdis->hDC, bkSav);
     HandleFocusState(app, lpdis, inflate + 2);
