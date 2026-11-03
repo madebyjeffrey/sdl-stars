@@ -278,11 +278,13 @@
         "carry-bounded-game-name-length-for-map-printing",
         "bounded-battle-plan-name-length",
         "typed-production-queue-array-shifts",
-        "typed-planet-pane-and-prefixed-label-shifts"
+        "typed-planet-pane-and-prefixed-label-shifts",
+        "typed-dialog-help-context-enumerator-call-sites"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
-        "post-migration-scratch-storage-and-borrowed-return-audit"
+        "post-migration-scratch-storage-and-borrowed-return-audit",
+        "verify-and-name-three-remaining-help-context-values"
       ],
       "metadata_scan": {
         "interface": "Typed integer field pack and span; no C varargs or va_arg.",
@@ -27506,14 +27508,14 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L05 typed planet-pane and prefixed label shifts",
-    "status": "Source commit 6b1a9d71 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
-    "parent": "aee4dd61",
-    "change": "Planet-pane TILE reordering and fixed 50-byte fleet/packet label prefix shifts now use typed std::move/std::move_backward ranges instead of four memmove calls.",
+    "batch": "L05 use help-context enumerators at dialog calls",
+    "status": "Source commit 7475dba8 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "parent": "ad433acf",
+    "change": "Three dialog help-context branches now pass their named HelpContextId enumerators instead of numeric ternaries and uint32_t casts.",
     "verification": {
-      "batch": "L05 typed planet-pane and prefixed label shifts",
+      "batch": "L05 use help-context enumerators at dialog calls",
       "source_commits": [
-        "6b1a9d71"
+        "7475dba8"
       ],
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
@@ -27531,8 +27533,8 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged. TILE reorder and fixed label shifts retain their same source/destination element ranges and byte extents; no game-state or record layout changed.",
-      "api_audit": "Four overlapping byte-count moves of UI-only TILE records and char text now use typed standard C++ range algorithms.",
+      "baseline": "Unchanged. The named enumerators have the same underlying values as the prior literals; help targets and dialog behavior are unchanged.",
+      "api_audit": "Transfer, custom transport order, and ship designer help contexts use existing HelpContextId values. Three other numeric context values remain to resolve against source material.",
       "remaining_strlen": "Three production std::strlen calls remain, all incoming C-string API/input boundaries; zero owned/fixed text scans remain.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
@@ -28486,8 +28488,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "6b1a9d71",
-  "latest_batch_status": "Source commit 6b1a9d71 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "7475dba8",
+  "latest_batch_status": "Source commit 7475dba8 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28504,7 +28506,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "6b1a9d71",
+    "source_head": "7475dba8",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28578,13 +28580,14 @@
     "map_print_game_name": "CommandHandler measures the fixed game-name field once within its array extent and reuses the byte count across printed map pages.",
     "inspector_snapshot_result": "Hierarchy capture returns std::optional<std::vector<STARSCOMPATWINDOW>> with owned std::string class/text fields; callers use value ownership without manual allocation/free or an always-true UTF-8 flag. JSON output and window inspection behavior remain unchanged.",
     "typed_production_queue_shifts": "Production queue insertion/removal shifts PROD ranges with std::move_backward/std::move instead of byte-count memmove; the literal four-byte stride and sizeof-based byte count are removed.",
-    "typed_planet_pane_shifts": "Planet pane TILE reordering and fleet/packet label prefix shifts use std::move/std::move_backward over the same element ranges, replacing four memmove calls."
+    "typed_planet_pane_shifts": "Planet pane TILE reordering and fleet/packet label prefix shifts use std::move/std::move_backward over the same element ranges, replacing four memmove calls.",
+    "typed_help_context_calls": "Three dialog branches now pass named HelpContextId values for transfer, custom transport order, and ship designer topics. Three numeric contexts remain: 1089, 1090, and 13002."
   },
-  "latest_change": "L05 typed planet-pane and prefixed label shifts",
+  "latest_change": "L05 use help-context enumerators at dialog calls",
   "latest_batch_verification": {
-    "batch": "L05 typed planet-pane and prefixed label shifts",
+    "batch": "L05 use help-context enumerators at dialog calls",
     "source_commits": [
-      "6b1a9d71"
+      "7475dba8"
     ],
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
@@ -28602,9 +28605,10 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. TILE reorder and fixed label shifts retain their same source/destination element ranges and byte extents; no game-state or record layout changed.",
-    "api_audit": "Four overlapping byte-count moves of UI-only TILE records and char text now use typed standard C++ range algorithms.",
+    "baseline": "Unchanged. The named enumerators have the same underlying values as the prior literals; help targets and dialog behavior are unchanged.",
+    "api_audit": "Transfer, custom transport order, and ship designer help contexts use existing HelpContextId values. Three other numeric context values remain to resolve against source material.",
     "remaining_strlen": "Three production std::strlen calls remain, all incoming C-string API/input boundaries; zero owned/fixed text scans remain.",
+    "remaining_numeric_help_contexts": [1089, 1090, 13002],
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass."
   }
