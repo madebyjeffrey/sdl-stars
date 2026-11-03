@@ -1444,23 +1444,33 @@ struct LIBRARYGAMECOPY {
 static std::int16_t FReadLibraryMetadata(std::string_view pszDirectory, std::span<char> pszName,
                                     int &iplr, long long &lPlayed, std::span<char> pszExchangeName) {
     char szFile[512], szLine[256];
+    std::optional<std::size_t> cchLine;
+    std::size_t cchLineContent, ichLineEnd;
     NATIVEFILE *pf;
     int iVersion, cchText, cch;
     std::int16_t fRead;
+    auto trimLine = [&](std::size_t cch) {
+        std::string_view szLineView{szLine, cch};
+        cchLineContent = szLineView.find('\0');
+        if (cchLineContent == std::string_view::npos) cchLineContent = szLineView.size();
+        ichLineEnd = szLineView.substr(0, cchLineContent).find_first_of("\r\n");
+        if (ichLineEnd != std::string_view::npos) cchLineContent = ichLineEnd;
+        szLine[cchLineContent] = 0;
+    };
     if (pszName.empty() || pszExchangeName.empty()) return 0;
     cch = CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s.library", pszDirectory, szDirSep);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return 0;
     pf = PfOpenNativeFile(szFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
-    fRead = CNativeScan(pf, "%d\n", &iVersion) == 1 && CchGetNativeLine(std::span{szLine}, pf);
+    fRead = CNativeScan(pf, "%d\n", &iVersion) == 1 && (cchLine = CchGetNativeLine(std::span{szLine}, pf)).has_value();
     if (fRead) {
-        szLine[std::strcspn(szLine, "\r\n")] = 0;
+        trimLine(*cchLine);
         cchText = CchSnprintf(pszName, "%s", szLine);
         fRead = cchText > 0 && static_cast<std::size_t>(cchText) < pszName.size() &&
                 CNativeScan(pf, "%d\n%lld\n", &iplr, &lPlayed) == 2;
     }
-    if (fRead && iVersion == 2 && CchGetNativeLine(std::span{szLine}, pf)) {
-        szLine[std::strcspn(szLine, "\r\n")] = 0;
+    if (fRead && iVersion == 2 && (cchLine = CchGetNativeLine(std::span{szLine}, pf)).has_value()) {
+        trimLine(*cchLine);
         cchText = CchSnprintf(pszExchangeName, "%s", szLine);
         fRead = cchText > 0 && static_cast<std::size_t>(cchText) < pszExchangeName.size();
     } else if (fRead && iVersion == 1) {
