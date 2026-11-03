@@ -175,7 +175,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         _Draw3dFrame(app, hdc, &app.lpui->rcMsgTitle, 0);
         crFore = win32::SetTextColor(hdc, app.lpui->crButtonText);
         crBack = win32::SetBkColor(hdc, app.lpui->crButtonFace);
-        cch = std::strlen(app.lpui->szMsgTitle);
+        cch = static_cast<std::int16_t>(app.lpui->cchMsgTitle);
         dxMax = app.lpui->rcMsgTitle.right - app.lpui->rcMsgTitle.left - 48;
         while (cch > 0 && static_cast<std::int16_t>(LOWORD(GetTextExtent(hdc, app.lpui->szMsgTitle, cch))) > dxMax) {
             cch = static_cast<std::int16_t>(CchUtf8Prefix(app.lpui->szMsgTitle, cch - 1));
@@ -744,7 +744,7 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
         }
         ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[1], app.lpui->mdMsgObj != mdMsgObjNone);
     FinishUp:
-        CchCopyUtf8Prefix(std::span{app.lpui->szMsgTitle}, app.state.szWork);
+        app.lpui->cchMsgTitle = CchCopyUtf8Prefix(std::span{app.lpui->szMsgTitle}, app.state.szWork);
         ControlIO().pfnInvalidateRect(app.lpui->hwndMessage, &app.lpui->rcMsgTitle, 1);
     }
     return;

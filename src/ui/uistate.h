@@ -239,6 +239,7 @@ struct APPUISTATE {
     alignas(std::max_align_t) char           szMineralTitle[90] = "";
     std::size_t                               cchMineralTitle = 0;
     alignas(std::max_align_t) char           szMsgTitle[90] = "";
+    std::size_t                               cchMsgTitle = 0;
     alignas(std::max_align_t) char           szPlanet[12] = "starsplanet";
     alignas(std::max_align_t) char           szPopupBuffer[256] = "";
     alignas(std::max_align_t) char           szPopup[11] = "starspopup";
