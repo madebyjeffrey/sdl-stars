@@ -169,13 +169,13 @@ static void test_FRunLogRecord_rejects_invalid_utf8_name(void) {
     if (cbPacked1) cOut = static_cast<std::int16_t>(*cbPacked1);
     TEST_ASSERT(cbPacked1);
     rt.rgb[0] = cOut;
-    TEST_CHECK(!FRunLogRecord(app, rtLogFleetName, offsetof(RTCHGNAME, rgb) + cOut + 1, (uint8_t *)&rt));
+    TEST_CHECK(!FRunLogRecord(app, rtLogFleetName, offsetof(RTCHGNAME, rgb) + cOut + 1, std::span{reinterpret_cast<std::uint8_t *>(&rt), sizeof(rt)}));
     TEST_CHECK(strcmp(lpfl->lpszName, "Original") == 0);
     rt.rgb[0] = 0;
     memcpy(rt.rgb + 1, "\xc3\xa9", 3);
-    TEST_CHECK(!FRunLogRecord(app, rtLogFleetName, offsetof(RTCHGNAME, rgb) + 3, (uint8_t *)&rt));
+    TEST_CHECK(!FRunLogRecord(app, rtLogFleetName, offsetof(RTCHGNAME, rgb) + 3, std::span{reinterpret_cast<std::uint8_t *>(&rt), sizeof(rt)}));
     TEST_CHECK(strcmp(lpfl->lpszName, "Original") == 0);
-    TEST_CHECK(FRunLogRecord(app, rtLogFleetName, offsetof(RTCHGNAME, rgb) + 4, (uint8_t *)&rt));
+    TEST_CHECK(FRunLogRecord(app, rtLogFleetName, offsetof(RTCHGNAME, rgb) + 4, std::span{reinterpret_cast<std::uint8_t *>(&rt), sizeof(rt)}));
     TEST_CHECK(strcmp(lpfl->lpszName, "\xc3\xa9") == 0);
 }
 
@@ -512,7 +512,7 @@ static void test_FRunLogRecord_production_bytes(void) {
     TEST_CHECK(!lppl->lpplprod);
     cPlanetSav = app.state.cPlanet;
     app.state.cPlanet = 0;
-    TEST_CHECK(!FRunLogRecord(app, rtLogPlanetProdQ, 0, nullptr));
+    TEST_CHECK(!FRunLogRecord(app, rtLogPlanetProdQ, 0, {}));
     app.state.cPlanet = cPlanetSav;
 }
 
@@ -650,8 +650,8 @@ static void test_battle_plan_prefix_replay(void) {
     std::strcpy(rgplan[0].szName, "First"); std::strcpy(rgplan[1].szName, "Second"); rgplan[1].iplan = 1;
     TEST_CHECK(FRunLogRecord(app, rtBtlPlan, 2, wrongOwner) && app.state.rgcbtlplan[0] == 2);
     TEST_CHECK(FRunLogRecord(app, rtBtlPlan, 2, badIndex) && app.state.rgcbtlplan[0] == 2);
-    TEST_CHECK(!FRunLogRecord(app, rtBtlPlan, 0, NULL));
-    TEST_CHECK(!FRunLogRecord(app, rtBtlPlan, 1, oneByte));
+    TEST_CHECK(!FRunLogRecord(app, rtBtlPlan, 0, {}));
+    TEST_CHECK(!FRunLogRecord(app, rtBtlPlan, 1, std::span<std::uint8_t>{oneByte, 0}));
     TEST_CHECK(!FRunLogRecord(app, rtBtlPlan, 2, shortPlan));
     TEST_CHECK(!FRunLogRecord(app, rtBtlPlan, 3, threeBytes));
     TEST_CHECK(FRunLogRecord(app, rtBtlPlan, 2, deletion));
@@ -694,7 +694,7 @@ static void test_control_record_partial_effects(void) {
     TEST_CHECK(FRunLogRecord(app, rtLogResearch, 0, valid)); // Declared length never became the old field-read bound.
     TEST_CHECK(app.state.rgplr[0].pctResearch == 100 && app.state.rgplr[0].iTechCur == 0x75);
     app.state.gd.fGeneratingTurn = 0; app.state.rgplr[0].lSalt = 42;
-    TEST_CHECK(FRunLogRecord(app, rtChgPassword, 0, NULL) && app.state.rgplr[0].lSalt == 42);
+    TEST_CHECK(FRunLogRecord(app, rtChgPassword, 0, {}) && app.state.rgplr[0].lSalt == 42);
     app.state.gd.fGeneratingTurn = 1;
     TEST_CHECK(FRunLogRecord(app, rtChgPassword, 0, password) && app.state.rgplr[0].lSalt == 0x12345678);
     TEST_CHECK(FRunLogRecord(app, rtChgPassword, 4, minusOne) && app.state.rgplr[0].lSalt == -1);
@@ -889,7 +889,7 @@ static void test_routing_replay_read_boundaries(void) {
     }
     TEST_CHECK(rtLogThingByteParam == rtThing);
     TEST_CHECK(!FRunLogRecord(app, rtLogThingByteParam, 0, noThing));
-    TEST_CHECK(FRunLogRecord(app, static_cast<RecordType>(63), 0, NULL));
+    TEST_CHECK(FRunLogRecord(app, static_cast<RecordType>(63), 0, {}));
 }
 
 static void ChangeZipProdDuringAlert() {
@@ -929,14 +929,14 @@ static void test_zipprod_replay_and_callback_order(void) {
             expected[2 + i * 2] = static_cast<uint8_t>(0xc0 + i); expected[3 + i * 2] = 0xa5;
         }
         memcpy(expected, incoming, cb);
-        TEST_CHECK(FRunLogRecord(app, rtLogPlayerZpq1, cb, cb == 0 ? nullptr : incoming));
+        TEST_CHECK(FRunLogRecord(app, rtLogPlayerZpq1, cb, cb == 0 ? std::span<std::uint8_t>{} : std::span{incoming}));
         FEncodeZipProdQ1(app.state.rgplr[0].zpq1, std::as_writable_bytes(std::span(actual)));
         TEST_CHECK(!memcmp(actual, expected, 26));
     }
-    TEST_CHECK(!FRunLogRecord(app, rtLogPlayerZpq1, -1, nullptr));
-    TEST_CHECK(!FRunLogRecord(app, rtLogPlayerZpq1, 27, nullptr));
+    TEST_CHECK(!FRunLogRecord(app, rtLogPlayerZpq1, -1, {}));
+    TEST_CHECK(!FRunLogRecord(app, rtLogPlayerZpq1, 27, {}));
     app.state.gd.fGeneratingTurn = 0;
-    TEST_CHECK(FRunLogRecord(app, rtLogPlayerZpq1, -1, nullptr));
+    TEST_CHECK(FRunLogRecord(app, rtLogPlayerZpq1, -1, {}));
     lpLogSav = app.state.lpLog; imemSav = app.state.imemLogCur; imemPrevSav = app.state.imemLogPrev; hdrSav = app.state.hdrPrev;
     app.state.lpLog = rgbLog.data(); app.state.imemLogCur = 31999; app.state.fLogOff = 0; app.state.game.fDirty = 1;
     app.state.vrgZipProd[0].fNoResearch = 1; app.state.vrgZipProd[0].cpq = 0;

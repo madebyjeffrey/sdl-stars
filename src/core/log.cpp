@@ -642,14 +642,16 @@ std::int16_t FRunLogFile(APPSESSION &app) {
     app.state.fLogOff = 1;
     for (; iCur < app.state.imemLogCur; iCur += HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb() + 2) {
         lprts = app.state.lpLog + iCur;
-        fRet &= FRunLogRecord(app, static_cast<RecordType>(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).rt()), HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb(), app.state.lpLog + (2 + iCur));
+        fRet &= FRunLogRecord(app, static_cast<RecordType>(HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).rt()),
+                              HdvFromPrefix(std::span<std::uint8_t, cbWireHdr>{lprts, cbWireHdr}).cb(),
+                              std::span{app.state.lpLog, std::size_t{32000}}.subspan(static_cast<std::size_t>(2 + iCur)));
     }
     app.state.fLogOff = fLogOld;
     app.state.gd.fFleetLinkValid = 0;
     return fRet;
 }
 
-std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std::uint8_t *lpb) {
+std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std::span<std::uint8_t> rgbPayload) {
     std::int16_t   fExtra;
     std::int32_t   cXfer;
     XFERFULL *lpxfCur;
@@ -682,6 +684,8 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     std::int16_t idFleet, cShipXfer;
     std::size_t cchName;
     char *pchNameEnd;
+
+    std::uint8_t *lpb = rgbPayload.data();
 
     lpxfCur = nullptr;
     switch (rt) {
