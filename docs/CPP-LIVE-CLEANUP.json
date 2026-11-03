@@ -27965,8 +27965,8 @@
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
     "latest_source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
-    "latest_batch_status": "Source commit af80ed26 is verified locally; ledger checkpoint and push pending. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
-    "latest_published_head": "e8397da8",
+    "latest_batch_status": "Source commit af80ed26 and ledger checkpoint 6cee4543 are published on origin/develop. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_published_head": "6cee4543",
     "latest_batch_verification": {
       "batch": "L05 retire lstrlenA and bound UI text measurement",
       "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
@@ -28462,7 +28462,7 @@
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
     "latest_source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
-    "latest_batch_status": "Source commit af80ed26 is verified locally; ledger checkpoint and push pending. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_batch_status": "Source commit af80ed26 and ledger checkpoint 6cee4543 are published on origin/develop. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_change": "L05 retire lstrlenA and bound UI text measurement",
     "latest_batch_verification": {
       "batch": "L05 retire lstrlenA and bound UI text measurement",
@@ -28505,10 +28505,10 @@
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
-    "latest_published_head": "e8397da8"
+    "latest_published_head": "6cee4543"
   },
   "latest_source_commit": "af80ed26e5f24914bda8a9638575c80ea983cc40",
-  "latest_batch_status": "Source commit af80ed26 is verified locally; ledger checkpoint and push pending. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_batch_status": "Source commit af80ed26 and ledger checkpoint 6cee4543 are published on origin/develop. macOS SDL Debug build, library publication/safety/delete/import workflows, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28638,6 +28638,7 @@
     "baseline": "Unchanged; pending-directory creation, asynchronous game completion, rollback and metadata publication retain the same path and capacity.",
     "api_audit": "APPUISTATE owns the pending game-library path across game generation. LIBRARYPATHS carries it as a fixed-extent span; the remove callback reads the same session owner.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-    "diff_check": "Pass."
+    "diff_check": "Pass.",
+    "ledger_commit": "6cee4543"
   }
 }
