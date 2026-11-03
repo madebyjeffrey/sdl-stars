@@ -3625,7 +3625,7 @@
     ]
   },
   "current_source_audit": {
-    "source_head": "c4ef34df",
+    "source_head": "a250299b7ff5a51c9cbc7c036f1d48d49ebc6ce5",
     "scope": "Owned production source and compatibility implementation/header trees: src, compat/win32/src and compat/win32/include.",
     "raw_copy_calls": 0,
     "spellings_checked": [
@@ -3635,7 +3635,13 @@
       "strncat"
     ],
     "evidence": "The current source was rebuilt and the maintained lexical manifest passed; no owned production call sites were found. The manifest enforces the empty raw-copy inventory against reintroduction.",
-    "remaining_work": "Borrowed scratch return and other bounded text/service interfaces remain in L05/L06; Windows/Linux qualification remains open.",
+    "remaining_work": "Bounded text destination and shared scratch/borrowed-return audits remain in L05; current-source Windows/Linux qualification remains open.",
     "historical_counts": "Per-batch remaining-site counts below record their original checkpoints; this current source audit supersedes them."
+  },
+  "imported_turn_path_views": {
+    "status": "complete; locally verified; current-source Windows/Linux qualification pending",
+    "interface": "FImportSubsequentTurn and FInspectImportPlayer use std::string_view paths.",
+    "change": "FImportLibraryGame passes its already validated source view through turn import; basename and .m1-.m16 suffix checks use bounded views rather than C-string pointer walks.",
+    "verification": "Strict macOS Debug build, library publication and file-workflow checks 2/2, desktop units 18/18, native regression 519 matches with zero differences/errors, tutorial smoke 1/1. See docs/CPP-LIVE-CLEANUP.json."
   }
 }
