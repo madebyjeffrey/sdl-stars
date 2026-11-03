@@ -63,7 +63,7 @@ std::int16_t FSendPlrMsg(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, Msg
     std::int16_t  cbMsg;
     std::uint8_t *lpb;
 
-    cbMsg = PackageUpMsg(app, rgbWork, iPlr, iMsg, iObj, p1, p2, p3, p4, p5, p6, p7);
+    cbMsg = PackageUpMsg(app, std::span{rgbWork}, iPlr, iMsg, iObj, p1, p2, p3, p4, p5, p6, p7);
     if (cbMsg <= 0) {
         if (cbMsg == 0) {
             return 1;
@@ -81,7 +81,7 @@ std::int16_t FSendPrependedPlrMsg(APPSESSION &app, std::int16_t iPlr, MessageId 
     std::uint8_t rgbWork[40];
     std::int16_t cbMsg;
 
-    cbMsg = PackageUpMsg(app, rgbWork, iPlr, iMsg, iObj, p1, p2, p3, p4, p5, p6, p7);
+    cbMsg = PackageUpMsg(app, std::span{rgbWork}, iPlr, iMsg, iObj, p1, p2, p3, p4, p5, p6, p7);
     if (cbMsg <= 0) {
         if (cbMsg == 0) {
             return 1;
@@ -95,15 +95,14 @@ std::int16_t FSendPrependedPlrMsg(APPSESSION &app, std::int16_t iPlr, MessageId 
     return 1;
 }
 
-std::int16_t PackageUpMsg(APPSESSION &app, std::uint8_t *pb, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2, std::int16_t p3, std::int16_t p4, std::int16_t p5, std::int16_t p6,
+std::int16_t PackageUpMsg(APPSESSION &app, std::span<std::uint8_t> rgb, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2, std::int16_t p3, std::int16_t p4, std::int16_t p5, std::int16_t p6,
                      std::int16_t p7) {
     std::int16_t *pi;
     std::int16_t  i;
     std::uint16_t grbit;
-    std::uint8_t *lpmt;
     MSGTURN mt{};
-    std::uint8_t *lpb;
-    std::uint8_t *lpbBase;
+    std::size_t ib;
+    std::span<std::uint8_t> rgbMsgHdr;
     std::int16_t  rgArgs[7];
 
     if (iPlr == iplrNone) {
@@ -123,15 +122,16 @@ std::int16_t PackageUpMsg(APPSESSION &app, std::uint8_t *pb, std::int16_t iPlr, 
     if (static_cast<std::uint16_t>((app.state.imemMsgCur + 20)) > 0xffc8) {
         return -1;
     }
-    lpb = pb;
-    lpmt = lpb;
+    if (rgb.size() < cbWireMsgTurn + static_cast<std::size_t>(rgcMsgArgs[iMsg]) * 2) {
+        return -1;
+    }
+    rgbMsgHdr = rgb.first<cbWireMsgTurn>();
     mt.iPlr = iPlr & 0xf;
     mt.msghdr.iMsg = iMsg;
     mt.msghdr.grWord = 0;
     mt.msghdr.wGoto = iObj;
-    FEncodeMsgTurn(mt, std::as_writable_bytes(std::span(lpb, cbWireMsgTurn)));
-    lpb += 5;
-    lpbBase = lpb;
+    FEncodeMsgTurn(mt, std::as_writable_bytes(rgbMsgHdr));
+    ib = cbWireMsgTurn;
     grbit = 1;
     rgArgs[0] = p1;
     rgArgs[1] = p2;
@@ -144,19 +144,20 @@ std::int16_t PackageUpMsg(APPSESSION &app, std::uint8_t *pb, std::int16_t iPlr, 
     i = 0;
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
-            MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{lpmt, cbWireMsgTurn}).msghdr().SetGrWord(MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{lpmt, cbWireMsgTurn}).msghdr().grWord() | grbit);
-            SetMsgParam(lpb, *pi);
-            lpb += 2;
+            MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{rgbMsgHdr.data(), cbWireMsgTurn}).msghdr().SetGrWord(
+                MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{rgbMsgHdr.data(), cbWireMsgTurn}).msghdr().grWord() | grbit);
+            SetMsgParam(std::span<std::uint8_t, 2>{rgb.data() + ib, 2}, *pi);
+            ib += 2;
         } else {
-            *lpb = *pi;
-            lpb++;
+            rgb[ib] = static_cast<std::uint8_t>(*pi);
+            ib++;
         }
         i++;
         pi++;
         grbit *= 2;
     }
-    MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{lpmt, cbWireMsgTurn}).SetCbParams((lpb - lpbBase) & 0xf);
-    return lpb - pb;
+    MtvFromPrefix(std::span<std::uint8_t, cbWireMsgTurn>{rgbMsgHdr.data(), cbWireMsgTurn}).SetCbParams((ib - cbWireMsgTurn) & 0xf);
+    return static_cast<std::int16_t>(ib);
 }
 
 std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2) {
@@ -189,7 +190,7 @@ std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId 
     while (i < rgcMsgArgs[iMsg]) {
         if (*pi & 0xff00) {
             MhvFromPrefix(std::span<std::uint8_t, cbWireMsgHdr>{pmsghdr, cbWireMsgHdr}).SetGrWord(MhvFromPrefix(std::span<std::uint8_t, cbWireMsgHdr>{pmsghdr, cbWireMsgHdr}).grWord() | grbit);
-            SetMsgParam(pb, *pi);
+            SetMsgParam(std::span<std::uint8_t, 2>{pb, 2}, *pi);
             pb += 2;
         } else {
             *pb = *pi;

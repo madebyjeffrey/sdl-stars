@@ -529,6 +529,8 @@ static void TestMessagePackingAdmissionAndPrepend(void) {
     TEST_CHECK(PackageUpMsg(app, rgb, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0) == 0);
     for (uint8_t b : rgb) TEST_CHECK(b == 0xa5);
     app.state.rgplr[1].fAi = 0;
+    TEST_CHECK(PackageUpMsg(app, std::span<std::uint8_t>{rgb, 7}, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0) == -1);
+    for (uint8_t b : rgb) TEST_CHECK(b == 0xa5);
     app.state.imemMsgCur = static_cast<int16_t>(0xffc8 - 20);
     cb = PackageUpMsg(app, rgb, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 255, -1, 0, 0, 0, 0, 0);
     TEST_CHECK(cb == 8);

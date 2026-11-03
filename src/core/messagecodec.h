@@ -57,8 +57,8 @@ inline std::uint16_t WMsgParam(const std::uint8_t *lpb) noexcept {
     NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadU16Le(w);
     return w;
 }
-inline void SetMsgParam(std::uint8_t *lpb, std::uint16_t w) noexcept {
-    NATIVEBYTEWRITER(std::as_writable_bytes(std::span(lpb, 2))).FWriteU16Le(w);
+inline void SetMsgParam(std::span<std::uint8_t, 2> lpb, std::uint16_t w) noexcept {
+    NATIVEBYTEWRITER(std::as_writable_bytes(lpb)).FWriteU16Le(w);
 }
 
 #endif
