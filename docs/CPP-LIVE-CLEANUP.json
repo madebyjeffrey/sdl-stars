@@ -28022,8 +28022,8 @@
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
     "latest_source_commit": "5e61b9d3799e4d8bba13f0d284abb4759201f8bb",
-    "latest_batch_status": "Source commit 5e61b9d3 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
-    "latest_published_head": "a0ab8995",
+    "latest_batch_status": "Source commit 5e61b9d3 and ledger checkpoint 4b8b1a1c are published on origin/develop. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_published_head": "4b8b1a1c",
     "latest_batch_verification": {
       "batch": "L05 move race library root into UI session state",
       "source_commit": "5e61b9d3799e4d8bba13f0d284abb4759201f8bb",
@@ -28040,7 +28040,8 @@
       "baseline": "Unchanged; race-library initialization, save, import, export, delete, enumeration and managed-file checks retain the same 256-byte path capacity and behavior.",
       "api_audit": "APPUISTATE owns the race-library root. Initialization, staging and managed-file checks receive APPSESSION; MDI passes the owning session through the managed-race query.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass."
+      "diff_check": "Pass.",
+      "ledger_commit": "4b8b1a1c6b781109d7da6835e9d16defdcc4e0d3"
     },
     "latest_progress_batch": {
       "batch": "L05 move race library root into UI session state",
@@ -28059,13 +28060,14 @@
       "api_audit": "APPUISTATE owns the race-library root. Initialization, staging and managed-file checks receive APPSESSION; MDI passes the owning session through the managed-race query.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit 5e61b9d3 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit 5e61b9d3 and ledger checkpoint 4b8b1a1c are published on origin/develop. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the remaining shared game-library root path; then continue L06 service interfaces and L08 platform qualification."
+      "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the remaining shared game-library root path; then continue L06 service interfaces and L08 platform qualification.",
+      "ledger_commit": "4b8b1a1c6b781109d7da6835e9d16defdcc4e0d3"
     }
   },
   "milestone_d_checkpoint": {
@@ -28526,7 +28528,7 @@
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
     "latest_source_commit": "5e61b9d3799e4d8bba13f0d284abb4759201f8bb",
-    "latest_batch_status": "Source commit 5e61b9d3 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_batch_status": "Source commit 5e61b9d3 and ledger checkpoint 4b8b1a1c are published on origin/develop. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_change": "L05 move race library root into UI session state",
     "latest_batch_verification": {
       "batch": "L05 move race library root into UI session state",
@@ -28544,7 +28546,8 @@
       "baseline": "Unchanged; race-library initialization, save, import, export, delete, enumeration and managed-file checks retain the same 256-byte path capacity and behavior.",
       "api_audit": "APPUISTATE owns the race-library root. Initialization, staging and managed-file checks receive APPSESSION; MDI passes the owning session through the managed-race query.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass."
+      "diff_check": "Pass.",
+      "ledger_commit": "4b8b1a1c6b781109d7da6835e9d16defdcc4e0d3"
     },
     "latest_progress_batch": {
       "batch": "L05 move race library root into UI session state",
@@ -28563,23 +28566,24 @@
       "api_audit": "APPUISTATE owns the race-library root. Initialization, staging and managed-file checks receive APPSESSION; MDI passes the owning session through the managed-race query.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit 5e61b9d3 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit 5e61b9d3 and ledger checkpoint 4b8b1a1c are published on origin/develop. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the remaining shared game-library root path; then continue L06 service interfaces and L08 platform qualification."
+      "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the remaining shared game-library root path; then continue L06 service interfaces and L08 platform qualification.",
+      "ledger_commit": "4b8b1a1c6b781109d7da6835e9d16defdcc4e0d3"
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
-    "latest_published_head": "a0ab8995"
+    "latest_published_head": "4b8b1a1c"
   },
   "latest_source_commit": "5e61b9d3799e4d8bba13f0d284abb4759201f8bb",
-  "latest_batch_status": "Source commit 5e61b9d3 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_batch_status": "Source commit 5e61b9d3 and ledger checkpoint 4b8b1a1c are published on origin/develop. macOS SDL Debug build, race-library workflow, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
