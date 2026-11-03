@@ -137,7 +137,7 @@ std::int32_t CBattleUnits(APPSESSION &app, std::uint8_t *lpbd, BattleUnitFlags g
     return lUnits;
 }
 
-std::int32_t CBattleKills(APPSESSION &app, std::uint8_t *lpbd, std::int16_t fOurDead) {
+std::int32_t CBattleKills(APPSESSION &app, std::uint8_t *lpbd, bool fOurDead) {
     std::int32_t  cKilled;
     std::uint8_t *lpbdNext;
     std::int16_t  i;

@@ -15,7 +15,7 @@ struct VCRSTATS {
 void             BattleVCR(APPSESSION &app, std::int16_t iBattle);
 std::uint8_t         *BtlDataGet(APPSESSION &app, std::int16_t i);
 std::int32_t          CBattleUnits(APPSESSION &app, std::uint8_t *lpbd, BattleUnitFlags grbitBU);
-std::int32_t          CBattleKills(APPSESSION &app, std::uint8_t *lpbd, std::int16_t fOurDead);
+std::int32_t          CBattleKills(APPSESSION &app, std::uint8_t *lpbd, bool fOurDead);
 std::int32_t          LdpFromItokDv(APPSESSION &app, std::int16_t itok, DV dv);
 std::int16_t          SetVCRBoard(APPSESSION &app, std::int16_t iStep);
 INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
