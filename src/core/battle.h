@@ -12,6 +12,11 @@ struct INITIATIVERANGE {
     std::int16_t initMac;
 };
 
+struct MOVEMENTRANGECANDIDATE {
+    std::int16_t dz;
+    std::uint8_t brcOOR;
+};
+
 std::int16_t FDeleteBattlePlan(APPSESSION &app, std::int16_t iplan, std::int16_t fWarn);
 std::int16_t FFleetHasBombs(APPSESSION &app, FLEET *lpfl);
 std::int16_t FHullHasBombs(HUL *lphul);
@@ -34,7 +39,7 @@ void    RandomizeTokOrder(APPSESSION &app);
 INITIATIVERANGE InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint16_t grfPlayer, std::span<std::uint8_t, 64> rgfInit);
 std::int16_t DzFromBrcBrc(std::uint8_t brc1, std::uint8_t brc2);
 std::int32_t DpFromPtokBrcToBrc(APPSESSION &app, TOK *ptok, std::uint8_t brcSrc, std::uint8_t brcTarget, TOK *ptokTarget, std::int16_t fProximity);
-std::int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack, std::uint8_t *pbrc);
+MOVEMENTRANGECANDIDATE DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack);
 std::int16_t FDoesPrimaryTargetTypeExist(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack);
 std::int16_t FIsTargetOfMdTarget(TOK *ptok, MdTarget mdTarget);
 std::int32_t ScoreGuessBattleDamage(APPSESSION &app, TOK *ptokSrc, std::uint8_t brc, std::int16_t fPrimary, std::uint16_t grfAttack);

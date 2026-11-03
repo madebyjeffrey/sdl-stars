@@ -1151,7 +1151,7 @@ std::int32_t DpFromPtokBrcToBrc(APPSESSION &app, TOK *ptok, std::uint8_t brcSrc,
     return dpTotal;
 }
 
-std::int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack, std::uint8_t *pbrc) {
+MOVEMENTRANGECANDIDATE DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack) {
     std::int16_t  dzNonSapper;
     std::uint8_t  dz;
     std::int16_t  iplr;
@@ -1162,6 +1162,7 @@ std::int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grf
     TOK     *ptokTarget;
     std::int16_t  dzMax;
     std::uint8_t  brcCur;
+    std::uint8_t  brcOOR;
     std::int16_t  ihs;
     SHDEF   *lpshdef;
     HUL     *lphul;
@@ -1172,7 +1173,7 @@ std::int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grf
     mdTarget = static_cast<MdTarget>(!FDoesPrimaryTargetTypeExist(app, ptok, grfAttack) ? ptok->mdTarget2 : ptok->mdTarget1);
     iplr = ptok->iplr;
     dzBest = 10;
-    *pbrc = 0xff;
+    brcOOR = 0xff;
     if (ptok->dxyLim == 3) {
         dzNonSapper = -1;
         lpshdef = LpshdefFromTok(app, ptok);
@@ -1204,18 +1205,17 @@ std::int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grf
                 dz++;
             }
             if (dz <= dzMax && (ptokTarget->dpShield > 0 || dzNonSapper == ptok->dxyLim || dz <= static_cast<std::uint16_t>((dzNonSapper + ptok->dMovesLeft)))) {
-                *pbrc = 0xff;
-                return ptok->dMovesLeft;
+                return {ptok->dMovesLeft, 0xff};
             }
             if (static_cast<std::int16_t>(dz) < dzBest && DpFromPtokBrcToBrc(app, ptok, 0, 0, ptokTarget, 0) > 0) {
                 dzBest = dz;
-                *pbrc = ptokTarget->brc;
+                brcOOR = ptokTarget->brc;
             }
         }
         itokLook++;
         ptokTarget++;
     }
-    return 1;
+    return {1, brcOOR};
 }
 
 std::int16_t FDoesPrimaryTargetTypeExist(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack) {
@@ -1444,7 +1444,7 @@ std::int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, std::int16_t spdMove, std:
     std::int16_t      dy;
     BattleTactic mdTactic;
     std::int16_t      y;
-    std::uint8_t      brcOOR;
+    MOVEMENTRANGECANDIDATE moveRange;
     std::int16_t      i;
     std::int16_t      yCur;
     std::uint8_t      brcBest;
@@ -1475,7 +1475,8 @@ std::int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, std::int16_t spdMove, std:
             rgscoreNear[x][y] = 30000000;
         }
     }
-    dz = DzMoveRangeToConsider(app, ptok, grfAttack, &brcOOR);
+    moveRange = DzMoveRangeToConsider(app, ptok, grfAttack);
+    dz = moveRange.dz;
     x = xCur - dz;
     if (x < 0) {
         x = 0;
@@ -1530,8 +1531,8 @@ std::int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, std::int16_t spdMove, std:
             }
         }
     }
-    if (brcOOR != 0xff) {
-        brcBest = brcOOR;
+    if (moveRange.brcOOR != 0xff) {
+        brcBest = moveRange.brcOOR;
     }
     dzAway = DzFromBrcBrc(ptok->brc, brcBest);
     if (dzAway > 1) {
