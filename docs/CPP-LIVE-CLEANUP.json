@@ -302,7 +302,8 @@
         "library-game-name-input-view",
         "library-game-list-owned-name",
         "fleet-rename-owned-name-view",
-        "scanner-find-names-use-bounded-views"
+        "scanner-find-names-use-bounded-views",
+        "built-in-race-name-comparisons-use-bounded-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1780,6 +1781,30 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged. The first sort key still truncates into the same 80-byte scratch array at complete UTF-8 boundaries; comparison keeps the same lexical ordering and tie results.",
           "api_audit": "Planet-name sorting uses PLANETNAMERESULT::view and a bounded prefix comparison instead of raw C-string pointers and strcmp.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 built-in race-name comparisons use bounded views",
+          "source_commit": "8c63b70ab4bace5091d6eb39992112c8b524a507",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. Player-name duplicate detection and built-in humanoid/berserker matching preserve their existing NUL-terminated comparison behavior.",
+          "api_audit": "Five std::strcmp comparisons in game creation and the race wizard now compare std::string_view values over the same NUL-terminated fields. No record layout or text capacity changed.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -29101,8 +29126,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "f1748d2ddb9e162c0232f77cae66cdf1eb873fe5",
-  "latest_batch_status": "Source commit f1748d2d verified locally. Strict macOS SDL Debug build, focused library workflows 2/2, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "8c63b70ab4bace5091d6eb39992112c8b524a507",
+  "latest_batch_status": "Source commit 8c63b70a verified locally. Strict macOS SDL Debug build, desktop/host units, native/host regressions, and tutorial smoke pass with unchanged baselines. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -29226,48 +29251,60 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L05 scanner find uses bounded name views",
+  "latest_change": "L05 built-in race-name comparisons use bounded views",
   "latest_batch_verification": {
-    "batch": "L05 scanner planet and fleet name matching uses bounded views",
-    "source_commit": "c8d03631",
+    "batch": "L05 built-in race-name comparisons use bounded views",
+    "source_commit": "8c63b70ab4bace5091d6eb39992112c8b524a507",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "Not applicable; this batch changes only desktop UI code.",
+    "host_unit_tests": "29/29 pass.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
+    "host_regression": {
+      "matches": 519,
+      "warnings": 25,
+      "differences_errors": 0,
+      "skipped": 0
+    },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "All native regression checkpoints match. Exact and partial planet matching, fleet-name prefix handling, case-insensitive comparisons, and fleet-number parsing retain their prior rules.",
-    "api_audit": "FSelectSz now keeps its bounded input as string_view, compares planet/fleet names through bounded views, and parses fleet-number suffixes without temporary NUL-terminated storage or strcmpi/strnicmp calls.",
+    "baseline": "Unchanged. Player-name duplicate detection and built-in humanoid/berserker matching preserve their existing NUL-terminated comparison behavior.",
+    "api_audit": "Five std::strcmp comparisons in game creation and the race wizard now compare std::string_view values over the same NUL-terminated fields. No record layout or text capacity changed.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L05 scanner planet and fleet name matching uses bounded views",
-    "source_commit": "c8d03631",
+    "batch": "L05 built-in race-name comparisons use bounded views",
+    "source_commit": "8c63b70ab4bace5091d6eb39992112c8b524a507",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "Not applicable; this batch changes only desktop UI code.",
+    "host_unit_tests": "29/29 pass.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
+    "host_regression": {
+      "matches": 519,
+      "warnings": 25,
+      "differences_errors": 0,
+      "skipped": 0
+    },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "All native regression checkpoints match. Exact and partial planet matching, fleet-name prefix handling, case-insensitive comparisons, and fleet-number parsing retain their prior rules.",
-    "api_audit": "FSelectSz now keeps its bounded input as string_view, compares planet/fleet names through bounded views, and parses fleet-number suffixes without temporary NUL-terminated storage or strcmpi/strnicmp calls.",
+    "baseline": "Unchanged. Player-name duplicate detection and built-in humanoid/berserker matching preserve their existing NUL-terminated comparison behavior.",
+    "api_audit": "Five std::strcmp comparisons in game creation and the race wizard now compare std::string_view values over the same NUL-terminated fields. No record layout or text capacity changed.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit c8d03631 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit 8c63b70a verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
-    "next": "Continue remaining L05 bounded-text destinations and scratch/borrowed-return audit, L06 buffer and native file/path results, and L08 Windows/Linux qualification."
+    "next": "Continue L05 bounded text destinations, const-text and scratch/borrowed-return audits; finish L06 remaining interfaces and chooser qualification; complete L08 current-source Windows/Linux qualification."
   }
 }
