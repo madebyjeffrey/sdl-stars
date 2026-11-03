@@ -2710,7 +2710,8 @@
         "remaining-native-file-path-results",
         "message-packing-output-and-parameter-spans",
         "bounded-message-parameter-spans-and-stack-message-cursor",
-        "battle-initialization-spans-and-results"
+        "battle-initialization-spans-and-results",
+        "movement-range-output-pointer-replaced-with-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces"
@@ -3832,6 +3833,31 @@
           },
           "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
           "api_audit": "CheckWeapons and InitializeBoard take a fixed 64-byte initiative span; InitializeBoard returns INITIATIVERANGE instead of two output pointers. FAttack takes a fixed battle-record span. The 64-byte initialization array, six-byte battle record, field widths and serialized output are unchanged.",
+          "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "Return movement range result",
+          "parent": "cb7b3838",
+          "source_commit": "b99bbcf8",
+          "macos_sdl_debug_build": "make test-unit rebuilt owned SDL production, test and header-check translation units with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
+          "api_audit": "DzMoveRangeToConsider returns MOVEMENTRANGECANDIDATE containing its movement distance and out-of-range coordinate rather than writing through a byte pointer. The default 0xff coordinate and early-return behavior are preserved.",
           "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
           "diff_check": "Pass."
         }
@@ -28537,7 +28563,7 @@
     "date": "2026-11-03",
     "reason": "Resume the live C++ cleanup after publishing the toolbar ownership batch and accumulated cleanup commits to develop.",
     "branch": "develop",
-    "latest_batch": "Use typed battle initialization results",
+    "latest_batch": "Return movement range result",
     "latest_published_head": "8eb069fc",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -29996,14 +30022,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "417cbbe7",
-  "latest_batch_status": "Source commit 417cbbe7 verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "b99bbcf8",
+  "latest_batch_status": "Source commit b99bbcf8 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "417cbbe7",
+      "source_commit": "b99bbcf8",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -30238,11 +30264,11 @@
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
   },
-  "latest_change": "Use typed battle initialization results",
+  "latest_change": "Return movement range result",
   "latest_batch_verification": {
-    "batch": "Use typed battle initialization results",
-    "parent": "682ec2d3",
-    "source_commit": "417cbbe7",
+    "batch": "Return movement range result",
+    "parent": "cb7b3838",
+    "source_commit": "b99bbcf8",
     "macos_sdl_debug_build": "make test-unit rebuilt owned SDL production, test and header-check translation units with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30260,14 +30286,14 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
-    "api_audit": "CheckWeapons and InitializeBoard take a fixed 64-byte initiative span; InitializeBoard returns INITIATIVERANGE instead of two output pointers. FAttack takes a fixed battle-record span. The 64-byte initialization array, six-byte battle record, field widths and serialized output are unchanged.",
+    "api_audit": "DzMoveRangeToConsider returns MOVEMENTRANGECANDIDATE containing its movement distance and out-of-range coordinate rather than writing through a byte pointer. The default 0xff coordinate and early-return behavior are preserved.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use typed battle initialization results",
-    "parent": "682ec2d3",
-    "source_commit": "417cbbe7",
+    "batch": "Return movement range result",
+    "parent": "cb7b3838",
+    "source_commit": "b99bbcf8",
     "macos_sdl_debug_build": "make test-unit rebuilt owned SDL production, test and header-check translation units with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30285,10 +30311,10 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
-    "api_audit": "CheckWeapons and InitializeBoard take a fixed 64-byte initiative span; InitializeBoard returns INITIATIVERANGE instead of two output pointers. FAttack takes a fixed battle-record span. The 64-byte initialization array, six-byte battle record, field widths and serialized output are unchanged.",
+    "api_audit": "DzMoveRangeToConsider returns MOVEMENTRANGECANDIDATE containing its movement distance and out-of-range coordinate rather than writing through a byte pointer. The default 0xff coordinate and early-return behavior are preserved.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit 417cbbe7 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit b99bbcf8 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
