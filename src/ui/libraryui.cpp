@@ -2955,7 +2955,7 @@ void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc) {
     int y;
     Uint64 msStart = CompatTimeIO().pfnGetTicks();
 
-    StarsCompatSetWindowAlertSounds(hwnd, 0);
+    StarsCompatSetWindowAlertSounds(hwnd, false);
     fHostLibraryView = 0;
     if (std::getenv("STARS_DEBUG_LIBRARY_STARTUP"))
         std::fprintf(stderr, "[DEBUG-library-startup] InitLibraryGames begin hwnd=%p\n", static_cast<void *>(hwnd));

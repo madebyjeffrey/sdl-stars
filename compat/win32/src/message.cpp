@@ -202,7 +202,7 @@ static BOOL PushAsyncPost(COMPATASYNCPOST *lp) noexcept {
     return fOk;
 }
 
-BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+bool StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (SDL_IsMainThread()) return win32::PostMessageA(hwnd, msg, wParam, lParam);
     void *pv = CompatMessageAllocIO().pfnAllocate(sizeof(COMPATASYNCPOST));
     if (!pv) return 0;
@@ -211,7 +211,7 @@ BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     return PushAsyncPost(lp);
 }
 
-BOOL StarsCompatPostOwnedMessageAsync(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
+bool StarsCompatPostOwnedMessageAsync(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
     if (SDL_IsMainThread()) return PostOwnedMessage(idWindow, msg, std::move(payload), lParam);
     if (!payload) return 0;
     void *pv = CompatMessageAllocIO().pfnAllocate(sizeof(COMPATASYNCPOST));

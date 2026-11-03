@@ -14,13 +14,13 @@
  * wizard pages. Logical HWNDs and controls still have independent lifetimes.
  * End the sequence on every exit path; nested sequences are rejected without changing state.
  */
-BOOL StarsCompatBeginDialogSequence(HWND hwndOwner);
+bool StarsCompatBeginDialogSequence(HWND hwndOwner);
 void StarsCompatEndDialogSequence(void);
 
 /* Message boxes owned by this window, its children or its owned windows can
  * be silent. Other windows and explicit MessageBeep calls keep their sounds.
  */
-BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable);
+bool StarsCompatSetWindowAlertSounds(HWND hwnd, bool fEnable);
 
 /* UI-thread inspection. IDs identify logical windows, never native SDL windows,
  * and are not reused during the process lifetime (including runtime restarts).
@@ -40,7 +40,7 @@ struct STARSCOMPATWINDOW {
 using STARSCOMPATSNAPSHOT = std::vector<STARSCOMPATWINDOW>;
 std::optional<STARSCOMPATSNAPSHOT> StarsCompatCaptureHierarchy();
 /* JSON uses UTF-8 text and decimal strings for IDs, to preserve 64-bit values. */
-BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT &rgWindow, NATIVEFILE *lpfile);
+bool StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT &rgWindow, NATIVEFILE *lpfile);
 std::uint64_t StarsCompatWindowId(HWND hwnd);
 HWND StarsCompatResolveWindow(std::uint64_t id);
 /* Unique immediate child; zero means absent or ambiguous. NULL class matches any. */
@@ -55,17 +55,17 @@ void StarsCompatSetObjectInspector(HWND (*pfnShow)(void));
  * All handles and class atoms must be discarded before using the runtime again.
  */
 void StarsCompatShutdown(void);
-BOOL StarsCompatCanShutdown() noexcept;
+bool StarsCompatCanShutdown() noexcept;
 /* Non-owning numeric messages: the caller keeps HWND valid until delivery.
  * Delayed chooser results use the owned logical-ID handoff below. */
-BOOL StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+bool StarsCompatPostMessageAsync(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 /* Move-only one-shot payload. Ownership is consumed on entry, including failure.
  * Capture a logical window ID on the UI thread before starting a foreign dialog.
  * wParam is an opaque delivery token; borrow its payload only during dispatch.
  * Destroying the target, dropping delivery or shutting down releases the payload.
  */
-BOOL StarsCompatPostOwnedMessageAsync(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam);
+bool StarsCompatPostOwnedMessageAsync(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam);
 void *PvCompatMessagePayload(WPARAM id) noexcept;
 
 /* Stop native callbacks, timers and windows without calling window procedures.
@@ -75,13 +75,13 @@ void *PvCompatMessagePayload(WPARAM id) noexcept;
  */
 void StarsCompatProcessExit(void);
 
-BOOL StarsCompatTextInputRejected(HWND hwnd);
-BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, std::string_view psz);
+bool StarsCompatTextInputRejected(HWND hwnd);
+bool StarsCompatSetWindowTitleUtf8(HWND hwnd, std::string_view psz);
 
 /* Prepare a hidden top-level window's first ShowWindow(SW_SHOW) without
  * exposing it to the desktop while the application initializes.
  */
-BOOL StarsCompatSetInitialShowCommand(HWND hwnd, int sw);
+bool StarsCompatSetInitialShowCommand(HWND hwnd, int sw);
 
 
 

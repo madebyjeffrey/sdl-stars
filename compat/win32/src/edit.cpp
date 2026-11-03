@@ -771,7 +771,7 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
 }
 
-BOOL StarsCompatTextInputRejected(HWND hwnd) {
+bool StarsCompatTextInputRejected(HWND hwnd) {
     HWND lp = LpCompatWindow(hwnd);
     return lp && lp->fEditInputRejected;
 }

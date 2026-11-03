@@ -164,7 +164,7 @@ static bool FMessageKey(HWND hwnd, COMPATMSGBOX *lp, const win32::MSG *lpmsg) {
     }
     return 0;
 }
-BOOL StarsCompatSetWindowAlertSounds(HWND hwnd, BOOL fEnable) {
+bool StarsCompatSetWindowAlertSounds(HWND hwnd, bool fEnable) {
     HWND lpwin = LpCompatWindow(hwnd);
 
     if (!lpwin) { win32::SetLastError(win32::ERROR_INVALID_WINDOW_HANDLE); return 0; }

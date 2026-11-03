@@ -175,7 +175,7 @@ static bool FWriteString(NATIVEFILE *lpfile, std::string_view szValue) {
     return ChPutNativeFile('"', lpfile) != EOF;
 }
 
-BOOL StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT &rgWindow, NATIVEFILE *lpfile) {
+bool StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT &rgWindow, NATIVEFILE *lpfile) {
     std::size_t i;
     const STARSCOMPATWINDOW *lp;
     char szStyle[2048], szExStyle[2048];

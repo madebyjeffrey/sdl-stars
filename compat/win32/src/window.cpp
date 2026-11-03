@@ -56,7 +56,7 @@ bool FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
     return CompatWindowIO().pfnSetWindowTitle(lpWindow, pszTitle);
 }
 
-BOOL StarsCompatSetWindowTitleUtf8(HWND hwnd, std::string_view psz) {
+bool StarsCompatSetWindowTitleUtf8(HWND hwnd, std::string_view psz) {
     return win32::SetWindowTextA(hwnd, std::string{psz}.c_str());
 }
 
@@ -104,7 +104,7 @@ void CompatRestoreOwnerFocus(HWND hwndOwner, HWND hwndSaved) {
     if (win32::IsWindow(hwnd) && win32::IsWindowEnabled(hwnd)) win32::SetFocus(hwnd);
 }
 
-BOOL StarsCompatBeginDialogSequence(HWND hwndOwner) {
+bool StarsCompatBeginDialogSequence(HWND hwndOwner) {
     if (!SDL_IsMainThread() || fDialogSequence || (hwndOwner && !win32::IsWindow(hwndOwner))) return 0;
     fDialogSequence = 1;
     hwndSequenceOwner = hwndOwner ? HwndCompatRoot(hwndOwner) : nullptr;
@@ -786,7 +786,7 @@ BOOL win32::GetWindowPlacement(HWND hwnd, WINDOWPLACEMENT *lpwndpl) {
     return 1;
 }
 
-BOOL StarsCompatSetInitialShowCommand(HWND hwnd, int sw) {
+bool StarsCompatSetInitialShowCommand(HWND hwnd, int sw) {
     HWND lpwin = LpCompatWindow(hwnd);
 
     if (!lpwin || lpwin->hwndParent || lpwin->fVisible ||
@@ -1457,7 +1457,7 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
     fShutdown = 0;
 }
 
-BOOL StarsCompatCanShutdown() noexcept { return SDL_IsMainThread() && CCompatDispatch() == 0; }
+bool StarsCompatCanShutdown() noexcept { return SDL_IsMainThread() && CCompatDispatch() == 0; }
 
 void StarsCompatShutdown(void) { ShutdownCompatRuntime(1); }
 void StarsCompatProcessExit(void) { ShutdownCompatRuntime(0); }
