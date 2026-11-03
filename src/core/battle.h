@@ -2,9 +2,15 @@
 #define STARS_DECOMPILED_BATTLE_H
 
 #include "common.h"
+#include "battlecodec.h"
 #include <cstdint>
 
 extern std::uint8_t rgbrcStart[136];
+
+struct INITIATIVERANGE {
+    std::int16_t initMin;
+    std::int16_t initMac;
+};
 
 std::int16_t FDeleteBattlePlan(APPSESSION &app, std::int16_t iplan, std::int16_t fWarn);
 std::int16_t FFleetHasBombs(APPSESSION &app, FLEET *lpfl);
@@ -23,9 +29,9 @@ void    DoBattles(APPSESSION &app, std::int16_t fPostMovement);
 void    RegenShield(APPSESSION &app, TOK *ptok);
 std::int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t *ppctBC);
 void    CheckInitiative(APPSESSION &app, TOK *ptok);
-void    CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, std::uint8_t *pinit);
+void    CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, std::span<std::uint8_t, 64> rgfInit);
 void    RandomizeTokOrder(APPSESSION &app);
-void    InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint16_t grfPlayer, std::uint8_t *pinit, std::int16_t *pinitMin, std::int16_t *pinitMac);
+INITIATIVERANGE InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint16_t grfPlayer, std::span<std::uint8_t, 64> rgfInit);
 std::int16_t DzFromBrcBrc(std::uint8_t brc1, std::uint8_t brc2);
 std::int32_t DpFromPtokBrcToBrc(APPSESSION &app, TOK *ptok, std::uint8_t brcSrc, std::uint8_t brcTarget, TOK *ptokTarget, std::int16_t fProximity);
 std::int16_t DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::uint16_t grfAttack, std::uint8_t *pbrc);
@@ -35,7 +41,7 @@ std::int32_t ScoreGuessBattleDamage(APPSESSION &app, TOK *ptokSrc, std::uint8_t 
 std::int32_t ScoreFromGiveAndTakeAndTactic(std::int32_t dpGive, std::int32_t dpTake, BattleTactic mdTactic);
 std::int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, std::int16_t spdMove, std::uint16_t grfAttack);
 std::int32_t CTorpHit(APPSESSION &app, std::int32_t cTorpBase, TOK *ptok, std::int16_t pctBase, std::int16_t pctBC);
-std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t init, std::uint8_t *lpbtlrec, std::uint16_t grfAttack);
+std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t init, std::span<std::uint8_t, cbWireBattleRecord> rgbBattleRecord, std::uint16_t grfAttack);
 void    KillShips(APPSESSION &app, TOK *ptok, std::int16_t cshKill, std::int16_t ishdef, FLEET *lpfl, std::int16_t fFallout);
 void    CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth);
 std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int32_t *pdpBeam, std::int32_t dpTorp, GrfWeapon grfWeapon, std::int16_t fShieldsOnly, std::int32_t *pcTorp);

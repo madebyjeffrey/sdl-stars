@@ -748,7 +748,7 @@ void CheckInitiative(APPSESSION &app, TOK *ptok) {
     return;
 }
 
-void CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, std::uint8_t *pinit) {
+void CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, std::span<std::uint8_t, 64> rgfInit) {
     std::int16_t pctJam;
     std::int32_t ldp;
     std::int32_t pctBeamDef;
@@ -876,7 +876,7 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, st
                 if (dxyPart > dxyLim) {
                     dxyLim = dxyPart;
                 }
-                pinit[init] = 1;
+                rgfInit[init] = 1;
                 if (initMin == -1 || init < initMin) {
                     initMin = init;
                 }
@@ -933,7 +933,7 @@ void RandomizeTokOrder(APPSESSION &app) {
     return;
 }
 
-void InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint16_t grfPlayer, std::uint8_t *pinit, std::int16_t *pinitMin, std::int16_t *pinitMac) {
+INITIATIVERANGE InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint16_t grfPlayer, std::span<std::uint8_t, 64> rgfInit) {
     std::int16_t   iplr;
     FLEET    *lpflCur;
     TOK      *ptok;
@@ -974,7 +974,7 @@ void InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint1
             ptok->csh = 1;
             ptok->ishdef = lppl->isb + 16;
             CheckInitiative(app, ptok);
-            CheckWeapons(app, ptok, &fDampeningField, pinit);
+            CheckWeapons(app, ptok, &fDampeningField, rgfInit);
             rgfTorp[iplr] |= ptok->fTorp;
             if (ptok->initBase == 0xff) {
                 ptok->mdTarget0 = mdTargetUnarmedShips;
@@ -1011,7 +1011,7 @@ void InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint1
                         ptok->csh = lpflCur->rgcsh[ishdef];
                         ptok->dv.dp = lpflCur->rgdv[ishdef].dp;
                         CheckInitiative(app, ptok);
-                        CheckWeapons(app, ptok, &fDampeningField, pinit);
+                        CheckWeapons(app, ptok, &fDampeningField, rgfInit);
                         rgfTorp[iplr] |= ptok->fTorp;
                         CheckTarget(app, ptok, lpflCur, ishdef);
                         ptok->spd = SpdOfShip(app, lpflCur, ishdef, ptok, fDumpCargo, nullptr);
@@ -1046,9 +1046,7 @@ LTooManyTokens:
             initMac = ptokT->initMac;
         }
     }
-    *pinitMin = initMin & 0xff;
-    *pinitMac = initMac & 0xff;
-    return;
+    return {static_cast<std::int16_t>(initMin & 0xff), static_cast<std::int16_t>(initMac & 0xff)};
 }
 
 std::int16_t DzFromBrcBrc(std::uint8_t brc1, std::uint8_t brc2) {
@@ -1668,7 +1666,7 @@ std::int32_t CTorpHit(APPSESSION &app, std::int32_t cTorpBase, TOK *ptok, std::i
     return cTorpHit;
 }
 
-std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t init, std::uint8_t *lpbtlrec, std::uint16_t grfAttack) {
+std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t init, std::span<std::uint8_t, cbWireBattleRecord> rgbBattleRecord, std::uint16_t grfAttack) {
     std::int32_t   dpShieldLeft;
     std::int16_t   dz;
     SHDEF    *lpshdefE;
@@ -1752,7 +1750,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                             if (FDamageTok(app, ptokE, itok, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
                                 if (!fSetItok) {
                                     fSetItok = 1;
-                                    BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itok);
+                                    BevFromPrefix(rgbBattleRecord).SetItokAttack(itok);
                                 }
                                 ctokDamaged++;
                             }
@@ -1876,7 +1874,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                         dpT = dp;
                         if (FDamageTok(app, ptokTarget, itokTarget, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
                             if (!fSetItok) {
-                                BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itokTarget);
+                                BevFromPrefix(rgbBattleRecord).SetItokAttack(itokTarget);
                                 fSetItok = 1;
                             }
                             ctokDamaged++;
@@ -1942,7 +1940,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                         ctokDamaged++;
                         if (!fSetItok) {
                             fSetItok = 1;
-                            BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itokTarget);
+                            BevFromPrefix(rgbBattleRecord).SetItokAttack(itokTarget);
                         }
                         cTorpsLeft -= cTorpFire + cTorpMiss;
                     }
@@ -1952,7 +1950,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
             }
         }
     }
-    BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetCtok(ctokDamaged);
+    BevFromPrefix(rgbBattleRecord).SetCtok(ctokDamaged);
     if (ctokDamaged != 0) {
         return 1;
     }
@@ -2281,6 +2279,7 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
     std::int16_t  i;
     std::int16_t  j;
     std::int16_t  initMin;
+    INITIATIVERANGE initRange;
     std::uint8_t *lpbtlrec;
     std::int16_t  iRound;
     FLEET   *lpflT;
@@ -2353,7 +2352,9 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
             lppl->fNoHeal = 1;
         }
     }
-    InitializeBoard(app, lpfl, static_cast<std::int16_t>(((cplr - 1) * cplr)) / 2, grfPlayer, rgfInit, &initMin, &initMac);
+    initRange = InitializeBoard(app, lpfl, static_cast<std::int16_t>(((cplr - 1) * cplr)) / 2, grfPlayer, rgfInit);
+    initMin = initRange.initMin;
+    initMac = initRange.initMac;
     BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetCplr(cplr);
     BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetCtok(app.state.vctok);
     BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetIdPlanet(lpfl->idPlanet);
@@ -2473,7 +2474,7 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
                             BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetBrcDest(ptok->brc);
                             BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetItokAttack(itok);
                             BevFromPrefix(std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}).SetDzDis(ptok->dzDis);
-                            if (!FAttack(app, itok, init, lpbtlrec, rggrfAttack[ptok->iplr])) {
+                            if (!FAttack(app, itok, init, std::span<std::uint8_t, cbWireBattleRecord>{lpbtlrec, cbWireBattleRecord}, rggrfAttack[ptok->iplr])) {
                                 app.state.lpbBattleCur -= 6;
                             } else {
                                 ptok->fMoved = 0;
