@@ -290,13 +290,11 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                 break;
             case grTaskPatrol:
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                szCatalogPsz = TextIO().pfnCompressed(app, idsWarpFactor);
+                cch = TextIO().pfnCchGetString(app, idsWarpFactor, std::span{szCatalogPsz});
                 psz = szCatalogPsz.data();
-                cch = std::strlen(psz);
                 dxT = LOWORD(GetTextExtent(hdc, psz, cch)) + 2;
-                szCatalogPsz = TextIO().pfnCompressed(app, idsIntercept);
+                cch = TextIO().pfnCchGetString(app, idsIntercept, std::span{szCatalogPsz});
                 psz = szCatalogPsz.data();
-                cch = std::strlen(psz);
                 win32::SetRect(&rc, xLeft, yTop + 4, xLeft + dxT, yBot);
                 win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
                 win32::DrawTextA(hdc, psz, cch, &rc, win32::DT_NOPREFIX);
@@ -338,9 +336,8 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             yTop += app.lpui->dyShipDD + 4;
             win32::SetRect(&rcT, xLeft - dxT - 2, yTop, xRight - 1, yTop + app.state.dyArial8);
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            szCatalogPsz = TextIO().pfnCompressed(app, idsWarpFactor);
+            cch = TextIO().pfnCchGetString(app, idsWarpFactor, std::span{szCatalogPsz});
             psz = szCatalogPsz.data();
-            cch = std::strlen(psz);
             win32::DrawTextA(hdc, psz, cch, &rcT, win32::DT_NOPREFIX);
             rcT.left += dxT + 2;
             app.lpui->rgrcRef[18] = rcT;
@@ -415,12 +412,12 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             if (app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].grobj == grobjFleet)
                 break;
             ids = idsWarningDestinationWaypointFleetMergeWillSucessfu;
-            szCatalogPsz = TextIO().pfnCompressed(app, ids);
+            cch = TextIO().pfnCchGetString(app, ids, std::span{szCatalogPsz});
             psz = szCatalogPsz.data();
             win32::SetTextColor(hdc, 127);
             win32::SetRect(&rc, xLeft, yTopMsg, xRight, yBot + 2);
             win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
-            win32::DrawTextA(hdc, psz, std::strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
+            win32::DrawTextA(hdc, psz, cch, &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             break;
         case grTaskLayMines:
@@ -432,7 +429,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             }
             szCatalogPszT = TextIO().pfnCompressed(app, idsFleetCanLayLdMinesPerYear);
             pszT = szCatalogPszT.data();
-            CchSprintf(app.state.szWork, pszT, l);
+            cch = CchSprintf(app.state.szWork, pszT, l);
             psz = app.state.szWork;
             goto LDisplayMsg2;
         case grTaskColonize:
@@ -460,13 +457,13 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             }
             ids = idsWarningColonizeMissionCannotCarriedBecauseNone;
         LDisplayMsg:
-            szCatalogPsz = TextIO().pfnCompressed(app, ids);
+            cch = TextIO().pfnCchGetString(app, ids, std::span{szCatalogPsz});
             psz = szCatalogPsz.data();
         LDisplayMsg2:
             win32::SetTextColor(hdc, ids == idsNoteShipsFleetWillDismantledProvideSupplies ? app.lpui->crButtonText : 127);
             win32::SetRect(&rc, xLeft, yTopMsg, xRight, yBot + 2);
             win32::SelectObject(hdc, app.lpui->rghfontArial7[0]);
-            win32::DrawTextA(hdc, psz, std::strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
+            win32::DrawTextA(hdc, psz, cch, &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             break;
         case grTaskMine:
@@ -509,10 +506,10 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             }
         ShowString:
             win32::SetTextColor(hdc, ids == 229 ? app.lpui->crButtonText : 127);
-            szCatalogPsz = TextIO().pfnCompressed(app, ids);
+            cch = TextIO().pfnCchGetString(app, ids, std::span{szCatalogPsz});
             psz = szCatalogPsz.data();
             win32::SetRect(&rc, xLeft, yTopMsg, xRight, yBot + 2);
-            win32::DrawTextA(hdc, psz, std::strlen(psz), &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
+            win32::DrawTextA(hdc, psz, cch, &rc, win32::DT_WORDBREAK | win32::DT_NOPREFIX);
         DoneMine:
             win32::SetTextColor(hdc, app.lpui->crButtonText);
         }
