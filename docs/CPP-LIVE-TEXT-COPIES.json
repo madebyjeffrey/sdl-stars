@@ -3625,7 +3625,7 @@
     ]
   },
   "current_source_audit": {
-    "source_head": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
+    "source_head": "229ef1fe429102f4d87153188659fca5dd95dc00",
     "scope": "Owned production source and compatibility implementation/header trees: src, compat/win32/src and compat/win32/include.",
     "raw_copy_calls": 0,
     "spellings_checked": [
@@ -3649,5 +3649,11 @@
     "interface": "GetRaceLibraryStem accepts std::string_view; FSaveCurrentLibraryRace constructs a view bounded by PLAYER::szName.",
     "destination": "The existing 240-byte stem span and filename sanitization logic are retained.",
     "verification": "Strict macOS Debug build, race-library/publication workflows 3/3, desktop units 18/18, native regression 519 matches with zero differences/errors, tutorial smoke 1/1. See docs/CPP-LIVE-CLEANUP.json."
+  },
+  "library_game_name_input_view": {
+    "status": "complete; locally verified; current-source Windows/Linux qualification pending",
+    "interface": "FChooseLibraryGameActionName receives the current game name as std::string_view.",
+    "copying": "Both destination operations use bounded UTF-8 spans and retain the 256-byte application/caller capacities.",
+    "verification": "Strict macOS Debug build, game/race-library workflows 3/3, desktop units 18/18, native regression 519 matches with zero differences/errors, tutorial smoke 1/1. See docs/CPP-LIVE-CLEANUP.json."
   }
 }

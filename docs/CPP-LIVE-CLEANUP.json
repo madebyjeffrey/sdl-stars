@@ -298,7 +298,8 @@
         "recursive-import-cleanup-roots-use-string-view",
         "planet-report-sort-names-use-bounded-views",
         "imported-turn-path-views",
-        "race-library-bounded-name-view"
+        "race-library-bounded-name-view",
+        "library-game-name-input-view"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -2271,6 +2272,30 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged for valid player names; the field is copied and sanitized identically, with the source read bounded by its fixed 32-byte storage.",
           "api_audit": "GetRaceLibraryStem accepts string_view. FSaveCurrentLibraryRace bounds the name view at the NUL or end of PLAYER::szName, then copies into the existing 240-byte stem span.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
+        }
+      },
+      "library_game_name_input_view": {
+        "status": "complete; locally verified",
+        "interface": "FChooseLibraryGameActionName accepts std::string_view for the current name.",
+        "copying": "The owned UI name and fixed 256-byte caller result are copied through bounded UTF-8 span operations.",
+        "contract": "Empty/oversized admission, suggestion, prompt order and resulting name bytes for valid input are unchanged.",
+        "verification": {
+          "batch": "L05 library game-name input uses string_view",
+          "source_commit": "229ef1fe429102f4d87153188659fca5dd95dc00",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "focused_workflows": "win32_client_game_library_safety_dummy, win32_client_game_library_delete_dummy, and win32_client_race_library_dummy pass (3/3).",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged for valid selected library names; state copy, suggestion, prompt and 256-byte output admission are preserved.",
+          "api_audit": "FChooseLibraryGameActionName accepts string_view; its bounded input/output copies use UTF-8 span operations rather than C-string formatting.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -28510,14 +28535,14 @@
       }
     },
     "latest_followup": {
-      "batch": "L05 race library names use a bounded field view",
-      "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
-      "parent": "0e730376822bdde9d566ff6e84b9043df69e23ee",
+      "batch": "L05 library game-name input uses string_view",
+      "source_commit": "229ef1fe429102f4d87153188659fca5dd95dc00",
+      "parent": "becb8744bd8e027cb7cac9eac7be6318f8e521b6",
       "verification": {
-        "batch": "L05 race library names use a bounded field view",
-        "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
+        "batch": "L05 library game-name input uses string_view",
+        "source_commit": "229ef1fe429102f4d87153188659fca5dd95dc00",
         "macos_sdl_debug_build": "make compile passes with strict warnings.",
-        "focused_workflows": "witness_library-publication, win32_client_race_library_dummy, and win32_client_race_dummy pass (3/3).",
+        "focused_workflows": "win32_client_game_library_safety_dummy, win32_client_game_library_delete_dummy, and win32_client_race_library_dummy pass (3/3).",
         "desktop_unit_tests": "18/18 pass.",
         "native_regression": {
           "matches": 519,
@@ -28526,8 +28551,8 @@
           "skipped": 0
         },
         "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-        "baseline": "Unchanged for valid player names; the field is copied and sanitized identically, with the source read bounded by its fixed 32-byte storage.",
-        "api_audit": "GetRaceLibraryStem accepts string_view. FSaveCurrentLibraryRace bounds the name view at the NUL or end of PLAYER::szName, then copies into the existing 240-byte stem span.",
+        "baseline": "Unchanged for valid selected library names; state copy, suggestion, prompt and 256-byte output admission are preserved.",
+        "api_audit": "FChooseLibraryGameActionName accepts string_view; its bounded input/output copies use UTF-8 span operations rather than C-string formatting.",
         "platform": "Current-source Windows and Linux qualification remains outstanding.",
         "diff_check": "Pass."
       }
@@ -29045,8 +29070,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
-  "latest_batch_status": "Source commit eecad5ed verified locally. Strict macOS SDL Debug build, focused race-library workflows 3/3, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "229ef1fe429102f4d87153188659fca5dd95dc00",
+  "latest_batch_status": "Source commit 229ef1fe verified locally. Strict macOS SDL Debug build, focused game/race-library workflows 3/3, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -29170,12 +29195,12 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L05 race library names use a bounded field view",
+  "latest_change": "L05 library game-name input uses string_view",
   "latest_batch_verification": {
-    "batch": "L05 race library names use a bounded field view",
-    "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
+    "batch": "L05 library game-name input uses string_view",
+    "source_commit": "229ef1fe429102f4d87153188659fca5dd95dc00",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_workflows": "witness_library-publication, win32_client_race_library_dummy, and win32_client_race_dummy pass (3/3).",
+    "focused_workflows": "win32_client_game_library_safety_dummy, win32_client_game_library_delete_dummy, and win32_client_race_library_dummy pass (3/3).",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
       "matches": 519,
@@ -29184,16 +29209,16 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged for valid player names; the field is copied and sanitized identically, with the source read bounded by its fixed 32-byte storage.",
-    "api_audit": "GetRaceLibraryStem accepts string_view. FSaveCurrentLibraryRace bounds the name view at the NUL or end of PLAYER::szName, then copies into the existing 240-byte stem span.",
+    "baseline": "Unchanged for valid selected library names; state copy, suggestion, prompt and 256-byte output admission are preserved.",
+    "api_audit": "FChooseLibraryGameActionName accepts string_view; its bounded input/output copies use UTF-8 span operations rather than C-string formatting.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L05 race library names use a bounded field view",
-    "source_commit": "eecad5eda1b33bdac31b9a516a0e54f6b4e81959",
+    "batch": "L05 library game-name input uses string_view",
+    "source_commit": "229ef1fe429102f4d87153188659fca5dd95dc00",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_workflows": "witness_library-publication, win32_client_race_library_dummy, and win32_client_race_dummy pass (3/3).",
+    "focused_workflows": "win32_client_game_library_safety_dummy, win32_client_game_library_delete_dummy, and win32_client_race_library_dummy pass (3/3).",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
       "matches": 519,
@@ -29202,11 +29227,11 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged for valid player names; the field is copied and sanitized identically, with the source read bounded by its fixed 32-byte storage.",
-    "api_audit": "GetRaceLibraryStem accepts string_view. FSaveCurrentLibraryRace bounds the name view at the NUL or end of PLAYER::szName, then copies into the existing 240-byte stem span.",
+    "baseline": "Unchanged for valid selected library names; state copy, suggestion, prompt and 256-byte output admission are preserved.",
+    "api_audit": "FChooseLibraryGameActionName accepts string_view; its bounded input/output copies use UTF-8 span operations rather than C-string formatting.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit eecad5ed verified locally; ledger checkpoint recorded.",
+    "status": "Source commit 229ef1fe verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
