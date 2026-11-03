@@ -5,10 +5,8 @@
 #include "fileio.h"
 #include <SDL3/SDL.h>
 #include <io.h>
-#include <direct.h>
 #include <cerrno>
 #include <cstdio>
-#include <cstdlib>
 #include <strings.h>
 #include <sys/stat.h>
 #ifdef __APPLE__
@@ -50,17 +48,6 @@ int win32::lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); 
 
 #ifndef _WIN32
 int _access(const char *pszPath, int mdAccess) { return IAccessNativePath(pszPath, mdAccess); }
-int _mkdir(const char *pszPath) { return ICreateNativeDirectory(pszPath, 0777); }
-char *_getcwd(char *pszPath, int cchPath) {
-    char *pszResult;
-    if (cchPath <= 0) { errno = EINVAL; return nullptr; }
-    if (pszPath) return CchNativeCwd(std::span{pszPath, static_cast<std::size_t>(cchPath)}) ? pszPath : nullptr;
-    const auto szCwd = SzNativeCwd();
-    if (!szCwd) return nullptr;
-    pszResult = static_cast<char *>(std::malloc(szCwd->size() + 1));
-    if (pszResult) std::copy_n(szCwd->c_str(), szCwd->size() + 1, pszResult);
-    return pszResult;
-}
 int _stricmp(const char *psz1, const char *psz2) { return strcasecmp(psz1, psz2); }
 int _strnicmp(const char *psz1, const char *psz2, std::size_t cb) { return strncasecmp(psz1, psz2, cb); }
 int strcmpi(const char *psz1, const char *psz2) { return _stricmp(psz1, psz2); }

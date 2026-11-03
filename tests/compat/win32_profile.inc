@@ -1,6 +1,10 @@
 /* File-backed profile contracts shared with the Windows SDK. */
 #include <windows.h>
+#ifdef _WIN32
 #include <direct.h>
+#else
+#include <unistd.h>
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,7 +99,11 @@ int main(void) {
         "[Paths]\r\nGame=./games/a file.m1\r\nKeep=unchanged\r\n";
     static const char szKeys[] = "Logging\0Blank\0Quoted\0Single\0Number\0Hex\0Decimal\0Partial\0Invalid\0Large\0";
 
+#ifdef _WIN32
     CHECK(_getcwd(szDir, sizeof(szDir)));
+#else
+    CHECK(getcwd(szDir, sizeof(szDir)));
+#endif
     snprintf(szPath, sizeof(szPath), "%s/stars profile-%lu.ini", szDir, (unsigned long)GetCurrentThreadId());
     fp = fopen(szPath, "wb");
     CHECK(fp && fwrite(szFixture, 1, sizeof(szFixture) - 1, fp) == sizeof(szFixture) - 1 && fclose(fp) == 0);

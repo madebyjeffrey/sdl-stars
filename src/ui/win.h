@@ -8,7 +8,6 @@
 #include <commctrl.h>
 #include <string_view>
 
-#include <direct.h>
 #include <io.h>
 
 #include "common.h"

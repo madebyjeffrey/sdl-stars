@@ -17,8 +17,6 @@
 #endif
 #include "callbackcontext.h"
 
-#include <direct.h>
-
 typedef struct {
     const char *pszName;
     const char *pszDesc;
@@ -96,7 +94,7 @@ int main(int argc, char **argv) {
         if (*pch == '/')
             *pch = '\\';
     }
-    _mkdir(szDir);
+    CreateNativeDir(szDir);
     if (!FStarsTestInit(app) || !rgscen[iscen].pfnBuild(app, szDir)) {
         fprintf(stderr, "%s failed%s%s\n", argv[1], cStarsTestAlert ? ": " : "", cStarsTestAlert ? szStarsTestAlert : "");
         return 1;

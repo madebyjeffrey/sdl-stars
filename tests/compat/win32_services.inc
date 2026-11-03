@@ -1,7 +1,9 @@
 /* Shared SDK comparisons for the UI's narrow strings and CRT helpers. */
 #include <windows.h>
 #include <io.h>
+#ifdef _WIN32
 #include <direct.h>
+#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -58,18 +60,19 @@ int main(void) {
     CHECK(!strcmp(_strlwr(sz), "fl33t"));
     CHECK(_strdate(szDate) == szDate && strlen(szDate) == 8 && szDate[2] == '/' && szDate[5] == '/');
     CHECK(_strtime(szTime) == szTime && strlen(szTime) == 8 && szTime[2] == ':' && szTime[5] == ':');
+#ifdef _WIN32
     CHECK(_getcwd(sz, sizeof(sz)) == sz && *sz);
-#ifndef _WIN32
-    // This compatibility adapter retains its CRT allocation protocol.
-    {
-        char *pszCwd = _getcwd(NULL, 1);
-        CHECK(pszCwd && !strcmp(pszCwd, sz));
-        free(pszCwd);
-    }
+#else
+    CHECK(getcwd(sz, sizeof(sz)) == sz && *sz);
 #endif
     snprintf(szPath, sizeof(szPath), "stars-compat-services-%lu", (unsigned long)idThread);
     snprintf(szFile, sizeof(szFile), "%s/data", szPath);
-    CHECK(_access(szPath, 0) == -1 && _mkdir(szPath) == 0 && _mkdir(szPath) == -1);
+    CHECK(_access(szPath, 0) == -1);
+#ifdef _WIN32
+    CHECK(_mkdir(szPath) == 0 && _mkdir(szPath) == -1);
+#else
+    CHECK(mkdir(szPath, 0700) == 0 && mkdir(szPath, 0700) == -1);
+#endif
     CHECK(_access(szPath, 0) == 0);
     fp = fopen(szFile, "wb");
     CHECK(fp && fwrite("test", 1, 4, fp) == 4 && fclose(fp) == 0);
