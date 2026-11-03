@@ -69,14 +69,10 @@ int CchFormatNativeArgs(NATIVEFORMATPROC pfnFormat, std::span<char> rgch, std::s
     return pfnFormat(rgch, szFormat, rgArgs);
 }
 
-template<class... ARGS>
-int CchFormatNativeArgs(NATIVEFORMATPROC pfnFormat, std::span<char> rgch, const char *pszFormat, const ARGS &... args) {
-    if (!pszFormat) {
-        if (!rgch.empty()) rgch[0] = 0;
-        errno = EINVAL;
-        return -1;
-    }
-    return CchFormatNativeArgs(pfnFormat, rgch, std::string_view{pszFormat}, args...);
+inline int CchFormatNativeArgs(NATIVEFORMATPROC, std::span<char> rgch, std::nullptr_t) {
+    if (!rgch.empty()) rgch[0] = 0;
+    errno = EINVAL;
+    return -1;
 }
 
 // A concrete typed provider keeps fault injection at the real format boundary.
@@ -87,10 +83,7 @@ struct NATIVEFORMATTER {
     int operator()(std::span<char> rgch, std::string_view szFormat, ARGS... args) const {
         return CchFormatNativeArgs(pfnFormat, rgch, szFormat, args...);
     }
-    template<class... ARGS>
-    int operator()(std::span<char> rgch, const char *pszFormat, ARGS... args) const {
-        return CchFormatNativeArgs(pfnFormat, rgch, pszFormat, args...);
-    }
+    int operator()(std::span<char> rgch, std::nullptr_t) const { return CchFormatNativeArgs(pfnFormat, rgch, nullptr); }
 };
 
 #pragma pack(pop)
