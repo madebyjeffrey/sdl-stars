@@ -3,6 +3,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <windows.h>
 #include <callbackcontext.h>
@@ -48,11 +49,10 @@ struct COMPATFONTDATA { const BYTE *rgb; std::size_t cb; };
 extern const COMPATFONTDATA rgCompatFontData[12];
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
 void FreeCompatFont(COMPATFONT *lpfont) noexcept;
-BOOL FCompatFontSize(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
 BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm);
 BOOL FCompatFontDraw(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx,
                     void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);
-BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch, LPSIZE lpsize);
+BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz, SIZE &size);
 BOOL FCompatFontDrawUtf8(COMPATFONT *lpfont, LPCSTR psz, int cch,
                         void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);
 BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, LPCSTR psz, int cch, const INT *rgdx, int iScale,

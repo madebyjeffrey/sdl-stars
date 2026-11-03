@@ -19,22 +19,22 @@ int main() {
     lf.lfHeight = -12;
     std::strcpy(lf.lfFaceName, "Arial");
     lpfont.reset(LpNewCompatFont(&lf)); CHECK(lpfont);
-    CHECK(FCompatFontSizeUtf8(lpfont.get(), "\xc4\x80", 2, &before));
+    CHECK(FCompatFontSizeUtf8(lpfont.get(), std::string_view{"\xc4\x80", 2}, before));
     for (ch = 0x100; ch < 0x300; ch++) {
         sz[0] = static_cast<char>(0xc0 | (ch >> 6));
         sz[1] = static_cast<char>(0x80 | (ch & 0x3f));
-        CHECK(FCompatFontSizeUtf8(lpfont.get(), sz, 2, &after));
+        CHECK(FCompatFontSizeUtf8(lpfont.get(), std::string_view{sz, 2}, after));
     }
-    CHECK(FCompatFontSizeUtf8(lpfont.get(), "\xc4\x80", 2, &after));
+    CHECK(FCompatFontSizeUtf8(lpfont.get(), std::string_view{"\xc4\x80", 2}, after));
     CHECK(before.cx == after.cx && before.cy == after.cy);
     CHECK(FCompatFontDrawScaled(lpfont.get(), "\xc4\x80", 2, NULL, 2, CountGlyph, &cPixels));
     CHECK(cPixels > 0);
     lpfontRetained = std::move(lpfont); CompatShutdownFonts();
     // Module cleanup drops its root; a live face still owns its library.
-    CHECK(FCompatFontSizeUtf8(lpfontRetained.get(), "\xc4\x80", 2, &after));
+    CHECK(FCompatFontSizeUtf8(lpfontRetained.get(), std::string_view{"\xc4\x80", 2}, after));
     CHECK(before.cx == after.cx && before.cy == after.cy);
     lpfont.reset(LpNewCompatFont(&lf)); CHECK(lpfont);
-    CHECK(FCompatFontSizeUtf8(lpfont.get(), "\xc4\x80", 2, &after));
+    CHECK(FCompatFontSizeUtf8(lpfont.get(), std::string_view{"\xc4\x80", 2}, after));
     CHECK(before.cx == after.cx && before.cy == after.cy);
     lpfont.reset(); CompatShutdownFonts(); lpfontRetained.reset();
     std::puts("Glyph eviction/reload, scaled pixels and font restart preserve metrics");

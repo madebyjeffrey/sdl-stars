@@ -1655,7 +1655,10 @@ struct COMPATTEXTDRAW {
 };
 
 static BOOL FTextSize(HDC lpdc, LPCSTR psz, int cch, LPSIZE lpsize) {
-    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), psz, cch, lpsize);
+    std::string_view sz;
+    if (!lpsize || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return 0;
+    if (cch) sz = std::string_view{psz, static_cast<std::size_t>(cch)};
+    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), sz, *lpsize);
 }
 
 BOOL win32::GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
