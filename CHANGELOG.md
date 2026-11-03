@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `DrawMineSurvey` now starts the fully surveyed unowned-planet label at the
+  beginning of its local buffer. It previously measured uninitialized storage
+  before appending the production value. The visible label now contains only
+  the production value; game rules and saved records are unchanged.
+
 - `CommandHandler` now snapshots the active file path before save and tutorial
   prompts or `WriteIniSettings` can reuse the shared work buffer. Returning to
   the title screen previously copied the last INI value into the game's base
