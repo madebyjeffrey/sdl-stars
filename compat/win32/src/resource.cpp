@@ -2,6 +2,9 @@
 #include "internal.h"
 #include <cstdlib>
 #include <limits>
+#include <new>
+#include <stdexcept>
+#include <string>
 
 static BYTE bModule;
 
@@ -95,10 +98,9 @@ static BOOL FMenuWord(const BYTE *rgb, std::size_t cb, std::size_t *lpib, WORD *
 static HMENU HmenuTemplateItems(const BYTE *rgb, std::size_t cb, std::size_t *lpib, int depth) {
     HMENU hmenu, hsub;
     WORD flags, id, wch;
-    char *psz;
+    std::string szText;
     std::size_t cch, ibText;
     BOOL fEnd;
-    NATIVEOWNER<char, std::free> pszOwner;
 
     if (depth >= 64) return nullptr;
     hmenu = win32::CreatePopupMenu();
@@ -117,19 +119,22 @@ static HMENU HmenuTemplateItems(const BYTE *rgb, std::size_t cb, std::size_t *lp
             if (!FMenuWord(rgb, cb, lpib, &wch)) goto fail;
             if (wch) cch++;
         } while (wch);
-        psz = static_cast<char *>((std::malloc(cch * 3 + 1)));
-        pszOwner.reset(psz);
-        if (!psz) goto fail;
-        if (CchUtf16leToUtf8(std::span{psz, cch * 3 + 1},
+        try {
+            szText.resize(cch * 3 + 1);
+        } catch (const std::bad_alloc &) {
+            goto fail;
+        } catch (const std::length_error &) {
+            goto fail;
+        }
+        if (CchUtf16leToUtf8(std::span{szText},
                              std::span{reinterpret_cast<const std::byte *>(rgb + ibText), cch * sizeof(WORD)}) < 0) goto fail;
         if (!(flags & win32::MF_POPUP) && id == 0 && cch == 0) flags |= win32::MF_SEPARATOR;
         if (flags & win32::MF_POPUP) hsub = HmenuTemplateItems(rgb, cb, lpib, depth + 1);
         if (((flags & win32::MF_POPUP) && !hsub) ||
-            !win32::AppendMenuA(hmenu, flags, hsub ? reinterpret_cast<UINT_PTR>(hsub) : id, psz)) {
+            !win32::AppendMenuA(hmenu, flags, hsub ? reinterpret_cast<UINT_PTR>(hsub) : id, szText.c_str())) {
             if (hsub) win32::DestroyMenu(hsub);
             goto fail;
         }
-        pszOwner.reset();
     } while (!fEnd);
     return hmenu;
 fail:
