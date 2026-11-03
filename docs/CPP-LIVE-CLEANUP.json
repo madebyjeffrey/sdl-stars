@@ -2166,7 +2166,8 @@
         "bounded-menu-resource-word-reads-use-optional-results",
         "paint-region-merge-uses-span-and-returned-count",
         "owned-paint-update-and-paint-region-vectors",
-        "typed-dialog-template-parser-results"
+        "typed-dialog-template-parser-results",
+        "utf8-font-sizing-returns-optional-size"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -3019,6 +3020,18 @@
           "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
           "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
           "baseline": "Unchanged. Dialog template cursor advancement, UTF-16LE field decoding, ordinal values, item alignment and result ownership are preserved.",
+          "platform": "Current-source Windows and Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 UTF-8 font sizing returns optional SIZE",
+          "source_commit": "b138dd81c4b683ab06dc8306e9708672d77efd1d",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "focused_compatibility_tests": "win32_sdl_resource_font passes (1/1); malformed UTF-8 and null font produce empty results.",
+          "desktop_units": "18/18 pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+          "baseline": "Unchanged. Glyph advances, rendered extents, and Win32 GetTextExtentPoint32A failure/output behavior are preserved.",
           "platform": "Current-source Windows and Linux qualification remains pending.",
           "diff_check": "Pass."
         }
@@ -27433,21 +27446,19 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 dialog template parser returns typed optional results",
-    "status": "Source committed as 80c2111d. Strict macOS SDL Debug build, focused compatibility tests, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "parent": "20d1dc523b447758d05c9ee3ae690c051611ab19",
-    "change": "The dialog-template parser now returns optional WORD/DWORD/rectangle/field results instead of bool plus output references. Field strings remain owned; parser cursor and template values are unchanged.",
+    "batch": "L06 UTF-8 font sizing returns optional SIZE",
+    "status": "Source committed as b138dd81. Strict macOS SDL Debug build, focused font compatibility test, desktop units, native regression and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "parent": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
+    "change": "FCompatFontSizeUtf8 now returns std::optional<SIZE>; paint code consumes the value and writes to the Win32 SIZE output only after success.",
     "verification": {
-      "batch": "L06 dialog template parser returns typed optional results",
-      "source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
+      "batch": "L06 UTF-8 font sizing returns optional SIZE",
+      "source_commit": "b138dd81c4b683ab06dc8306e9708672d77efd1d",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_compatibility_tests": "win32_sdl_resource_combo passes (1/1); win32_client_startup_dummy passes (1/1).",
+      "focused_compatibility_tests": "win32_sdl_resource_font passes (1/1); malformed UTF-8 and null font produce empty results.",
       "desktop_units": "18/18 pass.",
-      "host_units": "29/29 pass.",
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
       "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
-      "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
-      "baseline": "Unchanged. Dialog template cursor advancement, UTF-16LE field decoding, ordinal values, item alignment and result ownership are preserved.",
+      "baseline": "Unchanged. Glyph advances, rendered extents, and Win32 GetTextExtentPoint32A failure/output behavior are preserved.",
       "platform": "Current-source Windows and Linux qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -27839,8 +27850,8 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
-    "latest_change": "L06 dialog template parser returns typed optional results",
+    "source_commit": "b138dd81c4b683ab06dc8306e9708672d77efd1d",
+    "latest_change": "L06 UTF-8 font sizing returns optional SIZE",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -27859,8 +27870,8 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
-    "latest_batch_status": "Committed as 80c2111d; local verification passes, Windows/Linux qualification remains pending.",
+    "latest_source_commit": "b138dd81c4b683ab06dc8306e9708672d77efd1d",
+    "latest_batch_status": "Committed as b138dd81; local verification passes, Windows/Linux qualification remains pending.",
     "latest_published_head": "ef24142a",
     "latest_batch_verification": {
       "batch": "Return planet name byte lengths",
@@ -28401,8 +28412,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
-  "latest_batch_status": "Source committed as 80c2111d. Strict macOS SDL Debug build, focused compatibility tests, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "b138dd81c4b683ab06dc8306e9708672d77efd1d",
+  "latest_batch_status": "Source committed as b138dd81. Strict macOS SDL Debug build, focused font compatibility test, desktop units, native regression and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28419,7 +28430,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "80c2111d",
+    "source_head": "b138dd81",
     "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. This raw count is not a replacement count: four measure C-string API/input boundaries and seven measure text already held in owned or fixed storage; those seven are candidates for carried lengths, subject to confirming that extra state is worthwhile.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28489,16 +28500,17 @@
     },
     "paint_region_merge_result": "CrcMergeRegion accepts a span of active rectangles and returns the merged count; it no longer mutates a size_t output pointer.",
     "paint_update_region_ownership": "HWND pending update rectangles and HDC paint rectangles are vector-owned; add/subtract helpers mutate a vector, and the separate count fields and realloc-based temporary ownership are removed.",
-    "dialog_template_parser_results": "Dialog-template parser helpers return optional typed WORD, DWORD, rectangle and field results rather than bool plus output references; field strings remain owned."
+    "dialog_template_parser_results": "Dialog-template parser helpers return optional typed WORD, DWORD, rectangle and field results rather than bool plus output references; field strings remain owned.",
+    "font_size_service": "FCompatFontSizeUtf8 returns std::optional<SIZE>; text sizing keeps the Win32 SIZE pointer only at GetTextExtentPoint32A."
   },
-  "latest_change": "L06 dialog template parser returns typed optional results",
+  "latest_change": "L06 UTF-8 font sizing returns optional SIZE",
   "latest_batch_verification": {
-    "batch": "L06 dialog template parser returns typed optional results",
-    "source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
+    "batch": "L06 UTF-8 font sizing returns optional SIZE",
+    "source_commit": "b138dd81c4b683ab06dc8306e9708672d77efd1d",
     "macos_debug_build": "make compile passes with strict warnings.",
-    "focused_compatibility_tests": "win32_sdl_resource_combo passes (1/1); win32_client_startup_dummy passes (1/1).",
+    "focused_compatibility_tests": "win32_sdl_resource_font passes (1/1); malformed UTF-8 and null font produce empty results.",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "29/29 pass.",
+    "host_unit_tests": "Not required; this batch changes only the Win32 compatibility font/paint implementation.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
       "matches": 519,
@@ -28506,13 +28518,8 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "host_regression": {
-      "matches": 519,
-      "warnings": 25,
-      "differences_errors": 0,
-      "skipped": 0
-    },
-    "baseline": "Unchanged. Dialog template cursor advancement, UTF-16LE field decoding, ordinal values, item alignment and result ownership are preserved.",
+    "host_regression": "Not required; no core/game code changed.",
+    "baseline": "Unchanged. Glyph advances, rendered extents, and Win32 GetTextExtentPoint32A failure/output behavior are preserved.",
     "platform": "Current-source Windows and Linux qualification remains pending.",
     "diff_check": "Pass."
   }
