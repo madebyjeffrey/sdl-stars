@@ -231,7 +231,7 @@ bool FCompatControlClass(LPCSTR pszClass, HINSTANCE hInstance);
 bool FCompatVideo(void);
 bool FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle);
 void CompatRememberNormal(HWND hwnd);
-void CompatWindowState(HWND hwnd, UINT sw, BOOL fNotify);
+void CompatWindowState(HWND hwnd, UINT sw, bool fNotify);
 LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 unsigned NCompatListMutation(HWND hwnd);

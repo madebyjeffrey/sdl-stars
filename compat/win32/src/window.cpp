@@ -18,15 +18,15 @@ static COMPATCLASS *lpClasses;
 static HWND lpWindows, hwndFocus, hwndActive, hwndFirstTop;
 static unsigned int atomNext = 1;
 static std::uint64_t idInspectNext;
-static BOOL fVideoOwned, fShutdown, fResizeWatch, fLiveResize;
-static BOOL fDialogSequence;
+static bool fVideoOwned, fShutdown, fResizeWatch, fLiveResize;
+static bool fDialogSequence;
 static HWND hwndSequenceOwner;
 static NATIVEOWNER<SDL_Window, FreeCompatWindow> lpSequenceWindow;
 static NATIVEOWNER<SDL_Renderer, FreeCompatRenderer> lpSequenceRenderer;
 static NATIVEOWNER<SDL_Texture, FreeCompatTexture> lpSequenceTexture;
 static NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpSequenceCanvas, lpSequenceComposite;
 static int iSequenceScale;
-static BOOL fSequenceOwnerEnabled;
+static bool fSequenceOwnerEnabled;
 static HWND hwndSequenceFocus;
 
 void FreeCompatWindow(SDL_Window *lpWindow) noexcept {
@@ -119,7 +119,7 @@ bool FCompatPendingDialogSequence(HWND hwndOwner) {
 
 void StarsCompatEndDialogSequence(void) {
     HWND hwndOwner = hwndSequenceOwner, hwndFocus = hwndSequenceFocus;
-    BOOL fEnable = fSequenceOwnerEnabled;
+    bool fEnable = fSequenceOwnerEnabled;
 
     if (!SDL_IsMainThread()) return;
     DestroySequenceWindow();
@@ -155,7 +155,7 @@ static void UpdateCompatLiveResize(SDL_Event *lpevent) {
         return;
     }
     // SDL permits application drawing from a watcher during native live resize.
-    StarsRestore<BOOL> restoreResize(fLiveResize);
+    StarsRestore<bool> restoreResize(fLiveResize);
     COMPATPRESENTSCOPE deferPresent(lpwin);
     fLiveResize = 1;
     win32::SendMessageA(lpwin, win32::WM_SIZE, win32::IsZoomed(lpwin) ? win32::SIZE_MAXIMIZED : win32::SIZE_RESTORED,
@@ -302,11 +302,11 @@ static HWND HwndCompatLast(HWND hwndFirst) {
     return hwndFirst;
 }
 
-static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) {
+static void DestroyCompatWindow(HWND lpwin, bool fDestroyMessage, bool fNotify) {
     HWND lpchild;
     HWND hwndParent = lpwin->hwndParent;
     HWND hwndOwner = lpwin->hwndOwner, hwndSaved = lpwin->hwndRestoreFocus;
-    BOOL fRestore = fNotify && !hwndParent && lpwin->fVisible && !(lpwin->dwExStyle & win32::WS_EX_NOACTIVATE) &&
+    bool fRestore = fNotify && !hwndParent && lpwin->fVisible && !(lpwin->dwExStyle & win32::WS_EX_NOACTIVATE) &&
         (win32::GetActiveWindow() == lpwin || (lpwin->lpWindow.get() && SDL_GetKeyboardFocus() == lpwin->lpWindow.get()));
 
     lpwin->fDestroying = 1;
@@ -322,7 +322,7 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
         if (lpchild->fAlive && !lpchild->fDestroying &&
             (lpchild->hwndParent == lpwin || lpchild->hwndOwner == lpwin)) {
             if (fNotify) win32::DestroyWindow(lpchild);
-            else DestroyCompatWindow(lpchild, 0, 0);
+            else DestroyCompatWindow(lpchild, false, false);
         }
     if (fNotify) win32::SendMessageA(lpwin, win32::WM_NCDESTROY, 0, 0);
     CompatPurgeMessages(lpwin);
@@ -384,9 +384,9 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     COMPATCLASS *lpclass;
     HWND lpwin, lpparent, lpancestor;
     int cDepth = 0;
-    BOOL fChild = (dwStyle & win32::WS_CHILD) != 0;
-    BOOL fReuse = 0;
-    BOOL fNativePopup = 0;
+    bool fChild = (dwStyle & win32::WS_CHILD) != 0;
+    bool fReuse = false;
+    bool fNativePopup = false;
     const char *pszNative;
     const std::string_view szTitle{pszTitle ? pszTitle : ""};
     int cxReuse, cyReuse;
@@ -569,12 +569,12 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     if (!fChild && !hMenu && lpclass->wc.lpszMenuName) {
         hMenu = win32::LoadMenuA(lpclass->wc.hInstance, lpclass->wc.lpszMenuName);
         if (!hMenu) {
-            DestroyCompatWindow(lpwin, 0, 1);
+            DestroyCompatWindow(lpwin, false, true);
             return nullptr;
         }
     }
     if (!fChild && hMenu && !win32::SetMenu(lpwin, hMenu)) {
-        DestroyCompatWindow(lpwin, 0, 1);
+        DestroyCompatWindow(lpwin, false, true);
         return nullptr;
     }
     cs.hMenu = hMenu;
@@ -587,7 +587,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     if (!lpwin->fAlive)
         return nullptr;
     if (!lr) {
-        DestroyCompatWindow(lpwin, 0, 1);
+        DestroyCompatWindow(lpwin, false, true);
         return nullptr;
     }
     lr = win32::SendMessageA(lpwin, win32::WM_CREATE, 0, reinterpret_cast<LPARAM>(&cs));
@@ -595,7 +595,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         return nullptr;
     if (lr == -1) {
         // A rejected creation receives WM_NCDESTROY, not ordinary WM_DESTROY.
-        DestroyCompatWindow(lpwin, 0, 1);
+        DestroyCompatWindow(lpwin, false, true);
         return nullptr;
     }
     lpwin->fCreated = 1;
@@ -638,7 +638,7 @@ BOOL win32::DestroyWindow(HWND hwnd) {
 
     if (!lpwin || lpwin->fDestroying)
         return 0;
-    DestroyCompatWindow(lpwin, 1, 1);
+    DestroyCompatWindow(lpwin, true, true);
     return 1;
 }
 
@@ -719,7 +719,7 @@ void CompatRememberNormal(HWND hwnd) {
         win32::GetWindowRect(hwnd, &lpwin->rcNormal);
 }
 
-void CompatWindowState(HWND hwnd, UINT sw, BOOL fNotify) {
+void CompatWindowState(HWND hwnd, UINT sw, bool fNotify) {
     HWND lpwin = LpCompatWindow(hwnd);
     RECT rc;
     UINT swOld;
@@ -796,9 +796,9 @@ bool StarsCompatSetInitialShowCommand(HWND hwnd, int sw) {
     return 1;
 }
 
-static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
+static bool ShowCompatWindow(HWND hwnd, int sw, bool fRedraw, bool fNotify) {
     HWND lpwin = LpCompatWindow(hwnd);
-    BOOL fWasVisible, fVisible, fOk, fPrepare;
+    bool fWasVisible, fVisible, fOk, fPrepare;
     UINT swNew, swOld;
     RECT rc, rcOld, rcSaved;
 
@@ -868,7 +868,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
         return 0;
     }
     if (fVisible) lpwin->swInitial = 0;
-    CompatWindowState(hwnd, swNew, 0);
+    CompatWindowState(hwnd, swNew, false);
     if (swOld == win32::SW_SHOWNORMAL) lpwin->rcNormal = rcSaved;
     if (lpwin->hwndParent && swNew != swOld) {
         rcOld = lpwin->rcChild;
@@ -877,7 +877,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
         if (swNew != win32::SW_SHOWMINIMIZED &&
             !win32::SetWindowPos(hwnd, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
                           win32::SWP_NOZORDER | win32::SWP_NOACTIVATE)) {
-            CompatWindowState(hwnd, swOld, 0);
+            CompatWindowState(hwnd, swOld, false);
             if (lpwin->fAlive) lpwin->rcNormal = rcSaved;
             return 0;
         }
@@ -924,7 +924,7 @@ static BOOL ShowCompatWindow(HWND hwnd, int sw, BOOL fRedraw, BOOL fNotify) {
     return fWasVisible;
 }
 
-BOOL win32::ShowWindow(HWND hwnd, int sw) { return ShowCompatWindow(hwnd, sw, 1, 1); }
+BOOL win32::ShowWindow(HWND hwnd, int sw) { return ShowCompatWindow(hwnd, sw, true, true); }
 
 BOOL win32::IsWindowVisible(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
@@ -966,9 +966,9 @@ static bool FCompatPosition(HWND hwnd, WINDOWPOS *lpwp) {
     return FNativePosition(hwnd->lpWindow.get(), &lpwp->x, &lpwp->y);
 }
 
-static void MarkCompatTopmost(HWND hwnd, BOOL fTopmost) {
+static void MarkCompatTopmost(HWND hwnd, bool fTopmost) {
     HWND lp;
-    BOOL fWasTopmost = (hwnd->dwExStyle & win32::WS_EX_TOPMOST) != 0;
+    bool fWasTopmost = (hwnd->dwExStyle & win32::WS_EX_TOPMOST) != 0;
     if (fTopmost) hwnd->dwExStyle |= win32::WS_EX_TOPMOST;
     else hwnd->dwExStyle &= ~win32::WS_EX_TOPMOST;
     if (hwnd->lpWindow.get() && fTopmost != fWasTopmost) SDL_SetWindowAlwaysOnTop(hwnd->lpWindow.get(), fTopmost);
@@ -989,10 +989,10 @@ static void NormalizeCompatTopmost(void) {
 
 static void KeepCompatOwnedAbove(HWND hwnd) {
     HWND lp, lpPrev, lpNext;
-    BOOL fBelow;
-    for (lp = hwndFirstTop, fBelow = 0; lp; lp = lpNext) {
+    bool fBelow;
+    for (lp = hwndFirstTop, fBelow = false; lp; lp = lpNext) {
         lpNext = lp->hwndZNext;
-        if (lp == hwnd) fBelow = 1;
+        if (lp == hwnd) fBelow = true;
         if (lp->hwndOwner == hwnd) {
             if (fBelow) {
                 lpPrev = hwnd->hwndZPrev;
@@ -1013,7 +1013,7 @@ static bool FCompatInsertAfter(HWND hwnd, HWND hwndAfter) {
 
 static void ReorderCompatWindow(HWND hwnd, HWND hwndAfter) {
     HWND lp, hwndPrev;
-    BOOL fTopmost;
+    bool fTopmost;
     if (hwndAfter == hwnd) return;
     if (hwnd->hwndParent) {
         UnlinkCompatZ(hwnd);
@@ -1023,12 +1023,12 @@ static void ReorderCompatWindow(HWND hwnd, HWND hwndAfter) {
         return;
     }
     fTopmost = (hwnd->dwExStyle & win32::WS_EX_TOPMOST) != 0;
-    if (hwndAfter == win32::HWND_TOPMOST) fTopmost = 1;
-    else if (hwndAfter == win32::HWND_BOTTOM || hwndAfter == win32::HWND_NOTOPMOST) fTopmost = 0;
+    if (hwndAfter == win32::HWND_TOPMOST) fTopmost = true;
+    else if (hwndAfter == win32::HWND_BOTTOM || hwndAfter == win32::HWND_NOTOPMOST) fTopmost = false;
     else if (hwndAfter && (hwndAfter->dwExStyle & win32::WS_EX_TOPMOST)) fTopmost = 1;
     MarkCompatTopmost(hwnd, fTopmost);
     if (!fTopmost)
-        for (lp = hwnd->hwndOwner; lp; lp = lp->hwndOwner) MarkCompatTopmost(lp, 0);
+        for (lp = hwnd->hwndOwner; lp; lp = lp->hwndOwner) MarkCompatTopmost(lp, false);
     UnlinkCompatZ(hwnd);
     if (hwndAfter == win32::HWND_BOTTOM) hwndAfter = HwndCompatLast(hwndFirstTop);
     else if (hwndAfter == win32::HWND_TOPMOST || (hwndAfter == win32::HWND_TOP && fTopmost)) hwndAfter = nullptr;
@@ -1046,7 +1046,7 @@ static void ReorderCompatWindow(HWND hwnd, HWND hwndAfter) {
 BOOL win32::SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy, UINT flags) {
     HWND lpwin = LpCompatWindow(hwnd);
     WINDOWPOS wp, wpOld;
-    BOOL fShow, fHide, fZorder, fChanged, fRedraw;
+    bool fShow, fHide, fZorder, fChanged, fRedraw;
     int xNative, yNative;
     const UINT flagsAllowed = win32::SWP_NOSIZE | win32::SWP_NOMOVE | win32::SWP_NOZORDER | win32::SWP_NOREDRAW |
         win32::SWP_NOACTIVATE | win32::SWP_SHOWWINDOW | win32::SWP_HIDEWINDOW | win32::SWP_NOOWNERZORDER | win32::SWP_NOSENDCHANGING;
@@ -1101,7 +1101,7 @@ BOOL win32::SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     }
     CompatRememberNormal(hwnd);
     if (fZorder) ReorderCompatWindow(lpwin, wp.hwndInsertAfter);
-    if (fShow || fHide) ShowCompatWindow(hwnd, fHide ? win32::SW_HIDE : win32::SW_SHOW, 0, 0);
+    if (fShow || fHide) ShowCompatWindow(hwnd, fHide ? win32::SW_HIDE : win32::SW_SHOW, false, false);
     if (!lpwin->fAlive) return 1;
     if (!(wp.flags & win32::SWP_NOACTIVATE) && !lpwin->hwndParent && lpwin->fVisible && win32::IsWindowEnabled(hwnd) &&
         lpwin->swState != win32::SW_SHOWMINIMIZED && !(lpwin->dwExStyle & win32::WS_EX_NOACTIVATE)) {
@@ -1221,7 +1221,7 @@ static bool FClientOrigin(HWND hwnd, std::int64_t *lpx, std::int64_t *lpy) {
     return 1;
 }
 
-static bool FConvertPoint(HWND hwnd, LPPOINT lppt, BOOL fToScreen) {
+static bool FConvertPoint(HWND hwnd, LPPOINT lppt, bool fToScreen) {
     std::int64_t x, y;
     if (!lppt || !FClientOrigin(hwnd, &x, &y)) return 0;
     x = static_cast<std::int64_t>(lppt->x) + (fToScreen ? x : -x);
@@ -1231,8 +1231,8 @@ static bool FConvertPoint(HWND hwnd, LPPOINT lppt, BOOL fToScreen) {
     return 1;
 }
 
-BOOL win32::ClientToScreen(HWND hwnd, LPPOINT lppt) { return FConvertPoint(hwnd, lppt, 1); }
-BOOL win32::ScreenToClient(HWND hwnd, LPPOINT lppt) { return FConvertPoint(hwnd, lppt, 0); }
+BOOL win32::ClientToScreen(HWND hwnd, LPPOINT lppt) { return FConvertPoint(hwnd, lppt, true); }
+BOOL win32::ScreenToClient(HWND hwnd, LPPOINT lppt) { return FConvertPoint(hwnd, lppt, false); }
 
 int win32::MapWindowPoints(HWND hwndFrom, HWND hwndTo, LPPOINT rgpt, UINT cpt) {
     std::int64_t xFrom = 0, yFrom = 0, xTo = 0, yTo = 0, dx, dy, x, y;
@@ -1338,7 +1338,7 @@ BOOL win32::EnableWindow(HWND hwnd, BOOL fEnable) {
     return fWasDisabled;
 }
 
-static HWND HwndCompatHit(HWND hwnd, int *lpx, int *lpy, BOOL fPoint) {
+static HWND HwndCompatHit(HWND hwnd, int *lpx, int *lpy, bool fPoint) {
     HWND lp;
     RECT rc, client;
     if (!win32::IsWindowEnabled(hwnd)) return nullptr;
@@ -1357,7 +1357,7 @@ static HWND HwndCompatHit(HWND hwnd, int *lpx, int *lpy, BOOL fPoint) {
     return hwnd;
 }
 
-HWND HwndCompatMouse(HWND hwnd, int *lpx, int *lpy) { return HwndCompatHit(hwnd, lpx, lpy, 0); }
+HWND HwndCompatMouse(HWND hwnd, int *lpx, int *lpy) { return HwndCompatHit(hwnd, lpx, lpy, false); }
 
 HWND win32::WindowFromPoint(POINT pt) {
     HWND hwnd, hwndPointer = nullptr;
@@ -1377,7 +1377,7 @@ HWND win32::WindowFromPoint(POINT pt) {
         if (win32::ScreenToClient(hwnd, &ptClient)) {
             if (ptClient.y < 0 && ptClient.y >= -CyCompatMenuBar(hwnd) && ptClient.x >= 0 &&
                 ptClient.x < hwnd->cxMenu) return hwnd;
-            return HwndCompatHit(hwnd, &ptClient.x, &ptClient.y, 1);
+            return HwndCompatHit(hwnd, &ptClient.x, &ptClient.y, true);
         }
     }
     return nullptr;
@@ -1406,7 +1406,7 @@ void CompatFocusWindow(HWND hwnd) {
     }
 }
 
-static void ShutdownCompatRuntime(BOOL fNotify) {
+static void ShutdownCompatRuntime(bool fNotify) {
     HWND lpwin, lpwinNext;
     COMPATCLASS *lpclass, *lpclassNext;
 
@@ -1424,7 +1424,7 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
     for (lpwin = lpWindows; lpwin; lpwin = lpwin->lpNext)
         if (lpwin->fAlive && !lpwin->fDestroying) {
             if (fNotify) win32::DestroyWindow(lpwin);
-            else DestroyCompatWindow(lpwin, 0, 0);
+            else DestroyCompatWindow(lpwin, false, false);
         }
     CompatShutdownInspector();
     CompatClearMessages();
@@ -1459,5 +1459,5 @@ static void ShutdownCompatRuntime(BOOL fNotify) {
 
 bool StarsCompatCanShutdown() noexcept { return SDL_IsMainThread() && CCompatDispatch() == 0; }
 
-void StarsCompatShutdown(void) { ShutdownCompatRuntime(1); }
-void StarsCompatProcessExit(void) { ShutdownCompatRuntime(0); }
+void StarsCompatShutdown(void) { ShutdownCompatRuntime(true); }
+void StarsCompatProcessExit(void) { ShutdownCompatRuntime(false); }
