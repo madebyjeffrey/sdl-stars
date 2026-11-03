@@ -34,7 +34,6 @@
  * is listed only after its complete generated family and metadata are saved. */
 static char szLibraryRoot[256];
 static std::size_t cchLibraryRoot;
-static char szLibraryPending[256];
 static char szLibraryName[256];
 static char szLibraryExchangeName[256];
 static char szRaceLibraryRoot[256];
@@ -472,13 +471,13 @@ std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 
         if (IdPromptLibraryName(app, hwnd, std::span{szLibraryName}) != 1) return 0;
     }
     if (!FPortableLibraryName(app, szLibraryName)) goto LFail;
-    CchSnprintf(std::span{szLibraryPending, sizeof(szLibraryPending)}, "%s%s%s", szLibraryRoot, szDirSep, szLibraryName);
+    CchSnprintf(std::span{app.lpui->szLibraryPending}, "%s%s%s", szLibraryRoot, szDirSep, szLibraryName);
     /* Reserve only a newly created folder; never write into an existing copy. */
-    if (!FLibraryNameAvailable(app, szLibraryRoot, szLibraryName) || CreateNativeDir(szLibraryPending) != 0) {
-        szLibraryPending[0] = 0;
+    if (!FLibraryNameAvailable(app, szLibraryRoot, szLibraryName) || CreateNativeDir(app.lpui->szLibraryPending.data()) != 0) {
+        app.lpui->szLibraryPending[0] = 0;
         goto LFail;
     }
-    CchSnprintf(pszFile, "%s%s%s.xy", szLibraryPending, szDirSep, szLibraryName);
+    CchSnprintf(pszFile, "%s%s%s.xy", app.lpui->szLibraryPending.data(), szDirSep, szLibraryName);
     return 1;
 LFail:
     CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
@@ -535,9 +534,9 @@ static std::int16_t FWriteLibraryMetadataValues(std::string_view pszDir, std::st
     return ReplaceNativeFile(szTemp, szFile) == 0;
 }
 
-static bool RemovePendingFile(APPSESSION &, std::string_view pszFile) {
+static bool RemovePendingFile(APPSESSION &app, std::string_view pszFile) {
     char szFile[256];
-    CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", szLibraryPending, szDirSep, pszFile);
+    CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", app.lpui->szLibraryPending.data(), szDirSep, pszFile);
     /* Failed generation can leave an empty directory at a file destination. */
     RemoveNativePath(szFile);
     return true;
@@ -2085,13 +2084,13 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
     if (fHasTurn && turn <= turnCurrent) {
         iChoice = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_TURN_CONFLICT), hwnd,
                                  LibraryTurnConflictDlg, 0);
-        if (iChoice == 1) return FReplaceConflictingLibraryTurn(app, {szLibraryRoot,szLibraryPending,szLibraryName}, hwnd, lm.szSelected, pszSource,
+        if (iChoice == 1) return FReplaceConflictingLibraryTurn(app, {szLibraryRoot,app.lpui->szLibraryPending,szLibraryName}, hwnd, lm.szSelected, pszSource,
                                                                szTarget, iplr, lidGame, turn);
-        if (iChoice == 2) return FImportConflictingTurnAsCopy(app, {szLibraryRoot,szLibraryPending,szLibraryName}, hwnd, lm.szSelected, pszSource,
+        if (iChoice == 2) return FImportConflictingTurnAsCopy(app, {szLibraryRoot,app.lpui->szLibraryPending,szLibraryName}, hwnd, lm.szSelected, pszSource,
                                                              iplr, lidGame, turn);
         return 0;
     }
-    return FPublishSubsequentTurn(app, {szLibraryRoot,szLibraryPending,szLibraryName}, hwnd,
+    return FPublishSubsequentTurn(app, {szLibraryRoot,app.lpui->szLibraryPending,szLibraryName}, hwnd,
                                   pszSource,szTarget,lm.szSelected,iplr,lidGame,turn,fHasTurn);
 }
 
@@ -2237,7 +2236,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
     }
     if (!FChooseLibraryGameName(app, hwnd, std::span<char, 256>{szSource, 256}, std::nullopt)) return 0;
     CchCopyUtf8(std::span{szLibraryExchangeName}, szStem);
-    return FPublishImportedLibraryGame(app, {szLibraryRoot,szLibraryPending,szLibraryName},li,szDir);
+    return FPublishImportedLibraryGame(app, {szLibraryRoot,app.lpui->szLibraryPending,szLibraryName},li,szDir);
 LInvalidSource:
     CchSnprintf(std::span{app.state.szWork, sizeof(app.state.szWork)}, "%s", szSource);
     AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsCantOpenFile, {}).data(), win32::MB_ICONHAND);
@@ -2789,21 +2788,21 @@ std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenera
     char szFile[256], szMessage[256];
     int i;
 
-    if (!szLibraryPending[0]) return 0;
+    if (!app.lpui->szLibraryPending[0]) return 0;
     for (i = -2; fGenerated && i < app.state.game.cPlayer; i++) {
         if (i == -2) CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s.xy", app.state.szBase);
         else if (i == -1) CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s.hst", app.state.szBase);
         else CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s.m%d", app.state.szBase, i + 1);
         if (!FCompleteGeneratedFile(app, szFile, i == -2 ? dtXY : i == -1 ? dtHost : dtTurn, i < 0 ? iplrNone : i)) fGenerated = 0;
     }
-    if (fGenerated) fGenerated = FWriteLibraryMetadata(szLibraryPending, szLibraryName, app.state.idPlayer);
+    if (fGenerated) fGenerated = FWriteLibraryMetadata(app.lpui->szLibraryPending.data(), szLibraryName, app.state.idPlayer);
     if (!fGenerated) {
-        FNativeEnumerateDirectory(app, szLibraryPending, RemovePendingFile);
-        RemoveNativePath(szLibraryPending);
+        FNativeEnumerateDirectory(app, app.lpui->szLibraryPending.data(), RemovePendingFile);
+        RemoveNativePath(app.lpui->szLibraryPending.data());
         CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
     }
-    szLibraryPending[0] = 0;
+    app.lpui->szLibraryPending[0] = 0;
     return fGenerated;
 }
 
@@ -3322,7 +3321,7 @@ void RememberLibraryGame(APPSESSION &app) {
 
 void CloseLibraryUiSession(APPSESSION &app) noexcept {
     ClearLibraryGameList();
-    szLibraryRoot[0] = szLibraryPending[0] = szLibraryName[0] = szLibraryExchangeName[0] = 0;
+    szLibraryRoot[0] = app.lpui->szLibraryPending[0] = szLibraryName[0] = szLibraryExchangeName[0] = 0;
     cchLibraryRoot = 0;
     szRaceLibraryRoot[0] = app.lpui->szRaceLibraryPath[0] = app.lpui->szRaceLibraryName[0] = 0;
     fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = 0;
@@ -3398,7 +3397,7 @@ std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &pa
     char szStage[256];
     LibraryPublicationIO().pfnCchSnprintf(std::span{szStage, sizeof(szStage)}, "%s%s.importing.%lld", paths.szLibraryRoot, szDirSep, static_cast<long long>(LibraryPublicationIO().pfnLNativeTime()));
     if (LibraryPublicationIO().pfnCreateNativeDir(szStage) != 0) {
-        RemoveNativePath(paths.szLibraryPending);
+        RemoveNativePath(paths.szLibraryPending.data());
         paths.szLibraryPending[0] = 0;
         return 0;
     }
@@ -3411,11 +3410,11 @@ std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &pa
             [&li](APPSESSION &appEntry, std::string_view pszName) { return CopyBackupDirectory(appEntry, &li, pszName); }) || li.fBad ||
         !LibraryPublicationIO().pfnFWriteLibraryMetadata(szStage, paths.szLibraryName,
                                li.grfPlayers ? static_cast<std::int16_t>(__builtin_ctz(li.grfPlayers)) : iplrNone) ||
-        RemoveNativePath(paths.szLibraryPending) != 0 || RenameNativeFile(szStage, paths.szLibraryPending) != 0) {
+        RemoveNativePath(paths.szLibraryPending.data()) != 0 || RenameNativeFile(szStage, paths.szLibraryPending.data()) != 0) {
         LibraryPublicationIO().pfnEnumerateDirectory(app, LIBRARYPUBLICATIONENUMERATION::removeFiles, szStage,
             [szStage](APPSESSION &appEntry, std::string_view pszName) { return RemoveImportFile(appEntry, szStage, pszName); });
         RemoveNativePath(szStage);
-        RemoveNativePath(paths.szLibraryPending);
+        RemoveNativePath(paths.szLibraryPending.data());
         paths.szLibraryPending[0] = 0;
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameImportFailed).data(), win32::MB_ICONHAND);
         return 0;

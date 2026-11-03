@@ -21,7 +21,7 @@ struct LIBRARYIMPORT {
 // Borrow existing library path buffers at the publication boundary.
 struct LIBRARYPATHS {
     char (&szLibraryRoot)[256];
-    char (&szLibraryPending)[256];
+    std::span<char, 256> szLibraryPending;
     char (&szLibraryName)[256];
 };
 std::int16_t FCopyNativeFileContents(NATIVEFILE *pfSource, NATIVEFILE *pfTarget);
