@@ -98,7 +98,7 @@ std::int16_t  FQueueAiTerraforming(APPSESSION &app, PLANET *lppl, std::span<std:
 std::int16_t  FQueueAiScanner(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
 std::int16_t  FQueueAiDefenses(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
 void     HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, PROD *rgprod, std::int16_t ishdefSBLatest, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
-void     SplitOutShdefs(APPSESSION &app, std::uint8_t *rgbIsh);
+void     SplitOutShdefs(APPSESSION &app, std::span<std::uint8_t, 16> rgbIsh);
 AISHDEFSTATUSRESULT CheckAiShdefStatus(APPSESSION &app, std::int16_t ishBeg, std::int16_t ishEnd, std::uint16_t cRecyclePeriod, std::span<std::uint8_t, 16> rgbOld);
 void     IncreaseAIMinefieldSizes(APPSESSION &app);
 std::int16_t  FFindBuddyAndJoinUp(APPSESSION &app, FLEET *lpfl, std::int16_t ishLo, std::int16_t ishHi, std::int32_t lMaxDist1, std::int32_t lMaxDist2);

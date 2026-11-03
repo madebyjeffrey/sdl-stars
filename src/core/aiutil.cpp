@@ -2740,7 +2740,7 @@ void HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, PROD *rgprod, std:
     return;
 }
 
-void SplitOutShdefs(APPSESSION &app, std::uint8_t *rgbIsh) {
+void SplitOutShdefs(APPSESSION &app, std::span<std::uint8_t, 16> rgbIsh) {
     std::int16_t iLast;
     std::int16_t iFirst;
     std::int16_t ifl;
