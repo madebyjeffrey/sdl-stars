@@ -28337,8 +28337,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "62c067063c9c0ac9e5846a5aaafef3df68a3a698",
-  "latest_batch_status": "Source committed as 62c06706. Strict macOS SDL Debug build, desktop unit suite, focused control tests, tutorial smoke and native regression pass. Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "2b8006317f63a2cb78aa7d3cf14202201d9a3253",
+  "latest_batch_status": "Source committed as 2b800631. Strict macOS SDL Debug build, startup test, desktop unit suite, tutorial smoke and native regression pass. Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28354,9 +28354,9 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "One hundred seven redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison and group-control title sizing.",
-    "source_head": "62c067063c9c0ac9e5846a5aaafef3df68a3a698",
-    "strlen_occurrence_inventory": "16 std::strlen calls remain in src and compat/win32/src C++ headers/sources (16 calls total); no SDL_strlen calls remain. Counts are individual matches from rg -o, not matching lines. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "ui_text_lengths": "One hundred eight redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing and SDL argument parsing.",
+    "source_head": "2b8006317f63a2cb78aa7d3cf14202201d9a3253",
+    "strlen_occurrence_inventory": "15 std::strlen calls remain in src and compat/win32/src C++ headers/sources (15 calls total); no SDL_strlen calls remain. Counts are individual matches from rg -o, not matching lines. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28392,21 +28392,22 @@
     "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8\u2019s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
     "compat_menu_label_lengths": "COMPATMENUITEM records the byte count when it owns its label; GetMenuStringA and popup sizing reuse that count.",
     "compat_list_item_lengths": "COMPATLISTITEM records the UTF-8 byte length at AddList ownership transfer; LB_GETTEXTLEN and LB_GETTEXT reuse it, removing the owned-item strlen scan and an implicit string_view length scan. Input search text remains a C-string ABI boundary.",
-    "strlen_occurrence_inventory_method": "rg -o confirms 16 std::strlen occurrences and no SDL_strlen occurrences after this source batch.",
+    "strlen_occurrence_inventory_method": "rg -o confirms 15 std::strlen occurrences and no SDL_strlen occurrences after this source batch.",
     "file_dialog_path_lengths": "FJoinFile returns a validated joined path byte count; IAcceptFilePath reuses it for extension placement and carries the final path length through result copy and required-buffer reporting, removing two redundant strlen scans.",
     "legacy_file_path_views": "OpenFile creates one view from the incoming path, then carries a view of the assembled path through UTF-8 validation, capacity checks and LPOFSTRUCT copying. This removes two strlen calls and redundant implicit scans while preserving the C API boundary.",
     "compat_window_text_lengths": "HWND__ caches title, undo and composition byte counts beside its owned C strings. Window creation and WM_SETTEXT set title lengths; edit replacement and undo keep title/undo lengths synchronized; composition ownership sets and clears its count. WM_GETTEXTLENGTH and edit helpers reuse the values, removing two std::strlen scans and one SDL_strlen scan.",
     "file_filter_lengths": "The OPENFILENAME MULTI_SZ parser stores each bounded SDL_strnlen result and uses it to create owned filter strings and advance the cursor, removing two duplicate std::strlen scans while retaining the 4096-byte per-string cap.",
     "race_file_prefix_view": "FSaveRace now uses string_view::starts_with to preserve the prior strncmp(..., strlen(currentPath)) prefix semantics while removing the explicit length scan.",
-    "group_control_title_length": "The compatibility group-control painter now passes HWND__::cchTitle to GetTextExtentPoint32A instead of rescanning the same owned title with SDL_strlen."
+    "group_control_title_length": "The compatibility group-control painter now passes HWND__::cchTitle to GetTextExtentPoint32A instead of rescanning the same owned title with SDL_strlen.",
+    "entry_argument_views": "ICompatMain measures each argv item once through string_view, rejects whitespace with find_first_of, compares native options with typed view equality and copies the exact byte range before writing the final NUL. The obsolete <cstring> include is removed."
   },
-  "latest_change": "Group-control title sizing reuses HWND__’s cached UTF-8 byte count.",
+  "latest_change": "ICompatMain parses argv through bounded string views and copies only argument bytes into the legacy command-line buffer.",
   "latest_batch_verification": {
-    "batch": "L05 group controls reuse cached window-title lengths",
-    "source_commit": "62c067063c9c0ac9e5846a5aaafef3df68a3a698",
+    "batch": "L05 SDL argv parsing uses string views and typed searches",
+    "source_commit": "2b8006317f63a2cb78aa7d3cf14202201d9a3253",
     "macos_debug_build": "make compile passes with strict warnings and header checks.",
     "desktop_unit_tests": "18/18 pass.",
-    "focused_compatibility_tests": "Compatibility control and resource-control tests pass (2/2).",
+    "focused_compatibility_tests": "SDL dummy startup test passes (1/1).",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
     "native_regression": {
@@ -28421,9 +28422,9 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; group-box title painting receives the same cached UTF-8 byte length as before.",
+    "baseline": "Unchanged; argv filtering, byte limits, whitespace rejection and final command-line bytes retain their prior behavior.",
     "platform": "Windows/Linux current-source qualification remains pending.",
-    "host_regression_scope": "Host regression passed 519/519 before this UI-only source batch; no game or host sources changed.",
+    "host_regression_scope": "Host regression passed 519/519 before this SDL entry-only source batch; no game or host sources changed.",
     "diff_check": "Pass."
   }
 }
