@@ -138,8 +138,9 @@ Finish:
     gameT.turn = 0;
     DestroyCurGame(app);
     app.state.game = gameT;
-    CchCopyUtf8(std::span{app.state.szBase}, szFile);
-    app.state.szBase[std::strlen(app.state.szBase) - 3] = 0;
+    c = CchCopyUtf8(std::span{app.state.szBase}, szFile);
+    if (c < 3) goto Cancel;
+    app.state.szBase[c - 3] = 0;
     for (i = 0; i < 16 && app.state.vrgplrTypeNew[i] != 0; i++) {
         switch (app.state.vrgplrTypeNew[i] & 3) {
         case 1:

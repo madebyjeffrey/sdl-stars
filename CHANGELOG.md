@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `NewGameWizard` now uses the bounded filename copy length to remove the
+  `.xy` extension. If the copy does not contain that suffix, it cancels safely
+  instead of indexing before the basename. Valid filenames and saved records
+  are unchanged.
+
 - `DrawMineSurvey` now starts the fully surveyed unowned-planet label at the
   beginning of its local buffer. It previously measured uninitialized storage
   before appending the production value. The visible label now contains only
