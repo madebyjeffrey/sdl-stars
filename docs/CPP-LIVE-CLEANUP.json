@@ -28374,7 +28374,7 @@
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
     "source_head": "650a36a5",
-    "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. Counts are individual matches from rg -o, not matching lines. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. This raw count is not a replacement count: four measure C-string API/input boundaries and seven measure text already held in owned or fixed storage; those seven are candidates for carried lengths, subject to confirming that extra state is worthwhile.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28421,7 +28421,26 @@
     "message_format_results": "PszFormatMessage and PszGetMessageN return MESSAGETEXTRESULT carrying exact UTF-8 byte counts from formatter output; MessageWndProc reuses the count for drawing and sizing. The general array-returning PszFormatString API remains unchanged.",
     "inspector_style_lengths": "FormatStyles and its append/decode helpers carry byte counts as style labels are written. InspectDetails reuses the generated style lengths when sizing details text, removing two scratch-buffer strlen calls.",
     "cocoa_chooser_path_length": "IChooseCocoaFile creates one bounded view for the selected native path and reuses its byte length for capacity admission and copy, removing a duplicate std::strlen scan.",
-    "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed."
+    "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed.",
+    "strlen_occurrence_classification": {
+      "source_head": "650a36a5",
+      "total": 11,
+      "c_string_api_or_input_boundaries": 4,
+      "owned_or_fixed_text_length_reads": 7,
+      "boundary_sites": [
+        "compat/win32/src/list.cpp: LB_FINDSTRING LPARAM input",
+        "compat/win32/src/services.cpp: lstrlenA compatibility adapter",
+        "compat/win32/src/filedialog_portal.cpp: DBus unique-name result",
+        "compat/win32/src/edit.cpp: ReplaceEdit LPCSTR input"
+      ],
+      "length_read_sites": [
+        "compat/win32/src/inspect.cpp: snapshot class and text lengths for details-buffer sizing",
+        "src/ui/reportui.cpp: three ship-class label lengths during report drawing",
+        "src/ui/battleui.cpp: fixed battle-plan name length before suffix update",
+        "src/ui/mdi.cpp: fixed game-name length for print output"
+      ],
+      "interpretation": "The seven length reads are not yet confirmed replacements; a migration should carry lengths only where it removes repeated work without adding fragile duplicated state."
+    }
   },
   "latest_change": "CchJoinFile returns the validated joined chooser path length as an optional result instead of a BOOL plus output pointer.",
   "latest_batch_verification": {
