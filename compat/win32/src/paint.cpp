@@ -1795,6 +1795,7 @@ struct COMPATTEXTLINE { int i, cch, dx; };
 
 int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     HDC lpdc = LpDC(hdc);
+    const char *pchEnd;
     std::string sz;
     std::vector<BYTE> rgUnderline;
     std::vector<COMPATTEXTLINE> rgline;
@@ -1809,7 +1810,10 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
                      win32::DT_EXPANDTABS | win32::DT_NOCLIP | win32::DT_EXTERNALLEADING | win32::DT_CALCRECT | win32::DT_NOPREFIX;
 
     if (!lpdc || !lprc || !psz || cch < -1 || (flags & ~supported)) return 0;
-    if (cch == -1) { cch = static_cast<int>(strnlen(psz, 1024 * 1024 + 1)); }
+    if (cch == -1) {
+        pchEnd = std::find(psz, psz + 1024 * 1024 + 1, '\0');
+        cch = static_cast<int>(pchEnd - psz);
+    }
     if (cch > 1024 * 1024) return 0;
     if (cch == 0) { if (flags & win32::DT_CALCRECT) lprc->bottom = lprc->top; return 0; }
     try {
