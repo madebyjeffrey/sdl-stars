@@ -2459,9 +2459,9 @@ std::int16_t FDeleteLibraryGameRecentPaths(APPSESSION &app, std::string_view szD
     }
     TextIO().pfnCchGetString(app, idsStarsIni, std::span{szIniFile});
     TextIO().pfnCchGetString(app, idsFiles, std::span{szSection});
-    TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
+    cch = TextIO().pfnCchGetString(app, idsFile1, std::span{szEntry});
     for (i = 0; i < 9; i++) {
-        szEntry[std::strlen(szEntry) - 1] = static_cast<char>(('1' + i));
+        szEntry[cch - 1] = static_cast<char>(('1' + i));
         CchCopyUtf8(std::span{app.lpui->vrgszMRU, std::size_t{2304}}.subspan(256 * i, 256), rgpszRecent[i]);
         if (!ProfileTextIO().pfnWriteString(szSection, szEntry, rgpszRecent[i], szIniFile)) return 0;
     }
