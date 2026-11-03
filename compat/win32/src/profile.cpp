@@ -11,6 +11,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <stdexcept>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utility>
@@ -269,14 +270,14 @@ UINT win32::GetPrivateProfileIntA(LPCSTR pszSection, LPCSTR pszKey, INT nDefault
 }
 
 BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszValue, LPCSTR pszFile) {
-    char *szLine = nullptr;
+    std::string szLine;
     std::optional<std::string> szPath;
     COMPATPROFILE *lpAll = nullptr, *lpSection, *lpKey, *lpNew, *lp;
     COMPATPROFILE **lplp;
     BOOL fRet = 0;
     std::size_t cb;
     std::unique_lock lockProfile(fProfileLock, std::defer_lock);
-    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { std::free(szLine); FreeProfile(lpAll); });
+    NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { FreeProfile(lpAll); });
 
     if (!pszSection && !pszKey && !pszValue) return 0; // No cache to flush.
     if (!pszSection || !FUtf8Valid(pszSection) ||
@@ -301,20 +302,21 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     } else {
         if (!lpSection) {
             cb = std::strlen(pszSection) + 4;
-            szLine = static_cast<char *>((std::malloc(cb)));
-            if (!szLine) goto LMemory;
-            CchSnprintf(std::span{szLine, cb}, "[%s]\n", pszSection);
-            lpSection = LpProfileLine(szLine);
-            std::free(szLine); szLine = nullptr;
+            try { szLine.resize(cb); }
+            catch (const std::bad_alloc &) { goto LMemory; }
+            catch (const std::length_error &) { goto LMemory; }
+            CchSnprintf(std::span{szLine}, "[%s]\n", pszSection);
+            lpSection = LpProfileLine(szLine.c_str());
             if (!lpSection) goto LMemory;
             for (lplp = &lpAll; *lplp; lplp = &(*lplp)->lpNext) {}
             *lplp = lpSection;
         }
         cb = std::strlen(pszKey) + std::strlen(pszValue) + 3;
-        szLine = static_cast<char *>((std::malloc(cb)));
-        if (!szLine) goto LMemory;
-        CchSnprintf(std::span{szLine, cb}, "%s=%s\n", pszKey, pszValue);
-        lpNew = LpProfileLine(szLine);
+        try { szLine.resize(cb); }
+        catch (const std::bad_alloc &) { goto LMemory; }
+        catch (const std::length_error &) { goto LMemory; }
+        CchSnprintf(std::span{szLine}, "%s=%s\n", pszKey, pszValue);
+        lpNew = LpProfileLine(szLine.c_str());
         if (!lpNew) goto LMemory;
         for (lplp = &lpSection->lpNext; *lplp && !(*lplp)->pszSection && *lplp != lpKey; lplp = &(*lplp)->lpNext) {}
         if (lpKey) {
