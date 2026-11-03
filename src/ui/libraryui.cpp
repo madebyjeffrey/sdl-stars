@@ -2803,7 +2803,7 @@ std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenera
     return fGenerated;
 }
 
-static std::int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, int iplr,
+static std::int16_t FAddLibraryGameListItem(HWND hwndList, const std::string &szName, int iplr,
                                        std::uint16_t grfPlayers, const std::uint16_t *rgturn) {
     LRESULT i;
     int cNew;
@@ -2817,9 +2817,9 @@ static std::int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, 
         rgLibraryGameList.reset(rgNew);
         cLibraryGameListMax = cNew;
     }
-    i = ControlIO().pfnSendMessage(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pszName));
+    if (CchCopyUtf8(std::span{rgLibraryGameList[cLibraryGameList].szName}, szName) < 0) return 0;
+    i = ControlIO().pfnSendMessage(hwndList, win32::LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szName.c_str()));
     if (i == win32::LB_ERR || i == win32::LB_ERRSPACE) return 0;
-    CchSnprintf(std::span{rgLibraryGameList[cLibraryGameList].szName, sizeof(rgLibraryGameList[cLibraryGameList].szName)}, "%s", pszName);
     rgLibraryGameList[cLibraryGameList].iplr = iplr;
     rgLibraryGameList[cLibraryGameList].grfPlayers = grfPlayers;
     std::copy_n(rgturn, sizeof(rgLibraryGameList[cLibraryGameList].rgturn) / sizeof(*rgturn), rgLibraryGameList[cLibraryGameList].rgturn);
@@ -2859,7 +2859,7 @@ static bool ListLibraryGame(APPSESSION &app, HWND hwndList, std::string_view psz
     }
     if (!grfPlayers) return true;
     const std::string szName{pszName};
-    return FAddLibraryGameListItem(hwndList, szName.c_str(), iplrSaved, grfPlayers, rgturn);
+    return FAddLibraryGameListItem(hwndList, szName, iplrSaved, grfPlayers, rgturn);
 }
 
 static bool ListLibraryHostGame(APPSESSION &app, HWND hwndList, std::string_view pszName) {
