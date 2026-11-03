@@ -50,10 +50,6 @@ static void DestroySequenceWindow(void) {
     iSequenceScale = 0;
 }
 
-static char *PszNativeTitle(LPCSTR pszTitle) {
-    return FUtf8Valid(pszTitle) ? SDL_strdup(pszTitle) : nullptr;
-}
-
 BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
     if (!FUtf8Valid(pszTitle)) return 0;
     if (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) return 1;
@@ -390,7 +386,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     BOOL fChild = (dwStyle & win32::WS_CHILD) != 0;
     BOOL fReuse = 0;
     BOOL fNativePopup = 0;
-    char *pszNative;
+    const char *pszNative;
     int cxReuse, cyReuse;
     RECT rcOwner;
     SDL_WindowFlags flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
@@ -507,8 +503,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             // backing before the renderer's first drawable reaches the screen.
             if (fNativePopup && !std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "cocoa")) flags |= SDL_WINDOW_TRANSPARENT;
             // Native captions and control text share the same UTF-8 representation.
-            pszNative = fNativePopup ? nullptr : PszNativeTitle(lpwin->pszTitle);
-            NATIVEOWNER<char, SDL_free> titleOwner(pszNative);
+            pszNative = fNativePopup ? nullptr : lpwin->pszTitle;
             if (fNativePopup && win32::GetWindowRect(lpwin->hwndOwner, &rcOwner))
                 lpwin->lpWindow.reset(SDL_CreatePopupWindow(lpwin->hwndOwner->lpWindow.get(),
                     x - rcOwner.left, y - rcOwner.top, StarsMax(1, dx), StarsMax(1, dy), flags));
