@@ -187,12 +187,12 @@ Finish:
         }
     }
     for (i = 1; i < app.state.game.cPlayer; i++) {
-        for (j = 0; j < i && std::strcmp(app.state.rgplr[i].szName, app.state.rgplr[j].szName) != 0; j++) {
+        for (j = 0; j < i && std::string_view{app.state.rgplr[i].szName} != std::string_view{app.state.rgplr[j].szName}; j++) {
         }
         if (j < i) {
             c = RandomIO().pfnRandom(app, 24);
             while (1) {
-                for (j = 0; j < app.state.game.cPlayer && std::strcmp(app.state.rgplr[j].szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c)).data()) != 0; j++) {
+                for (j = 0; j < app.state.game.cPlayer && std::string_view{app.state.rgplr[j].szName} != std::string_view{TextIO().pfnCompressed(app, static_cast<StringId>(idsBerserker + c)).data()}; j++) {
                 }
                 if (j == app.state.game.cPlayer)
                     break;

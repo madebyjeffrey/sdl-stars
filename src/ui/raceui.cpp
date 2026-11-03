@@ -331,7 +331,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             std::ranges::fill(app.state.vplr.szNames, 0);
             win32::GetDlgItemTextA(hwnd, IDC_RACE_PLURAL_NAME, app.state.vplr.szNames, 32);
             win32::GetDlgItemTextA(hwnd, LOWORD(wParam), szBuf, 32);
-            for (i = 0; i < 7 && std::strcmp(app.state.vplr.szName, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i)).data()) != 0; i++) {
+            for (i = 0; i < 7 && std::string_view{app.state.vplr.szName} != std::string_view{TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + i)).data()}; i++) {
             }
             if (i < 7 && LOWORD(wParam) < IDC_RACE_CUSTOM) {
                 std::ranges::fill(app.state.vplr.szName, 0);
