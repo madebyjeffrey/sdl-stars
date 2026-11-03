@@ -164,17 +164,11 @@ std::int32_t CBattleKills(APPSESSION &app, std::uint8_t *lpbd, std::int16_t fOur
     return cKilled;
 }
 
-std::int32_t LdpFromItokDv(APPSESSION &app, std::int16_t itok, DV *lpdv) {
-    DV       dv;
+std::int32_t LdpFromItokDv(APPSESSION &app, std::int16_t itok, DV dv) {
     std::uint16_t dpShdef;
     std::int16_t  csh;
     std::int32_t  dp;
 
-    if (lpdv) {
-        dv.dp = lpdv->dp;
-    } else {
-        dv.dp = 0;
-    }
     dpShdef = LpshdefFromTok(app, app.state.vrgtok + itok)->hul.dp;
     dp = static_cast<std::uint32_t>((static_cast<std::uint32_t>(dpShdef) * static_cast<std::uint32_t>(app.state.vrgtok[itok].csh)));
     if (dv.dp != 0) {
@@ -185,10 +179,6 @@ std::int32_t LdpFromItokDv(APPSESSION &app, std::int16_t itok, DV *lpdv) {
         dp -= static_cast<std::int32_t>((static_cast<std::int32_t>((static_cast<std::uint32_t>(dpShdef) * dv.pctDp())) / 10 * csh)) / 50;
     }
     return dp;
-}
-
-static std::int32_t LdpFromItokDv(APPSESSION &app, std::int16_t itok, DV dv) {
-    return LdpFromItokDv(app, itok, &dv);
 }
 
 std::int16_t SetVCRBoard(APPSESSION &app, std::int16_t iStep) {
@@ -202,7 +192,7 @@ std::int16_t SetVCRBoard(APPSESSION &app, std::int16_t iStep) {
     if (app.lpui->viStepVCRCur > iStep || app.lpui->viStepVCRCur == -1) {
         for (i = 0; i < BdvFromLp(app, app.lpui->vlpbdVCR).ctok(); i++) {
             app.state.vrgtok[i] = BdvFromLp(app, app.lpui->vlpbdVCR).rgtok(i).ReadValue();
-            app.lpui->vrgdpVCR[i] = LdpFromItokDv(app, i, &app.state.vrgtok[i].dv);
+            app.lpui->vrgdpVCR[i] = LdpFromItokDv(app, i, app.state.vrgtok[i].dv);
         }
         app.lpui->viStepVCRCur = -1;
         app.lpui->viRound = 0;
