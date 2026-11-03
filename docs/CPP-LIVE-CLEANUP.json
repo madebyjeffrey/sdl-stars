@@ -2295,7 +2295,8 @@
         "native-directory-context-callbacks-return-bool",
         "native-stream-error-eof-predicates-return-bool",
         "vcr-stats-value-result",
-        "vcr-damage-value-input"
+        "vcr-damage-value-input",
+        "vcr-battle-kill-selector-bool"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -3244,6 +3245,23 @@
           "api_audit": "LdpFromItokDv accepts DV by value. No nullable DV pointer or pointer-forwarding overload remains; all call sites provide a value.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 VCR death selector uses bool",
+          "source_commit": "a70326656b869079f110ae8f8af830fd06458605",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. The flag selects the same player-death side at every caller.",
+          "api_audit": "CBattleKills now accepts bool fOurDead; all production callers already pass boolean comparisons.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -3545,6 +3563,28 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged. VCR damage arithmetic and token updates are unchanged.",
           "api_audit": "LdpFromItokDv accepts DV by value. No nullable DV pointer or pointer-forwarding overload remains; all call sites provide a value.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
+        }
+      },
+      "battle_kill_selector": {
+        "status": "complete; locally verified",
+        "interface": "CBattleKills takes bool for fOurDead instead of a 16-bit integer flag.",
+        "callers": "Battle report callers pass boolean comparisons; tests continue to cover both sides.",
+        "verification": {
+          "batch": "L06 VCR death selector uses bool",
+          "source_commit": "a70326656b869079f110ae8f8af830fd06458605",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. The flag selects the same player-death side at every caller.",
+          "api_audit": "CBattleKills now accepts bool fOurDead; all production callers already pass boolean comparisons.",
           "platform": "Current-source Windows and Linux qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -27701,10 +27741,10 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 VCR damage value passed by value",
-    "status": "Source commit 066a21ba verified locally; ledger checkpoint pending publication.",
-    "parent": "9dcc9729348393afd8eb4be2a1fe6244e517bbff",
-    "change": "LdpFromItokDv takes the damage value directly and no longer uses an optional output pointer or pointer-forwarding overload.",
+    "batch": "L06 VCR death selector uses bool",
+    "status": "Source commit a7032665 verified locally; ledger checkpoint pending publication.",
+    "parent": "9535bdb030ed64b6827dce1b532d240ad02b729f",
+    "change": "CBattleKills takes bool fOurDead instead of a 16-bit integer flag.",
     "verification": {
       "batch": "L06 native file queries return bool",
       "source_commits": [
@@ -28121,7 +28161,7 @@
       }
     ],
     "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "latest_change": "L06 VCR damage value passed by value",
+    "latest_change": "L06 VCR death selector uses bool",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -28140,12 +28180,12 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
-    "latest_batch_status": "Source commit 066a21ba verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_source_commit": "a70326656b869079f110ae8f8af830fd06458605",
+    "latest_batch_status": "Source commit a7032665 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
-      "batch": "L06 VCR damage value passed by value",
-      "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+      "batch": "L06 VCR death selector uses bool",
+      "source_commit": "a70326656b869079f110ae8f8af830fd06458605",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "native_regression": {
@@ -28155,14 +28195,14 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged. VCR damage arithmetic and token updates are unchanged.",
-      "api_audit": "LdpFromItokDv accepts DV by value. No nullable DV pointer or pointer-forwarding overload remains; all call sites provide a value.",
+      "baseline": "Unchanged. The flag selects the same player-death side at every caller.",
+      "api_audit": "CBattleKills now accepts bool fOurDead; all production callers already pass boolean comparisons.",
       "platform": "Current-source Windows and Linux qualification remains outstanding.",
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L06 VCR damage value passed by value",
-      "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+      "batch": "L06 VCR death selector uses bool",
+      "source_commit": "a70326656b869079f110ae8f8af830fd06458605",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "native_regression": {
@@ -28172,11 +28212,11 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; VCR damage arithmetic and serialized state remain unchanged.",
-      "api_audit": "LdpFromItokDv now takes DV by value, with the nullable pointer overload removed.",
+      "baseline": "Unchanged; existing battle report behavior is preserved.",
+      "api_audit": "CBattleKills fOurDead is now bool; production callers already passed bool predicates.",
       "platform": "Current-source Windows and Linux qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit 066a21ba verified locally; ledger checkpoint pending publication.",
+      "status": "Source commit a7032665 verified locally; ledger checkpoint pending publication.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
@@ -28697,8 +28737,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
-  "latest_batch_status": "Source commit 066a21ba verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "a70326656b869079f110ae8f8af830fd06458605",
+  "latest_batch_status": "Source commit a7032665 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28822,10 +28862,10 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L06 VCR damage value passed by value",
+  "latest_change": "L06 VCR death selector uses bool",
   "latest_batch_verification": {
-    "batch": "L06 VCR damage value passed by value",
-    "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+    "batch": "L06 VCR death selector uses bool",
+    "source_commit": "a70326656b869079f110ae8f8af830fd06458605",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
@@ -28835,14 +28875,14 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. VCR damage arithmetic and token updates are unchanged.",
-    "api_audit": "LdpFromItokDv accepts DV by value. No nullable DV pointer or pointer-forwarding overload remains; all call sites provide a value.",
+    "baseline": "Unchanged. The flag selects the same player-death side at every caller.",
+    "api_audit": "CBattleKills now accepts bool fOurDead; all production callers already pass boolean comparisons.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L06 VCR damage value passed by value",
-    "source_commit": "066a21ba659a207872c3e39b800c5532ae1bb3c3",
+    "batch": "L06 VCR death selector uses bool",
+    "source_commit": "a70326656b869079f110ae8f8af830fd06458605",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "native_regression": {
@@ -28852,11 +28892,11 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; VCR damage arithmetic and serialized state remain unchanged.",
-    "api_audit": "LdpFromItokDv now takes DV by value, with the nullable pointer overload removed.",
+    "baseline": "Unchanged; existing battle report behavior is preserved.",
+    "api_audit": "CBattleKills fOurDead is now bool; production callers already passed bool predicates.",
     "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit 066a21ba verified locally; ledger checkpoint pending publication.",
+    "status": "Source commit a7032665 verified locally; ledger checkpoint pending publication.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
