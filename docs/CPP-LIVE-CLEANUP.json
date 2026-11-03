@@ -219,7 +219,8 @@
         "optional-library-chooser-suggestion-views",
         "bounded-race-library-save-load-edit-duplicate-name-views",
         "bounded-managed-library-game-validator-name-view",
-        "optional-immediate-button-caption-view"
+        "optional-immediate-button-caption-view",
+        "bounded-wrap-text-view-prefix-operations"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -24810,6 +24811,32 @@
       "remaining_wsprintfA_calls": "282 scanned owned C++ source call lines.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 bounded WrapTextOut string-view prefix operations",
+      "parent": "afa78fb9",
+      "source_commit": "372a353e",
+      "macos_debug_build": "make compile passes; strict warnings and standalone header checks pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "No additional focused test was needed; desktop UI utility unit suite passes.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; this UI-only cleanup does not affect game behavior.",
+      "api_audit": "WrapTextOut uses a bounded string_view prefix and safe empty-view pointer at the Win32 text boundary. Removed three pointer-to-pointer helpers used only by this function.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -24830,7 +24857,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 button captions use optional bounded text views",
+    "latest_batch": "L05 bounded WrapTextOut string-view prefix operations",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25027,10 +25054,14 @@
       {
         "commit": "afa78fb9",
         "message": "Draw button captions from optional text views"
+      },
+      {
+        "commit": "372a353e",
+        "message": "Wrap UI text from bounded views"
       }
     ],
-    "latest_source_commit": "afa78fb9",
-    "latest_batch_status": "Locally committed as afa78fb9. macOS SDL Debug build, desktop/host unit suites, startup UI workflow, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "372a353e",
+    "latest_batch_status": "Locally committed as 372a353e. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
@@ -25249,17 +25280,16 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 button captions use optional bounded text views",
-    "source_commit": "afa78fb9",
-    "status": "Locally committed as afa78fb9. macOS SDL Debug build, desktop/host unit suites, startup UI workflow, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 bounded WrapTextOut string-view prefix operations",
+    "source_commit": "372a353e",
+    "status": "Locally committed as 372a353e. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "DrawBtn takes an optional string_view caption; omitted captions use std::nullopt and readonly labels no longer require a mutable cast."
+      "WrapTextOut now walks bounded string_view prefixes; removed AddBackTrailingSpaces, ChopLastWord and ChopTrailingSpaces, which were used only there."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "ui_workflows": "win32_client_startup_dummy passes 1/1.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
