@@ -454,11 +454,11 @@ static void test_XorFileBuf_seed_alias_order(void) {
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
 
-static std::array<char, 360> PszLocationPlanet(APPSESSION &app, std::int16_t id) {
-    std::array<char, 360> szResult{};
+static PLANETNAMERESULT PszLocationPlanet(APPSESSION &app, std::int16_t id) {
+    PLANETNAMERESULT szResult{};
     TEST_CHECK(id == 0);
     CchCopyUtf8(std::span{app.state.szWork}, "World-\xce\xa9");
-    CchCopyUtf8Prefix(std::span{szResult}, app.state.szWork);
+    szResult.cch = CchCopyUtf8Prefix(std::span{szResult.rgch}, app.state.szWork);
     return szResult;
 }
 static void test_LocationText_contract(void) {

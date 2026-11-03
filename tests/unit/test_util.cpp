@@ -517,6 +517,9 @@ static void test_ObjectName_contract(void) {
     TEST_ASSERT(FStarsTestInit(app));
     app.state.rgidPlan[0] = 0;
     const auto szPlanet = PszGetPlanetName(app, 0);
+    const auto szPlanetResult = PszGetPlanetNameResult(app, 0);
+    TEST_CHECK(szPlanetResult.view() == "007" && szPlanetResult.size() == 3);
+    TEST_CHECK(PszGetPlanetNameResult(app, static_cast<std::int16_t>(0x8000)).view() == "Orbiting 007");
     TEST_CHECK(SzObjectNameBytes(PszGetPlanetName(app, 0)) == "007");
     TEST_CHECK(SzObjectNameBytes(PszGetPlanetName(app, static_cast<std::int16_t>(0x8000))) == "Orbiting 007");
     TEST_CHECK(std::string_view(app.state.szWork) == "Orbiting 007");

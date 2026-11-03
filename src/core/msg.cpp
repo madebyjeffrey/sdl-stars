@@ -446,7 +446,7 @@ std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszForma
                 break;
             case 'p':
             DoPlanet:
-                szObjectName = TextIO().pfnPlanetName(app, pParams.front());
+                szObjectName = TextIO().pfnPlanetName(app, pParams.front()).rgch;
                 pchT = szObjectName.data();
             FinishString:
                 AppendText(pchT);

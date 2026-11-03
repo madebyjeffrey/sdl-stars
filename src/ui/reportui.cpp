@@ -1172,6 +1172,7 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
 void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::int16_t irow, std::int16_t icol) {
     std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
+    PLANETNAMERESULT szPlanetName{};
     std::array<char, 360> szReportText{};
     std::uint8_t *lpbd;
     char     szT[100];
@@ -1216,28 +1217,31 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         case colPlanetRoutingDest:
             if (lppl->idRoute == 0) {
                 psz = app.state.szDblDash;
+                cch = cchDblDash;
             } else {
-                szObjectName = TextIO().pfnPlanetName(app, lppl->idRoute - 1);
-                psz = szObjectName.data();
+                szPlanetName = TextIO().pfnPlanetName(app, lppl->idRoute - 1);
+                psz = szPlanetName.data();
+                cch = static_cast<std::int16_t>(szPlanetName.size());
             }
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, cch, nullptr);
             break;
         case colPlanetDriverDest:
             if (lppl->idFling == 0) {
                 psz = app.state.szDblDash;
+                cch = cchDblDash;
             } else {
-                szObjectName = TextIO().pfnPlanetName(app, lppl->idFling - 1);
-                psz = szObjectName.data();
+                szPlanetName = TextIO().pfnPlanetName(app, lppl->idFling - 1);
+                psz = szPlanetName.data();
+                cch = static_cast<std::int16_t>(szPlanetName.size());
             }
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, cch, nullptr);
             break;
         case colPlanetName:
             if (app.state.sel.grobj == grobjPlanet && app.state.sel.pl.id == lppl->id) {
                 win32::SetTextColor(hdc, 127);
             }
-            szObjectName = TextIO().pfnPlanetName(app, lppl->id);
-            psz = szObjectName.data();
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            szPlanetName = TextIO().pfnPlanetName(app, lppl->id);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, szPlanetName.data(), static_cast<int>(szPlanetName.size()), nullptr);
             if (!lppl->fStarbase)
                 break;
             rc = *prc;
@@ -1382,9 +1386,9 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         switch (icol) {
         case colFleetBattlePlan:
             i = lpfl->iplan;
-            CchCopyUtf8Prefix(std::span{szT}, app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
+            cch = CchCopyUtf8Prefix(std::span{szT}, app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
             psz = szT;
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, cch, nullptr);
             break;
         case colFleetName:
             if (app.state.sel.grobj == grobjFleet && app.state.sel.fl.id == lpfl->id) {
@@ -1396,13 +1400,14 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             break;
         case colFleetLocation:
             if (lpfl->idPlanet != idPlanetDeepSpace) {
-                szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);
-                psz = szObjectName.data();
+                szPlanetName = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                psz = szPlanetName.data();
+                cch = static_cast<std::int16_t>(szPlanetName.size());
             } else {
                 psz = szT;
-                CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
+                cch = CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
             }
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, cch, nullptr);
             break;
         case colFleetDestination: {
             const auto destination = PszGetDestName(app, lpfl, hdc);
@@ -1484,16 +1489,17 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         switch (icol) {
         case colBattleLocation:
             if (BdvFromLp(app, lpbd).idPlanet() != idPlanetNone) {
-                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd).idPlanet());
-                psz = szObjectName.data();
+                szPlanetName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd).idPlanet());
+                psz = szPlanetName.data();
+                cch = static_cast<std::int16_t>(szPlanetName.size());
             } else {
                 psz = szT;
-                CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd).pt().x(), BdvFromLp(app, lpbd).pt().y());
+                cch = CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd).pt().x(), BdvFromLp(app, lpbd).pt().y());
             }
             if (BdvFromLp(app, lpbd).pt().x() == app.state.sel.scan.pt.x && BdvFromLp(app, lpbd).pt().y() == app.state.sel.scan.pt.y) {
                 win32::SetTextColor(hdc, 127);
             }
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, cch, nullptr);
             break;
         case colBattleSides:
             DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, static_cast<std::uint32_t>(BdvFromLp(app, lpbd).cplr()));
@@ -1569,13 +1575,14 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 break;
             case colEnemyFleetLocation:
                 if (lpfl->idPlanet != idPlanetDeepSpace) {
-                    szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);
-                    psz = szObjectName.data();
+                    szPlanetName = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                    psz = szPlanetName.data();
+                    cch = static_cast<std::int16_t>(szPlanetName.size());
                 } else {
                     psz = szT;
-                    CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
+                    cch = CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl->pt.x, lpfl->pt.y);
                 }
-                win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+                win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, cch, nullptr);
                 break;
             case colEnemyFleetComposition:
                 i = IshdefPrimaryFromLpfl(app, lpfl, &j);
@@ -1823,10 +1830,10 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            szObjectName = TextIO().pfnPlanetName(app, lppl1->idRoute - 1);
+            szObjectName = TextIO().pfnPlanetName(app, lppl1->idRoute - 1).rgch;
             psz = szObjectName.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            szObjectName = TextIO().pfnPlanetName(app, lppl2->idRoute - 1);
+            szObjectName = TextIO().pfnPlanetName(app, lppl2->idRoute - 1).rgch;
             psz = szObjectName.data();
             iRet = std::strcmp(szT, psz);
             break;
@@ -1843,18 +1850,18 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            szObjectName = TextIO().pfnPlanetName(app, lppl1->idFling - 1);
+            szObjectName = TextIO().pfnPlanetName(app, lppl1->idFling - 1).rgch;
             psz = szObjectName.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            szObjectName = TextIO().pfnPlanetName(app, lppl2->idFling - 1);
+            szObjectName = TextIO().pfnPlanetName(app, lppl2->idFling - 1).rgch;
             psz = szObjectName.data();
             iRet = std::strcmp(szT, psz);
             break;
         case colPlanetName:
-            szObjectName = TextIO().pfnPlanetName(app, lppl1->id);
+            szObjectName = TextIO().pfnPlanetName(app, lppl1->id).rgch;
             psz = szObjectName.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            szObjectName = TextIO().pfnPlanetName(app, lppl2->id);
+            szObjectName = TextIO().pfnPlanetName(app, lppl2->id).rgch;
             psz = szObjectName.data();
             iRet = std::strcmp(szT, psz);
             break;
@@ -1981,14 +1988,14 @@ TryTier2:
             break;
         case colFleetLocation:
             if (lpfl1->idPlanet != idPlanetDeepSpace) {
-                szObjectName = TextIO().pfnPlanetName(app, lpfl1->idPlanet);
+                szObjectName = TextIO().pfnPlanetName(app, lpfl1->idPlanet).rgch;
                 psz = szObjectName.data();
                 CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
                 CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl1->pt.x, lpfl1->pt.y);
             }
             if (lpfl2->idPlanet != idPlanetDeepSpace) {
-                szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet);
+                szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet).rgch;
                 psz = szObjectName.data();
             } else {
                 CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
@@ -2121,14 +2128,14 @@ TryTier2:
         switch (icolSort) {
         case colBattleLocation:
             if (BdvFromLp(app, lpbd1).idPlanet() != idPlanetNone) {
-                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd1).idPlanet());
+                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd1).idPlanet()).rgch;
                 psz = szObjectName.data();
                 CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
                 CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd1).pt().x(), BdvFromLp(app, lpbd1).pt().y());
             }
             if (BdvFromLp(app, lpbd2).idPlanet() != idPlanetNone) {
-                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd2).idPlanet());
+                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd2).idPlanet()).rgch;
                 psz = szObjectName.data();
             } else {
                 CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd2).pt().x(), BdvFromLp(app, lpbd2).pt().y());
@@ -2211,14 +2218,14 @@ TryTier2:
                 break;
             case colEnemyFleetLocation:
                 if (lpfl1->idPlanet != idPlanetDeepSpace) {
-                    szObjectName = TextIO().pfnPlanetName(app, lpfl1->idPlanet);
+                    szObjectName = TextIO().pfnPlanetName(app, lpfl1->idPlanet).rgch;
                     psz = szObjectName.data();
                     CchCopyUtf8Prefix(std::span{szT}, psz);
                 } else {
                     CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl1->pt.x, lpfl1->pt.y);
                 }
                 if (lpfl2->idPlanet != idPlanetDeepSpace) {
-                    szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet);
+                    szObjectName = TextIO().pfnPlanetName(app, lpfl2->idPlanet).rgch;
                     psz = szObjectName.data();
                 } else {
                     CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);

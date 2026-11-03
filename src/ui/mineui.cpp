@@ -407,7 +407,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
                 yTop += app.state.dyArial8 + 2;
                 c = TextIO().pfnCchGetString(app, idsDestination, std::span{szT});
-                szObjectName = TextIO().pfnPlanetName(app, lpth->thp().idPlanet());
+                szObjectName = TextIO().pfnPlanetName(app, lpth->thp().idPlanet()).rgch;
                 c += CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), szObjectName.data());
                 win32::TextOutA(hdc, xLeft, yTop, szT, c);
             }
@@ -1180,7 +1180,7 @@ void SetMineralTitleBar(APPSESSION &app, HWND hwnd) {
     grobj = app.state.sel.scan.grobj == grobjOther ? app.state.sel.scan.grobjFull : app.state.sel.scan.grobj;
     if (grobj & grobjPlanet) {
         if (app.state.sel.scan.idpl != idplNone) {
-            szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
+            szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl).rgch;
             CchAppendUtf8Prefix(std::span{szObjectName}, szSummary);
             CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
             psz = szObjectName.data();

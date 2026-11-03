@@ -208,7 +208,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         RightTextOut(app, hdc, dx, app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsId).data(), 0, 0);
         RightTextOut(app, hdc, dx, app.state.dyArial8 * 2 + 4, TextIO().pfnCompressed(app, idsX).data(), 0, 0);
         RightTextOut(app, hdc, dx, 3 * app.state.dyArial8 + 4, TextIO().pfnCompressed(app, idsY).data(), 0, 0);
-        szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
+        szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl).rgch;
         psz = szObjectName.data();
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         win32::TextOutA(hdc, dx, 4, psz, std::strlen(psz));
@@ -349,7 +349,7 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
         szCatalogPsz = TextIO().pfnCompressed(app, idsPlanet);
         psz = szCatalogPsz.data();
         dx = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
-        szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl);
+        szObjectName = TextIO().pfnPlanetName(app, app.state.sel.scan.idpl).rgch;
         psz = szObjectName.data();
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         dxName = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz)));
@@ -455,7 +455,7 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
                     szObjectName = PszGetFleetName(app, LOWORD(rgids[i]) | 0x8000);
                     szText = szObjectName.data();
                 } else {
-                    szObjectName = TextIO().pfnPlanetName(app, LOWORD(rgids[i]));
+                    szObjectName = TextIO().pfnPlanetName(app, LOWORD(rgids[i])).rgch;
                     szText = szObjectName.data();
                 }
                 EscapePopupMenuLabel(szTemp, szText);
@@ -803,7 +803,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
         c = TextIO().pfnCchGetString(app, idsPopulation, std::span{szT});
         WrapTextOut(app, hdc, x, y, std::string_view{szT, static_cast<std::size_t>(c)}, 4, xMax, nullptr, 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        szObjectName = TextIO().pfnPlanetName(app, pl.id);
+        szObjectName = TextIO().pfnPlanetName(app, pl.id).rgch;
         psz = szObjectName.data();
         WrapTextOut(app, hdc, x, y, std::string_view{psz}, 4, xMax, nullptr, 0, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -823,7 +823,7 @@ POINT16 PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) {
     if (pl.iPlayer == app.state.idPlayer || pl.iPlayer == iplrNone)
         goto AfterDesire;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-    szObjectName = TextIO().pfnPlanetName(app, pl.id);
+    szObjectName = TextIO().pfnPlanetName(app, pl.id).rgch;
     psz = szObjectName.data();
     WrapTextOut(app, hdc, x, y, std::string_view{psz}, 4, xMax, nullptr, 0, fPrint);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
@@ -990,7 +990,7 @@ POINT16 PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std:
             psz = app.state.szWork;
             break;
         case 3:
-            szObjectName = TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlan);
+            szObjectName = TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlan).rgch;
             psz = szObjectName.data();
             break;
         case 5:
@@ -1059,7 +1059,7 @@ POINT16 PtDisplayResourceInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::in
             psz = app.state.szWork;
             break;
         case 0:
-            szObjectName = TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet);
+            szObjectName = TextIO().pfnPlanetName(app, app.lpui->GlobalPD.idPlanet).rgch;
             psz = szObjectName.data();
             break;
         case 4:

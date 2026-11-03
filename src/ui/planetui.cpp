@@ -862,7 +862,7 @@ void DrawPlanShipBitmap(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     RECT    rc;
 
     if (app.state.sel.grobj == grobjPlanet) {
-        szObjectName = TextIO().pfnPlanetName(app, obj.ppl()->id);
+        szObjectName = TextIO().pfnPlanetName(app, obj.ppl()->id).rgch;
         psz = szObjectName.data();
         i = obj.ppl()->id;
         i += 8;
@@ -1736,7 +1736,7 @@ void SetPlanetTitleBar(APPSESSION &app, HWND hwnd) {
     char *psz;
 
     if (app.state.sel.grobj == grobjPlanet) {
-        szPlanet = TextIO().pfnPlanetName(app, app.state.sel.pl.id);
+        szPlanet = TextIO().pfnPlanetName(app, app.state.sel.pl.id).rgch;
         // The caption holds the complete bounded prefix and planet name.
         TextIO().pfnCchGetString(app, idsPlanet2, std::span{szTitle}.first(cchCatalogText));
         FAppendUtf8(std::span{szTitle}, szPlanet.data());

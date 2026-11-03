@@ -34,6 +34,15 @@ struct PLAYERNAMERESULT {
     std::size_t size() const noexcept { return cch; }
     std::string_view view() const noexcept { return {rgch.data(), cch}; }
 };
+struct PLANETNAMERESULT {
+    std::array<char, 360> rgch{};
+    std::size_t cch = 0;
+
+    char *data() noexcept { return rgch.data(); }
+    const char *data() const noexcept { return rgch.data(); }
+    std::size_t size() const noexcept { return cch; }
+    std::string_view view() const noexcept { return {rgch.data(), cch}; }
+};
 PLAYERNAMERESULT PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr);
 std::int16_t  FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, std::int32_t *pdmgPeople, std::int32_t *pdmgPeopleMin, std::int32_t *pdmgPeopleSmart, std::int32_t *pdmgBldg, std::int32_t *ppctTerra,
                               std::int16_t *pfMulti);
@@ -51,6 +60,7 @@ std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id);
 std::uint16_t WFromLpfl(APPSESSION &app, FLEET *lpfl);
 std::array<char, 360> PszFleetNameFromWord(APPSESSION &app, std::uint16_t w);
 std::array<char, 360> PszGetPlanetName(APPSESSION &app, std::int16_t id);
+PLANETNAMERESULT PszGetPlanetNameResult(APPSESSION &app, std::int16_t id);
 std::int16_t  IflFromLpfl(APPSESSION &app, FLEET *lpfl);
 std::int16_t  FDeleteFleet(APPSESSION &app, std::int16_t idFleet, GrobjClass grobjSel, std::int16_t idSel);
 FLEET   *LpflNew(APPSESSION &app, std::int16_t iPlr, std::int16_t idPl);

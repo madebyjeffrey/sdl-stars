@@ -970,7 +970,7 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
             }
             if ((app.lpui->grbitScan & grbitScanPlanetNames) && app.state.iScanZoom >= zoom75 && app.state.rgptPlan[i].x >= xMin - 50 && app.state.rgptPlan[i].x < xMax + 50 &&
                 app.state.rgptPlan[i].y >= yMin - 20 && app.state.rgptPlan[i].y < yMax + 20) {
-                szObjectName = TextIO().pfnPlanetName(app, i);
+                szObjectName = TextIO().pfnPlanetName(app, i).rgch;
                 CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
                 if (app.lpui->grbitScan & grbitScanPlayerColors) {
                     lppl = LpplFromId(app, i);
@@ -1961,7 +1961,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
         if (psbar && psbar->psz) {
             CchCopyUtf8Prefix(std::span{app.state.szWork}, psbar->psz);
         } else if (grReal & 1) {
-            szObjectName = TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id);
+            szObjectName = TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id).rgch;
             CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         } else if (grReal & 2) {
             szObjectName = PszGetFleetName(app, !psbar ? app.state.rglpfl[app.state.sel.scan.ifl]->id : psbar->id);

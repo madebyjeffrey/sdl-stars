@@ -533,7 +533,7 @@ void DrawShipPlanet(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     THING  *lpthMac;
 
     if (obj.pfl()->idPlanet != idPlanetDeepSpace) {
-        szObjectName = TextIO().pfnPlanetName(app, obj.pfl()->idPlanet | 0x8000);
+        szObjectName = TextIO().pfnPlanetName(app, obj.pfl()->idPlanet | 0x8000).rgch;
         psz = szObjectName.data();
     } else {
         szCatalogPsz = TextIO().pfnCompressed(app, idsDeepSpace2);
@@ -1940,7 +1940,7 @@ void DrawPlanetXferSide(APPSESSION &app, HDC hdc, RECT *prc, PLANET *ppl, Minera
     if (iSupply == SupplyAll) {
         _Draw3dFrame(app, hdc, &rc, 0);
         if (pl.id != idplNone) {
-            szObjectName = TextIO().pfnPlanetName(app, pl.id);
+            szObjectName = TextIO().pfnPlanetName(app, pl.id).rgch;
             psz = szObjectName.data();
         } else {
             szCatalogPsz = TextIO().pfnCompressed(app, idsDeepSpace);

@@ -128,10 +128,10 @@ static std::array<char, cchCatalogText> TestPszGetCompressedString(APPSESSION &,
     assert(id == idsProductionQueueS);
     return SzWitnessText("Production %s");
 }
-static std::array<char, 360> TestPszGetPlanetName(APPSESSION &, int id) {
-    std::array<char, 360> szResult{};
+static PLANETNAMERESULT TestPszGetPlanetName(APPSESSION &, int id) {
+    PLANETNAMERESULT szResult{};
     (void)id;
-    CchCopyUtf8Prefix(std::span{szResult}, "Test");
+    szResult.cch = CchCopyUtf8Prefix(std::span{szResult.rgch}, "Test");
     return szResult;
 }
 static void TestFUiSetWindowText(HWND hwnd, const char *s) {

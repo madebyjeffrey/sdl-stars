@@ -6,7 +6,7 @@ struct TEXTIO {
     decltype(&PszPlayerName)          pfnPlayerName = PszPlayerName;
     decltype(&PszGetCompressedString) pfnCompressed = PszGetCompressedString;
     decltype(&PszFormatIds)           pfnFormat = PszFormatIds;
-    decltype(&PszGetPlanetName)       pfnPlanetName = PszGetPlanetName;
+    decltype(&PszGetPlanetNameResult) pfnPlanetName = PszGetPlanetNameResult;
     decltype(&CchGetString)           pfnCchGetString = CchGetString;
 };
 const TEXTIO &TextIO() noexcept;

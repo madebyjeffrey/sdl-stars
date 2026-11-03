@@ -639,7 +639,7 @@ void DumpFleets(APPSESSION &app) {
                 if (lpfl->idPlanet == idPlanetDeepSpace) {
                     cchForm = 1;
                 } else {
-                    szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet);
+                    szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet).rgch;
                     psz = szObjectName.data();
                     cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), psz);
                 }

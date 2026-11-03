@@ -747,10 +747,14 @@ std::int16_t FLookupOrbitingXfer(APPSESSION &app, std::int16_t idPlanet, std::in
 
 // Keep the work-buffer effects used by later message \w fields, while callers
 // retain an independent value through subsequent lookups or drawing.
-static std::array<char, 360> SzLocationLabel(std::string_view sz) {
-    std::array<char, 360> szResult{};
-    CchCopyUtf8Prefix(std::span{szResult}, sz);
+static PLANETNAMERESULT SzLocationLabelResult(std::string_view sz) {
+    PLANETNAMERESULT szResult{};
+    szResult.cch = CchCopyUtf8Prefix(std::span{szResult.rgch}, sz);
     return szResult;
+}
+
+static std::array<char, 360> SzLocationLabel(std::string_view sz) {
+    return SzLocationLabelResult(sz).rgch;
 }
 
 std::array<char, 360> PszGetThingName(APPSESSION &app, std::int16_t id) {
@@ -883,9 +887,10 @@ std::array<char, 360> PszFleetNameFromWord(APPSESSION &app, std::uint16_t w) {
     return SzLocationLabel(app.state.szWork);
 }
 
-std::array<char, 360> PszGetPlanetName(APPSESSION &app, std::int16_t id) {
+PLANETNAMERESULT PszGetPlanetNameResult(APPSESSION &app, std::int16_t id) {
     std::array<char, 19> szPlanetName{};
     std::int16_t fInOrbit;
+    std::int16_t cch;
     char   *psz;
 
     fInOrbit = id & 0x8000;
@@ -894,11 +899,15 @@ std::array<char, 360> PszGetPlanetName(APPSESSION &app, std::int16_t id) {
     szPlanetName = PszGetCompressedPlanet(app, id);
     psz = szPlanetName.data();
     if (fInOrbit) {
-        CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsOrbitingS).data(), psz);
+        cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsOrbitingS).data(), psz);
     } else {
-        CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
+        cch = CchCopyUtf8Prefix(std::span{app.state.szWork}, psz);
     }
-    return SzLocationLabel(app.state.szWork);
+    return SzLocationLabelResult(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
+}
+
+std::array<char, 360> PszGetPlanetName(APPSESSION &app, std::int16_t id) {
+    return PszGetPlanetNameResult(app, id).rgch;
 }
 
 std::int16_t IflFromLpfl(APPSESSION &app, FLEET *lpfl) {
@@ -1209,7 +1218,7 @@ std::array<char, 360> PszGetLocName(APPSESSION &app, GrobjClass grobj, std::int1
     if (id == -1)
         goto NoObj;
     if (grobj == grobjPlanet)
-        return TextIO().pfnPlanetName(app, id);
+        return TextIO().pfnPlanetName(app, id).rgch;
     if (grobj == grobjFleet)
         return PszGetFleetName(app, id);
     if (grobj == grobjThing)
