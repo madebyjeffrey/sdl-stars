@@ -1009,7 +1009,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
             CchCopyUtf8(std::span{szT}, app.lpui->vrgszMRU + 256 * (LOWORD(wParam) - 4300));
             psz = std::strrchr(szT, 46);
             if (psz) {
-                if (!FIsManagedLibraryGameFile(szT)) {
+                if (!FIsManagedLibraryGameFile(app, szT)) {
                     if (FImportDesktopFile(app, hwnd, szT) && app.lpui->hwndTitle) {
                         RefreshLibraryGames(app, app.lpui->hwndTitle);
                         RefreshLibraryRaces(app, app.lpui->hwndTitle);
@@ -1517,7 +1517,7 @@ LPrintMapCleanup:
         case IDM_FILE_OPEN_GAME:
         case IDM_TOOL_OPEN_GAME:
             if (app.state.gd.fTutorial && !FAskKillTutor(app)) break;
-            if (app.state.ini.fStartupFile && FIsManagedLibraryGameFile(app.state.szBase)) {
+            if (app.state.ini.fStartupFile && FIsManagedLibraryGameFile(app, app.state.szBase)) {
                 if (FOpenGame(app, hwnd, 0) <= 0) break;
                 InitializeMenu(app, nullptr);
                 if (app.lpui->uTimerId == 0) win32::PostMessageA(hwnd, win32::WM_COMMAND, IDM_FRAME_POST_OPEN, 0);

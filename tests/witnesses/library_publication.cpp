@@ -177,7 +177,7 @@ static int TestFValidManagedLibraryGame(APPSESSION &, std::string_view name, std
     event("probe", 5, p, ok, 0);
     return ok;
 }
-static int TestFCreateLibraryGameStagePath(std::span<char> out) {
+static int TestFCreateLibraryGameStagePath(APPSESSION &, std::span<char> out) {
     assert(out.size() > 5);
     std::copy_n("stage", 6, out.begin());
     int ok = decision() && !objects[3];
@@ -186,7 +186,7 @@ static int TestFCreateLibraryGameStagePath(std::span<char> out) {
     event("allocate", 1, 3, ok, 0);
     return ok;
 }
-static int TestFCreateLibraryGameHoldPath(std::span<char> out) {
+static int TestFCreateLibraryGameHoldPath(APPSESSION &, std::span<char> out) {
     assert(out.size() > 4);
     std::copy_n("hold", 5, out.begin());
     int ok = decision();
@@ -276,12 +276,12 @@ static int TestCreateNativeDir(std::string_view path) {
 static int     TestRemove(std::string_view path, int directory) { return directory ? TestRemoveNativePath(std::string{path}.c_str()) : TestRemoveNativeFile(std::string{path}.c_str()); }
 static int     TestRename(std::string_view source, std::string_view target, int, int) { return move(std::string{source}.c_str(), std::string{target}.c_str()); }
 static int16_t NativeLater(APPSESSION &app, int16_t hasTurn) {
-    return FPublishSubsequentTurn(app, {szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "source", "target", "Game", 0, 123, 11, hasTurn);
+    return FPublishSubsequentTurn(app, {std::span<char, 256>{szLibraryRoot}, szLibraryPending, szLibraryName}, nullptr, "source", "target", "Game", 0, 123, 11, hasTurn);
 }
 static int16_t NativeFamily(APPSESSION &app) {
     LIBRARYIMPORT li{};
     li.grfPlayers = variant >= 5 && variant <= 20 ? 1u << (variant - 5) : variant == 21 ? 0 : 1;
-    return FPublishImportedLibraryGame(app, {szLibraryRoot, szLibraryPending, szLibraryName}, li, "source");
+    return FPublishImportedLibraryGame(app, {std::span<char, 256>{szLibraryRoot}, szLibraryPending, szLibraryName}, li, "source");
 }
 
 int main(void) {
@@ -349,8 +349,8 @@ int main(void) {
         printf("{\"profile\":%d,\"mask\":%u,\"variant\":%d,\"events\":[", profile, mask, variant);
         int result = profile <= 1 ? NativeLater(app, profile == 0)
                      : profile == 2
-                         ? FReplaceConflictingLibraryTurn(app, {szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "Game", "source", "target", 0, 123, 11)
-                     : profile == 3 ? FImportConflictingTurnAsCopy(app, {szLibraryRoot, szLibraryPending, szLibraryName}, nullptr, "Game", "source", 0, 123, 11)
+                         ? FReplaceConflictingLibraryTurn(app, {std::span<char, 256>{szLibraryRoot}, szLibraryPending, szLibraryName}, nullptr, "Game", "source", "target", 0, 123, 11)
+                     : profile == 3 ? FImportConflictingTurnAsCopy(app, {std::span<char, 256>{szLibraryRoot}, szLibraryPending, szLibraryName}, nullptr, "Game", "source", 0, 123, 11)
                                     : NativeFamily(app);
         clear();
         printf("[\"end\"]],\"result\":%d,\"calls\":%d,\"store\":[", result, count);

@@ -20,6 +20,8 @@ struct APPUISTATE {
     alignas(std::max_align_t) std::array<char, 256> szLibraryName = {};
     alignas(std::max_align_t) std::array<char, 256> szLibraryExchangeName = {};
     alignas(std::max_align_t) std::array<char, 256> szRaceLibraryRoot = {};
+    alignas(std::max_align_t) std::array<char, 256> szLibraryRoot = {};
+    std::size_t cchLibraryRoot = 0;
     alignas(std::max_align_t) std::uint8_t        *vlpbrVCR = nullptr;
     alignas(std::max_align_t) BTN           *rgbtnXfer = nullptr;
     alignas(std::max_align_t) COLORREF       crButtonFace = 0;

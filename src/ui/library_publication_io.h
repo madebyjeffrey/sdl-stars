@@ -14,8 +14,8 @@ struct LIBRARYPUBLICATIONIO {
     decltype(&FNativeFileSize)               pfnFNativeFileSize = FNativeFileSize;
     decltype(&FNativeDirectoryExists)        pfnFNativeDirectoryExists = FNativeDirectoryExists;
     decltype(&FValidManagedLibraryGame)      pfnFValidManagedLibraryGame = FValidManagedLibraryGame;
-    decltype(&FCreateLibraryGameStagePath)   pfnFCreateLibraryGameStagePath = FCreateLibraryGameStagePath;
-    decltype(&FCreateLibraryGameHoldPath)    pfnFCreateLibraryGameHoldPath = FCreateLibraryGameHoldPath;
+    std::int16_t (*pfnFCreateLibraryGameStagePath)(APPSESSION &, std::span<char>) = FCreateLibraryGameStagePath;
+    std::int16_t (*pfnFCreateLibraryGameHoldPath)(APPSESSION &, std::span<char>) = FCreateLibraryGameHoldPath;
     decltype(&FCreateLibraryGameStage)       pfnFCreateLibraryGameStage = FCreateLibraryGameStage;
     decltype(&FBackupConflictingPlayerFiles) pfnFBackupConflictingPlayerFiles = FBackupConflictingPlayerFiles;
     decltype(&FStageConflictingTurn)         pfnFStageConflictingTurn = FStageConflictingTurn;

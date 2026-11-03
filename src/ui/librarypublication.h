@@ -20,7 +20,7 @@ struct LIBRARYIMPORT {
 };
 // Borrow existing library path buffers at the publication boundary.
 struct LIBRARYPATHS {
-    char (&szLibraryRoot)[256];
+    std::span<char, 256> szLibraryRoot;
     std::span<char, 256> szLibraryPending;
     std::span<char, 256> szLibraryName;
 };
@@ -36,8 +36,8 @@ std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &p
 std::int16_t FInspectImportFile(std::string_view pszFile, DtFileType dt, int iplr, std::int32_t &lidGame, std::uint16_t *pturn, std::uint16_t *pwGen, std::int16_t &fMulti);
 std::int16_t FValidManagedLibraryGame(APPSESSION &app, std::string_view pszName, std::span<char> pszDirectory,
                                       int &iplr, long long &lPlayed, std::span<char> pszExchangeName);
-std::int16_t FCreateLibraryGameStagePath(std::span<char> pszStage);
-std::int16_t FCreateLibraryGameHoldPath(std::span<char> pszHold);
+std::int16_t FCreateLibraryGameStagePath(APPSESSION &app, std::span<char> pszStage);
+std::int16_t FCreateLibraryGameHoldPath(APPSESSION &app, std::span<char> pszHold);
 std::int16_t FCreateLibraryGameStage(APPSESSION &app, std::string_view pszSource, std::string_view pszSourceName,
                                      std::string_view pszTargetName, std::string_view pszStage, int iplr,
                                      long long lPlayed, std::string_view pszExchangeName);
