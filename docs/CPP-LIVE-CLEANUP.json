@@ -243,7 +243,8 @@
         "const-qualified-catalog-tech-level-view",
         "borrow-owned-window-title-to-sdl",
         "owned-dialog-template-labels-and-items",
-        "DrawText-scratch-containers"
+        "DrawText-scratch-containers",
+        "inspector-detail-text-string-owner"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25451,8 +25452,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L05 DrawText scratch ownership",
-    "latest_published_head": "d6230fbb",
+    "latest_batch": "L05 inspector detail text ownership",
+    "latest_published_head": "94b3942e",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -25483,18 +25484,16 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 DrawText scratch ownership",
-    "source_commit": "d6230fbb",
-    "status": "Locally committed as d6230fbb. macOS Debug build, desktop/host units, paint/font tests, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 inspector detail text ownership",
+    "source_commit": "94b3942e",
+    "status": "Locally committed as 94b3942e. macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "DrawTextA now owns its formatted text, underline flags, and line records in a string and vectors instead of three manual scratch allocations. Existing capacities, zero initialization, layout arithmetic, and allocation-failure return are preserved."
+      "InspectDetails now owns formatted detail text in a local std::string instead of an SDL allocation. The size bound, output formatting, and allocation failure return are preserved."
     ],
     "verification": {
-      "macos_debug_build": "make compile passes; paint.cpp rebuilt with strict warnings.",
+      "macos_debug_build": "make compile passes; inspect.cpp rebuilt with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "paint_font_tests": "win32_sdl_paint_batch, win32_sdl_resource_font, and win32_utf8_font pass 3/3.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -25507,7 +25506,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; text layout, capacity limits, underlining, and visible output retain existing behavior.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "baseline": "Unchanged; inspector text format, capacity, and failure result are preserved.",
       "platform": "Windows/Linux full-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25520,7 +25520,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through d6230fbb.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 94b3942e.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25531,7 +25531,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "d6230fbb",
+      "source_head": "94b3942e",
       "borrowed_return_audit": "The remaining text/scratch/borrowed-return audit is active; redundant SDL title duplication and manual chooser/dialog-template allocation paths have been removed."
     },
     "next": [
@@ -25759,10 +25759,14 @@
       {
         "commit": "d6230fbb",
         "message": "Own DrawText scratch buffers with containers"
+      },
+      {
+        "commit": "94b3942e",
+        "message": "Own inspector detail text in a string"
       }
     ],
-    "latest_source_commit": "d6230fbb",
-    "latest_batch_status": "Locally committed as d6230fbb. macOS Debug build, desktop/host units, paint/font tests, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "94b3942e",
+    "latest_batch_status": "Locally committed as 94b3942e. macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -25771,10 +25775,11 @@
       "current_source_after_08db1856": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_29cadc6a": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_d3977f06": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
-      "current_source_after_d6230fbb": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
+      "current_source_after_d6230fbb": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
+      "current_source_after_94b3942e": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "c_macro_audit": {
-      "source_head": "d6230fbb",
+      "source_head": "94b3942e",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25788,23 +25793,21 @@
       "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through d6230fbb."
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through 94b3942e."
     },
     "borrowed_return_audit": "The remaining text/scratch/borrowed-return audit is active; redundant SDL title duplication and manual chooser/dialog-template allocation paths have been removed."
   },
   "current_checkpoint": {
-    "batch": "L05 DrawText scratch ownership",
-    "status": "Locally committed as d6230fbb. macOS Debug build, desktop/host units, paint/font tests, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "3d7c6e06",
-    "change": "DrawTextA owns the text, underline flags, and line records in std::string and vectors. Capacity formulas, initialization, line layout, and failure result are preserved.",
+    "batch": "L05 inspector detail text ownership",
+    "status": "Locally committed as 94b3942e. macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "23afaa66",
+    "change": "InspectDetails uses a sized std::string for its formatted detail text. Existing capacity and C-string UI boundary remain.",
     "verification": {
-      "batch": "L05 DrawText scratch ownership",
-      "source_commit": "d6230fbb",
-      "macos_debug_build": "make compile passes; paint.cpp rebuilt with strict warnings.",
+      "batch": "L05 inspector detail text ownership",
+      "source_commit": "94b3942e",
+      "macos_debug_build": "make compile passes; inspect.cpp rebuilt with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "paint_font_tests": "win32_sdl_paint_batch, win32_sdl_resource_font, and win32_utf8_font pass 3/3.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -25817,7 +25820,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; text layout, capacity limits, underlining, and visible output retain existing behavior.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "baseline": "Unchanged; inspector text format, capacity, and failure result are preserved.",
       "platform": "Windows/Linux full-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25843,7 +25847,8 @@
       "current_source_after_e14499cd": "Windows/Linux qualification remains pending; local macOS/host builds, units and regressions pass through this source commit.",
       "current_source_after_29cadc6a": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_d3977f06": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
-      "current_source_after_d6230fbb": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
+      "current_source_after_d6230fbb": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
+      "current_source_after_94b3942e": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25858,7 +25863,7 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "Replaced three manual DrawTextA scratch allocations with C++ containers."
+      "Replaced one SDL scratch allocation with a local std::string."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -25869,7 +25874,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through d6230fbb.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 94b3942e.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25880,7 +25885,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "d6230fbb",
+      "source_head": "94b3942e",
       "raw_copy_call_audit": {
         "source_head": "3670b2be",
         "owned_production_calls": 0,
@@ -26087,12 +26092,16 @@
       {
         "commit": "d6230fbb",
         "message": "Own DrawText scratch buffers with containers"
+      },
+      {
+        "commit": "94b3942e",
+        "message": "Own inspector detail text in a string"
       }
     ],
-    "source_commit": "d6230fbb",
+    "source_commit": "94b3942e",
     "latest_change": "Private dialog templates now own decoded labels and item records through optional<string> and vector; malformed templates retain the same failure result and valid resource bytes are unchanged.",
     "c_macro_audit": {
-      "source_head": "d6230fbb",
+      "source_head": "94b3942e",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26106,7 +26115,7 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through d6230fbb.",
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through 94b3942e.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     }
   },

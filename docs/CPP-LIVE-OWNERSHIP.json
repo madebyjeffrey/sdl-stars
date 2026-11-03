@@ -1,5 +1,5 @@
 {
-  "source_parent": "d6230fbb",
+  "source_parent": "94b3942e",
   "scope": [
     "src",
     "compat/win32/include",
@@ -271,8 +271,8 @@
       "id": "38",
       "path": "compat/win32/src/inspect.cpp",
       "scope": "InspectDetails",
-      "owner": "pszOwner",
-      "reason": "Copied inspector display strings stay owned across control messages, recursive row insertion and callback failure; retain the existing SDL allocation and UTF-8 capacity checks."
+      "owner": "std::string szDetails",
+      "reason": "The formatted inspector details are owned in a local string through the final SetWindowTextA call. The cb + 640 bound, formatting content, and silent failure on allocation/length errors are preserved."
     },
     {
       "id": "39",
@@ -1430,16 +1430,6 @@
     },
     {
       "path": "compat/win32/src/inspect.cpp",
-      "line": 225,
-      "scope": "InspectDetails",
-      "operation": "SDL_malloc",
-      "code": "SDL_malloc(cb + 640)",
-      "normalized_call": "SDL_malloc(cb+640)",
-      "compiler_context": true,
-      "contract": "38"
-    },
-    {
-      "path": "compat/win32/src/inspect.cpp",
       "line": 253,
       "scope": "InspectRows",
       "operation": "SDL_malloc",
@@ -2518,6 +2508,14 @@
       "change": "DrawTextA uses std::string and vectors for its three operation-scoped scratch buffers; it retains the same capacities, zero initialization, and failure return.",
       "verification": "macOS SDL Debug build; desktop units 18/18; host units 29/29; paint/font/UTF-8 font tests 3/3; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
       "baseline": "Unchanged."
+    },
+    {
+      "batch": "L05 inspector detail text ownership",
+      "source_commit": "94b3942e",
+      "retired_heap_sites": 1,
+      "change": "InspectDetails uses a sized std::string instead of an SDL-allocated character buffer.",
+      "verification": "macOS SDL Debug build; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
+      "baseline": "Unchanged."
     }
   ],
   "retired_path_text_sites": [
@@ -2614,6 +2612,17 @@
       "compiler_context": true,
       "contract": "64",
       "disposition": "L05 DrawText scratch buffers moved to std::string/std::vector in d6230fbb"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 225,
+      "scope": "InspectDetails",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(cb + 640)",
+      "normalized_call": "SDL_malloc(cb+640)",
+      "compiler_context": true,
+      "contract": "38",
+      "disposition": "L05 inspector detail scratch moved to std::string in 94b3942e"
     }
   ]
 }
