@@ -343,7 +343,7 @@ int main(void) {
     ioRandom.pfnRandom = TestRandom;
     RANDOMIOSCOPE scopeRandom(ioRandom);
     app.state.rglpfl = fleetPointers;
-    orders = LpStartPl<PLORD, ORDER>(orderBytes, sizeof(orderBytes));
+    orders = LpStartPl<PLORD, ORDER>(std::as_writable_bytes(std::span{orderBytes, static_cast<std::size_t>(sizeof(orderBytes))}));
     static_assert(sizeof(PROD) == 4 && sizeof(PLPROD) == 4 && offsetof(PLANET, lpplprod) == 52, "native forecast layout");
     PRODUCTIONESTIMATE result;
     reset(app);

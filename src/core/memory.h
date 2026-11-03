@@ -74,18 +74,18 @@ public:
 // Retain every initialized physical slot byte, including rounded spare items.
 // memmove is a C++20 implicit-lifetime operation; no value initialization,
 // allocation, logical count gate or moving container is introduced here.
-template<class T> T *LpStartHeapArray(void *lp, std::size_t cb) noexcept {
+template<class T> T *LpStartHeapArray(std::span<std::byte> rgb) noexcept {
     static_assert(std::is_trivially_copyable_v<T> && std::is_trivially_default_constructible_v<T>);
-    assert(reinterpret_cast<std::uintptr_t>(lp) % alignof(T) == 0);
-    return std::launder(static_cast<T *>(std::memmove(lp, lp, cb)));
+    assert(reinterpret_cast<std::uintptr_t>(rgb.data()) % alignof(T) == 0);
+    return std::launder(static_cast<T *>(std::memmove(rgb.data(), rgb.data(), rgb.size())));
 }
 template<class T> T *LpAlloc(APPSESSION &app, std::uint16_t cb, HeapType ht) {
     void *lp = HeapIO().pfnAllocate(app, cb, ht);
-    return LpStartHeapArray<T>(lp, HeapIO().pfnExtent(app, lp));
+    return LpStartHeapArray<T>(std::span<std::byte>{static_cast<std::byte *>(lp), HeapIO().pfnExtent(app, lp)});
 }
 template<class T> T *LpReAlloc(APPSESSION &app, T *lp, std::uint16_t cb, HeapType ht) {
     void *lpNew = HeapIO().pfnResize(app, static_cast<void *>(lp), cb, ht);
-    return LpStartHeapArray<T>(lpNew, HeapIO().pfnExtent(app, lpNew));
+    return LpStartHeapArray<T>(std::span<std::byte>{static_cast<std::byte *>(lpNew), HeapIO().pfnExtent(app, lpNew)});
 }
 
 #endif

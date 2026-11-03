@@ -142,7 +142,7 @@ static MSGPLR *MakeMessage(int16_t from, int16_t to, int16_t len) {
 
     mp = (MSGPLR *)malloc(sizeof(MSGPLR) + abs(len));
     TEST_ASSERT(mp != NULL);
-    mp = LpStartPl<MSGPLR, uint8_t>(mp, sizeof(MSGPLR) + abs(len));
+    mp = LpStartPl<MSGPLR, uint8_t>(std::span<std::byte>{reinterpret_cast<std::byte *>(mp), static_cast<std::size_t>(sizeof(MSGPLR) + abs(len))});
     mp->lpmsgplrNext = NULL;
     mp->iPlrFrom = from;
     mp->iPlrTo = to;

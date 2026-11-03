@@ -300,14 +300,14 @@ PLPROD *LpplAlloc<PLPROD>(APPSESSION &app, std::uint16_t cbItem, std::uint16_t c
     PL *lppl;
 
     lppl = LpplAlloc(app, cbItem, cAlloc, ht);
-    return LpStartPl<PLPROD, PROD>(lppl, HeapIO().pfnExtent(app, lppl));
+    return LpStartPl<PLPROD, PROD>(std::span<std::byte>{reinterpret_cast<std::byte *>(lppl), HeapIO().pfnExtent(app, lppl)});
 }
 
 PLPROD *LpplReAlloc(APPSESSION &app, PLPROD *lppl, std::uint16_t cAlloc) {
     void *lp;
 
     lp = HeapIO().pfnResize(app, lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
-    lppl = LpStartPl<PLPROD, PROD>(lp, HeapIO().pfnExtent(app, lp));
+    lppl = LpStartPl<PLPROD, PROD>(std::span<std::byte>{reinterpret_cast<std::byte *>(lp), HeapIO().pfnExtent(app, lp)});
     lppl->iprodMax = cAlloc;
     return lppl;
 }
@@ -333,14 +333,14 @@ PLORD *LpplAlloc<PLORD>(APPSESSION &app, std::uint16_t cbItem, std::uint16_t cAl
     PL *lppl;
 
     lppl = LpplAlloc(app, cbItem, cAlloc, ht);
-    return LpStartPl<PLORD, ORDER>(lppl, HeapIO().pfnExtent(app, lppl));
+    return LpStartPl<PLORD, ORDER>(std::span<std::byte>{reinterpret_cast<std::byte *>(lppl), HeapIO().pfnExtent(app, lppl)});
 }
 
 PLORD *LpplReAlloc(APPSESSION &app, PLORD *lppl, std::uint16_t cAlloc) {
     void *lp;
 
     lp = HeapIO().pfnResize(app, lppl, lppl->cbItem * cAlloc + 4, static_cast<HeapType>(lppl->ht));
-    lppl = LpStartPl<PLORD, ORDER>(lp, HeapIO().pfnExtent(app, lp));
+    lppl = LpStartPl<PLORD, ORDER>(std::span<std::byte>{reinterpret_cast<std::byte *>(lp), HeapIO().pfnExtent(app, lp)});
     lppl->iordMax = cAlloc;
     return lppl;
 }
@@ -442,11 +442,11 @@ void CopyThingBytes(APPSESSION &app, THING *pth, std::span<const std::byte> rgb)
 
 MSGPLR *LpmsgplrAlloc(APPSESSION &app, std::uint16_t cb) {
     void *lp = HeapIO().pfnAllocate(app, cb, htPlrMsg);
-    return LpStartPl<MSGPLR, std::uint8_t>(lp, HeapIO().pfnExtent(app, lp));
+    return LpStartPl<MSGPLR, std::uint8_t>(std::span<std::byte>{reinterpret_cast<std::byte *>(lp), HeapIO().pfnExtent(app, lp)});
 }
 MSGPLR *LpmsgplrReAlloc(APPSESSION &app, MSGPLR *lpmp, std::uint16_t cb) {
     void *lp = HeapIO().pfnResize(app, lpmp, cb, htPlrMsg);
-    return LpStartPl<MSGPLR, std::uint8_t>(lp, HeapIO().pfnExtent(app, lp));
+    return LpStartPl<MSGPLR, std::uint8_t>(std::span<std::byte>{reinterpret_cast<std::byte *>(lp), HeapIO().pfnExtent(app, lp)});
 }
 
 NATIVEBYTEWINDOW MbwFromLp(APPSESSION &app, void *lp) noexcept { return BbwFromLpHt(app, lp, htMsg); }

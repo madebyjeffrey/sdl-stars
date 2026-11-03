@@ -61,7 +61,7 @@ static void setup(APPSESSION &app) {
     memset(fleets, 0, sizeof(fleets));
     memset(orderStorage, 0, sizeof(orderStorage));
     for (int i = 0; i < 4; i++)
-        orders[i] = LpStartPl<PLORD, ORDER>(orderStorage[i].bytes, sizeof(orderStorage[i].bytes));
+        orders[i] = LpStartPl<PLORD, ORDER>(std::as_writable_bytes(std::span{orderStorage[i].bytes, static_cast<std::size_t>(sizeof(orderStorage[i].bytes))}));
     draws = mineCalls = partCalls = operCalls = 0;
     app.state.lRandSeed1 = 7;
     app.state.lRandSeed2 = 11;

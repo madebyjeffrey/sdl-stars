@@ -22,7 +22,7 @@ static PLPROD *queue(unsigned count) {
     assert(allocations < 128 && count <= 255);
     PLPROD *p = (PLPROD *)calloc(1, 4 + count * 4);
     assert(p);
-    p = LpStartPl<PLPROD, PROD>(p, 4 + count * 4);
+    p = LpStartPl<PLPROD, PROD>(std::span<std::byte>{reinterpret_cast<std::byte *>(p), static_cast<std::size_t>(4 + count * 4)});
     p->cbItem = 4;
     p->iprodMac = count;
     p->iprodMax = count;

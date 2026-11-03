@@ -202,7 +202,7 @@ static void paintLabel(APPSESSION &app, int i) { FormatTransportPresetAction(app
 static void reset(APPSESSION &app) {
     memset(app.state.vrgZip, 0, sizeof(app.state.vrgZip));
     memset(orderBytes, 0, sizeof(orderBytes));
-    orders = LpStartPl<PLORD, ORDER>(orderBytes, sizeof(orderBytes));
+    orders = LpStartPl<PLORD, ORDER>(std::as_writable_bytes(std::span{orderBytes, static_cast<std::size_t>(sizeof(orderBytes))}));
     memset(&app.state.sel, 0, sizeof(app.state.sel));
     app.state.sel.fl.lpplord = orders;
     app.state.sel.iwpAct = 1;

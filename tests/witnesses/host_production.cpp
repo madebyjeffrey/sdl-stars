@@ -232,7 +232,7 @@ static PLPROD *queue(unsigned maximum, unsigned count, unsigned physical) {
     PLPROD *p = static_cast<PLPROD *>(malloc(n));
     assert(p);
     memset(p, 0, n);
-    p = LpStartPl<PLPROD, PROD>(p, n);
+    p = LpStartPl<PLPROD, PROD>(std::span<std::byte>{reinterpret_cast<std::byte *>(p), static_cast<std::size_t>(n)});
     heap[heaps].p = p;
     heap[heaps].bytes = n;
     heap[heaps++].live = 1;

@@ -373,7 +373,7 @@ int main(void) {
         fleetBodies[i].idPlanet = idPlanetDeepSpace;
         fleetBodies[i].rgcsh[0] = 1;
         fleetBodies[i].pt = POINT16{99, 99};
-        fleetBodies[i].lpplord = LpStartPl<PLORD, ORDER>(orderStorage[i].data, sizeof(orderStorage[i].data));
+        fleetBodies[i].lpplord = LpStartPl<PLORD, ORDER>(std::as_writable_bytes(std::span{orderStorage[i].data, static_cast<std::size_t>(sizeof(orderStorage[i].data))}));
         fleetBodies[i].cord = 1;
         fleetBodies[i].lpplord->iordMac = 1;
         fleetBodies[i].lpplord->rgord()[0].pt = fleetBodies[i].pt;

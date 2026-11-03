@@ -164,7 +164,7 @@ FLEET *TestLpflNew(APPSESSION &app, int16_t player, int16_t id) {
     FLEET *f = &fleetBodies[3];
     f->iPlayer = player;
     f->idPlanet = id;
-    f->lpplord = LpStartPl<PLORD, ORDER>(orderStorage[3].data, sizeof(orderStorage[3].data));
+    f->lpplord = LpStartPl<PLORD, ORDER>(std::as_writable_bytes(std::span{orderStorage[3].data, static_cast<std::size_t>(sizeof(orderStorage[3].data))}));
     app.state.rgplr[player].cFleet++;
     return f;
 }
@@ -328,7 +328,7 @@ static void reset(APPSESSION &app) {
     memset(orderStorage, 0, 4 * sizeof(orderStorage[0]));
     for (int i = 0; i < 4; i++) {
         fleetSlots[i] = &fleetBodies[i];
-        fleetBodies[i].lpplord = LpStartPl<PLORD, ORDER>(orderStorage[i].data, sizeof(orderStorage[i].data));
+        fleetBodies[i].lpplord = LpStartPl<PLORD, ORDER>(std::as_writable_bytes(std::span{orderStorage[i].data, static_cast<std::size_t>(sizeof(orderStorage[i].data))}));
     }
     app.state.rglpshdef[0] = ships;
     app.state.rglpshdefSB[0] = bases;

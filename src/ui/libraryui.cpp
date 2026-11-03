@@ -2821,7 +2821,7 @@ static std::int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, 
         cNew = cLibraryGameListMax ? cLibraryGameListMax * 2 : 32;
         rgNew = static_cast<LIBRARYGAMELISTITEM *>(SDL_realloc(rgLibraryGameList.get(), static_cast<std::size_t>(cNew) * sizeof(*rgNew)));
         if (!rgNew) return 0;
-        rgNew = LpStartHeapArray<LIBRARYGAMELISTITEM>(rgNew,static_cast<std::size_t>(cNew) * sizeof(*rgNew));
+        rgNew = LpStartHeapArray<LIBRARYGAMELISTITEM>(std::span<std::byte>{reinterpret_cast<std::byte *>(rgNew), static_cast<std::size_t>(cNew) * sizeof(*rgNew)});
         rgLibraryGameList.release();
         rgLibraryGameList.reset(rgNew);
         cLibraryGameListMax = cNew;
