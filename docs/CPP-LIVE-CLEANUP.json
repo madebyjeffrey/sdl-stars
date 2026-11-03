@@ -2081,7 +2081,8 @@
         "fixed-width-wire-scalar-read-spans",
         "wire-record-prefix-views-use-byte-spans",
         "research-cargo-battle-prefix-views-use-spans",
-        "fixed-extent-message-battle-and-header-prefix-spans"
+        "fixed-extent-message-battle-and-header-prefix-spans",
+        "raw-scalar-memory-accessors-use-byte-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2745,6 +2746,31 @@
           },
           "baseline": "Unchanged; wire sizes, record layouts, byte contents, and game behavior are unchanged.",
           "api_audit": "HdvFromPrefix, MhvFromPrefix, MtvFromPrefix, BkvFromPrefix, BevFromPrefix, and BdvFromPrefix now require fixed-extent spans. All 61 pointer-only callers construct spans with the existing wire extent.",
+          "platform": "Windows/Linux current-source qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 scalar raw-storage accessors use byte spans",
+          "parent": "e04ce09d",
+          "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
+          "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "baseline": "Unchanged; memcpy scalar semantics, allocator metadata, wire widths, and output bytes are unchanged.",
+          "api_audit": "RawLoad16/32 and RawStore16/32 now take byte spans instead of void pointers. All 32 callers pass explicit two- or four-byte extents.",
           "platform": "Windows/Linux current-source qualification remains pending.",
           "diff_check": "Pass."
         }
@@ -25879,6 +25905,31 @@
       "api_audit": "HdvFromPrefix, MhvFromPrefix, MtvFromPrefix, BkvFromPrefix, BevFromPrefix, and BdvFromPrefix now require fixed-extent spans. All 61 pointer-only callers construct spans with the existing wire extent.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "L06 scalar raw-storage accessors use byte spans",
+      "parent": "e04ce09d",
+      "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
+      "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; memcpy scalar semantics, allocator metadata, wire widths, and output bytes are unchanged.",
+      "api_audit": "RawLoad16/32 and RawStore16/32 now take byte spans instead of void pointers. All 32 callers pass explicit two- or four-byte extents.",
+      "platform": "Windows/Linux current-source qualification remains pending.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -26299,14 +26350,14 @@
     "borrowed_return_audit": "Packaged help guide body uses local std::string ownership and a bounded marker view; broader L05 scratch and borrowed-return audit remains active."
   },
   "current_checkpoint": {
-    "batch": "L06 fixed-extent message battle and header prefix views",
-    "status": "Locally committed as 2b1cda6f. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "parent": "feeaa8fa",
-    "change": "All message, battle, and record header prefix views now take fixed-extent spans.",
+    "batch": "L06 scalar raw-storage accessors use byte spans",
+    "status": "Locally committed as e22be817. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "parent": "e04ce09d",
+    "change": "RawLoad16/32 and RawStore16/32 take byte spans at all call sites.",
     "verification": {
-      "batch": "L06 fixed-extent message battle and header prefix views",
-      "parent": "feeaa8fa",
-      "source_commit": "2b1cda6f1ae4e346941b02e1a006d344739e268c",
+      "batch": "L06 scalar raw-storage accessors use byte spans",
+      "parent": "e04ce09d",
+      "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -26323,8 +26374,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; wire sizes, record layouts, byte contents, and game behavior are unchanged.",
-      "api_audit": "HdvFromPrefix, MhvFromPrefix, MtvFromPrefix, BkvFromPrefix, BevFromPrefix, and BdvFromPrefix now require fixed-extent spans. All 61 pointer-only callers construct spans with the existing wire extent.",
+      "baseline": "Unchanged; memcpy scalar semantics, allocator metadata, wire widths, and output bytes are unchanged.",
+      "api_audit": "RawLoad16/32 and RawStore16/32 now take byte spans instead of void pointers. All 32 callers pass explicit two- or four-byte extents.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -26379,7 +26430,9 @@
       "Research, cargo-transfer, and battle-plan wire-prefix helpers now accept mutable byte spans.",
       "All 64 source call sites pass bounded extents matching their previous lengths.",
       "Message header/turn, battle kill/event/data, and record header views now require fixed-extent spans.",
-      "All 61 pointer-only call sites now provide spans whose type carries the wire extent."
+      "All 61 pointer-only call sites now provide spans whose type carries the wire extent.",
+      "RawLoad16/32 and RawStore16/32 now take byte spans rather than void pointers.",
+      "All 32 allocator, battle, bitmap, and test callers pass explicit scalar extents."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -26417,11 +26470,12 @@
       "stream_scalar_readers": "WFromStreamBytes and LFromStreamBytes no longer accept unbounded void pointers.",
       "wire_prefix_views": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix take mutable byte spans.",
       "wire_record_prefix_apis": "Eight variable-length prefix helpers use mutable byte spans; remaining pointer-only helpers use fixed wire extents.",
-      "wire_prefix_apis": "All variable-width prefix helpers take spans; fixed-width header/message/battle prefix helpers take fixed-extent spans."
+      "wire_prefix_apis": "All variable-width prefix helpers take spans; fixed-width header/message/battle prefix helpers take fixed-extent spans.",
+      "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     },
     "next": [
       "L05 bounded text destinations, remaining const-text interfaces, and post-migration scratch/borrowed-return audit.",
-      "L06 remaining non-prefix buffer/length service interfaces, native file/path result work, and chooser Milestone D coverage.",
+      "L06 remaining non-scalar buffer/length service interfaces, native file/path result work, and chooser Milestone D coverage.",
       "L08 current-source Windows/Linux qualification and final macro/C inventory reconciliation."
     ],
     "post_checkpoint_commits": [
@@ -26662,8 +26716,8 @@
         "message": "Use views in profile text validation"
       }
     ],
-    "source_commit": "2b1cda6f1ae4e346941b02e1a006d344739e268c",
-    "latest_change": "Message header/turn, battle kill/event/data, and record header views now require fixed-extent spans.",
+    "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
+    "latest_change": "RawLoad16/32 and RawStore16/32 now take byte spans rather than void pointers.",
     "c_macro_audit": {
       "source_head": "ce4b1e7a",
       "date": "2026-11-02",
@@ -26682,13 +26736,13 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through ce4b1e7a.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "2b1cda6f1ae4e346941b02e1a006d344739e268c",
-    "latest_batch_status": "Locally committed as 2b1cda6f. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
+    "latest_batch_status": "Locally committed as e22be817. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "latest_published_head": "da8c27bc",
     "latest_batch_verification": {
-      "batch": "L06 fixed-extent message battle and header prefix views",
-      "parent": "feeaa8fa",
-      "source_commit": "2b1cda6f1ae4e346941b02e1a006d344739e268c",
+      "batch": "L06 scalar raw-storage accessors use byte spans",
+      "parent": "e04ce09d",
+      "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -26705,8 +26759,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; wire sizes, record layouts, byte contents, and game behavior are unchanged.",
-      "api_audit": "HdvFromPrefix, MhvFromPrefix, MtvFromPrefix, BkvFromPrefix, BevFromPrefix, and BdvFromPrefix now require fixed-extent spans. All 61 pointer-only callers construct spans with the existing wire extent.",
+      "baseline": "Unchanged; memcpy scalar semantics, allocator metadata, wire widths, and output bytes are unchanged.",
+      "api_audit": "RawLoad16/32 and RawStore16/32 now take byte spans instead of void pointers. All 32 callers pass explicit two- or four-byte extents.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -26715,7 +26769,7 @@
       "production_c_translation_units": 0,
       "application_api_function_like_macros": 0,
       "c_macro_inventory": "Unchanged by this batch; last source inventory was reviewed at 32deeaff.",
-      "wire_prefix_apis": "All variable-width prefix helpers take spans; fixed-width header/message/battle prefix helpers take fixed-extent spans."
+      "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
   "milestone_d_checkpoint": {
@@ -26742,9 +26796,9 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 fixed-extent message battle and header prefix views",
-    "source_commit": "2b1cda6f1ae4e346941b02e1a006d344739e268c",
-    "status": "Locally committed as 2b1cda6f. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "batch": "L06 scalar raw-storage accessors use byte spans",
+    "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
+    "status": "Locally committed as e22be817. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -26761,7 +26815,9 @@
       "Research, cargo-transfer, and battle-plan wire-prefix helpers now accept mutable byte spans.",
       "All 64 source call sites pass bounded extents matching their previous lengths.",
       "Message header/turn, battle kill/event/data, and record header views now require fixed-extent spans.",
-      "All 61 pointer-only call sites now provide spans whose type carries the wire extent."
+      "All 61 pointer-only call sites now provide spans whose type carries the wire extent.",
+      "RawLoad16/32 and RawStore16/32 now take byte spans rather than void pointers.",
+      "All 32 allocator, battle, bitmap, and test callers pass explicit scalar extents."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -26813,7 +26869,7 @@
     },
     "next": [
       "L05 bounded text destinations, remaining const-text interfaces, and post-migration scratch/borrowed-return audit.",
-      "L06 remaining non-prefix buffer/length service interfaces, native file/path result work, and chooser Milestone D coverage.",
+      "L06 remaining non-scalar buffer/length service interfaces, native file/path result work, and chooser Milestone D coverage.",
       "L08 current-source Windows/Linux qualification and final macro/C inventory reconciliation."
     ],
     "untracked_user_assets": [
@@ -27150,13 +27206,13 @@
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
-    "latest_source_commit": "2b1cda6f1ae4e346941b02e1a006d344739e268c",
-    "latest_batch_status": "Locally committed as 2b1cda6f. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "latest_change": "Message header/turn, battle kill/event/data, and record header views now require fixed-extent spans.",
+    "latest_source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
+    "latest_batch_status": "Locally committed as e22be817. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "latest_change": "RawLoad16/32 and RawStore16/32 now take byte spans rather than void pointers.",
     "latest_batch_verification": {
-      "batch": "L06 fixed-extent message battle and header prefix views",
-      "parent": "feeaa8fa",
-      "source_commit": "2b1cda6f1ae4e346941b02e1a006d344739e268c",
+      "batch": "L06 scalar raw-storage accessors use byte spans",
+      "parent": "e04ce09d",
+      "source_commit": "e22be81769606fb96e060a2372dc01310706e6c0",
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -27173,8 +27229,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; wire sizes, record layouts, byte contents, and game behavior are unchanged.",
-      "api_audit": "HdvFromPrefix, MhvFromPrefix, MtvFromPrefix, BkvFromPrefix, BevFromPrefix, and BdvFromPrefix now require fixed-extent spans. All 61 pointer-only callers construct spans with the existing wire extent.",
+      "baseline": "Unchanged; memcpy scalar semantics, allocator metadata, wire widths, and output bytes are unchanged.",
+      "api_audit": "RawLoad16/32 and RawStore16/32 now take byte spans instead of void pointers. All 32 callers pass explicit two- or four-byte extents.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -27183,7 +27239,7 @@
       "production_c_translation_units": 0,
       "application_api_function_like_macros": 0,
       "c_macro_inventory": "Unchanged by this batch; last source inventory was reviewed at 32deeaff.",
-      "wire_prefix_apis": "All variable-width prefix helpers take spans; fixed-width header/message/battle prefix helpers take fixed-extent spans."
+      "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   }
 }
