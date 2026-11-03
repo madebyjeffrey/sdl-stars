@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
     CHECK(InitPrinter(&pd, szChosen));
     CHECK(win32::Escape(pd.hDC, win32::STARTDOC, 6, "Failed", NULL) > 0);
     CHECK(win32::Escape(pd.hDC, win32::ENDDOC, 0, NULL, NULL) == win32::SP_ERROR && cViewer == 4);
-    FreePrinter(&pd); CHECK(IRemoveNativePath(szChosen, 1) == 0);
+    FreePrinter(&pd); CHECK(IRemoveNativePath(szChosen, true) == 0);
     memset(&pd, 0, sizeof(pd)); CHECK(!win32::PrintDlgA(&pd) && win32::CommDlgExtendedError() == win32::CDERR_STRUCTSIZE);
     pd.lStructSize = sizeof(pd); pd.Flags = win32::PD_RETURNDC; CHECK(!win32::PrintDlgA(&pd) && win32::CommDlgExtendedError() == win32::CDERR_INITIALIZATION);
     snprintf(szChosen, sizeof(szChosen), "%s/viewer-\xc3\xa9 #%%.pdf", pszDir);

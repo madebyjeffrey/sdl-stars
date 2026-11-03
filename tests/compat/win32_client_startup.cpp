@@ -1604,7 +1604,7 @@ int StarsTest_MessageBoxA(HWND hwnd, LPCSTR pszText, LPCSTR pszCaption, UINT typ
 }
 
 static const NATIVEPUBLISHIO publishNative;
-static int IRemoveClientFile(std::string_view szFile, int fDirectory) {
+static int IRemoveClientFile(std::string_view szFile, bool fDirectory) {
     if (fDirectory) return publishNative.pfnRemove(szFile, fDirectory);
     static int fFailImportOrdersRemove;
     if (!fFailLibraryGameDelete && PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
@@ -1624,7 +1624,7 @@ static int IRemoveClientFile(std::string_view szFile, int fDirectory) {
     return publishNative.pfnRemove(szFile, fDirectory);
 }
 
-static int IRenameClientFile(std::string_view szOld, std::string_view szNew, int fReplace, int fSync) {
+static int IRenameClientFile(std::string_view szOld, std::string_view szNew, bool fReplace, bool fSync) {
     static int fFailImportReplace, fFailConflictPublish, fFailConflictRestore;
     if (!fSync && fReplace) {
         if (fFailRaceVersionSave && szOld.find(".stars-race-stage-") != std::string_view::npos) {

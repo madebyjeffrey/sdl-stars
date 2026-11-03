@@ -106,7 +106,7 @@ static std::optional<std::string> PszHelpDocument(const char *pszDirectory, cons
     if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = 0;
     if (ICloseNativeFile(targetOwner.release())) fOk = 0;
     lpTarget = nullptr;
-    if (!fOk || IRenameNativePath(nft.szPath.c_str(), szTarget, 1, 1)) { IUnlinkNativePath(nft.szPath.c_str()); goto fail; }
+    if (!fOk || IRenameNativePath(nft.szPath.c_str(), szTarget, true, true)) { IUnlinkNativePath(nft.szPath.c_str()); goto fail; }
     try { szResult.emplace(szTarget); }
     catch (const std::bad_alloc &) { goto fail; }
     goto done;

@@ -542,17 +542,17 @@ bool FEnsureNativeDirectory(std::string_view szPath) {
         return fs::is_directory(pth, ec) && !ec;
     });
 }
-int IRemoveNativePath(std::string_view szPath, int directory) {
+int IRemoveNativePath(std::string_view szPath, bool fDirectory) {
     if (!FPath(szPath)) return -1;
     return FileCall(nullptr, -1, [&] {
 #ifdef _WIN32
-        if (!directory) {
+        if (!fDirectory) {
             if (DeleteFileW(PathFromUtf8(szPath).c_str())) return 0;
             errno = GetLastError() == ERROR_FILE_NOT_FOUND ? ENOENT : EACCES;
             return -1;
         }
 #else
-        static_cast<void>(directory);
+        static_cast<void>(fDirectory);
 #endif
         std::error_code ec;
         if (fs::remove(PathFromUtf8(szPath), ec)) return 0;
@@ -560,18 +560,18 @@ int IRemoveNativePath(std::string_view szPath, int directory) {
         return -1;
     });
 }
-int IRenameNativePath(std::string_view szOldPath, std::string_view szNewPath, int replace, int sync) {
+int IRenameNativePath(std::string_view szOldPath, std::string_view szNewPath, bool fReplace, bool fSync) {
     if (!FPath(szOldPath) || !FPath(szNewPath)) return -1;
     return FileCall(nullptr, -1, [&] {
 #ifdef _WIN32
-        DWORD flags = (replace ? MOVEFILE_REPLACE_EXISTING : 0) | (sync ? MOVEFILE_WRITE_THROUGH : 0);
+        DWORD flags = (fReplace ? MOVEFILE_REPLACE_EXISTING : 0) | (fSync ? MOVEFILE_WRITE_THROUGH : 0);
         if (MoveFileExW(PathFromUtf8(szOldPath).c_str(), PathFromUtf8(szNewPath).c_str(), flags)) return 0;
         DWORD error = GetLastError();
         errno = error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND ? ENOENT :
                 error == ERROR_ALREADY_EXISTS || error == ERROR_FILE_EXISTS ? EEXIST : EACCES;
         return -1;
 #else
-        static_cast<void>(replace); static_cast<void>(sync);
+        static_cast<void>(fReplace); static_cast<void>(fSync);
         std::error_code ec; fs::rename(PathFromUtf8(szOldPath), PathFromUtf8(szNewPath), ec);
         if (ec) { SetError(ec); return -1; }
         return 0;

@@ -271,7 +271,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
         }
         IUnlinkNativePath(lp->szTemp); lp->szTemp[0] = 0;
     } else {
-        if (IRenameNativePath(lp->szTemp, lp->szTarget, 1, 1) != 0) { AbortPrint(lp); win32::SetLastError(win32::ERROR_WRITE_FAULT); return win32::SP_ERROR; }
+        if (IRenameNativePath(lp->szTemp, lp->szTarget, true, true) != 0) { AbortPrint(lp); win32::SetLastError(win32::ERROR_WRITE_FAULT); return win32::SP_ERROR; }
         lp->szTemp[0] = 0;
         // The completed PDF remains valid even when no viewer accepts it.
         if (!FCompatOpenDocument(lp->szTarget)) {

@@ -273,8 +273,8 @@ static int TestCreateNativeDir(std::string_view path) {
     event("allocate", 2, p, ok, 0);
     return ok ? 0 : -1;
 }
-static int     TestRemove(std::string_view path, int directory) { return directory ? TestRemoveNativePath(std::string{path}.c_str()) : TestRemoveNativeFile(std::string{path}.c_str()); }
-static int     TestRename(std::string_view source, std::string_view target, int, int) { return move(std::string{source}.c_str(), std::string{target}.c_str()); }
+static int     TestRemove(std::string_view path, bool fDirectory) { return fDirectory ? TestRemoveNativePath(std::string{path}.c_str()) : TestRemoveNativeFile(std::string{path}.c_str()); }
+static int     TestRename(std::string_view source, std::string_view target, bool, bool) { return move(std::string{source}.c_str(), std::string{target}.c_str()); }
 static int16_t NativeLater(APPSESSION &app, int16_t hasTurn) {
     return FPublishSubsequentTurn(app, {std::span<char, 256>{szLibraryRoot}, szLibraryPending, szLibraryName}, nullptr, "source", "target", "Game", 0, 123, 11, hasTurn);
 }

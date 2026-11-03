@@ -131,8 +131,8 @@ std::optional<NATIVEFILEINFO> IGetNativeFileInfo(std::string_view szPath, NATIVE
 int IAccessNativePath(std::string_view szPath, int md);
 int ICreateNativeDirectory(std::string_view szPath, unsigned md);
 bool FEnsureNativeDirectory(std::string_view szPath);
-int IRemoveNativePath(std::string_view szPath, int fDirectory);
-int IRenameNativePath(std::string_view szOldPath, std::string_view szNewPath, int fReplace, int fSync);
+int IRemoveNativePath(std::string_view szPath, bool fDirectory);
+int IRenameNativePath(std::string_view szOldPath, std::string_view szNewPath, bool fReplace, bool fSync);
 std::optional<std::string> SzCanonicalNativePath(std::string_view szPath);
 std::optional<std::string> SzNativeCwd();
 // Counts exclude the NUL; insufficient spans retain their bytes and set ERANGE.

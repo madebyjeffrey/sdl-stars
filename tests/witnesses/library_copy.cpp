@@ -32,8 +32,8 @@ static int    copyClose(NATIVEFILE *f) {
     }
     return status;
 }
-static int copyRemove(std::string_view path, int directory) {
-    assert(!directory);
+static int copyRemove(std::string_view path, bool fDirectory) {
+    assert(!fDirectory);
     if (faults & 16) {
         errno = EACCES;
         return -1;

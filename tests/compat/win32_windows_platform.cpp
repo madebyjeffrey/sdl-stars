@@ -31,7 +31,7 @@ int main(void) {
     CHECK(win32::OpenFile(szPath, &of, win32::OF_READ | win32::OF_SHARE_DENY_NONE) == win32::HFILE_ERROR && of.nErrCode == win32::ERROR_SHARING_VIOLATION);
     CHECK(win32::_llseek(hf, 0, SEEK_SET) == 0 && win32::_lread(hf, rgbRead, sizeof(rgbRead)) == sizeof(rgbRead));
     CHECK(memcmp(rgb, rgbRead, sizeof(rgb)) == 0 && win32::_lclose(hf) == 0);
-    CHECK(IRenameNativePath(szPath, szOther, 1, 1) == 0 && IAccessNativePath(szPath, 0) != 0);
+    CHECK(IRenameNativePath(szPath, szOther, true, true) == 0 && IAccessNativePath(szPath, 0) != 0);
     const auto szReal = SzCanonicalNativePath(szOther);
     CHECK(szReal && *szReal == szOther);
     const auto szUri = SzCompatFileUri(szOther);

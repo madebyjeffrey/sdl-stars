@@ -125,7 +125,7 @@ int main(void) {
     CHECK(ICloseNativeFile(pf)==0 && IUnlinkNativePath(other)==0);
     errno=0;CHECK(!PfNativeOpen("\xff", static_cast<NATIVEFILEMODE>(255)) && errno==EINVAL);
     snprintf(other,sizeof(other),"%s/renamed",dir);
-    CHECK(IRenameNativePath(path,other,1,0)==0);
+    CHECK(IRenameNativePath(path,other,true,false)==0);
     auto pd=PdirNativeOpen(dir);CHECK(pd);int found=0;std::optional<std::string> entry;
     while((entry=SzNativeReadDir(pd.get())))if(!strcmp(entry->c_str(),"renamed"))found++;
     CHECK(found==1 && !errno && !SzNativeReadDir(pd.get()) && !errno); pd.reset();
@@ -136,7 +136,7 @@ int main(void) {
         pd.reset(); CHECK(*szEntry=="renamed");
     }
     errno=0;CHECK(!SzNativeReadDir(nullptr) && errno==EBADF);
-    CHECK(IRemoveNativePath(other,0)==0 && IRemoveNativePath(dir,1)==0);
+    CHECK(IRemoveNativePath(other,false)==0 && IRemoveNativePath(dir,true)==0);
     errno=0;CHECK(!PfNativeOpen("\xff", NATIVEFILEMODE::read) && errno==EILSEQ);
     pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && CchNativePrintf(pf,"2\nname\n7\n1234567890123\nnext\n")>0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     int version,player;long long played;char line[64];
