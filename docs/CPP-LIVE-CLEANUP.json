@@ -2079,7 +2079,8 @@
         "bounded-font-measurement-string-view-and-size-reference",
         "font-drawing-string-view-and-advance-span",
         "fixed-width-wire-scalar-read-spans",
-        "wire-record-prefix-views-use-byte-spans"
+        "wire-record-prefix-views-use-byte-spans",
+        "research-cargo-battle-prefix-views-use-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2693,6 +2694,31 @@
           },
           "baseline": "Unchanged; view offsets, admitted record lengths, serialized bytes, and record layouts are unchanged.",
           "api_audit": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix now accept mutable byte spans. All 109 source and fixture pointer-plus-length call sites migrated.",
+          "platform": "Windows/Linux current-source qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 research cargo and battle-plan record views use spans",
+          "parent": "f1eafe8e",
+          "source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
+          "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "baseline": "Unchanged; record offsets, serialized bytes, record layouts, and game behavior are unchanged.",
+          "api_audit": "RsvFromPrefix, CxvFromPrefix, and BpvFromPrefix now accept mutable byte spans. All 64 research, cargo-transfer, and battle-plan pointer/count call sites migrated.",
           "platform": "Windows/Linux current-source qualification remains pending.",
           "diff_check": "Pass."
         }
@@ -25777,6 +25803,31 @@
       "api_audit": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix now accept mutable byte spans. All 109 source and fixture pointer-plus-length call sites migrated.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "L06 research cargo and battle-plan record views use spans",
+      "parent": "f1eafe8e",
+      "source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
+      "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; record offsets, serialized bytes, record layouts, and game behavior are unchanged.",
+      "api_audit": "RsvFromPrefix, CxvFromPrefix, and BpvFromPrefix now accept mutable byte spans. All 64 research, cargo-transfer, and battle-plan pointer/count call sites migrated.",
+      "platform": "Windows/Linux current-source qualification remains pending.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -26197,14 +26248,14 @@
     "borrowed_return_audit": "Packaged help guide body uses local std::string ownership and a bounded marker view; broader L05 scratch and borrowed-return audit remains active."
   },
   "current_checkpoint": {
-    "batch": "L06 wire record prefix views accept byte spans",
-    "status": "Locally committed as f1eafe8e. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "parent": "4483f235",
-    "change": "Five wire record prefix views now take mutable byte spans; callers pass bounded byte extents.",
+    "batch": "L06 research cargo and battle-plan record views use spans",
+    "status": "Locally committed as be1a70e5. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "parent": "f1eafe8e",
+    "change": "Research, cargo-transfer, and battle-plan prefix views now take bounded byte spans.",
     "verification": {
-      "batch": "L06 wire record prefix views accept byte spans",
-      "parent": "4483f235",
-      "source_commit": "f1eafe8e7c9c52cc3b44ceea39abea83b244cbbf",
+      "batch": "L06 research cargo and battle-plan record views use spans",
+      "parent": "f1eafe8e",
+      "source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -26221,8 +26272,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; view offsets, admitted record lengths, serialized bytes, and record layouts are unchanged.",
-      "api_audit": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix now accept mutable byte spans. All 109 source and fixture pointer-plus-length call sites migrated.",
+      "baseline": "Unchanged; record offsets, serialized bytes, record layouts, and game behavior are unchanged.",
+      "api_audit": "RsvFromPrefix, CxvFromPrefix, and BpvFromPrefix now accept mutable byte spans. All 64 research, cargo-transfer, and battle-plan pointer/count call sites migrated.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -26273,7 +26324,9 @@
       "WFromStreamBytes and LFromStreamBytes accept fixed two- and four-byte spans instead of void pointers.",
       "All file, race and unit-test call sites pass explicit byte ranges.",
       "Five wire record prefix view helpers now accept mutable byte spans instead of void pointers and separate lengths.",
-      "All 109 save/load, log, and compatibility call sites pass spans covering their prior byte extents."
+      "All 109 save/load, log, and compatibility call sites pass spans covering their prior byte extents.",
+      "Research, cargo-transfer, and battle-plan wire-prefix helpers now accept mutable byte spans.",
+      "All 64 source call sites pass bounded extents matching their previous lengths."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -26309,11 +26362,12 @@
       },
       "borrowed_return_audit": "The broader L05 scratch and borrowed-return audit remains active; profile update lines now use local string ownership.",
       "stream_scalar_readers": "WFromStreamBytes and LFromStreamBytes no longer accept unbounded void pointers.",
-      "wire_prefix_views": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix take mutable byte spans."
+      "wire_prefix_views": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix take mutable byte spans.",
+      "wire_record_prefix_apis": "Eight variable-length prefix helpers use mutable byte spans; remaining pointer-only helpers use fixed wire extents."
     },
     "next": [
       "L05 bounded text destinations, remaining const-text interfaces, and post-migration scratch/borrowed-return audit.",
-      "L06 remaining buffer/length service interfaces, native file/path result work, and chooser Milestone D coverage.",
+      "L06 remaining buffer/length service interfaces, native file/path result work, fixed-prefix pointer helpers, and chooser Milestone D coverage.",
       "L08 current-source Windows/Linux qualification and final macro/C inventory reconciliation."
     ],
     "post_checkpoint_commits": [
@@ -26554,8 +26608,8 @@
         "message": "Use views in profile text validation"
       }
     ],
-    "source_commit": "f1eafe8e7c9c52cc3b44ceea39abea83b244cbbf",
-    "latest_change": "Five wire record prefix view helpers now accept mutable byte spans instead of void pointers and separate lengths.",
+    "source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
+    "latest_change": "Research, cargo-transfer, and battle-plan wire-prefix helpers now accept mutable byte spans.",
     "c_macro_audit": {
       "source_head": "ce4b1e7a",
       "date": "2026-11-02",
@@ -26574,13 +26628,13 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through ce4b1e7a.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "f1eafe8e7c9c52cc3b44ceea39abea83b244cbbf",
-    "latest_batch_status": "Locally committed as f1eafe8e. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
+    "latest_batch_status": "Locally committed as be1a70e5. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "latest_published_head": "da8c27bc",
     "latest_batch_verification": {
-      "batch": "L06 wire record prefix views accept byte spans",
-      "parent": "4483f235",
-      "source_commit": "f1eafe8e7c9c52cc3b44ceea39abea83b244cbbf",
+      "batch": "L06 research cargo and battle-plan record views use spans",
+      "parent": "f1eafe8e",
+      "source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -26597,8 +26651,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; view offsets, admitted record lengths, serialized bytes, and record layouts are unchanged.",
-      "api_audit": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix now accept mutable byte spans. All 109 source and fixture pointer-plus-length call sites migrated.",
+      "baseline": "Unchanged; record offsets, serialized bytes, record layouts, and game behavior are unchanged.",
+      "api_audit": "RsvFromPrefix, CxvFromPrefix, and BpvFromPrefix now accept mutable byte spans. All 64 research, cargo-transfer, and battle-plan pointer/count call sites migrated.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -26607,7 +26661,7 @@
       "production_c_translation_units": 0,
       "application_api_function_like_macros": 0,
       "c_macro_inventory": "Unchanged by this batch; last source inventory was reviewed at 32deeaff.",
-      "wire_prefix_views": "Five prefix view APIs no longer take void pointers and lengths."
+      "wire_record_prefix_apis": "Eight variable-length prefix helpers use mutable byte spans; remaining pointer-only helpers use fixed wire extents."
     }
   },
   "milestone_d_checkpoint": {
@@ -26634,9 +26688,9 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 wire record prefix views accept byte spans",
-    "source_commit": "f1eafe8e7c9c52cc3b44ceea39abea83b244cbbf",
-    "status": "Locally committed as f1eafe8e. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "batch": "L06 research cargo and battle-plan record views use spans",
+    "source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
+    "status": "Locally committed as be1a70e5. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -26649,7 +26703,9 @@
       "WFromStreamBytes and LFromStreamBytes accept fixed two- and four-byte spans instead of void pointers.",
       "All file, race and unit-test call sites pass explicit byte ranges.",
       "Five wire record prefix view helpers now accept mutable byte spans instead of void pointers and separate lengths.",
-      "All 109 save/load, log, and compatibility call sites pass spans covering their prior byte extents."
+      "All 109 save/load, log, and compatibility call sites pass spans covering their prior byte extents.",
+      "Research, cargo-transfer, and battle-plan wire-prefix helpers now accept mutable byte spans.",
+      "All 64 source call sites pass bounded extents matching their previous lengths."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -26701,7 +26757,7 @@
     },
     "next": [
       "L05 bounded text destinations, remaining const-text interfaces, and post-migration scratch/borrowed-return audit.",
-      "L06 remaining buffer/length service interfaces, native file/path result work, and chooser Milestone D coverage.",
+      "L06 remaining buffer/length service interfaces, native file/path result work, fixed-prefix pointer helpers, and chooser Milestone D coverage.",
       "L08 current-source Windows/Linux qualification and final macro/C inventory reconciliation."
     ],
     "untracked_user_assets": [
@@ -27038,13 +27094,13 @@
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
-    "latest_source_commit": "f1eafe8e7c9c52cc3b44ceea39abea83b244cbbf",
-    "latest_batch_status": "Locally committed as f1eafe8e. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "latest_change": "Five wire record prefix view helpers now accept mutable byte spans instead of void pointers and separate lengths.",
+    "latest_source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
+    "latest_batch_status": "Locally committed as be1a70e5. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "latest_change": "Research, cargo-transfer, and battle-plan wire-prefix helpers now accept mutable byte spans.",
     "latest_batch_verification": {
-      "batch": "L06 wire record prefix views accept byte spans",
-      "parent": "4483f235",
-      "source_commit": "f1eafe8e7c9c52cc3b44ceea39abea83b244cbbf",
+      "batch": "L06 research cargo and battle-plan record views use spans",
+      "parent": "f1eafe8e",
+      "source_commit": "be1a70e576c97020dbc79da7a6cd484032bf6884",
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -27061,8 +27117,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; view offsets, admitted record lengths, serialized bytes, and record layouts are unchanged.",
-      "api_audit": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix now accept mutable byte spans. All 109 source and fixture pointer-plus-length call sites migrated.",
+      "baseline": "Unchanged; record offsets, serialized bytes, record layouts, and game behavior are unchanged.",
+      "api_audit": "RsvFromPrefix, CxvFromPrefix, and BpvFromPrefix now accept mutable byte spans. All 64 research, cargo-transfer, and battle-plan pointer/count call sites migrated.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -27071,7 +27127,7 @@
       "production_c_translation_units": 0,
       "application_api_function_like_macros": 0,
       "c_macro_inventory": "Unchanged by this batch; last source inventory was reviewed at 32deeaff.",
-      "wire_prefix_views": "Five prefix view APIs no longer take void pointers and lengths."
+      "wire_record_prefix_apis": "Eight variable-length prefix helpers use mutable byte spans; remaining pointer-only helpers use fixed wire extents."
     }
   }
 }
