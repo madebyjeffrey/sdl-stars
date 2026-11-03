@@ -192,10 +192,9 @@ static void edit(int cmd) { ZipOrderDlg(HwndWitness(1), win32::WM_COMMAND, cmd, 
 static void popup(APPSESSION &app) { ApplyTransportPresetPopup(app, POINT16{0, 0}); }
 static void action(APPSESSION &app) { ChangeTransportAction(app); }
 static int  quantityControl(int l, int i, int *unit) {
-    int16_t value = (int16_t)i;
-    int     result = FTransportQuantityActive(l, &value);
-    *unit = value;
-    return result;
+    TRANSPORTQUANTITYRESULT result = FTransportQuantityActive(l, static_cast<int16_t>(i));
+    *unit = result.iUnit;
+    return result.fActive;
 }
 static void paintLabel(APPSESSION &app, int i) { FormatTransportPresetAction(app, (int16_t)i); }
 

@@ -215,7 +215,8 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     ORDER   *lpord;
     FLEET   *pfl;
     std::int16_t  i;
-    std::int16_t  fActive;
+    bool fActive;
+    TRANSPORTQUANTITYRESULT quantity;
     std::int16_t  xRight;
     TaskType grtask;
     char     szT[8];
@@ -382,7 +383,9 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             ControlIO().pfnSetWindowPos(app.lpui->rghwndOrderDD[2], nullptr, xLeft, yTop, dxRight, 9 * app.lpui->dyShipDD, swp);
             ui::ShowWindow(app.lpui->rghwndOrderDD[2], win32::SW_SHOW);
             l = ControlIO().pfnSendMessage(app.lpui->rghwndOrderDD[2], win32::CB_GETCURSEL, 0, 0);
-            fActive = FTransportQuantityActive(l, &i);
+            quantity = FTransportQuantityActive(l, i);
+            fActive = quantity.fActive;
+            i = quantity.iUnit;
             psz = app.state.vrgszUnits[i];
             swp = win32::SWP_NOZORDER | win32::SWP_NOACTIVATE;
             if (app.lpui->dxOrderED == edWid - dxKt) {
@@ -2688,21 +2691,20 @@ void ChangeTransportAction(APPSESSION &app) {
             ControlIO().pfnDrawPlanShip(app, nullptr, tileStarbaseOrWaypoint);
 }
 
-std::int16_t FTransportQuantityActive(std::int32_t l, std::int16_t *pi) {
-    std::int16_t i=*pi;
-    std::int16_t fActive;
-            fActive = 1;
-            switch (l) {
-            case 0:
-            case 1:
-            case 2:
-            case 7:
-                fActive = 0;
-                break;
-            case 5:
-            case 6:
-                i = 5;
-            }
-    *pi=i;
-    return fActive;
+TRANSPORTQUANTITYRESULT FTransportQuantityActive(std::int32_t l, std::int16_t iUnit) {
+    bool fActive;
+
+    fActive = true;
+    switch (l) {
+    case 0:
+    case 1:
+    case 2:
+    case 7:
+        fActive = false;
+        break;
+    case 5:
+    case 6:
+        iUnit = 5;
+    }
+    return {fActive, iUnit};
 }
