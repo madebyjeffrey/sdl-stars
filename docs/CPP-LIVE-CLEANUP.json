@@ -28498,7 +28498,7 @@
     }
   },
   "latest_source_commit": "f2cd103e21ab89ac9af27a50bd310ac603e05558",
-  "latest_batch_status": "Source commit f2cd103e verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
+  "latest_batch_status": "Source commit f2cd103e and ledger checkpoint ccbe88c9 are published on develop. macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28613,6 +28613,7 @@
     "baseline": "Unchanged. The same bounded scan limits are used for message text, filter MULTI_SZ strings, and the help path.",
     "api_audit": "Four SDL_strnlen calls now use std::find over the same explicit 65537, 4097 and PATH_MAX bounds. No SDL_strnlen or SDL_strlen calls remain in owned production source; three std::strlen API/input boundary calls remain.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-    "diff_check": "Pass."
+    "diff_check": "Pass.",
+    "ledger_commit": "ccbe88c9"
   }
 }
