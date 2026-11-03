@@ -283,7 +283,7 @@ INT_PTR  RaceWizardDlg1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             app.lpui->rgrcBuildSpin[1] = app.lpui->rgrcBuildSpin[0];
             win32::OffsetRect(&app.lpui->rgrcBuildSpin[1], 14, 0);
             for (i = 0; i < 2; i++) {
-                DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, nullptr);
+                DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, std::nullopt);
             }
         }
         win32::EndPaint(hwnd, &ps);
@@ -564,12 +564,12 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         case 2:
             if (!(iDraw & 0xfff0))
                 break;
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + i, (iMod == 0 ? 2 : 3) | bt | bt1, 0, nullptr);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + i, (iMod == 0 ? 2 : 3) | bt | bt1, 0, std::nullopt);
             break;
         default:
             if (!(iDraw & 0xfff0))
                 break;
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + i, 8 | bt | bt1, 0, const_cast<char *>(reinterpret_cast<const char*>((iMod == 3 ? "<<     >>" : ">>     <<"))));
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + i, 8 | bt | bt1, 0, (iMod == 3 ? "<<     >>" : ">>     <<"));
             break;
         case 1:
             if (1 << iPit & iDraw) {
@@ -592,8 +592,8 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         if (iDraw == -1) {
             cch = TextIO().pfnCchGetString(app, idsMaximumColonistGrowthRatePerYear, std::span{app.state.szWork});
             win32::TextOutA(hdc, app.lpui->vrgrcRCW->left, app.lpui->vrgrcRCW[15].top + 3, app.state.szWork, cch);
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + 15, 0xa0 | bt1, 0, nullptr);
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + 16, 0xa1 | bt1, 0, nullptr);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + 15, 0xa0 | bt1, 0, std::nullopt);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + 16, 0xa1 | bt1, 0, std::nullopt);
         } else {
             dx = LOWORD(GetTextExtent(hdc, "15%", 3));
             win32::SelectObject(hdc, app.lpui->hbrButtonFace);
@@ -944,8 +944,8 @@ void DrawRace3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         app.lpui->vrgrcRCW[irc + 1] = app.lpui->vrgrcRCW[irc];
         win32::OffsetRect(reinterpret_cast<RECT *>(&app.lpui->vrgrcRCW[irc + 1].left), 0, app.lpui->vrgrcRCW[irc].bottom - app.lpui->vrgrcRCW[irc].top - 1);
         if (iDraw == -1) {
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + irc, 0xa0 | bt, 0, nullptr);
-            DrawBtn(app, hdc, app.lpui->vrgrcRCW + (irc + 1), 0xa1 | bt, 0, nullptr);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + irc, 0xa0 | bt, 0, std::nullopt);
+            DrawBtn(app, hdc, app.lpui->vrgrcRCW + (irc + 1), 0xa1 | bt, 0, std::nullopt);
         }
         if (iDraw == -1) {
             if (fMacintosh && ids == idsColonists) {

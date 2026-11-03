@@ -280,7 +280,7 @@ std::int16_t FDrawTileNC(APPSESSION &app, HDC hdc, TILE *ptile, RECT *prc, std::
     } else {
         bt |= 1;
     }
-    DrawBtn(app, hdc, &rcT, bt, 0, nullptr);
+    DrawBtn(app, hdc, &rcT, bt, 0, std::nullopt);
     win32::SelectObject(hdc, app.lpui->hbrButtonShadow);
     win32::PatBlt(hdc, prc->right - 18, prc->top + 1, 1, rcT.bottom - prc->top - 1, win32::PATCOPY);
 

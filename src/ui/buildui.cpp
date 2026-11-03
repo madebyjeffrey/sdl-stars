@@ -663,7 +663,7 @@ void DrawSlotDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iD
             app.lpui->rgrcBuildSpin[1] = app.lpui->rgrcBuildSpin[0];
             win32::OffsetRect(&app.lpui->rgrcBuildSpin[1], 14, 0);
             for (i = 0; i < 2; i++) {
-                DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, nullptr);
+                DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, std::nullopt);
             }
         }
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);

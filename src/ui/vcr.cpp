@@ -631,7 +631,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
         app.lpui->rgrcBuildSpin[1] = app.lpui->rgrcBuildSpin[0];
         win32::OffsetRect(&app.lpui->rgrcBuildSpin[1], 14, 0);
         for (i = 0; i < 2; i++) {
-            DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, nullptr);
+            DrawBtn(app, hdc, &app.lpui->rgrcBuildSpin[i], (i == 0 ? 2 : 3) | 0x20, 0, std::nullopt);
         }
         if (app.lpui->viStepVCRCur >= 0) {
             y += app.state.dyArial8 + 4;

@@ -1575,7 +1575,7 @@ void DrawXferDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, MineralType iSu
         win32::PatBlt(hdc, dxCtr, 0, 1, prc->bottom, win32::BLACKNESS);
         for (i = 0; i < app.lpui->crgbtnXfer; i++) {
             if (app.lpui->rgbtnXfer[i].fVisible) {
-                DrawBtn(app, hdc, &app.lpui->rgbtnXfer[i].rc, app.lpui->rgbtnXfer[i].bt, 0, nullptr);
+                DrawBtn(app, hdc, &app.lpui->rgbtnXfer[i].rc, app.lpui->rgbtnXfer[i].bt, 0, std::nullopt);
             }
         }
         if (iSupply == SupplyButtonsOnly)

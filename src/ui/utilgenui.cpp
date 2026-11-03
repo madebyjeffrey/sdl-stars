@@ -498,7 +498,8 @@ std::int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
     return 0;
 }
 
-void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t fDown, const char *szText) {
+void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t fDown,
+             std::optional<std::string_view> szText) {
     std::int32_t  dxFace;
     std::int16_t  ipt;
     std::int16_t  dyOffset;
@@ -662,11 +663,11 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t 
         if (fDown) {
             OffsetRc(&rc, 1, 1);
         }
-        RcCtrTextOut(app, hdc, &rc, std::string_view{szText});
+        RcCtrTextOut(app, hdc, &rc, *szText);
         if (fDisabled) {
             OffsetRc(&rc, -1, -1);
             win32::SetTextColor(hdc, app.lpui->crButtonShadow);
-            RcCtrTextOut(app, hdc, &rc, std::string_view{szText});
+            RcCtrTextOut(app, hdc, &rc, *szText);
         }
         win32::SetTextColor(hdc, crSav);
         win32::SetBkMode(hdc, bkMode);

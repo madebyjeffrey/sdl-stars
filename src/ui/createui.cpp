@@ -925,8 +925,8 @@ void DrawNewGame3(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             app.lpui->vrgrcRCW[irc + 1] = app.lpui->vrgrcRCW[irc];
             win32::OffsetRect(reinterpret_cast<RECT *>(&app.lpui->vrgrcRCW[irc + 1].left), 0, app.lpui->vrgrcRCW[irc].bottom - app.lpui->vrgrcRCW[irc].top - 1);
             if (iDraw == -1) {
-                DrawBtn(app, hdc, app.lpui->vrgrcRCW + irc, 0xa0 | bt, 0, nullptr);
-                DrawBtn(app, hdc, app.lpui->vrgrcRCW + (irc + 1), 0xa1 | bt, 0, nullptr);
+                DrawBtn(app, hdc, app.lpui->vrgrcRCW + irc, 0xa0 | bt, 0, std::nullopt);
+                DrawBtn(app, hdc, app.lpui->vrgrcRCW + (irc + 1), 0xa1 | bt, 0, std::nullopt);
             }
             xLeft = app.lpui->vrgrcRCW[irc].right + 4;
             cch = TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});

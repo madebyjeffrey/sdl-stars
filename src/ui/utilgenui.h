@@ -3,8 +3,9 @@
 
 #include "win.h"
 #include <cstdint>
-#include <string_view>
+#include <optional>
 #include <span>
+#include <string_view>
 #include <windows.h>
 
 INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -30,7 +31,8 @@ std::int32_t  LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t cSegs
 void     _Draw3dFrame(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t fErase);
 void     InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, std::int16_t btf, std::int16_t dTimer, std::int16_t fInitDown, std::int16_t fNoEndRedraw, const char *szText);
 std::int16_t  FTrackBtn(APPSESSION &app, BTNT *pbtnt);
-void     DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t fDown, const char *szText);
+void     DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t fDown,
+                 std::optional<std::string_view> szText);
 std::int16_t  FGetMouseMove(POINT16 *ppt);
 std::int16_t  FGetRMouseMove(POINT16 *ppt);
 void     DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc);

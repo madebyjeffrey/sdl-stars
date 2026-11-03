@@ -447,8 +447,8 @@ DrawResPct:
     app.lpui->rcSpinTop.bottom = (app.state.dyArial8 >> 1) + rc.top + 1;
     app.lpui->rcSpinBot = app.lpui->rcSpinTop;
     win32::OffsetRect(&app.lpui->rcSpinBot, 0, app.lpui->rcSpinTop.bottom - app.lpui->rcSpinTop.top - 1);
-    DrawBtn(app, hdc, &app.lpui->rcSpinTop, 160, 0, nullptr);
-    DrawBtn(app, hdc, &app.lpui->rcSpinBot, 161, 0, nullptr);
+    DrawBtn(app, hdc, &app.lpui->rcSpinTop, 160, 0, std::nullopt);
+    DrawBtn(app, hdc, &app.lpui->rcSpinBot, 161, 0, std::nullopt);
 
 DrawProjBudg:
     rc.top += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
