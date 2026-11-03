@@ -651,8 +651,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
             if (csh > 1) {
                 c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
             } else {
-                CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
-                c = std::strlen(app.state.szWork);
+                c = CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
             }
             win32::TextOutA(hdc, x, y, app.state.szWork, c);
             y += app.state.dyArial8;
@@ -676,8 +675,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                 if (csh > 1) {
                     c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
                 } else {
-                    CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
-                    c = std::strlen(app.state.szWork);
+                    c = CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
                 }
                 win32::TextOutA(hdc, x, y, app.state.szWork, c);
                 y += app.state.dyArial8;
@@ -764,8 +762,7 @@ void DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd) {
                 if (csh > 1 || cshT != 0) {
                     c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSD).data(), lpshdef->hul.szClass, csh);
                 } else {
-                    CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
-                    c = std::strlen(app.state.szWork);
+                    c = CchCopyUtf8Prefix(std::span{app.state.szWork}, lpshdef->hul.szClass);
                 }
                 if (cshT != 0) {
                     c += CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), " (-%d)", cshT);
