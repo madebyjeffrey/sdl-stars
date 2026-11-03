@@ -263,7 +263,8 @@
         "owned-mineral-title-from-owned-object-name",
         "fixed-character-array-copies-use-copy-n",
         "typed-fixed-array-and-character-range-copies-use-copy-n",
-        "typed-array-copies-in-log-and-win32-adapters"
+        "typed-array-copies-in-log-and-win32-adapters",
+        "bounded-text-buffer-copies-use-copy-n"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -26158,6 +26159,30 @@
       "api_audit": "Seven same-type array memcpy calls now use std::copy_n. Current code scan finds 78 memcpy calls (39 under src and 39 under compat/win32/src); these remain subject to boundary-by-boundary classification.",
       "platform": "Current-source Windows/Linux qualification remains pending.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "L05 bounded text buffer copies use std::copy_n",
+      "source_commit": "f06e18ee",
+      "macos_debug_build": "make compile passes with strict warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; bounded text extents and terminating NUL bytes are preserved at each compatibility boundary.",
+      "api_audit": "Fifteen bounded text memcpy calls in compatibility wrappers now use std::copy_n. Current scan finds 63 memcpy calls (39 under src and 24 under compat/win32/src); the raw call count is not a count of replaceable sites. Raw string-copy and atoi/atol calls remain zero.",
+      "platform": "Current-source Windows/Linux qualification remains pending.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -26178,8 +26203,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L05 typed array copies in log and compatibility adapters",
-    "latest_published_head": "0edeec75",
+    "latest_batch": "L05 bounded text buffer copies use std::copy_n",
+    "latest_published_head": "f06e18ee",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -26211,8 +26236,8 @@
       "title-modernized-v3.png and prompt"
     ],
     "batch": "L05 profile text boundaries use views",
-    "source_commit": "0edeec75",
-    "status": "Committed as 0edeec75. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "source_commit": "f06e18ee",
+    "status": "Committed as f06e18ee. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "changes": [
       "Profile helper inputs, delimiter searches, lengths and path checks now use string_view across the Win32 C-string boundary."
     ],
@@ -26576,7 +26601,7 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through ce4b1e7a."
     },
     "borrowed_return_audit": "Packaged help guide body uses local std::string ownership and a bounded marker view; broader L05 scratch and borrowed-return audit remains active.",
-    "memcpy_audit": "78 current calls: 39 in src and 39 in compat/win32/src. Not all are replacement candidates; remaining calls cross byte/wire/ABI boundaries or need review."
+    "memcpy_audit": "63 current calls: 39 in src and 24 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
     "batch": "L06 heap copy and move hooks accept byte spans",
@@ -27026,9 +27051,9 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 typed array copies in log and compatibility adapters",
-    "source_commit": "0edeec75",
-    "status": "Committed as 0edeec75. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "batch": "L05 bounded text buffer copies use std::copy_n",
+    "source_commit": "f06e18ee",
+    "status": "Committed as f06e18ee. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -27054,7 +27079,8 @@
       "SetMineralTitleBar builds planet, fleet, and thing titles from owned object-name values and copies the final value back to szWork to preserve its prior side effect.",
       "Nine fixed character-array memcpy calls in race-name conversion and race-library state snapshots now use std::copy_n with unchanged extents.",
       "Fifteen typed array and bounded character-range memcpy calls now use std::copy_n; each extent is translated to the same element count.",
-      "Seven same-type array copies in log and compatibility adapters now use std::copy_n with equivalent element counts."
+      "Seven same-type array copies in log and compatibility adapters now use std::copy_n with equivalent element counts.",
+      "Fifteen bounded text copies in Win32 compatibility buffers now use std::copy_n with the same byte counts and terminator handling."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -27086,10 +27112,10 @@
       "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "0edeec75",
+      "source_head": "f06e18ee",
       "qsort16": "qsort16 accepts a bounded byte span and derives count from extent/width; the Win16 partition implementation and comparator order are unchanged.",
       "heap_copy_move": "HEAPIO pfnCopy/pfnMove receive mutable and readonly byte spans; all 13 production copy/move sites now pass bounded source/destination extents.",
-      "memcpy_call_audit": "78 remaining calls (39 src, 39 compat/win32/src); boundary-by-boundary classification continues."
+      "memcpy_call_audit": "63 remaining calls (39 src, 24 compat/win32/src); boundary-by-boundary classification continues."
     },
     "platform_ci": {
       "run_id": 41422617389,
