@@ -218,7 +218,8 @@
         "bounded-library-game-duplicate-and-rename-name-views",
         "optional-library-chooser-suggestion-views",
         "bounded-race-library-save-load-edit-duplicate-name-views",
-        "bounded-managed-library-game-validator-name-view"
+        "bounded-managed-library-game-validator-name-view",
+        "optional-immediate-button-caption-view"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1367,6 +1368,21 @@
           "desktop_unit_tests": "18/18 pass.",
           "host_unit_tests": "29/29 pass.",
           "library_workflows": "witness_library-publication and win32_client_startup_dummy, win32_client_fileworkflow_dummy pass 4/4.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 button captions use optional bounded text views",
+          "source_commit": "afa78fb9",
+          "change": "DrawBtn represents its optional caption as std::optional<std::string_view>. Null captions use std::nullopt, and the race wizard no longer casts a string literal to mutable char*. InitBtnTrack retains its long-lived pointer because BTNT stores that pointer across input events.",
+          "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "ui_workflows": "win32_client_startup_dummy passes 1/1.",
           "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
           "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
           "tutorial": "1/1 available SDL tutorial smoke passes.",
@@ -24814,7 +24830,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 managed library validator accepts a bounded name view",
+    "latest_batch": "L05 button captions use optional bounded text views",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25007,10 +25023,14 @@
       {
         "commit": "7076b94e",
         "message": "Pass managed library names as views"
+      },
+      {
+        "commit": "afa78fb9",
+        "message": "Draw button captions from optional text views"
       }
     ],
-    "latest_source_commit": "7076b94e",
-    "latest_batch_status": "Locally committed as 7076b94e. macOS SDL Debug build, desktop/host unit suites, managed library workflows, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "afa78fb9",
+    "latest_batch_status": "Locally committed as afa78fb9. macOS SDL Debug build, desktop/host unit suites, startup UI workflow, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
@@ -25229,17 +25249,17 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 managed library validator accepts a bounded name view",
-    "source_commit": "7076b94e",
-    "status": "Locally committed as 7076b94e. macOS SDL Debug build, desktop/host unit suites, managed library workflows, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 button captions use optional bounded text views",
+    "source_commit": "afa78fb9",
+    "status": "Locally committed as afa78fb9. macOS SDL Debug build, desktop/host unit suites, startup UI workflow, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "FValidManagedLibraryGame takes a bounded name view; validated local storage is used only at existing C-string path and metadata comparison boundaries."
+      "DrawBtn takes an optional string_view caption; omitted captions use std::nullopt and readonly labels no longer require a mutable cast."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
-      "library_workflows": "witness_library-publication and win32_client_startup_dummy, win32_client_fileworkflow_dummy pass 4/4.",
+      "ui_workflows": "win32_client_startup_dummy passes 1/1.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "1/1 available SDL tutorial smoke passes.",
