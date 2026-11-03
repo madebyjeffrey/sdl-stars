@@ -1639,7 +1639,7 @@ void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
         for (i = 0; i < j; i++) {
             part.hs.iItem = i;
             if (PartQueryIO().pfnLookup(app, &part) == mdPartAvailAvailable) {
-                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(part.pcom().szName()));
+                ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(part.pcom().szName().data()));
             }
         }
         break;

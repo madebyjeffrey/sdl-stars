@@ -2,9 +2,17 @@
 #define STARS_PARTVIEWS_H
 
 #include "structs.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
+#include <string_view>
 #include <type_traits>
+
+template<std::size_t cch>
+static std::string_view SzvPartName(const char (&sz)[cch]) noexcept {
+    const char *pchEnd = std::find(sz, sz + cch, '\0');
+    return {sz, static_cast<std::size_t>(pchEnd - sz)};
+}
 
 // Snapshot the selected borrow, not its PART carrier or the catalog values.
 // Callbacks may replace the carrier; catalog reads must still use this object.
@@ -41,10 +49,10 @@ public:
     friend bool operator==(NATIVEPARTCOMMONVIEW a, NATIVEPARTCOMMONVIEW b) noexcept { return a.lpv == b.lpv; }
     friend bool operator==(NATIVEPARTCOMMONVIEW a, const void *b) noexcept { return a.lpv == b; }
     const std::int8_t *rgTech() const noexcept { return Visit([](auto &item) { return item.rgTech; }); }
-    const char *szName() const noexcept {
+    std::string_view szName() const noexcept {
         return Visit([](auto &item) {
-            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(item)>, HUL>) return item.szClass;
-            else return item.szName;
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(item)>, HUL>) return SzvPartName(item.szClass);
+            else return SzvPartName(item.szName);
         });
     }
     std::int16_t cMass() const noexcept {

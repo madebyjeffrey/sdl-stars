@@ -303,8 +303,8 @@ DrawComingAttractions:
                             rc.top += app.state.dyArial8;
                             if (rc.top + app.state.dyArial8 > rc.bottom)
                                 goto TooManyToFinish;
-                            CchCopyUtf8Prefix(std::span{app.state.szWork}, part.pcom().szName());
-                            win32::TextOutA(hdc, rc.left + 8, rc.top, app.state.szWork, std::strlen(app.state.szWork));
+                            c = static_cast<std::int16_t>(CchCopyUtf8Prefix(std::span{app.state.szWork}, part.pcom().szName()));
+                            win32::TextOutA(hdc, rc.left + 8, rc.top, app.state.szWork, c);
                             if (app.lpui->cFutureTech < 8) {
                                 app.lpui->rghsFutureTech[app.lpui->cFutureTech++] = part.hs;
                             }
