@@ -164,7 +164,8 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     FcResult result;
     FcChar8 *pszFile;
     char szFamily[win32::LF_FACESIZE];
-    char *psz;
+    std::string_view szFamilyView;
+    std::size_t ichStyle;
     int index = 0, cHeight, i, cWidth = 0, dxMax = 0, iFaceError;
     FT_Face face = nullptr;
     FT_Library libraryNew = nullptr;
@@ -191,12 +192,17 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
     lpfont->library = library;
     lpfont->lf = *lplf; lpfont->lf.lfFaceName[win32::LF_FACESIZE - 1] = 0;
     CchCopyUtf8Prefix(std::span{szFamily}, lpfont->lf.lfFaceName);
+    szFamilyView = szFamily;
     fBold = lplf->lfWeight >= 600;
     fItalic = lplf->lfItalic;
     // The game stores styled face names rather than setting LOGFONT style flags.
-    psz = std::strstr(szFamily, " Bold");
-    if (psz) { *psz = 0; fBold = 1; fItalic |= std::strstr(psz + 1, "Italic") != nullptr; }
-    else if ((psz = std::strstr(szFamily, " Italic"))) { *psz = 0; fItalic = 1; }
+    ichStyle = szFamilyView.find(" Bold");
+    if (ichStyle != std::string_view::npos) {
+        fItalic |= szFamilyView.substr(ichStyle + 1).find("Italic") != std::string_view::npos;
+        szFamily[ichStyle] = 0; szFamilyView = szFamilyView.substr(0, ichStyle); fBold = 1;
+    } else if ((ichStyle = szFamilyView.find(" Italic")) != std::string_view::npos) {
+        szFamily[ichStyle] = 0; szFamilyView = szFamilyView.substr(0, ichStyle); fItalic = 1;
+    }
     i = -1;
     if (!*szFamily || !strcasecmp(szFamily, "Arial") || !strcasecmp(szFamily, "Liberation Sans") ||
         !strcasecmp(szFamily, "sans-serif") || !strcasecmp(szFamily, "Tahoma") || !strcasecmp(szFamily, "MS Sans Serif")) i = 0;

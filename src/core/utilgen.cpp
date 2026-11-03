@@ -530,7 +530,8 @@ std::optional<std::size_t> FDecompressUserStringBytes(APPSESSION &app, std::span
 }
 
 std::int16_t NybbleFromCh(APPSESSION &app, std::uint8_t ch) {
-    char *pch;
+    std::string_view szCompressed{app.state.rgchcomp, sizeof(app.state.rgchcomp)};
+    std::size_t ichCompressed;
 
     if (ch >= 97 && ch <= 122) {
         return app.state.rgcompstrlower[ch - 97];
@@ -550,9 +551,9 @@ std::int16_t NybbleFromCh(APPSESSION &app, std::uint8_t ch) {
     if (ch >= 54 && ch <= 57) {
         return (ch - 0x36) << 4 | 0xd;
     }
-    pch = std::strchr(app.state.rgchcomp, ch);
-    if (pch) {
-        return (pch - app.state.rgchcomp + 4) << 4 | 0xe;
+    ichCompressed = szCompressed.find(static_cast<char>(ch));
+    if (ichCompressed != std::string_view::npos) {
+        return (static_cast<int>(ichCompressed) + 4) << 4 | 0xe;
     }
     return ch << 4 | 0xf;
 }
