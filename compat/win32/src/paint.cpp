@@ -43,8 +43,8 @@ struct win32::HDC__ {
     HWND hwnd;
     RECT rcClip;
     POINT pt, ptOrg, ptBrush;
-    NATIVEARRAYOWNER<RECT, std::free> rgrcRegion, rgrcPaint;
-    std::size_t crcPaint;
+    NATIVEARRAYOWNER<RECT, std::free> rgrcRegion;
+    std::vector<RECT> rgrcPaint;
     std::size_t crcRegion;
     BOOL fRegion;
     COMPATOBJECT *lppen, *lpbrush, *lpfont, *lpbitmap, *lpbitmapDefault, *lppalette;
@@ -706,70 +706,60 @@ int win32::ReleaseDC(HWND hwnd, HDC hdc) {
     return fOk;
 }
 
-static BOOL FAddUpdate(RECT **lprgrc, std::size_t *lpcrc, RECT rc) {
-    RECT *rgrc;
-    std::size_t i;
+static BOOL FAddUpdate(std::vector<RECT> &rgrc, RECT rc) {
     if (rc.left >= rc.right || rc.top >= rc.bottom) return 1;
-    for (i = 0; i < *lpcrc; i++)
-        if (rc.left >= (*lprgrc)[i].left && rc.top >= (*lprgrc)[i].top &&
-            rc.right <= (*lprgrc)[i].right && rc.bottom <= (*lprgrc)[i].bottom) return 1;
-    if (*lpcrc >= std::numeric_limits<std::size_t>::max() / sizeof(*rgrc) - 1) return 0;
-    rgrc = static_cast<RECT *>((std::realloc(*lprgrc, (*lpcrc + 1) * sizeof(*rgrc))));
-    if (!rgrc) return 0;
-    rgrc[(*lpcrc)++] = rc; *lprgrc = rgrc;
+    for (const RECT &rcExisting : rgrc)
+        if (rc.left >= rcExisting.left && rc.top >= rcExisting.top &&
+            rc.right <= rcExisting.right && rc.bottom <= rcExisting.bottom) return 1;
+    try { rgrc.push_back(rc); }
+    catch (const std::bad_alloc &) { return 0; }
+    catch (const std::length_error &) { return 0; }
     return 1;
 }
 
-static BOOL FSubtractUpdate(RECT **lprgrc, std::size_t *lpcrc, RECT rc, const RECT *lprcCut) {
+static BOOL FSubtractUpdate(std::vector<RECT> &rgrc, RECT rc, const RECT *lprcCut) {
     RECT hit;
-    if (!win32::IntersectRect(&hit, &rc, lprcCut)) return FAddUpdate(lprgrc, lpcrc, rc);
-    return FAddUpdate(lprgrc, lpcrc, RECT{rc.left, rc.top, rc.right, hit.top}) &&
-           FAddUpdate(lprgrc, lpcrc, RECT{rc.left, hit.bottom, rc.right, rc.bottom}) &&
-           FAddUpdate(lprgrc, lpcrc, RECT{rc.left, hit.top, hit.left, hit.bottom}) &&
-           FAddUpdate(lprgrc, lpcrc, RECT{hit.right, hit.top, rc.right, hit.bottom});
+    if (!win32::IntersectRect(&hit, &rc, lprcCut)) return FAddUpdate(rgrc, rc);
+    return FAddUpdate(rgrc, RECT{rc.left, rc.top, rc.right, hit.top}) &&
+           FAddUpdate(rgrc, RECT{rc.left, hit.bottom, rc.right, rc.bottom}) &&
+           FAddUpdate(rgrc, RECT{rc.left, hit.top, hit.left, hit.bottom}) &&
+           FAddUpdate(rgrc, RECT{hit.right, hit.top, rc.right, hit.bottom});
 }
 
-static void SetUpdate(HWND hwnd, RECT *rgrc, std::size_t crc) {
+static void SetUpdate(HWND hwnd, std::vector<RECT> &&rgrc) {
     std::size_t i;
-    hwnd->rgrcUpdate.reset(rgrc); hwnd->crcUpdate = crc;
-    hwnd->rcUpdate = RECT{}; hwnd->fUpdate = crc != 0;
-    for (i = 0; i < crc; i++) {
-        if (i == 0) hwnd->rcUpdate = rgrc[i];
+    hwnd->rgrcUpdate = std::move(rgrc);
+    hwnd->rcUpdate = RECT{}; hwnd->fUpdate = !hwnd->rgrcUpdate.empty();
+    for (i = 0; i < hwnd->rgrcUpdate.size(); i++) {
+        if (i == 0) hwnd->rcUpdate = hwnd->rgrcUpdate[i];
         else {
-            hwnd->rcUpdate.left = StarsMin(hwnd->rcUpdate.left, rgrc[i].left);
-            hwnd->rcUpdate.top = StarsMin(hwnd->rcUpdate.top, rgrc[i].top);
-            hwnd->rcUpdate.right = StarsMax(hwnd->rcUpdate.right, rgrc[i].right);
-            hwnd->rcUpdate.bottom = StarsMax(hwnd->rcUpdate.bottom, rgrc[i].bottom);
+            hwnd->rcUpdate.left = StarsMin(hwnd->rcUpdate.left, hwnd->rgrcUpdate[i].left);
+            hwnd->rcUpdate.top = StarsMin(hwnd->rcUpdate.top, hwnd->rgrcUpdate[i].top);
+            hwnd->rcUpdate.right = StarsMax(hwnd->rcUpdate.right, hwnd->rgrcUpdate[i].right);
+            hwnd->rcUpdate.bottom = StarsMax(hwnd->rcUpdate.bottom, hwnd->rgrcUpdate[i].bottom);
         }
     }
-    if (crc == 0) hwnd->fErase = 0;
+    if (hwnd->rgrcUpdate.empty()) hwnd->fErase = 0;
 }
 
 BOOL win32::InvalidateRect(HWND hwnd, const RECT *lprc, BOOL fErase) {
     HWND lpwin = LpCompatWindow(hwnd);
     RECT rc, rcClient;
-    RECT *rgrc;
-    std::size_t crc;
+    std::vector<RECT> rgrc;
     if (!lpwin || !win32::GetClientRect(hwnd, &rcClient)) return 0;
     if (!win32::IntersectRect(&rc, lprc ? lprc : &rcClient, &rcClient)) return 1;
-    rgrc = lpwin->rgrcUpdate.get(); crc = lpwin->crcUpdate;
-    if (!FAddUpdate(&rgrc, &crc, rc)) return 0;
-    // FAddUpdate may have relocated the allocation; retain ownership before SetUpdate.
-    static_cast<void>(lpwin->rgrcUpdate.release());
-    SetUpdate(lpwin, rgrc, crc); lpwin->fErase |= fErase;
+    try { rgrc = lpwin->rgrcUpdate; }
+    catch (const std::bad_alloc &) { return 0; }
+    catch (const std::length_error &) { return 0; }
+    if (!FAddUpdate(rgrc, rc)) return 0;
+    SetUpdate(lpwin, std::move(rgrc)); lpwin->fErase |= fErase;
     return 1;
 }
 
 static BOOL FPaintClip(HDC lpdc, HWND hwnd) {
-    RECT *rgrc = nullptr;
-    NATIVEARRAYOWNER<RECT, std::free> rgrcOwner;
-    if (hwnd->crcUpdate != 0) {
-        rgrc = static_cast<RECT *>((std::malloc(hwnd->crcUpdate * sizeof(*rgrc))));
-        rgrcOwner.reset(rgrc);
-        if (!rgrc) return 0;
-        std::copy_n(hwnd->rgrcUpdate.get(), hwnd->crcUpdate, rgrc);
-    }
-    lpdc->rgrcPaint = std::move(rgrcOwner); lpdc->crcPaint = hwnd->crcUpdate;
+    try { lpdc->rgrcPaint = hwnd->rgrcUpdate; }
+    catch (const std::bad_alloc &) { return 0; }
+    catch (const std::length_error &) { return 0; }
     lpdc->fPaint = 1; lpdc->fClip = 1; lpdc->rcClip = hwnd->rcUpdate;
     return 1;
 }
@@ -809,8 +799,8 @@ HDC win32::BeginPaint(HWND hwnd, LPPAINTSTRUCT lpps) {
     lpps->hdc = hdc;
     lpps->rcPaint = lpwin->fUpdate ? lpwin->rcUpdate : RECT{};
     LpDC(hdc)->rcClip = lpps->rcPaint;
-    LpDC(hdc)->rgrcPaint.reset(lpwin->rgrcUpdate.release()); LpDC(hdc)->crcPaint = lpwin->crcUpdate;
-    lpwin->crcUpdate = 0;
+    LpDC(hdc)->rgrcPaint = std::move(lpwin->rgrcUpdate);
+    lpwin->rgrcUpdate.clear();
     fErase = lpwin->fErase;
     lpwin->fUpdate = 0;
     lpwin->fErase = 0;
@@ -845,13 +835,12 @@ BOOL win32::UpdateWindow(HWND hwnd) {
 
 BOOL win32::ValidateRect(HWND hwnd, const RECT *lprc) {
     HWND lpwin = LpCompatWindow(hwnd);
-    RECT *rgrc = nullptr;
-    std::size_t crc = 0, i;
-    NATIVECLEANUPSCOPE updateOwner([&]() noexcept { std::free(rgrc); });
+    std::vector<RECT> rgrc;
+    std::size_t i;
     if (!lpwin) return 0;
-    if (lprc) for (i = 0; i < lpwin->crcUpdate; i++)
-        if (!FSubtractUpdate(&rgrc, &crc, lpwin->rgrcUpdate[i], lprc)) return 0;
-    SetUpdate(lpwin, rgrc, crc); rgrc = nullptr;
+    if (lprc) for (i = 0; i < lpwin->rgrcUpdate.size(); i++)
+        if (!FSubtractUpdate(rgrc, lpwin->rgrcUpdate[i], lprc)) return 0;
+    SetUpdate(lpwin, std::move(rgrc));
     return 1;
 }
 
@@ -1024,16 +1013,15 @@ int win32::ExcludeClipRect(HDC hdc, int left, int top, int right, int bottom) {
     return IClipRect(hdc, left, top, right, bottom, 1);
 }
 
-static BOOL FRectPixel(const RECT *rgrc, std::size_t crc, std::int64_t x, std::int64_t y) {
-    std::size_t i;
-    for (i = 0; i < crc; i++)
-        if (x >= rgrc[i].left && x < rgrc[i].right && y >= rgrc[i].top && y < rgrc[i].bottom) return 1;
+static BOOL FRectPixel(std::span<const RECT> rgrc, std::int64_t x, std::int64_t y) {
+    for (const RECT &rc : rgrc)
+        if (x >= rc.left && x < rc.right && y >= rc.top && y < rc.bottom) return 1;
     return 0;
 }
 
 static BOOL FRegionPixel(HDC lpdc, std::int64_t x, std::int64_t y) {
-    return (!lpdc->fPaint || FRectPixel(lpdc->rgrcPaint.get(), lpdc->crcPaint, x, y)) &&
-           (!lpdc->fRegion || FRectPixel(lpdc->rgrcRegion.get(), lpdc->crcRegion, x, y));
+    return (!lpdc->fPaint || FRectPixel(lpdc->rgrcPaint, x, y)) &&
+           (!lpdc->fRegion || FRectPixel(std::span{lpdc->rgrcRegion.get(), lpdc->crcRegion}, x, y));
 }
 
 static void DevicePixel(HDC lpdc, std::int64_t x, std::int64_t y, COLORREF crColor) {
@@ -1212,7 +1200,7 @@ static BOOL FFillDevice(HDC lpdc, RECT rcFill, COMPATOBJECT *lpbrush, BOOL fRop)
             if (lpdc->fRegion) {
                 if (!win32::IntersectRect(&rcPart, &rc, &lpdc->rgrcRegion[i])) continue;
             } else rcPart = rc;
-            crcPaint = lpdc->fPaint ? lpdc->crcPaint : 1;
+            crcPaint = lpdc->fPaint ? lpdc->rgrcPaint.size() : 1;
             for (j = 0; j < crcPaint; j++) {
                 if (lpdc->fPaint) {
                     if (!win32::IntersectRect(&rcPaint, &rcPart, &lpdc->rgrcPaint[j])) continue;
@@ -1326,14 +1314,13 @@ BOOL win32::BitBlt(HDC hdc, int x, int y, int cx, int cy, HDC hdcSrc, int xSrc, 
 BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT *lprcClip) {
     HWND lpwin = LpCompatWindow(hwnd), hwndChild, hwndNext;
     RECT rcClient, rcScroll, rcClip, rcArea, rcMoved, rcDest, rc;
-    RECT *rgrc = nullptr;
-    std::size_t crc = 0, i;
+    std::vector<RECT> rgrc;
+    std::size_t i;
     SDL_Surface *lpsurface;
     BYTE *lpSrc, *lpDst;
     int y, yFirst, yLast, dRow, iScale;
     std::size_t cbRow;
     BOOL fErase, fCopy, fArea;
-    NATIVECLEANUPSCOPE updateOwner([&]() noexcept { std::free(rgrc); });
     if (!lpwin || lpwin->fDestroying || !win32::GetClientRect(hwnd, &rcClient)) {
         win32::SetLastError(win32::ERROR_INVALID_WINDOW_HANDLE); return 0;
     }
@@ -1354,19 +1341,19 @@ BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
                      LCoord(static_cast<std::int64_t>(rcArea.right) + dx), LCoord(static_cast<std::int64_t>(rcArea.bottom) + dy)};
     fCopy = win32::IntersectRect(&rcDest, &rcArea, &rcMoved);
     fErase = lpwin->fErase;
-    for (i = 0; i < lpwin->crcUpdate; i++) {
+    for (i = 0; i < lpwin->rgrcUpdate.size(); i++) {
         rc = lpwin->rgrcUpdate[i];
         if (!lprc) {
             // The whole-client variant moves pending damage with the pixels.
-            if (!FSubtractUpdate(&rgrc, &crc, rc, &rcClip)) goto Fail;
+            if (!FSubtractUpdate(rgrc, rc, &rcClip)) goto Fail;
             if (!win32::IntersectRect(&rc, &rc, &rcClip)) continue;
             rc = RECT{LCoord(static_cast<std::int64_t>(rc.left) + dx), LCoord(static_cast<std::int64_t>(rc.top) + dy),
                         LCoord(static_cast<std::int64_t>(rc.right) + dx), LCoord(static_cast<std::int64_t>(rc.bottom) + dy)};
             if (!win32::IntersectRect(&rc, &rc, &rcClip)) continue;
         }
-        if (!FAddUpdate(&rgrc, &crc, rc)) goto Fail;
+        if (!FAddUpdate(rgrc, rc)) goto Fail;
     }
-    if (!FSubtractUpdate(&rgrc, &crc, rcArea, &rcDest)) goto Fail;
+    if (!FSubtractUpdate(rgrc, rcArea, &rcDest)) goto Fail;
     if (fCopy) {
         if (!FCanvas(hwnd)) goto Fail;
         lpsurface = lpwin->lpCanvas.get();
@@ -1384,8 +1371,8 @@ BOOL win32::ScrollWindow(HWND hwnd, int dx, int dy, const RECT *lprc, const RECT
             std::memmove(lpDst, lpSrc, cbRow);
         }
     }
-    SetUpdate(lpwin, rgrc, crc); rgrc = nullptr;
-    lpwin->fErase = crc != 0 && (fErase || !win32::EqualRect(&rcArea, &rcDest));
+    SetUpdate(lpwin, std::move(rgrc));
+    lpwin->fErase = !lpwin->rgrcUpdate.empty() && (fErase || !win32::EqualRect(&rcArea, &rcDest));
 MoveChildren:
     if (!lprc) for (hwndChild = lpwin->hwndFirstChild; hwndChild; hwndChild = hwndNext) {
         hwndNext = hwndChild->hwndZNext;
@@ -1398,7 +1385,7 @@ MoveChildren:
     if (fArea) FCompatPresent(hwnd);
     return 1;
 Fail:
-    updateOwner.Close(); win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0;
+    win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); return 0;
 }
 
 
@@ -2084,7 +2071,7 @@ void CompatDestroyPaint(HWND hwnd) {
     hwnd->lpCanvas.reset();
     hwnd->lpComposite.reset();
     hwnd->hdcPaint = nullptr;
-    SetUpdate(hwnd, nullptr, 0);
+    SetUpdate(hwnd, {});
 }
 
 void CompatShutdownGdi(void) {

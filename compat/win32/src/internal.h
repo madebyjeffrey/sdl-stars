@@ -142,8 +142,7 @@ struct win32::HWND__ {
     NATIVEOWNER<SDL_Renderer, FreeCompatRenderer> lpRenderer;
     NATIVEOWNER<SDL_Texture, FreeCompatTexture> lpTexture;
     RECT rcUpdate;
-    NATIVEARRAYOWNER<RECT, std::free> rgrcUpdate;
-    std::size_t crcUpdate;
+    std::vector<RECT> rgrcUpdate;
     BOOL fUpdate, fErase;
     HDC hdcPaint;
     struct win32::HWND__ *lpNext;
