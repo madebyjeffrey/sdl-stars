@@ -17,7 +17,7 @@ std::int16_t RaceCreationWizard(APPSESSION &app, HWND hwndParent, std::int16_t f
     RECT         rgrcStack[17];
     std::int16_t      cpts;
     std::int16_t      fResult;
-    BOOL         fSequence;
+    bool         fSequence;
 
     app.lpui->vrgrcRCW = rgrcStack;
     app.state.fRCWReadOnly = fReadOnly;

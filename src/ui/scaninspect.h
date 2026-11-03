@@ -16,7 +16,7 @@ struct SCANOBJECT {
     std::uint16_t grType, id;
     std::int16_t iPlayer, det, ith;
     POINT ptUniverse, ptClient, ptScreen;
-    BOOL fOnScreen, fFiltered, fScanSelected, fMainSelected;
+    bool fOnScreen, fFiltered, fScanSelected, fMainSelected;
     char szName[360];
 };
 struct SCANSNAPSHOT {

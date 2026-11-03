@@ -41,7 +41,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     std::int16_t     cch;
     std::size_t cchText;
     std::string_view szText;
-    BOOL fTextLengthKnown;
+    bool fTextLengthKnown;
     std::int16_t     iMode;
     char        szT[32];
     MSGPLR     *lpmsgplr;

@@ -21,26 +21,26 @@ static inline POINT16 PointTo16(POINT pt) {
 }
 
 // GetCursorPos16 stores the cursor position in a Stars point.
-static inline BOOL GetCursorPos16(POINT16 *ppt, BOOL (*pfnCursorPos)(LPPOINT) = win32::GetCursorPos) {
+static inline bool GetCursorPos16(POINT16 *ppt, BOOL (*pfnCursorPos)(LPPOINT) = win32::GetCursorPos) {
     // Callers still use the point when a backend cannot report its position.
     POINT pt = {0, 0};
-    BOOL  ret = pfnCursorPos(&pt);
+    bool  ret = pfnCursorPos(&pt);
     *ppt = PointTo16(pt);
     return ret;
 }
 
 // ScreenToClient16 converts a Stars point from screen to client coordinates.
-static inline BOOL ScreenToClient16(HWND hwnd, POINT16 *ppt) {
+static inline bool ScreenToClient16(HWND hwnd, POINT16 *ppt) {
     POINT pt = PointFrom16(*ppt);
-    BOOL  ret = win32::ScreenToClient(hwnd, &pt);
+    bool  ret = win32::ScreenToClient(hwnd, &pt);
     *ppt = PointTo16(pt);
     return ret;
 }
 
 // ClientToScreen16 converts a Stars point from client to screen coordinates.
-static inline BOOL ClientToScreen16(HWND hwnd, POINT16 *ppt) {
+static inline bool ClientToScreen16(HWND hwnd, POINT16 *ppt) {
     POINT pt = PointFrom16(*ppt);
-    BOOL  ret = win32::ClientToScreen(hwnd, &pt);
+    bool  ret = win32::ClientToScreen(hwnd, &pt);
     *ppt = PointTo16(pt);
     return ret;
 }

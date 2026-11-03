@@ -28,7 +28,7 @@ static int ICompareNamePrefix(std::span<char> szBuffer, std::string_view szLeft,
     return std::string_view{szBuffer.data(), cchLeft}.compare(szRight);
 }
 
-static void SetReportScrollInfo(HWND hwnd, int iMax, int cPage, int iPos, BOOL fRedraw) {
+static void SetReportScrollInfo(HWND hwnd, int iMax, int cPage, int iPos, bool fRedraw) {
     SCROLLINFO si = {sizeof(si), win32::SIF_RANGE | win32::SIF_PAGE | win32::SIF_POS, 0, 0, 0, 0, 0};
 
     /* Legacy report ranges describe the last row/column position. */

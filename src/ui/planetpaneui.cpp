@@ -13,7 +13,7 @@ struct PLANETPANE {
     int x, y, dxContent, dyContent, dxOuter, dyOuter;
     int idSelection, grobjSelection;
     std::int16_t dWheel;
-    BOOL fRefitting, fPending;
+    bool fRefitting, fPending;
 };
 
 static PLANETPANE *LpPlanetPane(HWND hwnd) {
@@ -35,7 +35,7 @@ static void RefitPlanetPane(APPSESSION &app, HWND hwnd) {
     POINT pt;
     SCROLLINFO si = {sizeof(si), win32::SIF_RANGE | win32::SIF_PAGE | win32::SIF_POS, 0, 0, 0, 0, 0};
     int dx = 198, dy = 0, cTile, i, dxOuter, dyOuter, dxBar, dyBar;
-    BOOL fVertical, fHorizontal;
+    bool fVertical, fHorizontal;
 
     if (!lp || lp->fRefitting || !win32::IsWindow(lp->hwndContent)) return;
     lp->fRefitting = 1; lp->fPending = 0;
