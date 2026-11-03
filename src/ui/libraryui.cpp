@@ -1,5 +1,6 @@
 #include "win.h"
 #include <algorithm>
+#include <array>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -38,7 +39,6 @@ static char szLibraryName[256];
 static char szLibraryExchangeName[256];
 static char szRaceLibraryRoot[256];
 static char szRaceLibraryName[256];
-static char szRaceLibraryTemp[512];
 struct LIBRARYGAMELISTITEM {
     char szName[256];
     int iplr;
@@ -669,6 +669,7 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszNa
     char szPath[512];
     char szTempDir[512];
     char szName[256];
+    std::array<char, 512> szRaceLibraryTemp = {};
     std::uint16_t icksum;
     std::int16_t fOkay;
     if (!FInitRaceLibrary() || !FPortableRaceFilename(app, pszName)) return 0;
@@ -676,8 +677,8 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszNa
     szName[pszName.size()] = 0;
     CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, szName);
     if (!FCreateRaceStagePath(std::span{szTempDir}, std::span{szRaceLibraryTemp})) return 0;
-    if (!RecordIO().pfnFCreateFile(app, dtRace, iplrNone, szRaceLibraryTemp)) {
-        RemoveNativeFile(szRaceLibraryTemp);
+    if (!RecordIO().pfnFCreateFile(app, dtRace, iplrNone, szRaceLibraryTemp.data())) {
+        RemoveNativeFile(szRaceLibraryTemp.data());
         RemoveNativePath(szTempDir);
         return 0;
     }
@@ -685,9 +686,9 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszNa
     icksum = IRaceChecksum(pplr);
     WriteRtEof(app, icksum);
     RecordIO().pfnStreamClose(app);
-    fOkay = ReplaceNativeFile(szRaceLibraryTemp, szPath) == 0;
+    fOkay = ReplaceNativeFile(szRaceLibraryTemp.data(), szPath) == 0;
     if (!fOkay) {
-        RemoveNativeFile(szRaceLibraryTemp);
+        RemoveNativeFile(szRaceLibraryTemp.data());
         RemoveNativePath(szTempDir);
         if (win32::IsWindow(hwnd)) AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsStarsUnableSaveRaceDataFilePlease, {}).data(), win32::MB_ICONHAND);
         return 0;
@@ -3324,7 +3325,7 @@ void CloseLibraryUiSession(APPSESSION &app) noexcept {
     ClearLibraryGameList();
     szLibraryRoot[0] = szLibraryPending[0] = szLibraryName[0] = szLibraryExchangeName[0] = 0;
     cchLibraryRoot = 0;
-    szRaceLibraryRoot[0] = app.lpui->szRaceLibraryPath[0] = szRaceLibraryName[0] = szRaceLibraryTemp[0] = 0;
+    szRaceLibraryRoot[0] = app.lpui->szRaceLibraryPath[0] = szRaceLibraryName[0] = 0;
     fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = 0;
     continueLibrary = LIBRARYCONTINUE{};
 }
