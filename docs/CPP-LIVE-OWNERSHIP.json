@@ -1,5 +1,5 @@
 {
-  "source_parent": "94b3942e",
+  "source_parent": "9ceadec6",
   "scope": [
     "src",
     "compat/win32/include",
@@ -278,8 +278,8 @@
       "id": "39",
       "path": "compat/win32/src/inspect.cpp",
       "scope": "InspectRows",
-      "owner": "pszOwner",
-      "reason": "Copied inspector display strings stay owned across control messages, recursive row insertion and callback failure; retain the existing SDL allocation and UTF-8 capacity checks."
+      "owner": "bounded snapshot string_view plus szText stack buffer",
+      "reason": "The snapshot already owns each UTF-8 text value for the duration of row insertion. InspectRows computes the same code-point-safe prefix directly from that view and copies it into the existing fixed-size row buffer before normalization; the duplicate SDL allocation and ownership are removed."
     },
     {
       "id": "40",
@@ -1429,16 +1429,6 @@
       "contract": "37"
     },
     {
-      "path": "compat/win32/src/inspect.cpp",
-      "line": 253,
-      "scope": "InspectRows",
-      "operation": "SDL_malloc",
-      "code": "SDL_malloc(cb * 3 + 1)",
-      "normalized_call": "SDL_malloc(cb*3+1)",
-      "compiler_context": true,
-      "contract": "39"
-    },
-    {
       "path": "compat/win32/src/list.cpp",
       "line": 23,
       "scope": "~COMPATLIST",
@@ -2516,6 +2506,14 @@
       "change": "InspectDetails uses a sized std::string instead of an SDL-allocated character buffer.",
       "verification": "macOS SDL Debug build; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
       "baseline": "Unchanged."
+    },
+    {
+      "batch": "L05 inspector row snapshot view",
+      "source_commit": "9ceadec6",
+      "retired_heap_sites": 1,
+      "change": "InspectRows uses the snapshot-owned text view and writes the bounded UTF-8 prefix directly to its stack row buffer.",
+      "verification": "macOS SDL Debug build; startup contract test 1/1; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
+      "baseline": "Unchanged."
     }
   ],
   "retired_path_text_sites": [
@@ -2623,6 +2621,17 @@
       "compiler_context": true,
       "contract": "38",
       "disposition": "L05 inspector detail scratch moved to std::string in 94b3942e"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 253,
+      "scope": "InspectRows",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(cb * 3 + 1)",
+      "normalized_call": "SDL_malloc(cb*3+1)",
+      "compiler_context": true,
+      "contract": "39",
+      "disposition": "L05 borrowed the existing snapshot text and copied its bounded UTF-8 prefix in 9ceadec6"
     }
   ]
 }
