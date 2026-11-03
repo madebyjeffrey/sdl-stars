@@ -2164,7 +2164,8 @@
         "typed-app-session-callback-context-access",
         "optional-joined-chooser-path-length-result",
         "bounded-menu-resource-word-reads-use-optional-results",
-        "paint-region-merge-uses-span-and-returned-count"
+        "paint-region-merge-uses-span-and-returned-count",
+        "owned-paint-update-and-paint-region-vectors"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2991,6 +2992,19 @@
           "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
           "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
           "baseline": "Unchanged. Region merge order and rectangle replacement are preserved; the helper now bounds input to active rectangles and returns the resulting count instead of mutating it through std::size_t*.",
+          "platform": "Current-source Windows and Linux qualification remains pending."
+        },
+        {
+          "batch": "L06 pending paint regions use vector ownership",
+          "source_commit": "20d1dc523b447758d05c9ee3ae690c051611ab19",
+          "macos_sdl_debug_build": "Pass; make compile, strict warnings enabled.",
+          "focused_paint_test": "win32_sdl_paint_batch passes (1/1).",
+          "desktop_units": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+          "baseline": "Unchanged. Pending damage rectangle ordering, containment suppression, subtraction, scroll translation, paint clipping and erasure state are preserved. HWND and HDC paint buffers now own rectangles in vectors; temporary allocation failures remain reported through existing BOOL/error paths.",
           "platform": "Current-source Windows and Linux qualification remains pending."
         }
       ],
@@ -28383,8 +28397,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "7cf6fd7e8d40c0f9aca11a25cb883c0cc3410991",
-  "latest_batch_status": "Source committed as 7cf6fd7e. Strict macOS SDL Debug build, focused paint-region test, desktop/host unit suites, tutorial smoke and full native/host regressions pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "20d1dc523b447758d05c9ee3ae690c051611ab19",
+  "latest_batch_status": "Source committed as 20d1dc52. Strict macOS SDL Debug build, focused paint test, desktop/host unit suites, tutorial smoke and full native/host regressions pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28401,7 +28415,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "7cf6fd7e",
+    "source_head": "20d1dc52",
     "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. This raw count is not a replacement count: four measure C-string API/input boundaries and seven measure text already held in owned or fixed storage; those seven are candidates for carried lengths, subject to confirming that extra state is worthwhile.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28469,12 +28483,13 @@
       ],
       "interpretation": "The seven length reads are not yet confirmed replacements; a migration should carry lengths only where it removes repeated work without adding fragile duplicated state."
     },
-    "paint_region_merge_result": "CrcMergeRegion accepts a span of active rectangles and returns the merged count; it no longer mutates a size_t output pointer."
+    "paint_region_merge_result": "CrcMergeRegion accepts a span of active rectangles and returns the merged count; it no longer mutates a size_t output pointer.",
+    "paint_update_region_ownership": "HWND pending update rectangles and HDC paint rectangles are vector-owned; add/subtract helpers mutate a vector, and the separate count fields and realloc-based temporary ownership are removed."
   },
-  "latest_change": "CrcMergeRegion accepts a bounded span of active rectangles and returns the merged count by value.",
+  "latest_change": "Pending paint/update regions now use std::vector<RECT>; add/subtract helpers operate on the owner and paint-region counts derive from vector sizes.",
   "latest_batch_verification": {
-    "batch": "L06 paint-region merge consumes a span and returns its count",
-    "source_commit": "7cf6fd7e8d40c0f9aca11a25cb883c0cc3410991",
+    "batch": "L06 pending paint regions use vector ownership",
+    "source_commit": "20d1dc523b447758d05c9ee3ae690c051611ab19",
     "macos_debug_build": "make compile passes with strict warnings.",
     "focused_compatibility_tests": "win32_sdl_paint_batch passes (1/1).",
     "desktop_unit_tests": "18/18 pass.",
@@ -28492,7 +28507,7 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; region merge ordering and resulting rectangles are preserved.",
+    "baseline": "Unchanged; pending update rectangles retain the same order, bounds, invalidation and paint behavior.",
     "platform": "Windows/Linux current-source qualification remains pending.",
     "diff_check": "Pass."
   }
