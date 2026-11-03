@@ -1746,7 +1746,7 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                             if (ptokE->pctBeamDef < 100) {
                                 dp = static_cast<std::int32_t>((dp * static_cast<std::int16_t>(ptokE->pctBeamDef))) / 100;
                             }
-                            if (FDamageTok(app, ptokE, itok, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
+                            if (FDamageTok(app, ptokE, itok, dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, std::nullopt).fDamaged) {
                                 if (!fSetItok) {
                                     fSetItok = 1;
                                     BevFromPrefix(rgbBattleRecord).SetItokAttack(itok);
@@ -1871,13 +1871,15 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                             grfWeapon = bitFBeamLow;
                         }
                         dpT = dp;
-                        if (FDamageTok(app, ptokTarget, itokTarget, &dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, nullptr)) {
+                        const DAMAGERESULT damage = FDamageTok(app, ptokTarget, itokTarget, dp, 0, grfWeapon, part.pbeam()->grfAbilities & beamSapper, std::nullopt);
+                        if (damage.fDamaged) {
                             if (!fSetItok) {
                                 BevFromPrefix(rgbBattleRecord).SetItokAttack(itokTarget);
                                 fSetItok = 1;
                             }
                             ctokDamaged++;
                         }
+                        dp = damage.dpBeamRemaining;
                         if (dp > 0 && dpT > 0) {
                             if (dpMain < 65536 && dp < 65536) {
                                 lValue = static_cast<std::int32_t>((static_cast<std::int32_t>((dpMain * dp)) / dpT));
@@ -1930,12 +1932,12 @@ std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t in
                             }
                         }
                         dpCol = static_cast<std::int32_t>((cTorpMiss * dp)) / 8;
-                        if (dpCol > 0 && FDamageTok(app, ptokTarget, itokTarget, &dpCol, 0, static_cast<GrfWeapon>(grfWeapon | bitFDeflected), 1, nullptr)) {
+                        if (dpCol > 0 && FDamageTok(app, ptokTarget, itokTarget, dpCol, 0, static_cast<GrfWeapon>(grfWeapon | bitFDeflected), 1, std::nullopt).fDamaged) {
                             ctokDamaged++;
                         }
                         dpT = static_cast<std::int32_t>((cTorpFire * dp)) / 2;
                         cTorpBase = cTorpFire + cTorpMiss;
-                        FDamageTok(app, ptokTarget, itokTarget, &dpT, dpT, grfWeapon, 0, &cTorpBase);
+                        FDamageTok(app, ptokTarget, itokTarget, dpT, dpT, grfWeapon, 0, cTorpBase);
                         ctokDamaged++;
                         if (!fSetItok) {
                             fSetItok = 1;
@@ -2056,7 +2058,8 @@ void CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth) {
     return;
 }
 
-std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int32_t *pdpBeam, std::int32_t dpTorp, GrfWeapon grfWeapon, std::int16_t fShieldsOnly, std::int32_t *pcTorp) {
+DAMAGERESULT FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int32_t dpBeam, std::int32_t dpTorp, GrfWeapon grfWeapon, std::int16_t fShieldsOnly,
+                        std::optional<std::int32_t> cTorpKillLimit) {
     std::int16_t   pctSh;
     DV        dv;
     std::uint16_t *pwLosses;
@@ -2076,7 +2079,7 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
     std::int32_t   dp;
     std::uint16_t  pctDpNew;
 
-    dp = *pdpBeam;
+    dp = dpBeam;
     std::fill_n(app.state.lpbBattleCur, 8, 0);
     BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetItok(itok);
     BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetGrfWeapon(grfWeapon);
@@ -2095,22 +2098,17 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
             ptok->dpShield = 0;
         }
     } else if (fShieldsOnly) {
-        return 0;
+        return {false, dp};
     }
     if ((dp == 0 || fShieldsOnly) && dpTorp == 0) {
         BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().SetDp(ptok->dv.dp);
-        *pdpBeam = dp;
         if (BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).grfWeapon() & bitFTorp) {
             BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).SetGrfWeapon(BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).grfWeapon() | (bitFNoHit | bitFDeflected));
         }
         app.state.lpbBattleCur += 8;
-        return 1;
+        return {true, dp};
     }
-    if (pcTorp) {
-        cKillMax = *pcTorp;
-    } else {
-        cKillMax = 2147483647;
-    }
+    cKillMax = cTorpKillLimit.value_or(2147483647);
     dp += dpTorp;
     ishdef = ptok->ishdef;
     dpShdef = static_cast<std::uint32_t>(LpshdefFromTok(app, ptok)->hul.dp);
@@ -2146,9 +2144,8 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
             BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().SetPctSh(100);
             ptok->dv.dp = BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().dp();
         }
-        *pdpBeam = 0;
         app.state.lpbBattleCur += 8;
-        return 1;
+        return {true, 0};
     }
     if (ptok->mdTactic == mdTacticDisengageIfChallenged) {
         ptok->mdTactic = mdTacticDisengage;
@@ -2235,17 +2232,14 @@ std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int3
         dp = 0;
     }
     if (dp > dpTorp) {
-        *pdpBeam = dp - dpTorp;
+        dpBeam = dp - dpTorp;
     } else {
-        *pdpBeam = 0;
+        dpBeam = 0;
     }
-    dpOrig -= *pdpBeam;
+    dpOrig -= dpBeam;
     BkvFromPrefix(std::span<std::uint8_t, cbWireKill>{app.state.lpbBattleCur, cbWireKill}).dv().SetDp(ptok->dv.dp);
     app.state.lpbBattleCur += 8;
-    if (pcTorp) {
-        *pcTorp = cKillMax;
-    }
-    return 1;
+    return {true, dpBeam};
 }
 
 std::int16_t DxyFromSpdRound(std::uint16_t spd, std::int16_t iRound) {

@@ -22,6 +22,11 @@ struct HULLINITIATIVERESULT {
     std::int16_t pctBC;
 };
 
+struct DAMAGERESULT {
+    bool fDamaged;
+    std::int32_t dpBeamRemaining;
+};
+
 std::int16_t FDeleteBattlePlan(APPSESSION &app, std::int16_t iplan, std::int16_t fWarn);
 std::int16_t FFleetHasBombs(APPSESSION &app, FLEET *lpfl);
 std::int16_t FHullHasBombs(HUL *lphul);
@@ -54,7 +59,8 @@ std::int32_t CTorpHit(APPSESSION &app, std::int32_t cTorpBase, TOK *ptok, std::i
 std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t init, std::span<std::uint8_t, cbWireBattleRecord> rgbBattleRecord, std::uint16_t grfAttack);
 void    KillShips(APPSESSION &app, TOK *ptok, std::int16_t cshKill, std::int16_t ishdef, FLEET *lpfl, std::int16_t fFallout);
 void    CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth);
-std::int16_t FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int32_t *pdpBeam, std::int32_t dpTorp, GrfWeapon grfWeapon, std::int16_t fShieldsOnly, std::int32_t *pcTorp);
+DAMAGERESULT FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int32_t dpBeam, std::int32_t dpTorp, GrfWeapon grfWeapon, std::int16_t fShieldsOnly,
+                        std::optional<std::int32_t> cTorpKillLimit);
 std::int16_t DxyFromSpdRound(std::uint16_t spd, std::int16_t iRound);
 std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std::uint16_t *rggrfAttack, std::uint16_t grfPlayer, std::uint16_t grfSpectator);
 std::int16_t ITechLearnATech(APPSESSION &app, std::int16_t iplr, std::int16_t x, std::int16_t y, MessageId idm, std::uint16_t *piGoto);
