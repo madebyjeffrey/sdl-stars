@@ -1991,7 +1991,8 @@
         "native_file_position_optional_result",
         "owned-windows-chooser-text-and-filter-buffer",
         "span-reference-dialog-template-parser-interface",
-        "bounded-embedded-DIB-decoder-input-spans"
+        "bounded-embedded-DIB-decoder-input-spans",
+        "bounded-font-measurement-string-view-and-size-reference"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -25453,8 +25454,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L05 inspector row snapshot view",
-    "latest_published_head": "9ceadec6",
+    "latest_batch": "L06 bounded font-measurement view interface",
+    "latest_published_head": "7104d20b",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -25485,15 +25486,15 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 inspector row snapshot view",
-    "source_commit": "9ceadec6",
-    "status": "Locally committed as 9ceadec6. macOS Debug build, startup contract, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L06 bounded font-measurement view interface",
+    "source_commit": "7104d20b",
+    "status": "Locally committed as 7104d20b. macOS Debug build, font tests, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "InspectRows now borrows each snapshot-owned UTF-8 string and copies only the bounded prefix needed in its fixed row buffer. The duplicate three-times-sized allocation is removed."
+      "FCompatFontSizeUtf8 now consumes std::string_view and returns SIZE by reference. The Win32 pointer/count entry point validates and creates the bounded view; the unused forwarding helper is removed."
     ],
     "verification": {
-      "macos_debug_build": "make compile passes; inspect.cpp rebuilt with strict warnings.",
-      "dialog_startup": "win32_client_startup_dummy passes 1/1.",
+      "macos_debug_build": "make compile passes; font, paint, and test call sites rebuilt with strict warnings.",
+      "font_tests": "win32_sdl_resource_font and win32_utf8_font pass 2/2.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": {
@@ -25509,7 +25510,7 @@
         "skipped": 0
       },
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
-      "baseline": "Unchanged; UTF-8 prefix selection, sanitization, and row output are preserved.",
+      "baseline": "Unchanged; UTF-8 decoding, glyph metrics, and SDK pointer/count behavior are preserved.",
       "platform": "Windows/Linux full-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25522,7 +25523,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 9ceadec6.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 7104d20b.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25533,7 +25534,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "9ceadec6",
+      "source_head": "7104d20b",
       "borrowed_return_audit": "The remaining text/scratch/borrowed-return audit is active; redundant SDL title duplication and manual chooser/dialog-template allocation paths have been removed."
     },
     "next": [
@@ -25769,10 +25770,14 @@
       {
         "commit": "9ceadec6",
         "message": "Use snapshot text directly in inspector rows"
+      },
+      {
+        "commit": "7104d20b",
+        "message": "Measure font text from bounded views"
       }
     ],
-    "latest_source_commit": "9ceadec6",
-    "latest_batch_status": "Locally committed as 9ceadec6. macOS Debug build, startup contract, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "7104d20b",
+    "latest_batch_status": "Locally committed as 7104d20b. macOS Debug build, font tests, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -25783,10 +25788,11 @@
       "current_source_after_d3977f06": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_d6230fbb": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_94b3942e": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
-      "current_source_after_9ceadec6": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
+      "current_source_after_9ceadec6": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
+      "current_source_after_7104d20b": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "c_macro_audit": {
-      "source_head": "9ceadec6",
+      "source_head": "7104d20b",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25800,20 +25806,20 @@
       "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through 9ceadec6."
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through 7104d20b."
     },
     "borrowed_return_audit": "The remaining text/scratch/borrowed-return audit is active; redundant SDL title duplication and manual chooser/dialog-template allocation paths have been removed."
   },
   "current_checkpoint": {
-    "batch": "L05 inspector row snapshot view",
-    "status": "Locally committed as 9ceadec6. macOS Debug build, startup contract, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "06b297c5",
-    "change": "InspectRows computes the code-point-safe prefix from the snapshot-owned string view and writes it to the existing fixed-size stack buffer.",
+    "batch": "L06 bounded font-measurement view interface",
+    "status": "Locally committed as 7104d20b. macOS Debug build, font tests, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "16e51234",
+    "change": "The private UTF-8 font measurement service consumes std::string_view and returns SIZE by reference; the Win32 counted-text boundary validates and adapts its pointer/count input.",
     "verification": {
-      "batch": "L05 inspector row snapshot view",
-      "source_commit": "9ceadec6",
-      "macos_debug_build": "make compile passes; inspect.cpp rebuilt with strict warnings.",
-      "dialog_startup": "win32_client_startup_dummy passes 1/1.",
+      "batch": "L06 bounded font-measurement view interface",
+      "source_commit": "7104d20b",
+      "macos_debug_build": "make compile passes; font, paint, and test call sites rebuilt with strict warnings.",
+      "font_tests": "win32_sdl_resource_font and win32_utf8_font pass 2/2.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": {
@@ -25829,7 +25835,7 @@
         "skipped": 0
       },
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
-      "baseline": "Unchanged; UTF-8 prefix selection, sanitization, and row output are preserved.",
+      "baseline": "Unchanged; UTF-8 decoding, glyph metrics, and SDK pointer/count behavior are preserved.",
       "platform": "Windows/Linux full-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25857,7 +25863,8 @@
       "current_source_after_d3977f06": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_d6230fbb": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
       "current_source_after_94b3942e": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
-      "current_source_after_9ceadec6": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
+      "current_source_after_9ceadec6": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit.",
+      "current_source_after_7104d20b": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25872,7 +25879,7 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "Removed the intermediate SDL allocation and full-string copy from inspector rows."
+      "Removed the private font measurement pointer/count and output-pointer interface."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -25883,7 +25890,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 9ceadec6.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 7104d20b.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25894,7 +25901,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "9ceadec6",
+      "source_head": "7104d20b",
       "raw_copy_call_audit": {
         "source_head": "3670b2be",
         "owned_production_calls": 0,
@@ -26109,12 +26116,16 @@
       {
         "commit": "9ceadec6",
         "message": "Use snapshot text directly in inspector rows"
+      },
+      {
+        "commit": "7104d20b",
+        "message": "Measure font text from bounded views"
       }
     ],
-    "source_commit": "9ceadec6",
+    "source_commit": "7104d20b",
     "latest_change": "Private dialog templates now own decoded labels and item records through optional<string> and vector; malformed templates retain the same failure result and valid resource bytes are unchanged.",
     "c_macro_audit": {
-      "source_head": "9ceadec6",
+      "source_head": "7104d20b",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26128,7 +26139,7 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through 9ceadec6.",
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Local macOS/host verification is current through 7104d20b.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     }
   },
