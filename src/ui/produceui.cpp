@@ -502,7 +502,7 @@ void InitializeProductionDlg(APPSESSION &app, HWND hwnd) {
 }
 
 void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t iDraw) {
-    std::array<char, 360> szDisplayLabel{};
+    PRODUCTIONETARESULT eta;
     std::int32_t lSel;
     std::int16_t iSrc;
     std::int16_t idc;
@@ -566,8 +566,8 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
                 rc.bottom += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 c = CchSprintf(szT, TextIO().pfnCompressed(app, idsDDoneCompletion).data(), prod.pct);
-                szDisplayLabel = PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel))).sz;
-                c += CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), szDisplayLabel.data());
+                eta = PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel)));
+                c += CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), eta.view());
                 win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, c);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             }

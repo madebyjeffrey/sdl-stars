@@ -77,7 +77,7 @@ PRODUCTIONETARESULT PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lppl
     } else {
         c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDDYears).data(), iTurnBegin, iTurnEnd);
     }
-    return {SzPlanetLabel(app.state.szWork), iTurnBegin, iTurnEnd};
+    return {SzPlanetLabel(app.state.szWork), iTurnBegin, iTurnEnd, c};
 }
 
 void ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel) {

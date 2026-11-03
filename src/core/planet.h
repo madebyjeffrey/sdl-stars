@@ -3,11 +3,15 @@
 
 #include "common.h"
 #include <cstdint>
+#include <string_view>
 
 std::int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart);
 struct PRODUCTIONETARESULT {
     std::array<char, 360> sz;
     std::int16_t etaFirst, etaLast;
+    std::int16_t cch;
+
+    std::string_view view() const noexcept { return {sz.data(), static_cast<std::size_t>(cch)}; }
 };
 PRODUCTIONETARESULT PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem);
 void    ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel);

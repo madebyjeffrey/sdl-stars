@@ -744,7 +744,7 @@ void DrawMassWarpGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t iBest, 
 
 void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
     std::array<char, 19> szPlanetName{};
-    std::array<char, 360> szDisplayLabel{};
+    PRODUCTIONETARESULT eta;
     std::int16_t swp;
     std::int16_t dxRight;
     std::int16_t yTop;
@@ -802,9 +802,9 @@ void DrawPlanetProduction(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             c = 0;
             app.state.szWork[0] = 0;
         } else {
-            szDisplayLabel = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel)).sz;
-            psz = szDisplayLabel.data();
-            c = std::strlen(psz);
+            eta = PszProductionETA(app, ppl, nullptr, static_cast<ProdItemType>(iSel));
+            psz = eta.sz.data();
+            c = eta.cch;
         }
         if (c != 0) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
