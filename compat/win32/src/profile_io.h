@@ -2,11 +2,13 @@
 #define STARS_COMPAT_PROFILE_IO_H
 #include <windows.h>
 #include "fileio.h"
+#include <optional>
 #include <string>
+#include <string_view>
 
 struct COMPATPROFILE {
     std::string szRaw, szParsed;
-    char *pszSection, *pszKey, *pszValue;
+    std::optional<std::string_view> pszSection, pszKey, pszValue;
     struct COMPATPROFILE *lpNext;
 };
 

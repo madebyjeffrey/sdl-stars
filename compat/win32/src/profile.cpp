@@ -11,7 +11,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utility>
@@ -33,30 +32,38 @@ static void FreeProfile(COMPATPROFILE *lp) {
     }
 }
 
-static char *PszTrimProfile(char *psz) {
-    char *pszEnd;
-    while (*psz && std::isspace(static_cast<unsigned char>(*psz))) psz++;
-    pszEnd = psz + std::strlen(psz);
-    while (pszEnd > psz && std::isspace(static_cast<unsigned char>(pszEnd[-1]))) *--pszEnd = 0;
-    return psz;
+static std::string_view SzTrimProfile(std::string_view sz) {
+    while (!sz.empty() && std::isspace(static_cast<unsigned char>(sz.front()))) sz.remove_prefix(1);
+    while (!sz.empty() && std::isspace(static_cast<unsigned char>(sz.back()))) sz.remove_suffix(1);
+    return sz;
+}
+
+static BOOL FEqualProfileName(std::string_view szLeft, const char *pszRight) {
+    const std::string_view szRight{pszRight};
+    if (szLeft.size() != szRight.size()) return 0;
+    return std::equal(szLeft.begin(), szLeft.end(), szRight.begin(), [](char chLeft, char chRight) {
+        return std::tolower(static_cast<unsigned char>(chLeft)) == std::tolower(static_cast<unsigned char>(chRight));
+    });
 }
 
 static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
     COMPATPROFILE *lp = new (std::nothrow) COMPATPROFILE{};
-    char *psz, *pszEnd;
+    std::string_view szParsed;
+    std::size_t ichEnd, ichEquals;
 
     NATIVEOWNER<COMPATPROFILE, FreeProfile> profileOwner(lp);
     if (!lp) return nullptr;
     try { lp->szRaw = pszRaw; lp->szParsed = pszRaw; }
     catch (const std::bad_alloc &) { return nullptr; }
-    psz = PszTrimProfile(lp->szParsed.data());
-    if (*psz == '[' && (pszEnd = std::strchr(psz + 1, ']'))) {
-        *pszEnd = 0;
-        lp->pszSection = PszTrimProfile(psz + 1);
-    } else if (*psz && *psz != ';' && (pszEnd = std::strchr(psz, '='))) {
-        *pszEnd = 0;
-        lp->pszKey = PszTrimProfile(psz);
-        lp->pszValue = PszTrimProfile(pszEnd + 1);
+    szParsed = lp->szParsed;
+    ichEnd = szParsed.find('\0');
+    if (ichEnd != std::string_view::npos) szParsed = szParsed.substr(0, ichEnd);
+    szParsed = SzTrimProfile(szParsed);
+    if (!szParsed.empty() && szParsed.front() == '[' && (ichEnd = szParsed.find(']', 1)) != std::string_view::npos) {
+        lp->pszSection = SzTrimProfile(szParsed.substr(1, ichEnd - 1));
+    } else if (!szParsed.empty() && szParsed.front() != ';' && (ichEquals = szParsed.find('=')) != std::string_view::npos) {
+        lp->pszKey = SzTrimProfile(szParsed.substr(0, ichEquals));
+        lp->pszValue = SzTrimProfile(szParsed.substr(ichEquals + 1));
     }
     return profileOwner.release();
 }
@@ -101,19 +108,19 @@ LReturn:
 static COMPATPROFILE *LpProfileSection(COMPATPROFILE *lp, LPCSTR pszSection) {
     if (!pszSection) return nullptr;
     for (; lp; lp = lp->lpNext)
-        if (lp->pszSection && !strcasecmp(lp->pszSection, pszSection)) return lp;
+        if (lp->pszSection && FEqualProfileName(*lp->pszSection, pszSection)) return lp;
     return nullptr;
 }
 
 static COMPATPROFILE *LpProfileKey(COMPATPROFILE *lp, LPCSTR pszKey) {
     if (!lp || !pszKey) return nullptr;
     for (lp = lp->lpNext; lp && !lp->pszSection; lp = lp->lpNext)
-        if (lp->pszKey && !strcasecmp(lp->pszKey, pszKey)) return lp;
+        if (lp->pszKey && FEqualProfileName(*lp->pszKey, pszKey)) return lp;
     return nullptr;
 }
 
 static std::string_view SzvProfileValue(COMPATPROFILE *lp) {
-    std::string_view szValue{lp->pszValue};
+    std::string_view szValue = lp->pszValue.value_or(std::string_view{});
     if (szValue.size() >= 2 && (szValue.front() == '\'' || szValue.front() == '"') && szValue.back() == szValue.front()) {
         szValue.remove_prefix(1);
         szValue.remove_suffix(1);
@@ -188,7 +195,7 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
                                     LPSTR szResult, DWORD cchMax, LPCSTR pszFile) {
     std::optional<std::string> szPath;
     COMPATPROFILE *lpAll = nullptr, *lp, *lpKey;
-    const char *psz;
+    std::string_view szName;
     std::string_view szValue;
     std::size_t cch, cchOut = 0, cchCopy;
     BOOL fMulti = !pszSection || !pszKey;
@@ -207,13 +214,14 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
         if (pszSection && lp) lp = lp->lpNext;
         for (; lp; lp = lp->lpNext) {
             if (pszSection && lp->pszSection) break;
-            psz = pszSection ? lp->pszKey : lp->pszSection;
-            if (!psz || !*psz) continue;
-            cch = std::strlen(psz);
+            const auto &pszName = pszSection ? lp->pszKey : lp->pszSection;
+            if (!pszName || pszName->empty()) continue;
+            szName = *pszName;
+            cch = szName.size();
             if (cchMax < 2) break;
             if (cchOut > cchMax - 2) { cchOut = cchMax - 2; break; }
-            cchCopy = CchUtf8Prefix(psz, cch < cchMax - 2 - cchOut ? cch : cchMax - 2 - cchOut);
-            std::memcpy(szResult + cchOut, psz, cchCopy);
+            cchCopy = CchUtf8Prefix(szName, cch < cchMax - 2 - cchOut ? cch : cchMax - 2 - cchOut);
+            std::memcpy(szResult + cchOut, szName.data(), cchCopy);
             cchOut += cchCopy;
             if (cchCopy < cch || cchOut + 1 >= cchMax) {
                 std::fill_n(szResult + cchOut, cchMax - cchOut, 0);
