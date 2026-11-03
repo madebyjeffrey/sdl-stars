@@ -1,5 +1,5 @@
 {
-  "source_parent": "c5378ae9",
+  "source_parent": "ea947f5c",
   "scope": [
     "src",
     "compat/win32/include",
@@ -2470,6 +2470,14 @@
       "change": "WritePrivateProfileStringA builds section/key lines in local strings and passes c_str to the profile parser, which copies them into its owned nodes.",
       "verification": "macOS SDL Debug build; profile save/resource/UTF-8 tests pass; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1. Profile leak instrumentation timed out because the macOS wrapper could not get the process task port.",
       "baseline": "Unchanged."
+    },
+    {
+      "batch": "L05 packaged help document scratch ownership",
+      "source_commit": "ea947f5c",
+      "retired_heap_sites": 1,
+      "change": "PszHelpDocument keeps the packaged guide body in a local std::string; raw malloc/free buffer ownership is removed.",
+      "verification": "macOS SDL Debug build; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
+      "baseline": "Unchanged."
     }
   ],
   "retired_path_text_sites": [
@@ -2654,6 +2662,16 @@
       "compiler_context": true,
       "contract": "70",
       "disposition": "L05 update-line scratch migrated to std::string in c5378ae9"
+    },
+    {
+      "path": "compat/win32/src/help.cpp",
+      "line": 72,
+      "scope": "PszHelpDocument",
+      "operation": "malloc",
+      "code": "std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE) + 1)",
+      "normalized_call": "std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)+1)",
+      "compiler_context": true,
+      "disposition": "L05 packaged guide body migrated to std::string in ea947f5c"
     }
   ]
 }
