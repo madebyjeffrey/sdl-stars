@@ -3,7 +3,7 @@
 #include "filedialog_cocoa_bridge.h"
 #include "../../../src/platform/errors.h"
 #include <algorithm>
-#include <cstring>
+#include <string_view>
 
 @interface StarsFilePanelDelegate : NSObject <NSOpenSavePanelDelegate>
 @property(nonatomic, strong) NSArray<NSString *> *rgPatterns;
@@ -35,6 +35,8 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
                      int (*pfnPump)(void *), void *lpv) {
     @autoreleasepool {
         NSSavePanel *panel = fSave ? [NSSavePanel savePanel] : [NSOpenPanel openPanel];
+        const char *pszSelectedPath;
+        std::string_view szPathView;
         NSString *title = [NSString stringWithUTF8String:pszTitle];
         NSString *folder = [NSString stringWithUTF8String:pszFolder];
         NSString *name = [NSString stringWithUTF8String:pszName];
@@ -79,9 +81,11 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
             [NSApp updateWindows];
         }
         if (fCanceled || result != NSModalResponseOK) return 0;
-        const char *path = panel.URL.fileSystemRepresentation;
-        if (!path || std::strlen(path) >= cbPath) return -1;
-        std::copy_n(path, std::strlen(path) + 1, pszPath);
+        pszSelectedPath = panel.URL.fileSystemRepresentation;
+        if (!pszSelectedPath) return -1;
+        szPathView = pszSelectedPath;
+        if (szPathView.size() >= cbPath) return -1;
+        std::copy_n(szPathView.data(), szPathView.size() + 1, pszPath);
         if (cFilter != 0) *lpiFilter = static_cast<int>(delegate.iFilter);
         return 1;
     }
