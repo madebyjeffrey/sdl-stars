@@ -1082,6 +1082,7 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
     char szTemp[512], szMessage[640], szExt[4];
     std::optional<std::size_t> ichSlash, ichPreviousSlash;
     std::size_t ichName, ichTargetSlash, ichDot;
+    std::string_view szTargetView;
     const char *pszLibraryName;
     std::size_t cchTargetPath;
     StringId idsSaveError;
@@ -1128,11 +1129,15 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
         std::copy(pszTarget->begin(), pszTarget->end(), szTarget);
         szTarget[pszTarget->size()] = 0;
     }
-    ichTargetSlash = std::string_view{szTarget}.find_last_of("/\\");
-    ichDot = std::string_view{szTarget}.rfind('.');
-    if (ichDot != std::string_view::npos && (ichTargetSlash == std::string_view::npos || ichDot > ichTargetSlash)) szTarget[ichDot] = 0;
+    szTargetView = szTarget;
+    ichTargetSlash = szTargetView.find_last_of("/\\");
+    ichDot = szTargetView.rfind('.');
+    cchTargetPath = szTargetView.size();
+    if (ichDot != std::string_view::npos && (ichTargetSlash == std::string_view::npos || ichDot > ichTargetSlash)) {
+        szTarget[ichDot] = 0;
+        cchTargetPath = ichDot;
+    }
     if (!szTarget[0]) return 0;
-    cchTargetPath = std::strlen(szTarget);
     cch = CchSnprintf(std::span{szTarget + cchTargetPath, sizeof(szTarget) - cchTargetPath}, ".x%d", app.state.idPlayer + 1);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTarget) - cchTargetPath) return 0;
 
