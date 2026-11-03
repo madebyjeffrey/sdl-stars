@@ -38,7 +38,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
     std::int16_t        ishdefLatestSB;
     std::int16_t        pctValue;
     PLANET        *lpplMac;
-    std::uint8_t       *lpciPlan;
+    NATIVEAICYBERVIEW lpciPlan;
     std::int32_t        lNewPop;
     std::int16_t        iLatestBattle;
     std::int16_t        dOffsetPlanTemp;
@@ -159,10 +159,10 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
     lppl = app.state.lpPlanets;
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {
-        lpciPlan = app.state.vlpbAiData + (lppl->id * 2 + 2);
+        lpciPlan = CivFromLp(app, app.state.vlpbAiData + (lppl->id * 2 + 2));
         lpciPlanTemp = CtvFromLp(app, app.state.vlpbAiData + (dOffsetPlanTemp + lppl->id * 2));
-        if (CivFromLp(app, lpciPlan).iPktTarget() > 0) {
-            CivFromLp(app, lpciPlan).SetIPktTarget(CivFromLp(app, lpciPlan).iPktTarget() + 0x7ff);
+        if (lpciPlan.iPktTarget() > 0) {
+            lpciPlan.SetIPktTarget(lpciPlan.iPktTarget() + 0x7ff);
         }
         if (lppl->iPlayer != app.state.idPlayer && lppl->iPlayer != iplrNone) {
             i = lppl->uPopGuess / 250 + 1;
@@ -378,7 +378,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
         lppl = app.state.vrglpplAi[ipl];
         if (!app.state.vrglpplAi[ipl])
             break;
-        lpciPlan = app.state.vlpbAiData + (lppl->id * 2 + 2);
+        lpciPlan = CivFromLp(app, app.state.vlpbAiData + (lppl->id * 2 + 2));
         lpciPlanTemp = CtvFromLp(app, app.state.vlpbAiData + (dOffsetPlanTemp + lppl->id * 2));
         ChangeMainObjSel(app, grobjPlanet, lppl->id);
         ProductionIO().pfnInitialize(app, rgprod);
@@ -404,15 +404,15 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
             if (lppl->fStarbase) {
                 switch (lppl->isb) {
                 default:
-                    if ((!CivFromLp(app, lpciPlan).fBltColony() || lNewPop > 5500) && !lpciPlanTemp.fIdleColonizers() && cExistColony < 40 && FShouldPlanetBuildColonizer(app, lppl)) {
+                    if ((!lpciPlan.fBltColony() || lNewPop > 5500) && !lpciPlanTemp.fIdleColonizers() && cExistColony < 40 && FShouldPlanetBuildColonizer(app, lppl)) {
                         AddItemToQueue(app, 1, 1, grobjFleet, addItemEnd);
-                        CivFromLp(app, lpciPlan).SetFBltColony(1);
+                        lpciPlan.SetFBltColony(1);
                         fWrite = 1;
                         if (lNewPop > 15000 && app.state.game.turn < 100) {
                             AddItemToQueue(app, 1, 1, grobjFleet, addItemEnd);
                         }
                     } else {
-                        CivFromLp(app, lpciPlan).SetFBltColony(0);
+                        lpciPlan.SetFBltColony(0);
                     }
                     if (lppl->rgwtMin[3] > 2000 && !app.state.rgshdef[2].fFree && cExistCargo < 50 && lpciPlanTemp.cIdleFreighters() < 1 &&
                         LpplFindClosestEnum(app, lppl, FEnumDropOffStage2)) {
@@ -492,7 +492,7 @@ void DoCyberPackets(APPSESSION &app) {
     std::int16_t        i;
     std::int16_t        ipl;
     std::int16_t        iWarpDst;
-    std::uint8_t       *lpciPlan;
+    NATIVEAICYBERVIEW lpciPlan;
     PROD           rgprod[64];
     std::int16_t        dOffsetPlanTemp;
     std::int16_t        idPlanDst;
@@ -521,14 +521,14 @@ void DoCyberPackets(APPSESSION &app) {
         if (!app.state.vrglpplAi[ipl])
             break;
         if (lppl->fStarbase) {
-            lpciPlan = app.state.vlpbAiData + (lppl->id * 2 + 2);
+            lpciPlan = CivFromLp(app, app.state.vlpbAiData + (lppl->id * 2 + 2));
             lpciPlanTemp = CtvFromLp(app, app.state.vlpbAiData + (dOffsetPlanTemp + lppl->id * 2));
             ChangeMainObjSel(app, grobjPlanet, lppl->id);
             ProductionIO().pfnInitialize(app, rgprod);
             fWrite = 0;
             GetResourcesAvailable(app, lppl, rgResAvail);
             GetProdQCost(app, lppl, rgResCost);
-            if (!CivFromLp(app, lpciPlan).fNeedScanPkt() && (lppl->isb == 1 || lppl->isb == 3 || lppl->isb == 6 || lppl->isb == 8) &&
+            if (!lpciPlan.fNeedScanPkt() && (lppl->isb == 1 || lppl->isb == 3 || lppl->isb == 6 || lppl->isb == 8) &&
                 (lppl->rgwtMin[0] > 700 || lppl->rgwtMin[1] > 700 || lppl->rgwtMin[2] > 700)) {
                 iPacketMax = LOWORD(static_cast<std::int32_t>((rgResAvail[3] / 2)));
                 iPacketMax /= 5;
@@ -583,7 +583,7 @@ void DoCyberPackets(APPSESSION &app) {
                     goto LFinish;
                 }
             }
-            if (!CivFromLp(app, lpciPlan).fNeedScanPkt() && (app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard || (app.state.rgplr[app.state.idPlayer].lvlAi == lvlAiStandard && RandomIO().pfnRandom(app, 3) == 0))) {
+            if (!lpciPlan.fNeedScanPkt() && (app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard || (app.state.rgplr[app.state.idPlayer].lvlAi == lvlAiStandard && RandomIO().pfnRandom(app, 3) == 0))) {
                 plMinMax = app.state.vlpbAiData + (dOffsetPlanTemp + app.state.game.cPlanMax * 2);
                 rgResAvail[0] -= rgResCost[0];
                 rgResAvail[1] -= rgResCost[1];
@@ -650,43 +650,43 @@ void DoCyberPackets(APPSESSION &app) {
                     PlanetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.pl);
                     CivFromLp(app, lpciPlanDst).SetIPktTarget(3);
                     if (static_cast<double>(dDistance) < static_cast<double>(dDistanceTgt)) {
-                        CivFromLp(app, lpciPlan).SetFNeedScanPkt(1);
+                        lpciPlan.SetFNeedScanPkt(1);
                     }
-                    CivFromLp(app, lpciPlan).SetFLaunchedPkt(0);
+                    lpciPlan.SetFLaunchedPkt(0);
                     fWrite = 1;
                     goto LFinish;
                 }
             }
-            if (!CivFromLp(app, lpciPlan).fLaunchedPkt() || CivFromLp(app, lpciPlan).fNeedScanPkt()) {
-                if (!CivFromLp(app, lpciPlan).fNeedScanPkt()) {
+            if (!lpciPlan.fLaunchedPkt() || lpciPlan.fNeedScanPkt()) {
+                if (!lpciPlan.fNeedScanPkt()) {
                     i = RandomIO().pfnRandom(app, 7);
-                    if (i == CivFromLp(app, lpciPlan).iLstPktDir()) {
-                        CivFromLp(app, lpciPlan).SetILstPktDir(i + 1);
+                    if (i == lpciPlan.iLstPktDir()) {
+                        lpciPlan.SetILstPktDir(i + 1);
                     } else {
-                        CivFromLp(app, lpciPlan).SetILstPktDir(i);
+                        lpciPlan.SetILstPktDir(i);
                     }
-                    idPlanDst = IdGetBestScannerDest(app, lppl, static_cast<CompassDir>(CivFromLp(app, lpciPlan).iLstPktDir()));
+                    idPlanDst = IdGetBestScannerDest(app, lppl, static_cast<CompassDir>(lpciPlan.iLstPktDir()));
                 }
-                if (CivFromLp(app, lpciPlan).fNeedScanPkt() || idPlanDst != idplNone) {
+                if (lpciPlan.fNeedScanPkt() || idPlanDst != idplNone) {
                     lpciPlanDst = app.state.vlpbAiData + (idPlanDst * 2 + 2);
                     if (CivFromLp(app, lpciPlanDst).iPktTarget() == 0 && FAddPacketToQueue(app, lppl)) {
                         CivFromLp(app, lpciPlanDst).SetIPktTarget(3);
-                        CivFromLp(app, lpciPlan).SetFLaunchedPkt(CivFromLp(app, lpciPlan).fNeedScanPkt() == 0);
+                        lpciPlan.SetFLaunchedPkt(lpciPlan.fNeedScanPkt() == 0);
                         fWrite = 1;
                     } else {
-                        CivFromLp(app, lpciPlan).SetFLaunchedPkt(0);
+                        lpciPlan.SetFLaunchedPkt(0);
                     }
                     iWarp = ColonyIO().pfnWarp(app, lppl, &fTwoMA) - 1;
                     app.state.sel.pl.iWarpFling = iWarp;
-                    if (!CivFromLp(app, lpciPlan).fNeedScanPkt()) {
+                    if (!lpciPlan.fNeedScanPkt()) {
                         app.state.sel.pl.idFling = idPlanDst;
                     } else {
-                        CivFromLp(app, lpciPlan).SetFNeedScanPkt(0);
+                        lpciPlan.SetFNeedScanPkt(0);
                     }
                     PlanetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.pl);
                 }
             } else {
-                CivFromLp(app, lpciPlan).SetFLaunchedPkt(0);
+                lpciPlan.SetFLaunchedPkt(0);
             }
         LFinish:
             FinishProduction(app, fWrite);
@@ -1129,13 +1129,13 @@ std::int16_t FEnumNeedMinerals(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTes
     std::int16_t        iWarpSrc;
     std::int16_t        fTwoMA;
     std::int16_t        iMinLimit;
-    std::uint8_t       *lpciPlan;
+    NATIVEAICYBERVIEW lpciPlan;
     std::int16_t        iWarpDst;
     NATIVEAICYBERTEMPVIEW lpciPlanTemp;
     std::int16_t        dOffsetPlanTemp;
 
     dOffsetPlanTemp = app.state.game.cPlanMax * 2 + 2;
-    lpciPlan = app.state.vlpbAiData + 2;
+    lpciPlan = CivFromLp(app, app.state.vlpbAiData + 2);
     lpciPlanTemp = CtvFromLp(app, app.state.vlpbAiData + dOffsetPlanTemp);
     switch (lpplTest->isb) {
     case 1:
@@ -1147,7 +1147,7 @@ std::int16_t FEnumNeedMinerals(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTes
     default:
         iMinLimit = 1000;
     }
-    if (lpplTest->iPlayer != app.state.idPlayer || !lpplTest->fStarbase || CivFromLp(app, lpciPlan).At(lpplTest->id).iPktTarget() > 0) {
+    if (lpplTest->iPlayer != app.state.idPlayer || !lpplTest->fStarbase || lpciPlan.At(lpplTest->id).iPktTarget() > 0) {
         return 0;
     }
     if ((lpplSrc->rgwtMin[0] > 700 && lpciPlanTemp.At(lpplTest->id).fNeedsMin1()) || (lpplSrc->rgwtMin[1] > 700 && lpciPlanTemp.At(lpplTest->id).fNeedsMin2()) ||
@@ -1178,7 +1178,7 @@ std::int16_t FEnumPktAttack(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) 
     std::uint8_t   *plMinMax;
     std::int32_t    lMineral;
     std::int32_t    lMinNeeded;
-    std::uint8_t       *lpciPlan;
+    NATIVEAICYBERVIEW lpciPlan;
     std::int16_t    iWarpDst;
     std::int16_t    dOffsetPlanTemp;
     double     dDistanceTgt;
@@ -1186,9 +1186,9 @@ std::int16_t FEnumPktAttack(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) 
     lMineral = 0;
     iWarpDst = 0;
     dOffsetPlanTemp = app.state.game.cPlanMax * 2 + 2;
-    lpciPlan = app.state.vlpbAiData + 2;
+    lpciPlan = CivFromLp(app, app.state.vlpbAiData + 2);
     plMinMax = app.state.vlpbAiData + (dOffsetPlanTemp + app.state.game.cPlanMax * 2);
-    if (lpplTest->iPlayer == app.state.idPlayer || lpplTest->iPlayer == iplrNone || CivFromLp(app, lpciPlan).At(lpplTest->id).iPktTarget() > 0 ||
+    if (lpplTest->iPlayer == app.state.idPlayer || lpplTest->iPlayer == iplrNone || lpciPlan.At(lpplTest->id).iPktTarget() > 0 ||
         RaceQueryIO().pfnStat(&app.state.rgplr[lpplTest->iPlayer], rsMajorAdv) == raMacintosh) {
         return 0;
     }
