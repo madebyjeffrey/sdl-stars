@@ -1,4 +1,5 @@
 #include "common.h"
+#include <algorithm>
 #include "appstate.h"
 #include "fleet_query_io.h"
 #include "presentation_io.h"
@@ -367,7 +368,7 @@ void DeleteWpFar(FLEET *lpfl, std::int16_t iDel, std::int16_t fRecycle) {
             ord = lpfl->lpplord->rgord()[iDel];
         }
     }
-    std::memmove(&lpfl->lpplord->rgord()[iDel], &lpfl->lpplord->rgord()[iDel + 1], (lpfl->cord - iDel - 1) * sizeof(ORDER));
+    std::move(&lpfl->lpplord->rgord()[iDel + 1], &lpfl->lpplord->rgord()[lpfl->cord], &lpfl->lpplord->rgord()[iDel]);
     if (fRecycle) {
         lpfl->lpplord->rgord()[lpfl->cord - 1] = ord;
     } else {
