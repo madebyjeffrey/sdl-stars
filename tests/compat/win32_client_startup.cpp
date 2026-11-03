@@ -359,6 +359,7 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     size_t cb;
     const char *pszViewerCapture = PszCompatEnvironment("STARS_MAP_VIEWER_CAPTURE");
     NATIVEFILE *lpfile;
+    NATIVEFILEOWNER nftemp{nullptr, ICloseNativeFile};
     const char *pszCapture = PszCompatEnvironment("STARS_MAP_CAPTURE");
     int16_t fDirty = app.state.game.fDirty;
     if (!FCaptureScanner(app, &snap) || snap.cObject < (size_t)app.state.game.cPlanMax ||
@@ -382,10 +383,10 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     if (!FCaptureScanner(app, &fresh) || !fresh.rgobj[0].fOnScreen || !fresh.rgobj[0].fScanSelected || app.state.game.fDirty != fDirty) goto LDone;
     memcpy(szNameSav, fresh.rgobj[0].szName, sizeof(szNameSav));
     strcpy(fresh.rgobj[0].szName, "Quoted \"\xc3\xa9\xe2\x82\xac\"\r\n");
-    lpfile = PfNativeTemporary();
+    nftemp = NfoNativeTemporary(); lpfile = nftemp.get();
     if (!lpfile) goto LDone;
-    if (!FWriteScannerSnapshot(&fresh, lpfile)) { ICloseNativeFile(lpfile); goto LDone; }
-    ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szExport}.first(sizeof(szExport) - 1), lpfile); szExport[cb] = 0; ICloseNativeFile(lpfile);
+    if (!FWriteScannerSnapshot(&fresh, lpfile)) goto LDone;
+    ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szExport}.first(sizeof(szExport) - 1), lpfile); szExport[cb] = 0; nftemp.reset();
     if (!strstr(szExport, "\xc3\xa9\xe2\x82\xac") || !strstr(szExport, "\\u000d\\u000a")) goto LDone;
     memcpy(fresh.rgobj[0].szName, szNameSav, sizeof(szNameSav));
     if (pszCapture) {

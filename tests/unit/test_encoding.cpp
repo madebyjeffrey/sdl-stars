@@ -614,6 +614,7 @@ static void TestScannerSnapshotUtf8(void) {
     char sz[2048];
     size_t cb;
     NATIVEFILE *pf;
+    NATIVEFILEOWNER pftemp{nullptr, ICloseNativeFile};
     const char *psz = "\xc3\xa9\xe2\x82\xac\xf0\x9f\x98\x80";
 
     snap.rgobj.reset(static_cast<SCANOBJECT *>(calloc(1, sizeof(SCANOBJECT))));
@@ -621,7 +622,7 @@ static void TestScannerSnapshotUtf8(void) {
     SCANOBJECT &obj = snap.rgobj[0];
     snprintf(obj.szName, sizeof(obj.szName), "Quoted \"%s\"\r\n", psz);
     snap.cObject = 1;
-    pf = PfNativeTemporary(); TEST_ASSERT(pf);
+    pftemp = NfoNativeTemporary(); pf = pftemp.get(); TEST_ASSERT(pf);
     TEST_ASSERT(FWriteScannerSnapshot(&snap, pf));
     ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), pf); sz[cb] = 0;
     TEST_CHECK(FUtf8Valid(std::string_view{sz, cb}));
@@ -630,7 +631,7 @@ static void TestScannerSnapshotUtf8(void) {
     TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));
     memset(obj.szName, 'a', sizeof(obj.szName));
     TEST_CHECK(!FWriteScannerSnapshot(&snap, pf));
-    ICloseNativeFile(pf);
+    ICloseNativeFile(pftemp.release());
 }
 #endif
 

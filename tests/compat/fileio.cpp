@@ -85,6 +85,7 @@ int main(void) {
         // The remaining token is released by the actual session destructor.
     }
     NATIVEFILE *pf = PfNativeOpen(path, NATIVEFILEMODE::readWrite);
+    NATIVEFILEOWNER pftemp{nullptr, ICloseNativeFile};
     CHECK(pf && CbNativeFile(pf) == 6 && LNativePosition(pf) == 0);
     CHECK(CReadNative(std::span{rgwOut}, pf) == 3 && !memcmp(rgwOut,rgb,6) && FNativeStreamEof(pf) && !FNativeStreamError(pf));
     CHECK(CbNativeFile(pf) == 6 && LNativePosition(pf) == 6 && FNativeStreamEof(pf));
@@ -136,17 +137,17 @@ int main(void) {
     errno=0;CHECK(!SzNativeReadDir(nullptr) && errno==EBADF);
     CHECK(IRemoveNativePath(other,0)==0 && IRemoveNativePath(dir,1)==0);
     errno=0;CHECK(!PfNativeOpen("\xff", NATIVEFILEMODE::read) && errno==EILSEQ);
-    pf=PfNativeTemporary();CHECK(pf && CchNativePrintf(pf,"2\nname\n7\n1234567890123\nnext\n")>0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
+    pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && CchNativePrintf(pf,"2\nname\n7\n1234567890123\nnext\n")>0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     int version,player;long long played;char line[64];
     CHECK(CNativeScan(pf,"%d\n",&version)==1 && version==2 && CchGetNativeLine(std::span{line}, pf) && !strcmp(line,"name\n"));
     CHECK(CNativeScan(pf,"%d\n%lld\n",&player,&played)==2 && player==7 && played==1234567890123LL);
-    CHECK(CchGetNativeLine(std::span{line}, pf) && !strcmp(line,"next\n"));CHECK(ICloseNativeFile(pf)==0);
+    CHECK(CchGetNativeLine(std::span{line}, pf) && !strcmp(line,"next\n"));CHECK(ICloseNativeFile(pftemp.release())==0);
     // Line IO is binary: counts include embedded NULs/newlines and a final
     // fragment is returned even after EOF. A one-byte span does not consume IO.
     {
         char szLine[5]={'#','#','#','#','#'};
         std::optional<std::string> szOwned;
-        pf=PfNativeTemporary();CHECK(pf);
+        pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf);
         CHECK(CWriteNative(std::span{"A\0B\nlast"}.first(8),pf)==8 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
         CHECK(CchGetNativeLine(std::span{szLine}.first(1), pf)==0 && !szLine[0] && szLine[1]=='#' && LNativePosition(pf)==0 && !FNativeStreamEof(pf));
         errno=0;CHECK(!CchGetNativeLine(std::span{szLine}.first(0), pf) && errno==EINVAL && LNativePosition(pf)==0);
@@ -157,12 +158,12 @@ int main(void) {
         CHECK(CchGetNativeLine(std::span{szLine}.first(1), pf)==0 && !szLine[0] && FNativeStreamEof(pf));
         CHECK(ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
         CHECK((szOwned=SzGetNativeLine(pf)) && szOwned->size()==4 && !memcmp(szOwned->c_str(),"A\0B\n\0",5) && !FNativeStreamEof(pf));
-        CHECK(ICloseNativeFile(pf)==0);
+        CHECK(ICloseNativeFile(pftemp.release())==0);
     }
     // Byte operations preserve counts, sentinels, EOF and seek failure state.
     {
         unsigned char bytes[8];
-        pf=PfNativeTemporary();CHECK(pf);
+        pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf);
         CHECK(CbWriteNativeFile(pf, std::as_bytes(std::span{"abcd"}).first(4))==4 && LSeekNativeFile(pf, -2, NATIVESEEKORIGIN::end)==2);
         memset(bytes,0xa5,sizeof(bytes));
         CHECK(CbReadNativeFile(pf, std::as_writable_bytes(std::span{bytes}).subspan(1, 4))==2 && bytes[0]==0xa5 && bytes[1]=='c' && bytes[2]=='d' && bytes[3]==0xa5 && bytes[5]==0xa5);
@@ -172,7 +173,7 @@ int main(void) {
         CHECK(LSeekNativeFile(pf, -1, NATIVESEEKORIGIN::current)==3 && !FNativeStreamEof(pf));
         errno=0;CHECK(LSeekNativeFile(pf, 0, static_cast<NATIVESEEKORIGIN>(3))==-1 && errno==EINVAL && LNativePosition(pf)==3);
         CHECK(LSeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0 && CbWriteNativeFile(pf, std::as_bytes(std::span{bytes}).first(static_cast<std::size_t>(0)))==0 && CbNativeFile(pf)==4);
-        CHECK(ICloseNativeFile(pf)==0);
+        CHECK(ICloseNativeFile(pftemp.release())==0);
         errno=0;CHECK(!CbReadNativeFile(nullptr, std::as_writable_bytes(std::span{bytes}).first(static_cast<std::size_t>(0))) && errno==EBADF);
     }
     // Incomplete elements still expose their transferred prefix, but are not
@@ -180,14 +181,14 @@ int main(void) {
     {
         std::uint32_t word = 0xa5a5a5a5U;
         const std::uint32_t words[] = {0x01020304U, 0xf0e0d0c0U};
-        pf=PfNativeTemporary();CHECK(pf);
+        pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf);
         CHECK(CWriteNative(std::span{"abc"}.first(3), pf)==3 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
         CHECK(CReadNative(std::span{&word, 1}, pf)==0 && !memcmp(&word,"abc",3));
         CHECK(reinterpret_cast<const unsigned char *>(&word)[3]==0xa5 && LNativePosition(pf)==3 && FNativeStreamEof(pf));
-        CHECK(ICloseNativeFile(pf)==0);
-        pf=PfNativeTemporary();CHECK(pf);
+        CHECK(ICloseNativeFile(pftemp.release())==0);
+        pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf);
         CHECK(CWriteNative(std::span{words}, pf)==2 && LNativePosition(pf)==sizeof(words));
-        CHECK(ICloseNativeFile(pf)==0);
+        CHECK(ICloseNativeFile(pftemp.release())==0);
     }
     // Stream formatting writes binary bytes and measures long output before
     // allocating its second-pass buffer; counts include bytes after a NUL.
@@ -196,45 +197,45 @@ int main(void) {
         char expected[4096], actual[4096];
         int count = -1;
         const int cb = snprintf(expected, sizeof(expected), "%ld|%llu|%c%s:end", -123L, 18446744073709551615ULL, 0, payload.c_str());
-        pf=PfNativeTemporary();CHECK(pf);
+        pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf);
         CHECK(CchNativePrintf(pf,"%ld|%llu|%c%s:end%n",std::int32_t{-123},18446744073709551615ULL,0,payload,&count)==cb && count==cb);
         CHECK(LNativePosition(pf)==cb && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
         CHECK(CReadNative(std::span{actual}, pf)==static_cast<std::size_t>(cb) && !memcmp(actual,expected,cb));
-        CHECK(ICloseNativeFile(pf)==0);
-        pf=PfNativeTemporary();CHECK(pf);
+        CHECK(ICloseNativeFile(pftemp.release())==0);
+        pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf);
         count=-1;
         CHECK(CchNativePrintf(pf,"ab%n%c",&count,0)==3 && count==2 && CbNativeFile(pf)==3);
         errno=0;CHECK(CchNativePrintf(pf,"prefix %d")==-1 && errno==EINVAL && CbNativeFile(pf)==3);
         errno=0;CHECK(CchNativePrintf(pf,nullptr)==-1 && errno==EINVAL && CbNativeFile(pf)==3);
-        CHECK(ICloseNativeFile(pf)==0);
+        CHECK(ICloseNativeFile(pftemp.release())==0);
     }
     // Metadata scanning commits each field and leaves the first non-digit unread.
-    pf=PfNativeTemporary();CHECK(pf && IPutNativeString(" \t-2147483648\n+9223372036854775807!",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
+    pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && IPutNativeString(" \t-2147483648\n+9223372036854775807!",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     CHECK(CNativeScan(pf,"%d\n%lld",&player,&played)==2 && player==std::numeric_limits<std::int32_t>::min() && played==std::numeric_limits<std::int64_t>::max());
-    CHECK(ChGetNativeFile(pf)=='!' && ICloseNativeFile(pf)==0);
-    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("7 2147483648;",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
+    CHECK(ChGetNativeFile(pf)=='!' && ICloseNativeFile(pftemp.release())==0);
+    pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && IPutNativeString("7 2147483648;",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     version=123;player=456;
     CHECK(CNativeScan(pf,"%d %d",&version,&player)==1 && version==7 && player==456 && ChGetNativeFile(pf)==';');
-    CHECK(ICloseNativeFile(pf)==0);
-    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("7 +!",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
+    CHECK(ICloseNativeFile(pftemp.release())==0);
+    pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && IPutNativeString("7 +!",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     player=456;
     CHECK(CNativeScan(pf,"%d %d",&version,&player)==1 && player==456 && ChGetNativeFile(pf)=='!');
-    CHECK(ICloseNativeFile(pf)==0);
-    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("-9223372036854775808 9223372036854775808?",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
+    CHECK(ICloseNativeFile(pftemp.release())==0);
+    pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && IPutNativeString("-9223372036854775808 9223372036854775808?",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     CHECK(CNativeScan(pf,"%lld",&played)==1 && played==std::numeric_limits<std::int64_t>::min());
     errno=0;CHECK(CNativeScan(pf,"%lld",&played)==0 && played==std::numeric_limits<std::int64_t>::min() && errno==ERANGE && ChGetNativeFile(pf)=='?');
-    CHECK(ICloseNativeFile(pf)==0);
-    pf=PfNativeTemporary();CHECK(pf && CNativeScan(pf,"%d",&version)==EOF && ICloseNativeFile(pf)==0);
-    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("7",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
+    CHECK(ICloseNativeFile(pftemp.release())==0);
+    pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && CNativeScan(pf,"%d",&version)==EOF && ICloseNativeFile(pftemp.release())==0);
+    pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && IPutNativeString("7",pf)==0 && ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     CHECK(CNativeScan(pf,"%d %d",&version,&player)==1 && version==7 && player==456 && FNativeStreamEof(pf));
     CHECK(ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin)==0);
     errno=0;CHECK(CNativeScan(pf,"%lld",&player)==0 && errno==EINVAL && LNativePosition(pf)==0);
     errno=0;CHECK(CNativeScan(pf,"%d")==0 && errno==EINVAL && LNativePosition(pf)==0);
     errno=0;CHECK(CNativeScan(pf,"%d",static_cast<int *>(nullptr))==0 && errno==EINVAL && LNativePosition(pf)==0);
-    CHECK(ICloseNativeFile(pf)==0);
-    pf=PfNativeTemporary();CHECK(pf && IPutNativeString("8",pf)==0 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
+    CHECK(ICloseNativeFile(pftemp.release())==0);
+    pftemp=NfoNativeTemporary();pf=pftemp.get();CHECK(pf && IPutNativeString("8",pf)==0 && ISeekNativeFile(pf,0,NATIVESEEKORIGIN::begin)==0);
     const char szScanFormat[] = {'%', 'd'};
-    CHECK(CNativeScan(pf,std::string_view{szScanFormat,sizeof(szScanFormat)},&version)==1 && version==8 && ICloseNativeFile(pf)==0);
+    CHECK(CNativeScan(pf,std::string_view{szScanFormat,sizeof(szScanFormat)},&version)==1 && version==8 && ICloseNativeFile(pftemp.release())==0);
     puts("File service binary, read/write transition, EOF/seek, exclusive creation, live sizes, truncate/extend, identity and metadata tests passed");
     return 0;
 }

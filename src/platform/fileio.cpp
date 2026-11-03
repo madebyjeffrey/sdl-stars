@@ -727,18 +727,18 @@ NATIVEFILETEMPRESULT NftNativeCreateTemp(std::string_view szTemplate) {
     });
     return nft;
 }
-NATIVEFILE *PfNativeTemporary(void) {
-    return FileCall<NATIVEFILE *>(nullptr, nullptr, [&]() -> NATIVEFILE * {
+NATIVEFILEOWNER NfoNativeTemporary(void) {
+    return FileCall(nullptr, NATIVEFILEOWNER{nullptr, ICloseNativeFile}, [&]() -> NATIVEFILEOWNER {
         std::string name = SzFromUtf8((fs::temp_directory_path() / "stars-file-XXXXXX").u8string());
         auto nft = NftNativeCreateTemp(name);
         if (nft.lpfile) {
 #ifdef _WIN32
             nft.lpfile->fDelete = true;
 #else
-            if (unlink(nft.szPath.c_str()) != 0) { nft.lpfile.reset(); return nullptr; }
+            if (unlink(nft.szPath.c_str()) != 0) { nft.lpfile.reset(); return NATIVEFILEOWNER{nullptr, ICloseNativeFile}; }
 #endif
         }
-        return nft.lpfile.release();
+        return std::move(nft.lpfile);
     });
 }
 
