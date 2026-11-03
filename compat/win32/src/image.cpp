@@ -61,7 +61,7 @@ HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, BOOL fCursor) {
     cbInfo = cbWireDibHeader + cColors * cbWireRgbQuad;
     if (cbInfo > cb) return nullptr;
     std::memcpy(rgInfo, rgb, cbInfo); FEncodeDibHeader(bi, std::as_writable_bytes(std::span(rgInfo)));
-    if (!FCompatDib(rgInfo, cbInfo, rgb + cbInfo, cb - cbInfo, &dib)) return nullptr;
+    if (!FCompatDib(std::span{rgInfo, cbInfo}, std::span{rgb + cbInfo, cb - cbInfo}, dib)) return nullptr;
     cbMaskRow = ((static_cast<std::size_t>(dib.cx) + 31) / 32) * 4; cbMask = cbMaskRow * static_cast<std::size_t>(dib.cy);
     if (dib.cbBits > cb - cbInfo || cbMask > cb - cbInfo - dib.cbBits) return nullptr;
     lpAnd = rgb + cbInfo + dib.cbBits;

@@ -1911,7 +1911,7 @@ HBITMAP HbmpCompatResource(const BYTE *rgb, std::size_t cb) {
     if (cColors > 256)
         return nullptr;
     cbInfo = cbWireDibHeader + cColors * cbWireRgbQuad;
-    if (cbInfo > cb || !FCompatDib(rgb, cbInfo, rgb + cbInfo, cb - cbInfo, &dib))
+    if (cbInfo > cb || !FCompatDib(std::span{rgb, cbInfo}, std::span{rgb + cbInfo, cb - cbInfo}, dib))
         return nullptr;
     lpsurfaceOwner.reset(LpCompatDibSurface(&dib)); lpsurface = lpsurfaceOwner.get();
     if (!lpsurface)

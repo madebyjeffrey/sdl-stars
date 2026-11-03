@@ -39,17 +39,16 @@ static BOOL FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, std::siz
     return 1;
 }
 
-BOOL FCompatDib(const void *lpInfo, std::size_t cbInfo, const void *lpBits, std::size_t cbBits, COMPATDIB *lpdib) {
+BOOL FCompatDib(std::span<const BYTE> rgbInfo, std::span<const BYTE> rgbBits, COMPATDIB &dib) {
     BITMAPINFOHEADER bi;
     std::uint32_t cbHeader;
-    const auto *rgb = static_cast<const std::byte *>(lpInfo);
 
-    if (!rgb || !lpdib || cbInfo < 4) return 0;
-    NATIVEBYTEREADER(std::span(rgb, 4)).FReadU32Le(cbHeader);
-    if (cbHeader != cbWireDibHeader || cbInfo < cbWireDibHeader)
+    if (rgbInfo.size() < 4) return 0;
+    NATIVEBYTEREADER(std::as_bytes(rgbInfo.first(4))).FReadU32Le(cbHeader);
+    if (cbHeader != cbWireDibHeader || rgbInfo.size() < cbWireDibHeader)
         return SDL_SetError("DIB input requires a BITMAPINFOHEADER");
-    FDecodeDibHeader(std::span(rgb, cbWireDibHeader), bi);
-    return FCompatDibInfo(bi, static_cast<const BYTE *>(lpInfo), cbInfo, lpBits, cbBits, lpdib);
+    FDecodeDibHeader(std::as_bytes(rgbInfo.first(cbWireDibHeader)), bi);
+    return FCompatDibInfo(bi, rgbInfo.data(), rgbInfo.size(), rgbBits.data(), rgbBits.size(), &dib);
 }
 
 // Genuine GDI callers supply native SDK headers/palette storage. Keep this
