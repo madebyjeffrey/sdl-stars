@@ -3976,7 +3976,7 @@
       "id": "L08",
       "status": "active",
       "current_macro_audit": {
-        "status": "Refreshed at 3b2132e7: no production C translation units or owned function-like API macros. Windows/Linux current-source qualification and full chooser coverage remain pending.",
+        "status": "Refreshed at 2ac0e6fc9147bef965393c343276062e19339fc7: no production C translation units or owned function-like API macros. Windows/Linux current-source qualification and full chooser coverage remain pending.",
         "change": "Replaced SDL_arraysize with std::size; SDL_zero with C++ aggregate initialization/reset; INT32_C/UINT32_C/UINT64_C with explicitly typed C++ integer literals. Updated resource constant extraction for typed forms.",
         "search": "No SDL convenience family or INT/UINT fixed-width literal macros remain in scanned owned application or ordinary test C++ sources. Remaining uses are isolated to SDK/reference fixtures and the independent C precision probe.",
         "remaining": "Qualify the current develop source on Windows and Linux, including Linux portal/X11 chooser coverage and Windows SDK/client build.",
@@ -3984,10 +3984,10 @@
         "api_like_names": "LOWORD, HIWORD, LOBYTE, HIBYTE and MAKELONG in src/platform/value.h are typed constexpr C++ functions. MAKEWPARAM, MAKELPARAM, MAKEINTRESOURCE, RGB, PALETTEINDEX, PALETTERGB and GET_*_WPARAM in wincompat_values.h are typed C++ functions/templates.",
         "preprocessor": "Remaining owned conditionals select platform/compiler/test configurations or guard headers. Third-party free-api headers retain SDK macros under compat/win32/upstream; these are excluded from owned-code cleanup.",
         "source_files": "44 tracked .c translation units remain, all under tests; none are production under src or compat/win32.",
-        "last_reviewed_source_head": "3b2132e7",
+        "last_reviewed_source_head": "2ac0e6fc9147bef965393c343276062e19339fc7",
         "last_reviewed_date": "2026-11-03",
         "final_local_inventory": {
-          "source_head": "3b2132e7",
+          "source_head": "2ac0e6fc9147bef965393c343276062e19339fc7",
           "date": "2026-11-03",
           "tracked_c_translation_units": 44,
           "production_c_translation_units": 0,
@@ -4000,8 +4000,15 @@
           "owned_function_like_api_macros": 0,
           "owned_definitions": "Header guards only, plus NOMINMAX in src/platform/fileio.cpp; FSHIFT remains undefined in the Win32 constants header to prevent the SDK collision. No owned function-like macros.",
           "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
-          "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-          "platform_qualification": "Windows SDL and Linux desktop current-source CI remain outstanding; local macOS and host checks pass through 3b2132e7."
+          "remaining_c_translation_units": "Independent compatibility and SDK/reference/scaffold C translation units only; CMake production languages remain C++20/Objective-C++20.",
+          "platform_qualification": "Windows SDL and Linux desktop current-source qualification remain outstanding; local macOS and host builds, units, regressions and tutorial smoke pass through 2ac0e6fc9147bef965393c343276062e19339fc7."
+        },
+        "last_inventory_recheck": {
+          "source_head": "2ac0e6fc9147bef965393c343276062e19339fc7",
+          "tracked_c_translation_units": 44,
+          "production_c_translation_units": 0,
+          "owned_function_like_api_macros": 0,
+          "result": "Confirmed after L06 native path option cleanup; no C/API macro inventory change."
         }
       },
       "linux_desktop_execution_budget": {
@@ -29000,7 +29007,7 @@
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
-    "c_macro_inventory": "Refreshed 2026-11-03 at 3b2132e7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
+    "c_macro_inventory": "Refreshed 2026-11-03 at 2ac0e6fc9147bef965393c343276062e19339fc7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
     "memcpy_call_audit": {
       "source_head": "d5d82d87",
@@ -29012,7 +29019,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "3b2132e7",
+    "source_head": "2ac0e6fc9147bef965393c343276062e19339fc7",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
