@@ -1852,10 +1852,10 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
     std::int16_t    dxHole;
     HFONT      hfontSav;
     RECT       rcClip;
-    char      *psz;
     HBRUSH     hbrSav;
     std::int16_t    fDoName;
     std::int32_t    l;
+    std::size_t cchBuf, ichSpace;
     GrobjClass grobj;
     RECT       rcT;
     RECT       rc;
@@ -2002,16 +2002,19 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
             pt2.x = -1;
         }
         if (pt.x != -1 && pt2.x != -1 && (pt.x != pt2.x || pt.y != pt2.y)) {
-            CchCopyUtf8Prefix(std::span{szBuf}, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y).data());
-            psz = std::find(szBuf.data(), szBuf.data() + szBuf.size(), ' ');
-            if (psz != szBuf.data() + szBuf.size()) {
-                TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf.data() + 1), cchCatalogText));
+            cchBuf = CchCopyUtf8Prefix(std::span{szBuf}, PszGetDistance(app, pt.x, pt.y, pt2.x, pt2.y).data());
+            ichSpace = std::string_view{szBuf.data(), cchBuf}.find(' ');
+            if (ichSpace != std::string_view::npos) {
+                cchBuf = ichSpace + 1;
+                cchBuf += static_cast<std::size_t>(TextIO().pfnCchGetString(app, static_cast<StringId>(idsLy + (rc.right >= 350)), std::span{szBuf}.subspan(cchBuf)));
                 if (!psbar || !psbar->pscan) {
-                    TextIO().pfnCchGetString(app, idsFrom, std::span{szBuf}.subspan(static_cast<std::size_t>(psz - szBuf.data() + std::strlen(psz)), cchCatalogText));
-                    FAppendUtf8(std::span{szBuf}, PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y).data());
+                    cchBuf += static_cast<std::size_t>(TextIO().pfnCchGetString(app, idsFrom, std::span{szBuf}.subspan(cchBuf)));
+                    if (FAppendUtf8(std::span{szBuf}.subspan(cchBuf), PszGetLocName(app, app.state.sel.grobj, app.state.sel.id, pt2.x, pt2.y).data())) {
+                        cchBuf = static_cast<std::size_t>(std::find(szBuf.begin() + static_cast<std::ptrdiff_t>(cchBuf), szBuf.end(), 0) - szBuf.begin());
+                    }
                 }
             }
-            win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, szBuf.data(), std::strlen(szBuf.data()), nullptr);
+            win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, szBuf.data(), cchBuf, nullptr);
         }
         win32::SelectObject(hdc, hbrSav);
         win32::SetBkMode(hdc, iBkPrev);
