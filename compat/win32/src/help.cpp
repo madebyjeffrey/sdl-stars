@@ -12,7 +12,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utility>
@@ -119,9 +118,10 @@ done:
 }
 
 BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
-    const char *pszBase, *pszName;
+    const char *pszBase;
     char szDirectory[PATH_MAX];
     std::string_view szHelp;
+    std::string_view szName;
     std::string_view szPage;
     std::size_t i, ichSlash;
     int cch;
@@ -142,8 +142,10 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         return 0;
     }
     ichSlash = szHelp.rfind('/');
-    pszName = ichSlash != std::string_view::npos ? pszHelp + ichSlash + 1 : pszHelp;
-    if (strcasecmp(pszName, "stars-help.html") || szHelp.find_first_of("\\/") != std::string_view::npos) {
+    szName = szHelp.substr(ichSlash != std::string_view::npos ? ichSlash + 1 : 0);
+    if (szName.size() != sizeof("stars-help.html") - 1 ||
+        SDL_strncasecmp(szName.data(), "stars-help.html", szName.size()) != 0 ||
+        szHelp.find_first_of("\\/") != std::string_view::npos) {
         win32::SetLastError(win32::ERROR_NOT_SUPPORTED);
         return 0;
     }
