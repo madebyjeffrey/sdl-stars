@@ -2165,7 +2165,8 @@
         "optional-joined-chooser-path-length-result",
         "bounded-menu-resource-word-reads-use-optional-results",
         "paint-region-merge-uses-span-and-returned-count",
-        "owned-paint-update-and-paint-region-vectors"
+        "owned-paint-update-and-paint-region-vectors",
+        "typed-dialog-template-parser-results"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -3006,6 +3007,20 @@
           "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
           "baseline": "Unchanged. Pending damage rectangle ordering, containment suppression, subtraction, scroll translation, paint clipping and erasure state are preserved. HWND and HDC paint buffers now own rectangles in vectors; temporary allocation failures remain reported through existing BOOL/error paths.",
           "platform": "Current-source Windows and Linux qualification remains pending."
+        },
+        {
+          "batch": "L06 dialog template parser returns typed optional results",
+          "source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "focused_compatibility_tests": "win32_sdl_resource_combo passes (1/1); win32_client_startup_dummy passes (1/1).",
+          "desktop_units": "18/18 pass.",
+          "host_units": "29/29 pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+          "baseline": "Unchanged. Dialog template cursor advancement, UTF-16LE field decoding, ordinal values, item alignment and result ownership are preserved.",
+          "platform": "Current-source Windows and Linux qualification remains pending.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -26542,7 +26557,7 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5\u201331 byte acceptance range.",
+      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5–31 byte acceptance range.",
       "api_audit": "Removed the strlen rescan after ProfileTextIO::ReadString by using its returned byte count.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
@@ -27418,33 +27433,22 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "Return planet name byte lengths",
-    "status": "Source committed as 9b644d08. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "parent": "b5dafbad",
-    "change": "The C++ text service now returns PLANETNAMERESULT for planet names, carrying owned fixed storage and the exact UTF-8 byte count. The legacy array-returning PszGetPlanetName wrapper remains for the archived C observer. Report drawing uses result or formatter counts in seven former std::strlen sites.",
+    "batch": "L06 dialog template parser returns typed optional results",
+    "status": "Source committed as 80c2111d. Strict macOS SDL Debug build, focused compatibility tests, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "parent": "20d1dc523b447758d05c9ee3ae690c051611ab19",
+    "change": "The dialog-template parser now returns optional WORD/DWORD/rectangle/field results instead of bool plus output references. Field strings remain owned; parser cursor and template values are unchanged.",
     "verification": {
-      "batch": "Return planet name byte lengths",
-      "parent": "b5dafbada2eb653ce982ed22c6aebc5cca34b8a9",
-      "source_commit": "9b644d089c9aafa692f8c2bc863bc945d8d91a06",
-      "macos_debug_build": "make compile passes with strict warnings and header checks.",
-      "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
-      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
-      "native_regression": {
-        "matches": 519,
-        "warnings": 25,
-        "differences_errors": 0,
-        "skipped": 0
-      },
-      "host_regression": {
-        "matches": 519,
-        "warnings": 25,
-        "differences_errors": 0,
-        "skipped": 0
-      },
-      "baseline": "Unchanged; planet labels, UTF-8 bytes, work-buffer effects, and saved data remain unchanged.",
-      "api_audit": "PLANETNAMERESULT returns the label byte count through TEXTIO; the original array-returning PszGetPlanetName remains available for the independent archived observer. Seven report drawing rescans now use result, copy, or format counts.",
-      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
+      "batch": "L06 dialog template parser returns typed optional results",
+      "source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
+      "macos_sdl_debug_build": "make compile passes with strict warnings.",
+      "focused_compatibility_tests": "win32_sdl_resource_combo passes (1/1); win32_client_startup_dummy passes (1/1).",
+      "desktop_units": "18/18 pass.",
+      "host_units": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+      "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+      "baseline": "Unchanged. Dialog template cursor advancement, UTF-16LE field decoding, ordinal values, item alignment and result ownership are preserved.",
+      "platform": "Current-source Windows and Linux qualification remains pending.",
       "diff_check": "Pass."
     },
     "platform_ci": {
@@ -27509,7 +27513,7 @@
       "PszGetTaskName carries REPORTTEXTRESULT with an exact byte count; fleet task drawing and dump serialization use that count or its bounded view.",
       "Replaced two std::strlen scans of the fixed \"-- \" placeholder in report drawing with its compile-time byte length; rendered bytes are unchanged.",
       "APPGAMESTATE now has compile-time string_view sources for its mineral and planet attribute labels. Existing C-string pointer arrays retain their layout and point to those literals; UI sizing, drawing, and text-out calls now use the exact byte lengths.",
-      "Fleet order labels copied into fixed buffers now use CchGetString\u2019s returned byte count for drawing; the composed mine-laying message uses CchSprintf\u2019s returned count. Six std::strlen rescans were removed without changing displayed text.",
+      "Fleet order labels copied into fixed buffers now use CchGetString’s returned byte count for drawing; the composed mine-laying message uses CchSprintf’s returned count. Six std::strlen rescans were removed without changing displayed text.",
       "The C++ text service now returns PLANETNAMERESULT for planet names, carrying owned fixed storage and the exact UTF-8 byte count. The legacy array-returning PszGetPlanetName wrapper remains for the archived C observer. Report drawing uses result or formatter counts in seven former std::strlen sites."
     ],
     "current_source_audits": {
@@ -27835,8 +27839,8 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "9b644d089c9aafa692f8c2bc863bc945d8d91a06",
-    "latest_change": "TASKNAMERESULT now carries REPORTTEXTRESULT, preserving the owned label while adding its byte count. Drawing uses the count, and the fleet dump copies from a bounded view.",
+    "source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
+    "latest_change": "L06 dialog template parser returns typed optional results",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -27855,8 +27859,8 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "9b644d089c9aafa692f8c2bc863bc945d8d91a06",
-    "latest_batch_status": "Source committed as 9b644d08. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
+    "latest_batch_status": "Committed as 80c2111d; local verification passes, Windows/Linux qualification remains pending.",
     "latest_published_head": "ef24142a",
     "latest_batch_verification": {
       "batch": "Return planet name byte lengths",
@@ -28397,8 +28401,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "20d1dc523b447758d05c9ee3ae690c051611ab19",
-  "latest_batch_status": "Source committed as 20d1dc52. Strict macOS SDL Debug build, focused paint test, desktop/host unit suites, tutorial smoke and full native/host regressions pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
+  "latest_batch_status": "Source committed as 80c2111d. Strict macOS SDL Debug build, focused compatibility tests, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28415,7 +28419,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "20d1dc52",
+    "source_head": "80c2111d",
     "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. This raw count is not a replacement count: four measure C-string API/input boundaries and seven measure text already held in owned or fixed storage; those seven are candidates for carried lengths, subject to confirming that extra state is worthwhile.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28446,10 +28450,10 @@
     "library_export_path_length": "FExportLibraryOrders builds one bounded view of the selected path and reuses its size and separator/extension indices; path truncation at the first NUL and suffix replacement semantics are unchanged.",
     "compat_list_search_length": "COMPATLIST owns cchSearch alongside szSearch; ResetList clears both and WM_CHAR updates the count on every append/restart, removing the repeated buffer scan.",
     "library_recent_key_length": "FDeleteLibraryGameRecentPaths uses the byte count returned by CchGetString for idsFile1 when replacing the numeric suffix.",
-    "game_file_path_length": "FOpenGame carries CchCopyUtf8\u2019s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
-    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8\u2019s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
+    "game_file_path_length": "FOpenGame carries CchCopyUtf8’s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
+    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8’s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
     "strlen_inventory_method": "Individual call counts use rg -o and wc -l; rg -c counts matching lines and undercounts when a line has multiple calls.",
-    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8\u2019s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
+    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8’s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
     "compat_menu_label_lengths": "COMPATMENUITEM records the byte count when it owns its label; GetMenuStringA and popup sizing reuse that count.",
     "compat_list_item_lengths": "COMPATLISTITEM records the UTF-8 byte length at AddList ownership transfer; LB_GETTEXTLEN and LB_GETTEXT reuse it, removing the owned-item strlen scan and an implicit string_view length scan. Input search text remains a C-string ABI boundary.",
     "strlen_occurrence_inventory_method": "rg -o confirms 11 std::strlen calls in C++ source/header files and no Objective-C++ std::strlen or SDL_strlen calls after this source batch.",
@@ -28484,17 +28488,18 @@
       "interpretation": "The seven length reads are not yet confirmed replacements; a migration should carry lengths only where it removes repeated work without adding fragile duplicated state."
     },
     "paint_region_merge_result": "CrcMergeRegion accepts a span of active rectangles and returns the merged count; it no longer mutates a size_t output pointer.",
-    "paint_update_region_ownership": "HWND pending update rectangles and HDC paint rectangles are vector-owned; add/subtract helpers mutate a vector, and the separate count fields and realloc-based temporary ownership are removed."
+    "paint_update_region_ownership": "HWND pending update rectangles and HDC paint rectangles are vector-owned; add/subtract helpers mutate a vector, and the separate count fields and realloc-based temporary ownership are removed.",
+    "dialog_template_parser_results": "Dialog-template parser helpers return optional typed WORD, DWORD, rectangle and field results rather than bool plus output references; field strings remain owned."
   },
-  "latest_change": "Pending paint/update regions now use std::vector<RECT>; add/subtract helpers operate on the owner and paint-region counts derive from vector sizes.",
+  "latest_change": "L06 dialog template parser returns typed optional results",
   "latest_batch_verification": {
-    "batch": "L06 pending paint regions use vector ownership",
-    "source_commit": "20d1dc523b447758d05c9ee3ae690c051611ab19",
+    "batch": "L06 dialog template parser returns typed optional results",
+    "source_commit": "80c2111dbd8677f875e3735f37fbea8a3572ebe1",
     "macos_debug_build": "make compile passes with strict warnings.",
-    "focused_compatibility_tests": "win32_sdl_paint_batch passes (1/1).",
+    "focused_compatibility_tests": "win32_sdl_resource_combo passes (1/1); win32_client_startup_dummy passes (1/1).",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "29/29 pass, including C++ manifest and routing policy checks.",
-    "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+    "host_unit_tests": "29/29 pass.",
+    "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
@@ -28507,8 +28512,8 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; pending update rectangles retain the same order, bounds, invalidation and paint behavior.",
-    "platform": "Windows/Linux current-source qualification remains pending.",
+    "baseline": "Unchanged. Dialog template cursor advancement, UTF-16LE field decoding, ordinal values, item alignment and result ownership are preserved.",
+    "platform": "Current-source Windows and Linux qualification remains pending.",
     "diff_check": "Pass."
   }
 }
