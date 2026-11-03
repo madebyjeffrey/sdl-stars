@@ -6,7 +6,6 @@
 #include <SDL3/SDL.h>
 #include <cerrno>
 #include <cstdio>
-#include <cstring>
 #include <limits>
 #include <new>
 #include <optional>
@@ -20,38 +19,40 @@
 #include "help_contexts.h"
 #include "installed_data.h"
 
-static bool FHelpAssets(const char *pszDirectory) {
+static bool FHelpAssets(std::string_view pszDirectory) {
     char szFile[PATH_MAX], szStamp[66];
     std::optional<NATIVEFILEINFO> st;
+    std::optional<std::size_t> cchStamp;
     std::size_t i;
     int cch;
     NATIVEFILE *lpFile;
-    BOOL fStamp;
+    bool fStamp;
 
     for (i = 0; i < sizeof(rgHelpFile) / sizeof(rgHelpFile[0]); i++) {
         cch = CchSnprintf(std::span{szFile}, "%s/%s", pszDirectory, rgHelpFile[i]);
         if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
-            return 0;
+            return false;
         }
         if (!(st = IGetNativeFileInfo(szFile, NATIVELINKMODE::follow)) || !st->fRegular || st->cb <= 0) {
             win32::SetLastError(win32::ERROR_FILE_NOT_FOUND);
-            return 0;
+            return false;
         }
     }
     CchSnprintf(std::span{szFile}, "%s/complete.stamp", pszDirectory);
     lpFile = PfNativeOpen(szFile, NATIVEFILEMODE::read);
     if (!lpFile) {
         win32::SetLastError(win32::ERROR_ACCESS_DENIED);
-        return 0;
+        return false;
     }
-    fStamp = CchGetNativeLine(std::span{szStamp}, lpFile) && !std::strcmp(szStamp, STARS_HELP_STAMP);
+    cchStamp = CchGetNativeLine(std::span{szStamp}, lpFile);
+    fStamp = cchStamp && std::string_view{szStamp, *cchStamp} == STARS_HELP_STAMP;
     ICloseNativeFile(lpFile);
     if (!fStamp) win32::SetLastError(win32::ERROR_BAD_FORMAT);
     return fStamp;
 }
 
-static std::optional<std::string> PszHelpDocument(const char *pszDirectory, const char *pszPage) {
+static std::optional<std::string> PszHelpDocument(std::string_view pszDirectory, std::string_view pszPage) {
     static const char szMarker[] = "__STARS_HELP_START__";
     char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
     char *pszBase;
@@ -117,10 +118,10 @@ done:
 }
 
 BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwData) {
-    const char *pszBase, *pszName, *pszPage = nullptr;
+    const char *pszBase, *pszName;
     char szDirectory[PATH_MAX];
-    const char *pszDirectory;
     std::string_view szHelp;
+    std::string_view szPage;
     std::size_t i, ichSlash;
     int cch;
     BOOL fLaunched;
@@ -146,16 +147,16 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         return 0;
     }
     if (uCommand == win32::HELP_INDEX) {
-        pszPage = STARS_HELP_CONTENTS;
+        szPage = STARS_HELP_CONTENTS;
     } else if (dwData <= std::numeric_limits<std::uint32_t>::max()) {
         for (i = 0; i < sizeof(rgHelpContext) / sizeof(rgHelpContext[0]); i++) {
             if (rgHelpContext[i].idh == static_cast<std::uint32_t>(dwData)) {
-                pszPage = rgHelpContext[i].pszPage;
+                szPage = rgHelpContext[i].pszPage;
                 break;
             }
         }
     }
-    if (!pszPage) {
+    if (szPage.empty()) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return 0;
     }
@@ -183,9 +184,8 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
             return 0;
         }
     }
-    pszDirectory = szDirectoryOwned->c_str();
-    if (!FHelpAssets(pszDirectory)) return 0;
-    auto szDocument = PszHelpDocument(pszDirectory, pszPage);
+    if (!FHelpAssets(*szDirectoryOwned)) return 0;
+    auto szDocument = PszHelpDocument(*szDirectoryOwned, szPage);
     szDirectoryOwned.reset();
     if (!szDocument) return 0;
     fLaunched = FCompatOpenDocument(szDocument->c_str());
