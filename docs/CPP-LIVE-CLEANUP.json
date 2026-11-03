@@ -2662,7 +2662,8 @@
         "ai-research-result-value-interface",
         "redundant-native-seek-status-wrapper-retired",
         "profile-save-path-view-and-bool-result",
-        "profile-load-path-view-and-bool-result"
+        "profile-load-path-view-and-bool-result",
+        "typed-native-dib-decoder-interface"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -4262,6 +4263,35 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
           "api_audit": "FLoadProfile now accepts std::string_view and returns bool. Both profile API call paths pass the owned path string as a view; its BOOL result local was replaced with bool. Win32 exported profile APIs retain their SDK signatures.",
+          "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
+          "diff_check": "Pass."
+        }
+      },
+      "typed_native_dib_decoder": {
+        "status": "complete; locally verified",
+        "change": "FCompatDib/FCompatNativeDib now return bool; FCompatNativeDib uses a required COMPATDIB reference and typed header/byte inputs. GDI caller signature is unchanged.",
+        "verification": {
+          "batch": "Type native DIB decoder inputs",
+          "source_commit": "62e18900",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "dib_witness": "win32_sdl_resource_dib passes (1/1) after the final edit.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
+          "api_audit": "Private FCompatDib/FCompatNativeDib interfaces now return bool and write required output by reference. The native decoder receives a typed BITMAPINFOHEADER plus byte pointers at the unavoidable GDI boundary; the exported StretchDIBits signature remains unchanged. Removed void pointers, sentinel-sized input lengths, nullable output pointer, and output-pointer checks from the internal helper.",
           "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -29481,14 +29511,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "1af0cf24",
-  "latest_batch_status": "Source commit 1af0cf24 verified locally: macOS SDL Debug build, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. Four broad code-audit substeps and current-source Windows/Linux qualification remain open.",
+  "latest_source_commit": "62e18900",
+  "latest_batch_status": "Source commit 62e18900 verified locally: macOS SDL Debug build, DIB witness 1/1, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. Four broad code-audit substeps and current-source Windows/Linux qualification remain open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "1af0cf24",
+      "source_commit": "62e18900",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -29654,13 +29684,20 @@
       "source_commit": "1af0cf24",
       "remaining_sizeof_array_division_expressions": 0,
       "replacement": "All nine production sizeof(array)/sizeof(array[0]) expressions now use std::size."
+    },
+    "native_dib_decoder_interface": {
+      "source_commit": "62e18900",
+      "untyped_void_pointer_arguments_remaining": 0,
+      "separate_output_pointer_remaining": 0,
+      "boundary": "StretchDIBits retains the genuine Win32 pointer-only signature; its private decoder receives a typed BITMAPINFOHEADER reference and byte pointers."
     }
   },
-  "latest_change": "Use std::size for fixed arrays",
+  "latest_change": "Type native DIB decoder inputs",
   "latest_batch_verification": {
-    "batch": "Use std::size for fixed arrays",
-    "source_commit": "1af0cf24",
+    "batch": "Type native DIB decoder inputs",
+    "source_commit": "62e18900",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
+    "dib_witness": "win32_sdl_resource_dib passes (1/1) after the final edit.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "native_regression": {
@@ -29677,14 +29714,15 @@
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Replaced all nine remaining sizeof(array)/sizeof(array[0]) expressions in owned production code with std::size, preserving element counts and SDK count conversions.",
+    "api_audit": "Private FCompatDib/FCompatNativeDib interfaces now return bool and write required output by reference. The native decoder receives a typed BITMAPINFOHEADER plus byte pointers at the unavoidable GDI boundary; the exported StretchDIBits signature remains unchanged. Removed void pointers, sentinel-sized input lengths, nullable output pointer, and output-pointer checks from the internal helper.",
     "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use std::size for fixed arrays",
-    "source_commit": "1af0cf24",
+    "batch": "Type native DIB decoder inputs",
+    "source_commit": "62e18900",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
+    "dib_witness": "win32_sdl_resource_dib passes (1/1) after the final edit.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "native_regression": {
@@ -29701,15 +29739,15 @@
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Replaced all nine remaining sizeof(array)/sizeof(array[0]) expressions in owned production code with std::size, preserving element counts and SDK count conversions.",
+    "api_audit": "Private FCompatDib/FCompatNativeDib interfaces now return bool and write required output by reference. The native decoder receives a typed BITMAPINFOHEADER plus byte pointers at the unavoidable GDI boundary; the exported StretchDIBits signature remains unchanged. Removed void pointers, sentinel-sized input lengths, nullable output pointer, and output-pointer checks from the internal helper.",
     "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit 1af0cf24 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit 62e18900 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-      "L06: finish buffer/length service interfaces and native file/path results; complete chooser Windows/Linux qualification.",
+      "L06: finish remaining buffer/length service interfaces and native file/path results; complete chooser Windows/Linux qualification.",
       "L08: run current-source Windows and Linux qualification and record the final macro/C inventory."
     ],
-    "next": "Continue the open L05 bounded-text and ownership audits, then L06 buffer/path results and current-source platform qualification."
+    "next": "Continue the L05 text and ownership audits plus L06 native file/path results, then qualify current source on Windows and Linux."
   }
 }
