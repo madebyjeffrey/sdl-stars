@@ -274,10 +274,9 @@ COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf) {
     return LpNewFontRaster(lplf, 512);
 }
 
-BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm) {
-    if (!lpfont || !lptm) return 0;
-    *lptm = lpfont->tm;
-    return 1;
+std::optional<TEXTMETRICA> FCompatFontMetrics(COMPATFONT *lpfont) {
+    if (!lpfont) return std::nullopt;
+    return lpfont->tm;
 }
 
 std::optional<SIZE> FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz) {

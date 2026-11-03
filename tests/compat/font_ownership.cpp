@@ -14,11 +14,14 @@ int main() {
     std::optional<SIZE> before, after;
     char sz[3] = {};
     int ch, cPixels = 0;
+    std::optional<TEXTMETRICA> metrics;
     NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfont, lpfontRetained;
 
     lf.lfHeight = -12;
     std::strcpy(lf.lfFaceName, "Arial");
     lpfont.reset(LpNewCompatFont(&lf)); CHECK(lpfont);
+    CHECK(!FCompatFontMetrics(nullptr));
+    metrics = FCompatFontMetrics(lpfont.get()); CHECK(metrics && metrics->tmHeight > 0);
     CHECK(!FCompatFontSizeUtf8(nullptr, std::string_view{"\xc4\x80", 2}));
     CHECK(!FCompatFontSizeUtf8(lpfont.get(), std::string_view{"\xc0\x80", 2}));
     before = FCompatFontSizeUtf8(lpfont.get(), std::string_view{"\xc4\x80", 2}); CHECK(before);

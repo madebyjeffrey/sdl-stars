@@ -49,7 +49,7 @@ struct COMPATFONTDATA { const BYTE *rgb; std::size_t cb; };
 extern const COMPATFONTDATA rgCompatFontData[12];
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
 void FreeCompatFont(COMPATFONT *lpfont) noexcept;
-BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm);
+std::optional<TEXTMETRICA> FCompatFontMetrics(COMPATFONT *lpfont);
 std::optional<SIZE> FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz);
 BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
                           void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);

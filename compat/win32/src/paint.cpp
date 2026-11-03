@@ -1660,7 +1660,12 @@ BOOL win32::GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
 
 BOOL win32::GetTextMetricsA(HDC hdc, LPTEXTMETRICA lptm) {
     HDC lpdc = LpDC(hdc);
-    return lpdc && FCompatFontMetrics(lpdc->lpfont->lpFont.get(), lptm);
+    std::optional<TEXTMETRICA> tm;
+    if (!lpdc || !lptm) return 0;
+    tm = FCompatFontMetrics(lpdc->lpfont->lpFont.get());
+    if (!tm) return 0;
+    *lptm = *tm;
+    return 1;
 }
 
 COLORREF win32::GetBkColor(HDC hdc) {
@@ -1732,7 +1737,7 @@ static BOOL FDrawText(HDC lpdc, int x, int y, std::string_view sz, UINT options,
                       const RECT *lprc, std::span<const INT> rgdx) {
     COMPATTEXTDRAW draw;
     std::optional<SIZE> textSize;
-    TEXTMETRICA tm;
+    std::optional<TEXTMETRICA> tm;
     double angle;
     std::size_t i;
     std::int64_t dx;
@@ -1754,12 +1759,13 @@ static BOOL FDrawText(HDC lpdc, int x, int y, std::string_view sz, UINT options,
     draw.cs = std::cos(angle); draw.sn = std::sin(angle);
     dx = textSize->cx;
     if (!rgdx.empty()) { dx = 0; for (i = 0; i < rgdx.size(); i++) dx += rgdx[i]; }
-    FCompatFontMetrics(lpdc->lpfont->lpFont.get(), &tm);
-    if (lpdc->iBkMode == win32::OPAQUE) DrawFontRect(&draw, dx, 0, tm.tmHeight, lpdc->crBk);
+    tm = FCompatFontMetrics(lpdc->lpfont->lpFont.get());
+    if (!tm) return 0;
+    if (lpdc->iBkMode == win32::OPAQUE) DrawFontRect(&draw, dx, 0, tm->tmHeight, lpdc->crBk);
     if (!FCompatFontDrawScaled(lpdc->lpfont->lpFont.get(), sz, rgdx, IDCScale(lpdc),
                                DrawFontPixel, &draw)) return 0;
-    if (tm.tmUnderlined) DrawFontRect(&draw, dx, tm.tmAscent + 1, tm.tmAscent + 2, lpdc->crText);
-    if (tm.tmStruckOut) DrawFontRect(&draw, dx, tm.tmAscent * 2 / 3, tm.tmAscent * 2 / 3 + 1, lpdc->crText);
+    if (tm->tmUnderlined) DrawFontRect(&draw, dx, tm->tmAscent + 1, tm->tmAscent + 2, lpdc->crText);
+    if (tm->tmStruckOut) DrawFontRect(&draw, dx, tm->tmAscent * 2 / 3, tm->tmAscent * 2 / 3 + 1, lpdc->crText);
     return 1;
 }
 
@@ -1791,7 +1797,7 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     std::string sz;
     std::vector<BYTE> rgUnderline;
     std::vector<COMPATTEXTLINE> rgline;
-    TEXTMETRICA tm;
+    std::optional<TEXTMETRICA> tm;
     SIZE size;
     RECT rcOld;
     BOOL fOldClip, fUnderline = 0;
@@ -1831,8 +1837,9 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
         fUnderline = 0;
     }
     sz[c] = 0;
-    FCompatFontMetrics(lpdc->lpfont->lpFont.get(), &tm);
-    dyLine = tm.tmHeight + (flags & win32::DT_EXTERNALLEADING ? tm.tmExternalLeading : 0);
+    tm = FCompatFontMetrics(lpdc->lpfont->lpFont.get());
+    if (!tm) return 0;
+    dyLine = tm->tmHeight + (flags & win32::DT_EXTERNALLEADING ? tm->tmExternalLeading : 0);
     dxAvail = static_cast<std::int64_t>(lprc->right) - lprc->left;
     i = 0;
     while (i < c) {
@@ -1893,8 +1900,8 @@ LNextLine:
             win32::GetTextExtentPoint32A(hdc, sz.data() + rgline[i].i + j, cStep, &size);
             // Leave a pixel below the baseline, matching ordinary font
             // underlines, so mnemonic marks do not merge into the glyph.
-            if (dx >= std::numeric_limits<int>::min() && dx + size.cx <= std::numeric_limits<int>::max() && y + tm.tmAscent + 2 <= std::numeric_limits<int>::max()) {
-                RECT rc = {static_cast<LONG>(dx), static_cast<LONG>((y + tm.tmAscent + 1)), static_cast<LONG>((dx + size.cx)), static_cast<LONG>((y + tm.tmAscent + 2))};
+            if (dx >= std::numeric_limits<int>::min() && dx + size.cx <= std::numeric_limits<int>::max() && y + tm->tmAscent + 2 <= std::numeric_limits<int>::max()) {
+                RECT rc = {static_cast<LONG>(dx), static_cast<LONG>((y + tm->tmAscent + 1)), static_cast<LONG>((dx + size.cx)), static_cast<LONG>((y + tm->tmAscent + 2))};
                 COMPATTEXTDRAW draw = {lpdc, {}, dx - lpdc->ptOrg.x, -static_cast<std::int64_t>(lpdc->ptOrg.y), 1, 0};
                 if (FClip(lpdc, &draw.rc)) DrawFontRect(&draw, rc.right - rc.left, rc.top, rc.bottom, lpdc->crText);
             }
