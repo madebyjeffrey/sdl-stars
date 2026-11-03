@@ -34,7 +34,6 @@
  * is listed only after its complete generated family and metadata are saved. */
 static char szLibraryRoot[256];
 static std::size_t cchLibraryRoot;
-static char szLibraryExchangeName[256];
 static char szRaceLibraryRoot[256];
 struct LIBRARYGAMELISTITEM {
     char szName[256];
@@ -450,7 +449,7 @@ std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 
     char szMessage[256];
 
     if (!FInitLibrary() || cchLibraryRoot + 20 >= sizeof(app.state.szBase)) goto LFail;
-    szLibraryExchangeName[0] = 0;
+    app.lpui->szLibraryExchangeName[0] = 0;
     if (pszName) GetGameLibraryName(app, *pszName, std::span{app.lpui->szLibraryName});
     else {
         pch = std::strrchr(pszFile.data(), chDirSep);
@@ -507,9 +506,9 @@ static std::int16_t FChooseLibraryRaceName(APPSESSION &app, HWND hwnd, std::stri
     return 1;
 }
 
-std::int16_t FWriteLibraryMetadata(std::string_view pszDir, std::string_view pszName, int iplr) {
+std::int16_t FWriteLibraryMetadata(APPSESSION &app, std::string_view pszDir, std::string_view pszName, int iplr) {
     return FWriteLibraryMetadataValues(pszDir, pszName, iplr, static_cast<long long>(LNativeTime()),
-                                       szLibraryExchangeName[0] ? szLibraryExchangeName : pszName);
+                                       app.lpui->szLibraryExchangeName[0] ? std::string_view{app.lpui->szLibraryExchangeName.data()} : pszName);
 }
 
 static std::int16_t FWriteLibraryMetadataValues(std::string_view pszDir, std::string_view pszName, int iplr,
@@ -1098,7 +1097,7 @@ std::int16_t FExportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
     if (!LibraryPathIO().pfnUnder(szLibraryRoot, app.state.szBase)) return 0;
     RememberLibraryGame(app);
 
-    pszLibraryName = szLibraryExchangeName;
+    pszLibraryName = app.lpui->szLibraryExchangeName.data();
     if (!pszLibraryName[0]) {
         ichSlash = IchLibrarySeparator(app.state.szBase);
         if (!ichSlash) return 0;
@@ -2234,7 +2233,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
         return 0;
     }
     if (!FChooseLibraryGameName(app, hwnd, std::span<char, 256>{szSource, 256}, std::nullopt)) return 0;
-    CchCopyUtf8(std::span{szLibraryExchangeName}, szStem);
+    CchCopyUtf8(std::span{app.lpui->szLibraryExchangeName}, szStem);
     return FPublishImportedLibraryGame(app, {szLibraryRoot,app.lpui->szLibraryPending,app.lpui->szLibraryName},li,szDir);
 LInvalidSource:
     CchSnprintf(std::span{app.state.szWork, sizeof(app.state.szWork)}, "%s", szSource);
@@ -2794,7 +2793,7 @@ std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenera
         else CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s.m%d", app.state.szBase, i + 1);
         if (!FCompleteGeneratedFile(app, szFile, i == -2 ? dtXY : i == -1 ? dtHost : dtTurn, i < 0 ? iplrNone : i)) fGenerated = 0;
     }
-    if (fGenerated) fGenerated = FWriteLibraryMetadata(app.lpui->szLibraryPending.data(), app.lpui->szLibraryName.data(), app.state.idPlayer);
+    if (fGenerated) fGenerated = FWriteLibraryMetadata(app, app.lpui->szLibraryPending.data(), app.lpui->szLibraryName.data(), app.state.idPlayer);
     if (!fGenerated) {
         FNativeEnumerateDirectory(app, app.lpui->szLibraryPending.data(), RemovePendingFile);
         RemoveNativePath(app.lpui->szLibraryPending.data());
@@ -3309,18 +3308,18 @@ void RememberLibraryGame(APPSESSION &app) {
     szDir[*ichSlash] = 0;
     ichSlash = IchLibrarySeparator(szDir);
     if (!ichSlash) return;
-    szLibraryExchangeName[0] = 0;
+    app.lpui->szLibraryExchangeName[0] = 0;
     /* szDir already names the game folder; retain its exchange basename before
      * publishing the newly opened player and last-played time. */
     if (!FReadLibraryMetadata(szDir, std::span{szMetadataName}, iplr, lPlayed,
-                              std::span{szLibraryExchangeName})) szLibraryExchangeName[0] = 0;
-    if (FWriteLibraryMetadata(szDir, std::string_view{szDir}.substr(*ichSlash + 1), app.state.idPlayer))
+                              std::span{app.lpui->szLibraryExchangeName})) app.lpui->szLibraryExchangeName[0] = 0;
+    if (FWriteLibraryMetadata(app, szDir, std::string_view{szDir}.substr(*ichSlash + 1), app.state.idPlayer))
         ProfileTextIO().pfnWriteString("Library", "ContinueDeleted", nullptr, TextIO().pfnCompressed(app, idsStarsIni).data());
 }
 
 void CloseLibraryUiSession(APPSESSION &app) noexcept {
     ClearLibraryGameList();
-    szLibraryRoot[0] = app.lpui->szLibraryPending[0] = app.lpui->szLibraryName[0] = szLibraryExchangeName[0] = 0;
+    szLibraryRoot[0] = app.lpui->szLibraryPending[0] = app.lpui->szLibraryName[0] = app.lpui->szLibraryExchangeName[0] = 0;
     cchLibraryRoot = 0;
     szRaceLibraryRoot[0] = app.lpui->szRaceLibraryPath[0] = app.lpui->szRaceLibraryName[0] = 0;
     fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = 0;
@@ -3407,7 +3406,7 @@ std::int16_t FPublishImportedLibraryGame(APPSESSION &app, const LIBRARYPATHS &pa
             [&li](APPSESSION &appEntry, std::string_view pszName) { return CopyImportEntry(appEntry, &li, pszName); }) || li.fBad ||
         !LibraryPublicationIO().pfnEnumerateDirectory(app, LIBRARYPUBLICATIONENUMERATION::backupFiles, szDir,
             [&li](APPSESSION &appEntry, std::string_view pszName) { return CopyBackupDirectory(appEntry, &li, pszName); }) || li.fBad ||
-        !LibraryPublicationIO().pfnFWriteLibraryMetadata(szStage, paths.szLibraryName.data(),
+        !LibraryPublicationIO().pfnFWriteLibraryMetadata(app, szStage, paths.szLibraryName.data(),
                                li.grfPlayers ? static_cast<std::int16_t>(__builtin_ctz(li.grfPlayers)) : iplrNone) ||
         RemoveNativePath(paths.szLibraryPending.data()) != 0 || RenameNativeFile(szStage, paths.szLibraryPending.data()) != 0) {
         LibraryPublicationIO().pfnEnumerateDirectory(app, LIBRARYPUBLICATIONENUMERATION::removeFiles, szStage,

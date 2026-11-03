@@ -21,7 +21,7 @@ struct LIBRARYPUBLICATIONIO {
     decltype(&FStageConflictingTurn)         pfnFStageConflictingTurn = FStageConflictingTurn;
     decltype(&FChooseSeparateCopyName)       pfnFChooseSeparateCopyName = FChooseSeparateCopyName;
     decltype(&FLibraryNameAvailable)         pfnFLibraryNameAvailable = FLibraryNameAvailable;
-    decltype(&FWriteLibraryMetadata)         pfnFWriteLibraryMetadata = FWriteLibraryMetadata;
+    std::int16_t (*pfnFWriteLibraryMetadata)(APPSESSION &, std::string_view, std::string_view, int) = FWriteLibraryMetadata;
     decltype(&RemoveLibraryGameTree)         pfnRemoveLibraryGameTree = RemoveLibraryGameTree;
     bool (*pfnEnumerateDirectory)(APPSESSION &, LIBRARYPUBLICATIONENUMERATION, std::string_view,
                                   const FNativeDirectoryEntryProc &) = [](APPSESSION &app, LIBRARYPUBLICATIONENUMERATION,

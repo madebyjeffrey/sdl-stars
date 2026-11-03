@@ -260,7 +260,7 @@ static bool TestFNativeEnumerateDirectory(APPSESSION &, LIBRARYPUBLICATIONENUMER
     // Removal itself is performed by the immediately following source call.
     return 1;
 }
-static int TestFWriteLibraryMetadata(std::string_view path, std::string_view name, int16_t player) {
+static int TestFWriteLibraryMetadata(APPSESSION &, std::string_view path, std::string_view name, int16_t player) {
     int expected = variant >= 5 && variant <= 20 ? variant - 5 : variant == 21 ? -1 : 0;
     assert(role(path) == 3 && name == "Copy" && player == expected);
     return build(7);
