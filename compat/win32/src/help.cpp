@@ -5,7 +5,6 @@
 #include <SDL3/SDL.h>
 #include <cerrno>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <new>
@@ -53,14 +52,15 @@ static BOOL FHelpAssets(const char *pszDirectory) {
 static std::optional<std::string> PszHelpDocument(const char *pszDirectory, const char *pszPage) {
     static const char szMarker[] = "__STARS_HELP_START__";
     char szSource[PATH_MAX], szTarget[PATH_MAX], szTemp[PATH_MAX];
-    char *pszBase, *pszBody = nullptr, *pszMarker;
+    char *pszBase;
+    const char *pszMarker;
     NATIVEFILE *lpSource = nullptr, *lpTarget = nullptr;
     NATIVEFILETEMPRESULT nft;
     std::optional<std::string> szResult;
+    std::string szBody;
     std::size_t cbPrefix, cbRead;
     int cch;
     BOOL fOk;
-    NATIVEOWNER<char, std::free> bodyOwner;
     NATIVEOWNER<char, SDL_free> baseOwner;
     NATIVEOWNER<NATIVEFILE, ICloseNativeFile> sourceOwner, targetOwner;
 
@@ -68,17 +68,17 @@ static std::optional<std::string> PszHelpDocument(const char *pszDirectory, cons
     if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szSource)) goto fail;
     lpSource = PfNativeOpen(szSource, NATIVEFILEMODE::read);
     sourceOwner.reset(lpSource);
-    pszBody = static_cast<char *>((std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE) + 1)));
-    bodyOwner.reset(pszBody);
-    if (!lpSource || !pszBody) goto fail;
-    cbRead = CReadNative(std::span{pszBody, static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}, lpSource);
+    if (!lpSource) goto fail;
+    try { szBody.resize(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE) + 1); }
+    catch (const std::bad_alloc &) { goto fail; }
+    cbRead = CReadNative(std::span{szBody.data(), static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}, lpSource);
     fOk = cbRead == STARS_HELP_BUNDLE_SIZE && !FNativeStreamError(lpSource) && ChGetNativeFile(lpSource) == EOF;
     sourceOwner.reset(); lpSource = nullptr;
-    if (!fOk || static_cast<std::uint32_t>(crc32(0, reinterpret_cast<const BYTE *>(pszBody), static_cast<uInt>(cbRead))) != STARS_HELP_BUNDLE_CRC) {
+    if (!fOk || static_cast<std::uint32_t>(crc32(0, reinterpret_cast<const BYTE *>(szBody.data()), static_cast<uInt>(cbRead))) != STARS_HELP_BUNDLE_CRC) {
         win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
-    pszBody[cbRead] = 0;
-    pszMarker = std::strstr(pszBody, szMarker);
+    szBody[cbRead] = 0;
+    pszMarker = std::strstr(szBody.c_str(), szMarker);
     if (!pszMarker || std::strstr(pszMarker + sizeof(szMarker) - 1, szMarker)) {
         win32::SetLastError(win32::ERROR_BAD_FORMAT); goto done;
     }
@@ -96,10 +96,10 @@ static std::optional<std::string> PszHelpDocument(const char *pszDirectory, cons
     lpTarget = nft.lpfile.release();
     targetOwner.reset(lpTarget);
     if (!lpTarget) goto fail;
-    cbPrefix = static_cast<std::size_t>((pszMarker - pszBody));
-    fOk = CWriteNative(std::span{pszBody, static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}.first(cbPrefix), lpTarget) == cbPrefix &&
+    cbPrefix = static_cast<std::size_t>((pszMarker - szBody.data()));
+    fOk = CWriteNative(std::span{szBody.data(), static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}.first(cbPrefix), lpTarget) == cbPrefix &&
           IPutNativeString(pszPage, lpTarget) >= 0 &&
-          CWriteNative(std::span{pszBody, cbRead}.subspan(cbPrefix + sizeof(szMarker) - 1), lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
+          CWriteNative(std::span{szBody.data(), cbRead}.subspan(cbPrefix + sizeof(szMarker) - 1), lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
     if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = 0;
     if (ICloseNativeFile(targetOwner.release())) fOk = 0;
     lpTarget = nullptr;
