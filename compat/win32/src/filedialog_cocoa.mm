@@ -2,6 +2,7 @@
 #import <AppKit/AppKit.h>
 #include "filedialog_cocoa_bridge.h"
 #include "../../../src/platform/errors.h"
+#include <algorithm>
 #include <cstring>
 
 @interface StarsFilePanelDelegate : NSObject <NSOpenSavePanelDelegate>
@@ -80,7 +81,7 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
         if (fCanceled || result != NSModalResponseOK) return 0;
         const char *path = panel.URL.fileSystemRepresentation;
         if (!path || std::strlen(path) >= cbPath) return -1;
-        std::memcpy(pszPath, path, std::strlen(path) + 1);
+        std::copy_n(path, std::strlen(path) + 1, pszPath);
         if (cFilter != 0) *lpiFilter = static_cast<int>(delegate.iFilter);
         return 1;
     }

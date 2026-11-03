@@ -38,7 +38,7 @@ static int ICompatMain(int argc, char **argv) {
         }
         if (cArgs != 0) szCmdLine[cch++] = ' ';
         cArgs++;
-        std::memcpy(szCmdLine + cch, argv[i], cchArg + 1);
+        std::copy_n(argv[i], cchArg + 1, szCmdLine + cch);
         cch += cchArg;
     }
     if (fHeadless) {

@@ -139,9 +139,9 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
         newOwner.reset(); NotifyEdit(hwnd, win32::EN_ERRSPACE); return;
     }
     undoOwner.reset(pszUndo);
-    std::memcpy(pszNew, hwnd->pszTitle, ichFirst);
-    std::memcpy(pszNew + ichFirst, psz, cch);
-    std::memcpy(pszNew + ichFirst + cch, hwnd->pszTitle + ichLast, cchOld - ichLast + 1);
+    std::copy_n(hwnd->pszTitle, ichFirst, pszNew);
+    std::copy_n(psz, cch, pszNew + ichFirst);
+    std::copy_n(hwnd->pszTitle + ichLast, cchOld - ichLast + 1, pszNew + ichFirst + cch);
     for (i = ichFirst; i < ichFirst + cch; i++) {
         if (hwnd->dwStyle & win32::ES_UPPERCASE) pszNew[i] = static_cast<char>(ChEditCase(static_cast<BYTE>(pszNew[i]), 1));
         else if (hwnd->dwStyle & win32::ES_LOWERCASE) pszNew[i] = static_cast<char>(ChEditCase(static_cast<BYTE>(pszNew[i]), 0));
@@ -201,7 +201,7 @@ static BOOL CopyEdit(HWND hwnd) {
     psz = static_cast<char *>((SDL_malloc(cch + 1)));
     NATIVEOWNER<char, SDL_free> pszOwner(psz);
     if (!psz) return 0;
-    std::memcpy(psz, hwnd->pszTitle + ichFirst, cch); psz[cch] = 0;
+    std::copy_n(hwnd->pszTitle + ichFirst, cch, psz); psz[cch] = 0;
     fOk = SDL_SetClipboardText(psz);
     return fOk;
 }

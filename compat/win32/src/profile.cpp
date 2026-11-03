@@ -222,7 +222,7 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
             if (cchMax < 2) break;
             if (cchOut > cchMax - 2) { cchOut = cchMax - 2; break; }
             cchCopy = CchUtf8Prefix(szName, cch < cchMax - 2 - cchOut ? cch : cchMax - 2 - cchOut);
-            std::memcpy(szResult + cchOut, szName.data(), cchCopy);
+            std::copy_n(szName.data(), cchCopy, szResult + cchOut);
             cchOut += cchCopy;
             if (cchCopy < cch || cchOut + 1 >= cchMax) {
                 std::fill_n(szResult + cchOut, cchMax - cchOut, 0);
@@ -241,7 +241,7 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
             while (!szValue.empty() && szValue.back() == ' ') szValue.remove_suffix(1);
         }
         cchOut = CchUtf8Prefix(szValue.data(), szValue.size() < cchMax - 1 ? szValue.size() : cchMax - 1);
-        std::memcpy(szResult, szValue.data(), cchOut); szResult[cchOut] = 0;
+        std::copy_n(szValue.data(), cchOut, szResult); szResult[cchOut] = 0;
     }
     releaseProfile.Close();
     lockProfile.unlock();

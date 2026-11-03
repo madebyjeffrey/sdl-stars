@@ -60,7 +60,7 @@ char *_getcwd(char *pszPath, int cchPath) {
     const auto szCwd = SzNativeCwd();
     if (!szCwd) return nullptr;
     pszResult = static_cast<char *>(std::malloc(szCwd->size() + 1));
-    if (pszResult) std::memcpy(pszResult, szCwd->c_str(), szCwd->size() + 1);
+    if (pszResult) std::copy_n(szCwd->c_str(), szCwd->size() + 1, pszResult);
     return pszResult;
 }
 int _stricmp(const char *psz1, const char *psz2) { return strcasecmp(psz1, psz2); }

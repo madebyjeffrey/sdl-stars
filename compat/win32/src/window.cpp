@@ -1141,7 +1141,7 @@ int win32::GetClassNameA(HWND hwnd, LPSTR psz, int cchMax) {
     if (!lpwin || !psz || cchMax <= 0)
         return 0;
     cch = CchUtf8Prefix(lpwin->lpclass->pszClass.get(), static_cast<std::size_t>(cchMax) - 1);
-    std::memcpy(psz, lpwin->lpclass->pszClass.get(), cch); psz[cch] = 0;
+    std::copy_n(lpwin->lpclass->pszClass.get(), cch, psz); psz[cch] = 0;
     return static_cast<int>(cch);
 }
 

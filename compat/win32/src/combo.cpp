@@ -364,7 +364,7 @@ LRESULT  CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (lp->hwndEdit) return win32::SendMessageA(lp->hwndEdit, msg, w, l);
         szItem = SzComboItem(hwnd, static_cast<int>(CompatListProc(hwnd, win32::LB_GETCURSEL, 0, 0)));
         result = szItem ? static_cast<LRESULT>(szItem->size()) : 0;
-        if (msg == win32::WM_GETTEXT) { result = w && l && szItem ? static_cast<LRESULT>(CchUtf8Prefix(szItem->data(), static_cast<std::size_t>(w) - 1)) : 0; if (w && l) { if (result) std::memcpy(reinterpret_cast<char *>(l), szItem->data(), static_cast<std::size_t>(result)); (reinterpret_cast<char *>(l))[result] = 0; } }
+        if (msg == win32::WM_GETTEXT) { result = w && l && szItem ? static_cast<LRESULT>(CchUtf8Prefix(szItem->data(), static_cast<std::size_t>(w) - 1)) : 0; if (w && l) { if (result) std::copy_n(szItem->data(), static_cast<std::size_t>(result), reinterpret_cast<char *>(l)); (reinterpret_cast<char *>(l))[result] = 0; } }
         return result;
     }
     case win32::WM_SETTEXT: {

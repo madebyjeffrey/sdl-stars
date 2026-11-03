@@ -518,7 +518,7 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         psz = lpwin->pszTitle;
         cch = CchUtf8Prefix(psz, static_cast<std::size_t>(wParam) - 1);
-        std::memcpy(reinterpret_cast<char *>(lParam), psz, cch); (reinterpret_cast<char *>(lParam))[cch] = 0;
+        std::copy_n(psz, cch, reinterpret_cast<char *>(lParam)); (reinterpret_cast<char *>(lParam))[cch] = 0;
         return static_cast<LRESULT>(cch);
     case win32::WM_GETTEXTLENGTH:
         return static_cast<LRESULT>(SDL_strlen(lpwin->pszTitle));

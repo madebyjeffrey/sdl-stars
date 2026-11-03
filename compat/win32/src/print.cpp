@@ -134,7 +134,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     NATIVEFILETEMPRESULT nft;
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
     if (cb != 0 && !FUtf8Valid(std::string_view{pszTitle, static_cast<std::size_t>(cb)})) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
-    if (cb) std::memcpy(lp->szTitle, pszTitle, cb);
+    if (cb) std::copy_n(pszTitle, cb, lp->szTitle);
     lp->szTitle[cb] = 0;
     if (!lp->fSpool && !*lp->szTarget) {
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : nullptr;

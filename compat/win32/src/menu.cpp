@@ -186,7 +186,7 @@ int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) 
     c = std::strlen(lpitem->psz.get());
     if (!psz || cch <= 0) return static_cast<int>((((c) < (static_cast<std::size_t>(std::numeric_limits<int>::max()))) ? (c) : (static_cast<std::size_t>(std::numeric_limits<int>::max()))));
     c = CchUtf8Prefix(lpitem->psz.get(), static_cast<std::size_t>(cch) - 1);
-    std::memcpy(psz, lpitem->psz.get(), c); psz[c] = 0;
+    std::copy_n(lpitem->psz.get(), c, psz); psz[c] = 0;
     return static_cast<int>(c);
 }
 void CompatShutdownMenus(void) {
