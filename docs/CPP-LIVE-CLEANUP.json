@@ -2708,7 +2708,8 @@
         "linux-portal-chooser-span-and-named-response",
         "private-list-state-bools",
         "remaining-native-file-path-results",
-        "message-packing-output-and-parameter-spans"
+        "message-packing-output-and-parameter-spans",
+        "bounded-message-parameter-spans-and-stack-message-cursor"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces"
@@ -3780,6 +3781,31 @@
           },
           "baseline": "Unchanged; both native and host regressions match all 519 checkpoints with zero differences or errors.",
           "api_audit": "PackageUpMsg accepts a writable byte span and checks capacity before writing. SetMsgParam requires a fixed two-byte span. Callers pass their full local buffer extents; the short-span unit case returns -1 without modifying the buffer. Message wire bytes and record layouts are unchanged.",
+          "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "Use bounded spans for message parameters",
+          "parent": "bfa8209a",
+          "source_commit": "cc8d7551",
+          "macos_sdl_debug_build": "make test-unit rebuilt all changed core and unit translation units with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "baseline": "Unchanged; both native and host regressions match all 519 checkpoints with zero differences or errors.",
+          "api_audit": "FSendPlrMsg2XGen now writes through an owned std::array cursor; WMsgParam requires a fixed two-byte span. Message encoding, copied lengths, wire bytes and record layouts are unchanged.",
           "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
           "diff_check": "Pass."
         }
@@ -28485,7 +28511,7 @@
     "date": "2026-11-03",
     "reason": "Resume the live C++ cleanup after publishing the toolbar ownership batch and accumulated cleanup commits to develop.",
     "branch": "develop",
-    "latest_batch": "Use spans for message packing",
+    "latest_batch": "Use bounded spans for message parameters",
     "latest_published_head": "8eb069fc",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -29944,14 +29970,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "9ff13511",
-  "latest_batch_status": "Source commit 9ff13511 verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "cc8d7551",
+  "latest_batch_status": "Source commit cc8d7551 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "9ff13511",
+      "source_commit": "cc8d7551",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -30186,12 +30212,12 @@
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
   },
-  "latest_change": "Use spans for message packing",
+  "latest_change": "Use bounded spans for message parameters",
   "latest_batch_verification": {
-    "batch": "Use spans for message packing",
-    "parent": "28417798",
-    "source_commit": "9ff13511",
-    "macos_sdl_debug_build": "make compile passes; make test-unit rebuilt the changed core and test translation units.",
+    "batch": "Use bounded spans for message parameters",
+    "parent": "bfa8209a",
+    "source_commit": "cc8d7551",
+    "macos_sdl_debug_build": "make test-unit rebuilt all changed core and unit translation units with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30208,15 +30234,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; both native and host regressions match all 519 checkpoints with zero differences or errors.",
-    "api_audit": "PackageUpMsg accepts a writable byte span and checks capacity before writing. SetMsgParam requires a fixed two-byte span. Callers pass their full local buffer extents; the short-span unit case returns -1 without modifying the buffer. Message wire bytes and record layouts are unchanged.",
+    "api_audit": "FSendPlrMsg2XGen now writes through an owned std::array cursor; WMsgParam requires a fixed two-byte span. Message encoding, copied lengths, wire bytes and record layouts are unchanged.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use spans for message packing",
-    "parent": "28417798",
-    "source_commit": "9ff13511",
-    "macos_sdl_debug_build": "make compile passes; make test-unit rebuilt the changed core and test translation units.",
+    "batch": "Use bounded spans for message parameters",
+    "parent": "bfa8209a",
+    "source_commit": "cc8d7551",
+    "macos_sdl_debug_build": "make test-unit rebuilt all changed core and unit translation units with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30233,10 +30259,10 @@
       "skipped": 0
     },
     "baseline": "Unchanged; both native and host regressions match all 519 checkpoints with zero differences or errors.",
-    "api_audit": "PackageUpMsg accepts a writable byte span and checks capacity before writing. SetMsgParam requires a fixed two-byte span. Callers pass their full local buffer extents; the short-span unit case returns -1 without modifying the buffer. Message wire bytes and record layouts are unchanged.",
+    "api_audit": "FSendPlrMsg2XGen now writes through an owned std::array cursor; WMsgParam requires a fixed two-byte span. Message encoding, copied lengths, wire bytes and record layouts are unchanged.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit 9ff13511 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit cc8d7551 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
