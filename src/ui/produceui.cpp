@@ -543,7 +543,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
                 lSel--;
                 prod = app.state.lpplProdGlob->rgprod()[lSel];
             }
-            ProductionIO().pfnQuote(app, &app.state.sel.pl, &prod, reinterpret_cast<std::uint32_t *>(rgCost), app.state.idPlayer, 0);
+            ProductionIO().pfnQuote(app, &app.state.sel.pl, &prod, std::span<std::int32_t, 4>{rgCost}, app.state.idPlayer, 0);
             rc.bottom = app.lpui->yTopFutureTech + 4;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             c = TextIO().pfnCchGetString(app, idsRequiredMinerals, std::span{app.state.szWork});

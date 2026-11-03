@@ -910,14 +910,14 @@ std::int16_t FFillProdMinesAndFactories(APPSESSION &app, PLANET *lppl) {
         if (app.state.pProdGlob[i].grobj == grobjPlanet) {
             if (app.state.pProdGlob[i].iItem == mdIdleMine) {
                 iMaxMines = (((0) > (ColonyIO().pfnOperableMines(app, lppl, app.state.idPlayer, 0) - ColonyIO().pfnMinesOperating(app, lppl) - iAddMines)) ? (0) : (ColonyIO().pfnOperableMines(app, lppl, app.state.idPlayer, 0) - ColonyIO().pfnMinesOperating(app, lppl) - iAddMines));
-                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, reinterpret_cast<std::uint32_t *>(rgMineCost), app.state.idPlayer, 1);
+                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, std::span<std::int32_t, 4>{rgMineCost}, app.state.idPlayer, 1);
             }
             if (app.state.pProdGlob[i].iItem == mdIdleFactory) {
                 iMaxFactories = (((0) > (ColonyIO().pfnOperableFactories(app, lppl, app.state.idPlayer, 0) - CFactoriesOperating(app, lppl) - iAddFactories)) ? (0) : (ColonyIO().pfnOperableFactories(app, lppl, app.state.idPlayer, 0) - CFactoriesOperating(app, lppl) - iAddFactories));
-                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, reinterpret_cast<std::uint32_t *>(rgFactCost), app.state.idPlayer, 1);
+                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, std::span<std::int32_t, 4>{rgFactCost}, app.state.idPlayer, 1);
             }
             if (app.state.pProdGlob[i].iItem == mdIdleAlchemy) {
-                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, reinterpret_cast<std::uint32_t *>(rgAlchCost), app.state.idPlayer, 1);
+                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, std::span<std::int32_t, 4>{rgAlchCost}, app.state.idPlayer, 1);
             }
             if (app.state.pProdGlob[i].iItem == mdIdleTerraform) {
                 iMaxTerra = app.state.pProdGlob[i].cItem;

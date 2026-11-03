@@ -227,7 +227,7 @@ std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *p
     cAlchemy = 0;
     pctInitial = lpprod->pct;
     prod = *lpprod;
-    ProductionIO().pfnQuote(app, lppl, lpprod, reinterpret_cast<std::uint32_t *>(rgCost), lppl->iPlayer, 1);
+    ProductionIO().pfnQuote(app, lppl, lpprod, std::span<std::int32_t, 4>{rgCost}, lppl->iPlayer, 1);
     cBuilt = 0;
     fAutoBuild = prod.grobj == grobjPlanet && prod.iItem < mdIdleFactory;
     if (fAutoBuild) {

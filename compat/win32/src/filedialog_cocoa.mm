@@ -3,7 +3,7 @@
 #include "filedialog_cocoa_bridge.h"
 #include "../../../src/platform/errors.h"
 #include <algorithm>
-#include <limits.h>
+#include <climits>
 #include <string_view>
 
 @interface StarsFilePanelDelegate : NSObject <NSOpenSavePanelDelegate>

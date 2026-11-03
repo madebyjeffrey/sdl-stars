@@ -173,10 +173,10 @@ static int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
     assert(p == app.state.rgplr && bit == ibitRaceMineralAlchemy);
     return (int16_t)cheapFixture;
 }
-static void TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *row, uint32_t *out, int16_t player, int16_t one) {
+static void TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *row, std::span<std::int32_t, 4> out, int16_t player, int16_t one) {
     (void)row;
     assert(p == &planet && !player && one);
-    memcpy(out, quote, 16);
+    memcpy(out.data(), quote, 16);
 }
 static int16_t TestFBuildObject(APPSESSION &, PLANET *p, GrobjClass kind, int16_t item, int16_t count, int32_t *resources) {
     (void)kind;

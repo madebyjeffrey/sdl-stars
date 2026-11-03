@@ -13,7 +13,6 @@ WINDOWSCHOOSERIOSCOPE::~WINDOWSCHOOSERIOSCOPE() noexcept { lpIO = lpPrev; }
 #include <cerrno>
 #include <climits>
 #include <new>
-#include <limits.h>
 #include <optional>
 #include <span>
 #include <stdexcept>

@@ -20,11 +20,11 @@
 static int     cheapFixture;
 static int32_t quote[4], limits[7];
 static int     calls, messages, messageArg, quoted;
-static void    TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *r, uint32_t *out, int16_t player, int16_t one) {
+static void    TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *r, std::span<std::int32_t, 4> out, int16_t player, int16_t one) {
     (void)r;
     assert(p && player == 0 && one && !quoted && calls == 0);
     quoted = 1;
-    memcpy(out, quote, 16);
+    memcpy(out.data(), quote, 16);
 }
 static int16_t TestCMaxOperableMines(APPSESSION &, PLANET *p, int16_t player, int16_t next) {
     (void)p;

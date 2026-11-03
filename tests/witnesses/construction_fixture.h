@@ -123,10 +123,10 @@ int16_t TestCResourcesAtPlanet(APPSESSION &, PLANET *p, int16_t player) {
     assert(p == &planet && !player);
     return gross;
 }
-void TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *row, uint32_t *cost, int16_t player, int16_t one) {
+void TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *row, std::span<std::int32_t, 4> cost, int16_t player, int16_t one) {
     assert(p == &planet && !player && one);
     (void)row;
-    memcpy(cost, quote, sizeof(quote));
+    memcpy(cost.data(), quote, sizeof(quote));
 }
 void    TestMineMinerals(APPSESSION &) {}
 void    TestUpdatePopulations(APPSESSION &) {}

@@ -131,7 +131,7 @@ static int16_t TestFSendPlrMsg2(APPSESSION &, int16_t player, MessageId id, MsgG
     messages++;
     return 1;
 }
-static void TestGetProductionCosts(APPSESSION &app, PLANET *p, PROD *row, uint32_t *out, int16_t player, int16_t one) {
+static void TestGetProductionCosts(APPSESSION &app, PLANET *p, PROD *row, std::span<std::int32_t, 4> out, int16_t player, int16_t one) {
     (void)p;
     assert(one && player == p->iPlayer);
     int32_t quote[4] = {unitOre, unitOre, unitOre, unitResources};
@@ -139,7 +139,7 @@ static void TestGetProductionCosts(APPSESSION &app, PLANET *p, PROD *row, uint32
         quote[0] = quote[1] = quote[2] = 0;
         quote[3] = (app.state.rgplr[player].grbitAttr & (std::uint32_t{1} << ibitRaceMineralAlchemy)) ? 25 : 100;
     }
-    memcpy(out, quote, sizeof(quote));
+    memcpy(out.data(), quote, sizeof(quote));
 }
 static int16_t TestCMinesOperating(APPSESSION &, PLANET *p) { return p->cMines; }
 static int32_t TestCMineFromLpfl(APPSESSION &, FLEET *f) {

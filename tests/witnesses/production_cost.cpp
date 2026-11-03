@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <bit>
 #include <limits>
 #include "common.h"
 #include "part_query_io.h"
@@ -127,12 +128,14 @@ static uint32_t oracle(APPSESSION &app, unsigned dimension, uint32_t prior, int 
     return one ? value : word32((int64_t)value * count);
 }
 static int compare(APPSESSION &app, int player, int one) {
-    uint32_t actual[4] = {std::numeric_limits<std::uint32_t>::max(), std::uint32_t{0x80000000}, 17, 29}, expected[4];
+    std::int32_t actual[4] = {std::bit_cast<std::int32_t>(std::numeric_limits<std::uint32_t>::max()),
+                              std::bit_cast<std::int32_t>(std::uint32_t{0x80000000}), 17, 29};
+    std::uint32_t expected[4];
     cursor = lookups = 0;
     lastHull = -1;
     for (unsigned d = 0; d < 4; d++)
-        expected[d] = oracle(app, d, actual[d], player, one);
-    GetProductionCosts(app, &planet, &prod, actual, player, one);
+        expected[d] = oracle(app, d, static_cast<std::uint32_t>(actual[d]), player, one);
+    GetProductionCosts(app, &planet, &prod, std::span<std::int32_t, 4>{actual}, player, one);
     if (prod.grobj == grobjFleet) {
         int    base = prod.iItem >= 16;
         SHDEF *target = base ? &app.state.rglpshdefSB[player][prod.iItem - 16] : &app.state.rglpshdef[player][prod.iItem];
@@ -172,8 +175,8 @@ static int compare(APPSESSION &app, int player, int one) {
         if (quotePlayer[q] != player)
             return 0;
     for (unsigned d = 0; d < 4; d++)
-        if (actual[d] != expected[d]) {
-            fprintf(stderr, "cost mismatch kind=%u item=%u dim=%u actual=%u expected=%u\n", prod.grobj, prod.iItem, d, actual[d], expected[d]);
+        if (static_cast<std::uint32_t>(actual[d]) != expected[d]) {
+            fprintf(stderr, "cost mismatch kind=%u item=%u dim=%u actual=%u expected=%u\n", prod.grobj, prod.iItem, d, static_cast<std::uint32_t>(actual[d]), expected[d]);
             return 0;
         }
     return 1;
@@ -283,8 +286,8 @@ int main(void) {
     bases[0].hul.resCost = bases[1].hul.resCost = 65535;
     app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>(std::uint32_t{1} << ibitRaceISB);
     CHECK(compare(app, 0, 1));
-    uint32_t exact[4] = {};
-    GetProductionCosts(app, &planet, &prod, exact, 0, 1);
+    std::int32_t exact[4] = {};
+    GetProductionCosts(app, &planet, &prod, std::span<std::int32_t, 4>{exact}, 0, 1);
     CHECK(exact[0] == 13107 && exact[1] == 13107 && exact[2] == 13107 && exact[3] == 13107);
     app.state.rgplr[0].grbitAttr = static_cast<decltype(app.state.rgplr[0].grbitAttr)>(0);
     for (unsigned word = 0; word < 65536; word++) {

@@ -3,6 +3,7 @@
 #include "appstate.h"
 #include "presentation_io.h"
 #include "production_io.h"
+#include <bit>
 #include "colony_io.h"
 #include "planet_query_io.h"
 #include "research_io.h"
@@ -235,7 +236,11 @@ std::array<char, 360> PszNameProdItem(APPSESSION &app, PROD *lpprod) {
     return SzProductionLabel(app.state.szWork);
 }
 
-void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::uint32_t *rgCost, std::int16_t iplr, std::int16_t fOnlyOne) {
+static std::int32_t LProductionCostFromBits(std::uint32_t uCost) noexcept {
+    return std::bit_cast<std::int32_t>(uCost);
+}
+
+void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::span<std::int32_t, 4> rgCost, std::int16_t iplr, std::int16_t fOnlyOne) {
     std::uint16_t      rgCostsCur[4];
     std::uint32_t      iItem;
     std::uint16_t      rgCosts[4];
@@ -361,7 +366,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::uint32
                 }
             } else {
                 rgCost[1] = 0;
-                *rgCost = 0;
+                rgCost[0] = 0;
                 rgCost[2] = static_cast<std::int16_t>((4 - cost));
             }
             rgCost[3] = RaceQueryIO().pfnStat(&app.state.rgplr[iplr], rsFactBuild);
@@ -426,7 +431,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::uint32
         case mdIdleTerraform:
             rgCost[2] = 0;
             rgCost[1] = 0;
-            *rgCost = 0;
+            rgCost[0] = 0;
             if (RaceQueryIO().pfnGrbit(&app.state.rgplr[iplr], ibitRaceTT) != 0) {
                 rgCost[3] = 70;
             } else {
@@ -459,7 +464,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::uint32
     }
     if (!fOnlyOne) {
         for (i = 0; i < 4; i++) {
-            rgCost[i] = static_cast<std::uint32_t>((rgCost[i] * cItem));
+            rgCost[i] = LProductionCostFromBits(static_cast<std::uint32_t>(rgCost[i] * cItem));
         }
     }
     return;

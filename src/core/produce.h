@@ -7,7 +7,7 @@
 void  InitProduction(APPSESSION &app, PROD *rgprod);
 void  FinishProduction(APPSESSION &app, std::int16_t fWrite);
 std::array<char, 360> PszNameProdItem(APPSESSION &app, PROD *lpprod);
-void  GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::uint32_t *rgCost, std::int16_t iplr, std::int16_t fOnlyOne);
+void  GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::span<std::int32_t, 4> rgCost, std::int16_t iplr, std::int16_t fOnlyOne);
 struct PRODUCTIONESTIMATE {
     std::int16_t iFirst, iLast;
 };

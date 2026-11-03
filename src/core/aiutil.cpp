@@ -511,7 +511,7 @@ void AddMinesToBlockedQueues(APPSESSION &app) {
                 if (etaFirst == -1) {
                     etaFirst = 600;
                 }
-                ProductionIO().pfnQuote(app, lppl, &prod, reinterpret_cast<std::uint32_t *>(rgCost), app.state.idPlayer, 1);
+                ProductionIO().pfnQuote(app, lppl, &prod, std::span<std::int32_t, 4>{rgCost}, app.state.idPlayer, 1);
                 cRes = ResearchIO().pfnResources(app, &app.state.sel.pl, app.state.idPlayer);
                 if (!app.state.sel.pl.fNoResearch) {
                     cRes -= static_cast<std::int32_t>((cRes * static_cast<std::int16_t>(app.state.rgplr[app.state.idPlayer].pctResearch))) / 100;
@@ -1584,7 +1584,7 @@ void GetProdQCost(APPSESSION &app, PLANET *lppl, std::int32_t *rgCost) {
         i = 0;
         lpprod = lpplprod->rgprod();
         while (i < lpplprod->iprodMac) {
-            ProductionIO().pfnQuote(app, lppl, lpprod, reinterpret_cast<std::uint32_t *>(rgCostCur), app.state.idPlayer, 0);
+            ProductionIO().pfnQuote(app, lppl, lpprod, std::span<std::int32_t, 4>{rgCostCur}, app.state.idPlayer, 0);
             for (j = 0; j < 4; j++) {
                 rgCost[j] += rgCostCur[j];
             }
@@ -2611,7 +2611,7 @@ std::int16_t FQueueAiTerraforming(APPSESSION &app, PLANET *lppl, std::int32_t *r
             if (app.state.pProdGlob[i].grobj == grobjPlanet && app.state.pProdGlob[i].iItem == mdIdleTerraform && app.state.pProdGlob[i].cItem >= 1) {
                 AddItemToQueue(app, app.state.pProdGlob[i].iItem, 4 >= static_cast<std::int32_t>(app.state.pProdGlob[i].cItem) ? app.state.pProdGlob[i].cItem : 4, grobjPlanet, addItemEnd);
                 app.state.pProdGlob[i].cItem = 0;
-                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, reinterpret_cast<std::uint32_t *>(rgItemCost), app.state.idPlayer, 1);
+                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, std::span<std::int32_t, 4>{rgItemCost}, app.state.idPlayer, 1);
                 for (j = 0; j < 4; j++) {
                     rgResCost[j] += static_cast<std::uint32_t>((rgItemCost[j] * (4 >= static_cast<std::int32_t>(app.state.pProdGlob[i].cItem) ? static_cast<std::int16_t>(app.state.pProdGlob[i].cItem) : 4)));
                 }
@@ -2642,7 +2642,7 @@ std::int16_t FQueueAiScanner(APPSESSION &app, PLANET *lppl, std::int32_t *rgResA
          i--) {
     }
     if (i >= 0) {
-        ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, reinterpret_cast<std::uint32_t *>(rgItemCost), app.state.idPlayer, 1);
+        ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, std::span<std::int32_t, 4>{rgItemCost}, app.state.idPlayer, 1);
         for (j = 0; j < 4 && (rgItemCost[j] <= 0 || rgItemCost[j] + rgResCost[j] <= rgResAvail[j]); j++) {
         }
         if (j == 4) {
