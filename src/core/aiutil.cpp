@@ -138,14 +138,15 @@ void PickANameAndBmp(APPSESSION &app, SHDEF *pshdef, StringId ids, std::int16_t 
         TextIO().pfnCchGetString(app, static_cast<StringId>(RandomIO().pfnRandom(app, cids) + ids), std::span{pshdef->hul.szClass});
         if (pshdef->ishdef >= 16) {
             for (ishdef = 0; ishdef < 10 && (app.state.rglpshdefSB[app.state.idPlayer][ishdef].fFree || app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.ihuldef != pshdef->hul.ihuldef ||
-                                             std::strcmp(pshdef->hul.szClass, app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.szClass) != 0);
+                                             std::string_view{pshdef->hul.szClass} != std::string_view{app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.szClass});
                  ishdef++) {
             }
             if (ishdef == 10) {
                 return;
             }
         } else {
-            for (ishdef = 0; ishdef < 16 && (app.state.rgshdef[ishdef].fFree || std::strcmp(pshdef->hul.szClass, app.state.rgshdef[ishdef].hul.szClass) != 0); ishdef++) {
+            for (ishdef = 0; ishdef < 16 && (app.state.rgshdef[ishdef].fFree ||
+                std::string_view{pshdef->hul.szClass} != std::string_view{app.state.rgshdef[ishdef].hul.szClass}); ishdef++) {
             }
             if (ishdef == 16) {
                 return;

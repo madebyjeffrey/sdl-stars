@@ -628,7 +628,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 prcSav = app.lpui->vrgrcRCW;
                 if (FCustomizeLibraryRace(app, hwnd, szLibraryRace)) {
                     app.lpui->vrgrcRCW = prcSav;
-                    if ((iCurVal & 3) == 1 || std::strcmp(szLibraryRace, app.lpui->rgszLibraryRaceNew[iCurVal >> 2].data()) != 0)
+                    if ((iCurVal & 3) == 1 || std::string_view{szLibraryRace} != std::string_view{app.lpui->rgszLibraryRaceNew[iCurVal >> 2].data()})
                         goto PlaceNew;
                     app.lpui->vrgplrNew[iCurVal >> 2] = app.state.vplr;
                     CchCopyUtf8(std::span{app.lpui->vrgszFileNew + (iCurVal >> 2) * 13, std::size_t{13}}, app.state.szRaceFile);

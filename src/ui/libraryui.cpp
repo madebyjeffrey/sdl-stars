@@ -701,7 +701,8 @@ static std::int16_t FSameLibraryRace(const PLAYER *pplrLeft, const PLAYER *pplrR
     plrLeft.fLearned = plrRight.fLearned = 0;
     FEncodePlayer(plrLeft, rgbLeft); FEncodePlayer(plrRight, rgbRight);
     return !std::memcmp(rgbLeft, rgbRight, ibWirePlayerNames) &&
-           !std::strcmp(plrLeft.szName, plrRight.szName) && !std::strcmp(plrLeft.szNames, plrRight.szNames);
+           std::string_view{plrLeft.szName} == std::string_view{plrRight.szName} &&
+           std::string_view{plrLeft.szNames} == std::string_view{plrRight.szNames};
 }
 
 static std::int16_t FReadManagedRace(APPSESSION &app, std::string_view pszPath, PLAYER *pplr) {
@@ -1245,7 +1246,7 @@ std::int16_t FDeleteLibraryRace(APPSESSION &app, HWND hwnd, std::string_view psz
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryRaceDeleteFailed).data(), win32::MB_ICONHAND);
         return 0;
     }
-    if (!std::strcmp(app.lpui->szRaceLibraryPath.data(), szPath)) app.lpui->szRaceLibraryPath[0] = 0;
+    if (std::string_view{app.lpui->szRaceLibraryPath.data()} == std::string_view{szPath}) app.lpui->szRaceLibraryPath[0] = 0;
     return 1;
 }
 
@@ -2487,12 +2488,12 @@ std::int16_t FDeleteLibraryGame(APPSESSION &app, HWND hwnd, std::string_view psz
     cch = CchSnprintf(std::span{szMetadata, sizeof(szMetadata)}, "%s%s.library", szDirectory, szDirSep);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMetadata) ||
         !FReadLibraryMetadata(szDirectory, std::span{szMetadataName}, iplr, lPlayed,
-                              std::span{szExchangeName}) || std::strcmp(szMetadataName, szName)) return 0;
+                              std::span{szExchangeName}) || std::string_view{szMetadataName} != std::string_view{szName}) return 0;
     cch = CchSnprintf(std::span{szMessage, sizeof(szMessage)}, TextIO().pfnCompressed(app, idsLibraryDeleteGamePrompt).data(), szName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szMessage)) return 0;
     if (CompatChoiceIO().pfnMessageBoxA(hwnd, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(),
                    win32::MB_YESNO | win32::MB_ICONQUESTION | win32::MB_TASKMODAL) != win32::IDYES) return 0;
-    fContinueTarget = FFindContinueLibraryGame(app) && !std::strcmp(continueLibrary.szName, szName);
+    fContinueTarget = FFindContinueLibraryGame(app) && std::string_view{continueLibrary.szName} == std::string_view{szName};
     if (!RemoveLibraryGameTree(app, szDirectory)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryDeleteGameFailed).data(), win32::MB_ICONHAND);
         return 0;

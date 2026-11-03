@@ -2067,7 +2067,8 @@ HULLNAMERESULT DecorateHullNameResult(APPSESSION &app, std::int16_t iplr, std::i
             c = 0;
             iVal = 1;
             for (i = 0; i < 16; i++) {
-                if (i != ish && !app.state.rglpshdef[iplr][i].fFree && std::strcmp(lpshdef->hul.szClass, app.state.rglpshdef[iplr][i].hul.szClass) == 0) {
+                if (i != ish && !app.state.rglpshdef[iplr][i].fFree &&
+                    std::string_view{lpshdef->hul.szClass} == std::string_view{app.state.rglpshdef[iplr][i].hul.szClass}) {
                     c++;
                     if (i < ish) {
                         iVal++;
