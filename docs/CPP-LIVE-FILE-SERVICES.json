@@ -5841,5 +5841,12 @@
     "compatibility": "Seek origins, seek return contract, successful offset values, archive fields and file bytes are unchanged. The old -1 getter sentinel is removed.",
     "verification": "e14499cd: strict macOS Debug build, desktop units 18/18, host units 29/29 including invalid-handle errno, native and host regressions each 519 matches with 25 existing warnings and zero differences/errors/skips, tutorial smoke 1/1.",
     "platforms": "Current-source Windows/Linux qualification remains pending."
+  },
+  "native_stream_predicates": {
+    "status": "complete; locally verified",
+    "source_commit": "3b2132e7577a1f409b644ead602c26fb31bbae91",
+    "interfaces": "FNativeStreamError and FNativeStreamEof return bool; all ordinary production consumers use predicate semantics.",
+    "verification": "Strict macOS SDL build, desktop/host units, native/host regressions, and SDL tutorial smoke pass; regression baseline unchanged.",
+    "platform": "Current-source Windows/Linux qualification remains open."
   }
 }

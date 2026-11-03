@@ -2190,7 +2190,8 @@
         "native-directory-predicates-return-bool",
         "ensure-native-directory-return-bool",
         "native-directory-enumeration-result-and-type-erased-callback-use-bool",
-        "native-directory-context-callbacks-return-bool"
+        "native-directory-context-callbacks-return-bool",
+        "native-stream-error-eof-predicates-return-bool"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -28497,8 +28498,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "f2cd103e21ab89ac9af27a50bd310ac603e05558",
-  "latest_batch_status": "Source commit f2cd103e and ledger checkpoint ccbe88c9 are published on develop. macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
+  "latest_source_commit": "3b2132e7577a1f409b644ead602c26fb31bbae91",
+  "latest_batch_status": "Source commit 3b2132e7 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28515,7 +28516,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "f2cd103e",
+    "source_head": "3b2132e7",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28595,25 +28596,32 @@
     "library_name_shifts": "Four overlapping character-range std::memmove calls in GetGameLibraryName and GetRaceLibraryStem were replaced by std::move/std::move_backward; byte ranges and NUL movement are unchanged.",
     "owned_text_range_copies": "Four non-overlapping std::memmove copies from catalog/decode scratch and legacy race-name scratch now use std::copy_n; byte counts and explicit terminator writes are unchanged.",
     "bounded_text_cpp_scans": "Five bounded terminator scans in message, decompressor, scanner snapshot, file-dialog and LOGFONT buffers use C++ ranges/views. Profile BOM comparison uses a three-byte string_view. Encoded compression output copies through std::byte spans.",
-    "bounded_sdl_string_scans": "All four production SDL_strnlen calls were replaced by bounded std::find scans using the same maximum lengths. No SDL_strnlen or SDL_strlen calls remain; the three std::strlen sites are incoming C-string/API boundaries."
+    "bounded_sdl_string_scans": "All four production SDL_strnlen calls were replaced by bounded std::find scans using the same maximum lengths. No SDL_strnlen or SDL_strlen calls remain; the three std::strlen sites are incoming C-string/API boundaries.",
+    "native_stream_predicates": "FNativeStreamError and FNativeStreamEof return bool. All production call sites consume predicates; legacy reference declarations remain int."
   },
-  "latest_change": "L05 replace bounded SDL string-length scans with std::find",
+  "latest_change": "L06 return native stream error and EOF predicates as bool",
   "latest_batch_verification": {
-    "batch": "L05 replace bounded SDL string-length scans with std::find",
-    "source_commit": "f2cd103e21ab89ac9af27a50bd310ac603e05558",
+    "batch": "L06 return native stream error and EOF predicates as bool",
+    "source_commit": "3b2132e7577a1f409b644ead602c26fb31bbae91",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
+    "host_unit_tests": "29/29 pass.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
+    "host_regression": {
+      "matches": 519,
+      "warnings": 25,
+      "differences_errors": 0,
+      "skipped": 0
+    },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. The same bounded scan limits are used for message text, filter MULTI_SZ strings, and the help path.",
-    "api_audit": "Four SDL_strnlen calls now use std::find over the same explicit 65537, 4097 and PATH_MAX bounds. No SDL_strnlen or SDL_strlen calls remain in owned production source; three std::strlen API/input boundary calls remain.",
+    "baseline": "Unchanged. Predicates retain exactly their prior false/true results; no stored field or wire representation changed.",
+    "api_audit": "FNativeStreamError and FNativeStreamEof now return bool. Production uses are conditions/results; the library-copy witness callback now matches the typed function pointer. Historical reference declarations remain unchanged.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-    "diff_check": "Pass.",
-    "ledger_commit": "ccbe88c9"
+    "diff_check": "Pass."
   }
 }
