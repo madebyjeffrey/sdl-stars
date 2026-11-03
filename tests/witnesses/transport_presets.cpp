@@ -167,7 +167,8 @@ static int  TestLUiDialogBox(int instance, int resource, HWND hwnd, int proc) {
     return outerResult;
 }
 static int TestPopupMenu(APPSESSION &, HWND hwnd, int x, int y, int count,
-                         std::span<const std::int32_t> ids, std::span<const char *const> labels,
+                         std::span<const std::int32_t> ids,
+                         std::span<const std::optional<std::string_view>> labels,
                          int selected, int flag) {
     (void)hwnd;
     (void)x;

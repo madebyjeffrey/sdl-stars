@@ -1133,7 +1133,7 @@ void AnimateAttack(APPSESSION &app, HDC hdc) {
 
 std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::uint8_t brc) {
     std::int16_t fAttack;
-    const char *rgsz[40];
+    std::optional<std::string_view> rgsz[40];
     std::int16_t i;
     std::int16_t c;
     char    rgch[1536];

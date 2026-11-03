@@ -2565,7 +2565,7 @@ void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
     std::array<char, cchCatalogText> szCatalogMenuText{};
     std::int16_t i,cMax,iSkip,fRet;
     char sz255[2];
-    const char *rgszZip[11];
+    std::optional<std::string_view> rgszZip[11];
     ZIPORDER rgzo[4];
     TASKXPORT *lptxp;
             sz255[0] = -1;

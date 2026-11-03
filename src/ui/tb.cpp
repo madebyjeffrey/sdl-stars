@@ -303,7 +303,7 @@ static POINT16 PtToolbarMenu(APPSESSION &app, ToolbarButton itb) {
 void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
     std::uint16_t grbitNew;
     POINT16  pt;
-    const char *rgszScan[12];
+    std::optional<std::string_view> rgszScan[12];
     std::int16_t  c;
     std::int16_t  i;
     std::uint16_t grbit;

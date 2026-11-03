@@ -883,7 +883,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
     HtMineType ht;
     PART       part;
     char       rgsz[16][32];
-    const char *rgpsz[16];
+    std::optional<std::string_view> rgpsz[16];
     std::int16_t    c;
     FLEET     *lpfl;
     std::int16_t    rgid[16];
@@ -898,7 +898,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
     SCAN       scan;
     std::int16_t    rgi[9];
     std::int16_t    iChecked;
-    const char *psz[9];
+    std::optional<std::string_view> psz[9];
     std::int32_t    rglQuan[3];
     std::int32_t    rglT[3];
     std::int16_t    ifl;

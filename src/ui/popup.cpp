@@ -8,6 +8,15 @@
 #include "planet_query_io.h"
 #include "part_query_io.h"
 #include "race_query_io.h"
+#include <string>
+
+static void EscapePopupMenuLabel(std::string &szTarget, std::string_view szText) {
+    szTarget.clear();
+    for (char ch : szText) {
+        szTarget.push_back(ch);
+        if (ch == '&') szTarget.push_back('&');
+    }
+}
 
 BattleUnitFlags mpimdgrbitBU[8] = {grBuClassUnarmed, grBuClassUnarmed, grBuClassScout,   grBuClassWarship,
                                    grBuClassUtility, grBuClassBomber,  grBuClassUnarmed, grBuClassUnarmed};
@@ -404,19 +413,19 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
 }
 
 std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t cString,
-                       std::span<const std::int32_t> rgids, std::span<const char *const> rgsz,
+                       std::span<const std::int32_t> rgids,
+                       std::span<const std::optional<std::string_view>> rgsz,
                        std::int16_t iChecked, std::int16_t fRightBtn) {
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
-    const char *pszTitle;
+    std::string szTitle;
     std::int16_t tpm;
     POINT16 pt;
     std::int16_t i;
-    char    szTemp[128];
+    std::string szTemp;
     HMENU   hmenuSub;
     HMENU   hmenuPopup;
-    char   *pszT;
-    const char   *psz;
+    std::string_view szText;
     win32::MSG     msg;
     std::int16_t fChecked;
     std::int16_t fCheckedCur;
@@ -436,67 +445,51 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
                 win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, nullptr);
             } else {
                 if (rgids[i] & 0x10000000) {
-                    psz = "Deep Space";
+                    szText = "Deep Space";
                 } else if (rgids[i] & 0x40000000) {
                     szCatalogPsz = TextIO().pfnCompressed(app, static_cast<StringId>(LOWORD(rgids[i])));
-                    psz = szCatalogPsz.data();
+                    szText = szCatalogPsz.data();
                 } else if (rgids[i] & 0x20000000) {
                     szObjectName = PszGetThingName(app, LOWORD(rgids[i]));
-                    psz = szObjectName.data();
+                    szText = szObjectName.data();
                 } else if (rgids[i] & 0x80000000) {
                     szObjectName = PszGetFleetName(app, LOWORD(rgids[i]) | 0x8000);
-                    psz = szObjectName.data();
+                    szText = szObjectName.data();
                 } else {
                     szObjectName = TextIO().pfnPlanetName(app, LOWORD(rgids[i]));
-                    psz = szObjectName.data();
+                    szText = szObjectName.data();
                 }
-                pszT = szTemp;
-                while (*psz != 0) {
-                    if ((*pszT++ = *psz++) == '&') {
-                        *pszT++ = '&';
-                    }
-                }
-                *pszT = 0;
-                win32::AppendMenuA(hmenuPopup, i == iChecked ? win32::MF_CHECKED : win32::MF_BYCOMMAND, i + 15000, szTemp);
+                EscapePopupMenuLabel(szTemp, szText);
+                win32::AppendMenuA(hmenuPopup, i == iChecked ? win32::MF_CHECKED : win32::MF_BYCOMMAND, i + 15000, szTemp.c_str());
             }
         } else if (!rgsz[i]) {
-            pszTitle = rgsz[i + 1];
+            if (static_cast<std::size_t>(i + 1) >= static_cast<std::size_t>(cString) || !rgsz[i + 1]) {
+                win32::DestroyMenu(hmenuPopup);
+                return -1;
+            }
+            szTitle = *rgsz[i + 1];
             fChecked = rgids.empty() ? 0 : LOWORD(rgids[i + 1]);
             hmenuSub = win32::CreatePopupMenu();
-            for (i += 2; i < cString && rgsz[i]; i++) {
+            for (i += 2; i < cString && rgsz[i].has_value(); i++) {
                 if (rgids.empty()) {
                     fCheckedCur = i == iChecked;
                     fChecked |= fCheckedCur;
                 } else {
                     fCheckedCur = LOWORD(rgids[i]);
                 }
-                if (*rgsz[i] == -1 && rgsz[i][1] == 0) {
+                if (rgsz[i]->size() == 1 && static_cast<unsigned char>((*rgsz[i])[0]) == 0xff) {
                     win32::AppendMenuA(hmenuSub, win32::MF_SEPARATOR, 0, nullptr);
                 } else {
-                    pszT = szTemp;
-                    psz = rgsz[i];
-                    while (*psz != 0) {
-                        if ((*pszT++ = *psz++) == '&') {
-                            *pszT++ = '&';
-                        }
-                    }
-                    *pszT = 0;
-                    win32::AppendMenuA(hmenuSub, !fCheckedCur ? win32::MF_BYCOMMAND : win32::MF_CHECKED, i + 15000, szTemp);
+                    EscapePopupMenuLabel(szTemp, *rgsz[i]);
+                    win32::AppendMenuA(hmenuSub, !fCheckedCur ? win32::MF_BYCOMMAND : win32::MF_CHECKED, i + 15000, szTemp.c_str());
                 }
             }
-            win32::AppendMenuA(hmenuPopup, (!fChecked ? 0 : 8) | 0x10, reinterpret_cast<UINT_PTR>(hmenuSub), pszTitle);
-        } else if (*rgsz[i] == -1 && rgsz[i][1] == 0) {
+            win32::AppendMenuA(hmenuPopup, (!fChecked ? 0 : 8) | 0x10, reinterpret_cast<UINT_PTR>(hmenuSub), szTitle.c_str());
+        } else if (rgsz[i]->size() == 1 && static_cast<unsigned char>((*rgsz[i])[0]) == 0xff) {
             win32::AppendMenuA(hmenuPopup, win32::MF_SEPARATOR, 0, nullptr);
         } else {
-            pszT = szTemp;
-            psz = rgsz[i];
-            while (*psz != 0) {
-                if ((*pszT++ = *psz++) == '&') {
-                    *pszT++ = '&';
-                }
-            }
-            *pszT = 0;
-            win32::AppendMenuA(hmenuPopup, (iChecked == -2 ? rgids[i] : i == iChecked) == 0 ? win32::MF_BYCOMMAND : win32::MF_CHECKED, i + 15000, szTemp);
+            EscapePopupMenuLabel(szTemp, *rgsz[i]);
+            win32::AppendMenuA(hmenuPopup, (iChecked == -2 ? rgids[i] : i == iChecked) == 0 ? win32::MF_BYCOMMAND : win32::MF_CHECKED, i + 15000, szTemp.c_str());
         }
     }
     if (fRightBtn) {
