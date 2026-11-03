@@ -69,7 +69,11 @@ LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // CWheelNotches gathers wheel deltas into notches and CWheelLines gives the
 // lines a notch scrolls (see nativeui.c).
 std::int16_t FRouteMouseWheel(win32::MSG *pmsg);
-std::int16_t CWheelNotches(std::int16_t *pdWheel, std::int16_t dWheel);
+struct WHEELNOTCHESRESULT {
+    std::int16_t cNotches;
+    std::int16_t dRemainder;
+};
+WHEELNOTCHESRESULT CWheelNotches(std::int16_t dAccumulated, std::int16_t dWheel);
 std::int16_t CWheelLines(std::int16_t cPage);
 
 #endif

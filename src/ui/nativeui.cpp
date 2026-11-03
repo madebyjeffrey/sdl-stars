@@ -88,20 +88,19 @@ std::int16_t FRouteMouseWheel(win32::MSG *pmsg) {
     return 1;
 }
 
-// CWheelNotches adds a wheel delta to *pdWheel and returns the whole notches
-// (WHEEL_DELTA each) gathered, keeping the remainder. Touchpads and fine
-// wheels send part notches. A change of direction starts over.
-std::int16_t CWheelNotches(std::int16_t *pdWheel, std::int16_t dWheel) {
+// CWheelNotches adds a wheel delta to the accumulated amount and returns the
+// whole notches (WHEEL_DELTA each) gathered with the remainder. Touchpads and
+// fine wheels send part notches. A change of direction starts over.
+WHEELNOTCHESRESULT CWheelNotches(std::int16_t dAccumulated, std::int16_t dWheel) {
     std::int32_t d;
     std::int16_t c;
 
-    d = *pdWheel;
+    d = dAccumulated;
     if ((d < 0 && dWheel > 0) || (d > 0 && dWheel < 0))
         d = 0;
     d += dWheel;
     c = static_cast<std::int16_t>((d / win32::WHEEL_DELTA));
-    *pdWheel = static_cast<std::int16_t>((d - c * win32::WHEEL_DELTA));
-    return c;
+    return {c, static_cast<std::int16_t>((d - c * win32::WHEEL_DELTA))};
 }
 
 // CWheelLines returns how many lines a wheel notch scrolls, from the

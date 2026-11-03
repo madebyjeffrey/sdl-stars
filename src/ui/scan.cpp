@@ -50,6 +50,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     std::int16_t     fChgScan;
     SCAN        scan;
     std::int16_t     c;
+    WHEELNOTCHESRESULT wheel;
     THING      *lpth;
     FLEET      *lpfl;
     std::int16_t     fSep;
@@ -357,7 +358,9 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // sideways, wheel down to the right.
         d = win32::GET_WHEEL_DELTA_WPARAM(wParam);
         if (msg == win32::WM_MOUSEWHEEL && !(win32::GET_KEYSTATE_WPARAM(wParam) & win32::MK_SHIFT)) {
-            c = CWheelNotches(&dWheelZoom, d);
+            wheel = CWheelNotches(dWheelZoom, d);
+            dWheelZoom = wheel.dRemainder;
+            c = wheel.cNotches;
             if (c == 0)
                 break;
             iScanNew = static_cast<ScanZoom>(app.state.iScanZoom + c);
@@ -379,7 +382,9 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             break;
         }
-        c = CWheelNotches(&dWheelScroll, msg == win32::WM_MOUSEWHEEL ? -d : d);
+        wheel = CWheelNotches(dWheelScroll, msg == win32::WM_MOUSEWHEEL ? -d : d);
+        dWheelScroll = wheel.dRemainder;
+        c = wheel.cNotches;
         if (c == 0)
             break;
         d = c * CWheelLines(app.lpui->dScanPage / app.lpui->dScanInc) * app.lpui->dScanInc;

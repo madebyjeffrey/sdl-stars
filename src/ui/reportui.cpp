@@ -44,6 +44,7 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     HDC         hdc;
     HMENU       hmenu;
     RECT        rc;
+    WHEELNOTCHESRESULT wheel;
     std::int16_t     i;
     std::int16_t     dx;
     std::uint16_t    swp;
@@ -160,14 +161,18 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         // paths, which clamp and redraw.
         i = win32::GET_WHEEL_DELTA_WPARAM(wParam);
         if (msg == win32::WM_MOUSEWHEEL && !(win32::GET_KEYSTATE_WPARAM(wParam) & win32::MK_SHIFT)) {
-            cRow = CWheelNotches(&dWheelRows, i);
+            wheel = CWheelNotches(dWheelRows, i);
+            dWheelRows = wheel.dRemainder;
+            cRow = wheel.cNotches;
             if (cRow != 0) {
                 iNew = win32::GetScrollPos(app.lpui->vprptCur->hwndVScroll, win32::SB_CTL) - cRow * CWheelLines(app.lpui->vprptCur->cRowsVis - 1);
                 ControlIO().pfnSendMessage(hwnd, win32::WM_VSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, static_cast<WORD>(iNew)), reinterpret_cast<LPARAM>(app.lpui->vprptCur->hwndVScroll));
             }
             return 0;
         }
-        iCol = CWheelNotches(&dWheelCols, msg == win32::WM_MOUSEWHEEL ? -i : i);
+        wheel = CWheelNotches(dWheelCols, msg == win32::WM_MOUSEWHEEL ? -i : i);
+        dWheelCols = wheel.dRemainder;
+        iCol = wheel.cNotches;
         if (iCol != 0) {
             iNew = win32::GetScrollPos(app.lpui->vprptCur->hwndHScroll, win32::SB_CTL) + iCol;
             ControlIO().pfnSendMessage(hwnd, win32::WM_HSCROLL, win32::MAKEWPARAM(win32::SB_THUMBPOSITION, static_cast<WORD>(iNew)), reinterpret_cast<LPARAM>(app.lpui->vprptCur->hwndHScroll));

@@ -19,6 +19,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
     HDC         hdc;
     std::int16_t     i;
+    WHEELNOTCHESRESULT wheel;
     char       *psz;
     PAINTSTRUCT ps;
     std::int16_t     dy;
@@ -273,7 +274,9 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     case win32::WM_MOUSEWHEEL:
         if (app.state.gd.fSendMsgMode || (LOWORD(wParam) & (win32::MK_CONTROL | win32::MK_SHIFT))) return 0;
-        i = CWheelNotches(&dWheelMessages, static_cast<std::int16_t>(HIWORD(wParam)));
+        wheel = CWheelNotches(dWheelMessages, static_cast<std::int16_t>(HIWORD(wParam)));
+        dWheelMessages = wheel.dRemainder;
+        i = wheel.cNotches;
         while (i > 0) { ControlIO().pfnSendMessage(hwnd, win32::WM_KEYDOWN, win32::VK_UP, 1); i--; }
         while (i < 0) { ControlIO().pfnSendMessage(hwnd, win32::WM_KEYDOWN, win32::VK_DOWN, 1); i++; }
         return 0;

@@ -89,6 +89,7 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
 
     PLANETPANE *lp = LpPlanetPane(hwnd);
     RECT rc;
+    WHEELNOTCHESRESULT wheel;
     int iAxis, iCode, iPosition, d, c;
 
     switch (message) {
@@ -125,7 +126,9 @@ LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
     case win32::WM_MOUSEWHEEL:
     case win32::WM_MOUSEHWHEEL:
         if (!lp) return 0;
-        c = CWheelNotches(&lp->dWheel, static_cast<std::int16_t>(HIWORD(wParam)));
+        wheel = CWheelNotches(lp->dWheel, static_cast<std::int16_t>(HIWORD(wParam)));
+        lp->dWheel = wheel.dRemainder;
+        c = wheel.cNotches;
         if (c == 0) return 0;
         ControlIO().pfnGetClientRect(hwnd, &rc);
         d = StarsMax(1, app.state.dyArial8 + 4);
