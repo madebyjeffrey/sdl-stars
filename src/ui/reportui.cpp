@@ -21,6 +21,13 @@ static std::int16_t dWheelRows;
 static std::int16_t dWheelCols;
 static constexpr std::size_t cchDblDash = sizeof("-- ") - 1;
 
+static int ICompareNamePrefix(std::span<char> szBuffer, std::string_view szLeft, std::string_view szRight) {
+    std::size_t cchLeft;
+
+    cchLeft = CchCopyUtf8Prefix(szBuffer, szLeft);
+    return std::string_view{szBuffer.data(), cchLeft}.compare(szRight);
+}
+
 static void SetReportScrollInfo(HWND hwnd, int iMax, int cPage, int iPos, BOOL fRedraw) {
     SCROLLINFO si = {sizeof(si), win32::SIF_RANGE | win32::SIF_PAGE | win32::SIF_POS, 0, 0, 0, 0, 0};
 
@@ -1761,6 +1768,8 @@ void SortReportCache(APPSESSION &app, ReportType irpt, std::int16_t icol) {
 int ICompReport(APPSESSION &app, std::uint16_t *pid1, std::uint16_t *pid2) {
     std::array<char, 360> szObjectName{};
     std::array<char, 360> szReportText{};
+    PLANETNAMERESULT szPlanetName1{};
+    PLANETNAMERESULT szPlanetName2{};
     char         szT[80];
     std::int32_t      l2;
     std::int16_t      fAscending;
@@ -1831,12 +1840,9 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            szObjectName = TextIO().pfnPlanetName(app, lppl1->idRoute - 1).rgch;
-            psz = szObjectName.data();
-            CchCopyUtf8Prefix(std::span{szT}, psz);
-            szObjectName = TextIO().pfnPlanetName(app, lppl2->idRoute - 1).rgch;
-            psz = szObjectName.data();
-            iRet = std::strcmp(szT, psz);
+            szPlanetName1 = TextIO().pfnPlanetName(app, lppl1->idRoute - 1);
+            szPlanetName2 = TextIO().pfnPlanetName(app, lppl2->idRoute - 1);
+            iRet = ICompareNamePrefix(std::span{szT}, szPlanetName1.view(), szPlanetName2.view());
             break;
         case colPlanetDriverDest:
             if (lppl1->idFling == 0) {
@@ -1851,20 +1857,14 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            szObjectName = TextIO().pfnPlanetName(app, lppl1->idFling - 1).rgch;
-            psz = szObjectName.data();
-            CchCopyUtf8Prefix(std::span{szT}, psz);
-            szObjectName = TextIO().pfnPlanetName(app, lppl2->idFling - 1).rgch;
-            psz = szObjectName.data();
-            iRet = std::strcmp(szT, psz);
+            szPlanetName1 = TextIO().pfnPlanetName(app, lppl1->idFling - 1);
+            szPlanetName2 = TextIO().pfnPlanetName(app, lppl2->idFling - 1);
+            iRet = ICompareNamePrefix(std::span{szT}, szPlanetName1.view(), szPlanetName2.view());
             break;
         case colPlanetName:
-            szObjectName = TextIO().pfnPlanetName(app, lppl1->id).rgch;
-            psz = szObjectName.data();
-            CchCopyUtf8Prefix(std::span{szT}, psz);
-            szObjectName = TextIO().pfnPlanetName(app, lppl2->id).rgch;
-            psz = szObjectName.data();
-            iRet = std::strcmp(szT, psz);
+            szPlanetName1 = TextIO().pfnPlanetName(app, lppl1->id);
+            szPlanetName2 = TextIO().pfnPlanetName(app, lppl2->id);
+            iRet = ICompareNamePrefix(std::span{szT}, szPlanetName1.view(), szPlanetName2.view());
             break;
         case colPlanetProduction:
             ControlIO().pfnFillPlanetProdLB(app, nullptr, nullptr, lppl1);
