@@ -2704,7 +2704,8 @@
         "compatibility-status-apis-use-bool",
         "private-window-state-bools",
         "private-compatibility-helper-results-and-state-bools",
-        "private-ui-flags-use-bool"
+        "private-ui-flags-use-bool",
+        "linux-portal-chooser-span-and-named-response"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -4366,6 +4367,13 @@
         "source_commit": "f70dd69a",
         "scope": "Local message/race/report flags, private planet-pane and scanner snapshot booleans, and POINT16 conversion helpers.",
         "preserved": "Win32 cursor API callback remains BOOL."
+      },
+      "linux_portal_chooser_response": {
+        "status": "implemented; macOS and host gates pass; Linux-only source build and portal workflow pending",
+        "source_commit": "ff56d836",
+        "path_output": "FUriPath accepts std::span<char>; PATH_MAX capacity and terminator budget are preserved.",
+        "response": "IResponse returns PORTALRESPONSERESULT with failed/cancelled/selected kind and filter index instead of int status plus size_t output pointer.",
+        "linux_evidence": "Not available locally: dbus-1 development package is absent; Linux CI and dbus-run-session chooser coverage remain required."
       }
     },
     {
@@ -28255,6 +28263,31 @@
       "api_audit": "Private UI flags, planet-pane state, scanner snapshot flags, and POINT16 conversion helper results use bool. The GetCursorPos callback keeps the Win32 BOOL function-pointer type.",
       "platform": "Current-source Windows and Linux qualification remains open.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Type Linux portal chooser results",
+      "parent": "823f8920",
+      "source_commit": "ff56d836",
+      "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks; Linux-only filedialog_portal.cpp is not part of the macOS target.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; both regressions match all 519 checkpoints with zero differences/errors.",
+      "api_audit": "FUriPath now receives std::string_view and std::span<char> instead of a raw output pointer and separate capacity. IResponse returns a named response kind and filter index instead of a tri-state int plus a filter output pointer. URI decoding retains the same PATH_MAX-sized output buffer and rejects the same malformed/oversized inputs.",
+      "platform": "Linux-specific compile and dbus-run-session chooser tests remain pending; dbus-1 development headers are unavailable in this macOS checkout.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -29732,14 +29765,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "f70dd69a",
-  "latest_batch_status": "Source commit f70dd69a verified locally: macOS SDL Debug build, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. L05/L06 audits and current-source Windows/Linux qualification remain open.",
+  "latest_source_commit": "ff56d836",
+  "latest_batch_status": "Source commit ff56d836 has passed all locally available macOS/host gates and regressions. The Linux-only portal source is not compiled on this host; its Linux build and chooser tests remain unverified. L05/L06 audits and current-source Windows/Linux qualification remain open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "f70dd69a",
+      "source_commit": "ff56d836",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -29752,7 +29785,7 @@
         "L06 remaining-native-file-path-results"
       ],
       "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser coverage.",
-      "interpretation": "Four broad code audit substeps remain open; they are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private BOOL helper results and private UI BOOL flags. The only remaining BOOL spelling under src is the Win32 GetCursorPos callback signature. Remaining L05 text/ownership and L06 service/path audits still need line-by-line closure; current-source Windows/Linux qualification and chooser coverage are also pending.",
+      "interpretation": "Four broad code audit substeps remain open; they are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private BOOL helper results or private UI BOOL flags. Portal chooser output pointer/capacity and status/filter output-pointer interfaces are now typed, but Linux compilation and chooser tests remain pending. Remaining L05 text/ownership and L06 service/path audits still need line-by-line closure; current-source Windows/Linux qualification and chooser coverage are pending.",
       "production_cost_output_api": "GetProductionCosts uses std::span<std::int32_t, 4>; callers no longer reinterpret signed int32 arrays as uint32_t output pointers. Fixed extent, storage widths, and legacy 32-bit wrap behavior are preserved.",
       "posix_getcwd_and_mkdir_compatibility_shims": 0,
       "redundant_ai_recipe_byte_pointer_casts": 0,
@@ -29783,7 +29816,10 @@
       "private_static_BOOL_flags_converted_in_batch": 6,
       "app_source_BOOL_relics_remaining": "Only the BOOL callback type for win32::GetCursorPos remains in src; it preserves the modeled SDK function pointer signature.",
       "private_ui_BOOL_helper_results_remaining": 0,
-      "private_ui_BOOL_flags_converted_in_batch": "All identified private UI flags and POINT16 conversion results in six touched files."
+      "private_ui_BOOL_flags_converted_in_batch": "All identified private UI flags and POINT16 conversion results in six touched files.",
+      "portal_response_raw_status_and_filter_output_pointer_remaining": 0,
+      "portal_path_output_pointer_and_capacity_pair_remaining": 0,
+      "portal_linux_validation": "Pending: this macOS checkout lacks dbus-1 development headers; require Linux compile and dbus-run-session chooser suite."
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -29797,7 +29833,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "f70dd69a",
+    "source_head": "ff56d836",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -29934,12 +29970,12 @@
       "comparison": "Exact length plus SDL_strncasecmp over the basename view."
     }
   },
-  "latest_change": "Use bool for private UI flags",
+  "latest_change": "Type Linux portal chooser results",
   "latest_batch_verification": {
-    "batch": "Use bool for private UI flags",
-    "parent": "b7b8ef67",
-    "source_commit": "f70dd69a",
-    "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
+    "batch": "Type Linux portal chooser results",
+    "parent": "823f8920",
+    "source_commit": "ff56d836",
+    "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks; Linux-only filedialog_portal.cpp is not part of the macOS target.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -29956,15 +29992,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; both regressions match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Private UI flags, planet-pane state, scanner snapshot flags, and POINT16 conversion helper results use bool. The GetCursorPos callback keeps the Win32 BOOL function-pointer type.",
-    "platform": "Current-source Windows and Linux qualification remains open.",
+    "api_audit": "FUriPath now receives std::string_view and std::span<char> instead of a raw output pointer and separate capacity. IResponse returns a named response kind and filter index instead of a tri-state int plus a filter output pointer. URI decoding retains the same PATH_MAX-sized output buffer and rejects the same malformed/oversized inputs.",
+    "platform": "Linux-specific compile and dbus-run-session chooser tests remain pending; dbus-1 development headers are unavailable in this macOS checkout.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use bool for private UI flags",
-    "parent": "b7b8ef67",
-    "source_commit": "f70dd69a",
-    "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
+    "batch": "Type Linux portal chooser results",
+    "parent": "823f8920",
+    "source_commit": "ff56d836",
+    "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks; Linux-only filedialog_portal.cpp is not part of the macOS target.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -29981,15 +30017,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; both regressions match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Private UI flags, planet-pane state, scanner snapshot flags, and POINT16 conversion helper results use bool. The GetCursorPos callback keeps the Win32 BOOL function-pointer type.",
-    "platform": "Current-source Windows and Linux qualification remains open.",
+    "api_audit": "FUriPath now receives std::string_view and std::span<char> instead of a raw output pointer and separate capacity. IResponse returns a named response kind and filter index instead of a tri-state int plus a filter output pointer. URI decoding retains the same PATH_MAX-sized output buffer and rejects the same malformed/oversized inputs.",
+    "platform": "Linux-specific compile and dbus-run-session chooser tests remain pending; dbus-1 development headers are unavailable in this macOS checkout.",
     "diff_check": "Pass.",
-    "status": "Source commit f70dd69a verified locally; ledger checkpoint recorded.",
+    "status": "Source commit ff56d836 recorded; local gates pass, Linux-only portal compilation and chooser tests remain pending.",
     "remaining_work": [
       "L05: finish bounded text destination review and post-migration scratch/borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path results.",
-      "L08: current-source Windows/Linux qualification and full final inventory review."
+      "L06: finish remaining buffer/length service interfaces and native file/path results; qualify the portal response change on Linux.",
+      "L08: current-source Windows/Linux qualification, full chooser coverage and final inventory review."
     ],
-    "next": "Continue line-by-line L05 text/ownership and L06 service/path audits, then qualify current-source Windows/Linux."
+    "next": "Continue L05 and L06 audits; obtain Linux build and dbus-run-session evidence for the portal source before treating this batch as fully verified."
   }
 }
