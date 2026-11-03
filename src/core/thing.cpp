@@ -49,7 +49,7 @@ THING *LpthNew(APPSESSION &app, std::int16_t iplr, ThingType ith) {
         std::memmove(lpth + 1, lpth, (app.state.cThing - i) * sizeof(THING));
     }
     app.state.cThing++;
-    std::memcpy(lpth, &thNew, sizeof(THING));
+    *lpth = thNew;
     return lpth;
 }
 
