@@ -118,10 +118,6 @@ template<class... ARGS>
 int CchSnprintf(std::span<char> psz, std::string_view szFormat, ARGS... args) {
     return CchFormatNativeArgs(CchFormatNative, psz, szFormat, args...);
 }
-template<class... ARGS>
-int CchSnprintf(std::span<char> psz, const char *pszFormat, ARGS... args) {
-    return CchFormatNativeArgs(CchFormatNative, psz, pszFormat, args...);
-}
 std::int32_t LMulDiv(std::int32_t lNumber, std::int32_t lNumerator, std::int32_t lDenominator);
 
 
