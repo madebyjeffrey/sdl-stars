@@ -172,10 +172,12 @@ void ReadIniIdentity(APPSESSION &app, std::string_view szIdentity) {
     }
 }
 
-void ReadIniRecent(APPSESSION &app, const char *szSection, const char *szEntry, const char *szIniFile, std::string_view szRecentPath) {
+void ReadIniRecent(APPSESSION &app, std::string_view szSection, std::string_view szEntry, std::string_view szIniFile, std::string_view szRecentPath) {
     std::int16_t i, iPass;
     std::int16_t cch;
     std::string szEntryCurrent{szEntry};
+    std::string szSectionOwned{szSection};
+    std::string szIniFileOwned{szIniFile};
 
     if (szRecentPath.size() > 3) {
         app.state.ini.fStartupFile = 1;
@@ -188,7 +190,7 @@ void ReadIniRecent(APPSESSION &app, const char *szSection, const char *szEntry, 
     }
     for (i = 0; i < 9; i++) {
         szEntryCurrent.back() = static_cast<char>(i + '1');
-        cch = ProfileTextIO().pfnReadString(szSection, szEntryCurrent.c_str(), ".", app.lpui->vrgszMRU + 256 * i, 256, szIniFile);
+        cch = ProfileTextIO().pfnReadString(szSectionOwned.c_str(), szEntryCurrent.c_str(), ".", app.lpui->vrgszMRU + 256 * i, 256, szIniFileOwned.c_str());
         if (cch < 4) {
             app.lpui->vrgszMRU[i * 256] = 0;
         }

@@ -8,5 +8,5 @@ void ReadIniPresets(APPSESSION &app, std::string_view szIniFile);
 void WriteIniPresets(APPSESSION &app, std::string_view szIniFile);
 void ReadIniSelection(APPSESSION &app, std::string_view szSelection);
 void ReadIniIdentity(APPSESSION &app, std::string_view szIdentity);
-void ReadIniRecent(APPSESSION &app, const char *szSection, const char *szEntry, const char *szIniFile, std::string_view szRecentPath);
+void ReadIniRecent(APPSESSION &app, std::string_view szSection, std::string_view szEntry, std::string_view szIniFile, std::string_view szRecentPath);
 #endif

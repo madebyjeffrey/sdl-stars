@@ -7,6 +7,7 @@
 #include "ownership.h"
 #include "uistate.h"
 #include <limits>
+#include <string>
 #include <stars_compat.h>
 
 std::uint8_t rgPalGray[20] = {10, 20, 30, 40, 61, 71, 81, 92, 112, 122, 133, 143, 161, 171, 182, 193, 215, 225, 235, 245};
@@ -369,7 +370,7 @@ void InitTiles(APPSESSION &app) {
     return;
 }
 
-void GetIniWinRc(APPSESSION &app, const char *szSection, const char *szIniFile, StringId ids, WN *pwn) {
+void GetIniWinRc(APPSESSION &app, std::string_view szSection, std::string_view szIniFile, StringId ids, WN *pwn) {
     std::int16_t fInitalized;
     std::int16_t fMinimized;
     std::int16_t fMaximized;
@@ -382,9 +383,11 @@ void GetIniWinRc(APPSESSION &app, const char *szSection, const char *szIniFile, 
     std::int16_t rg[4];
     std::size_t ich;
     char ch;
+    std::string szSectionOwned{szSection};
+    std::string szIniFileOwned{szIniFile};
 
     TextIO().pfnCchGetString(app, ids, std::span{szEntry});
-    cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
+    cch = ProfileTextIO().pfnReadString(szSectionOwned.c_str(), szEntry, "X", app.state.szWork, 20, szIniFileOwned.c_str());
     if (cch != 17 || (app.state.szWork[0] != 'M' && app.state.szWork[0] != 'R' && app.state.szWork[0] != 'I')) {
     NoRc:
         rc.left = -32768;
