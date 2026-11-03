@@ -256,7 +256,8 @@
         "profile-text-boundaries-use-views",
         "wildcard-pattern-parsing-uses-views",
         "owned-menu-labels-use-borrowed-tab-slices",
-        "bounded-help-path-and-folder-name-validation-views"
+        "bounded-help-path-and-folder-name-validation-views",
+        "font-style-and-compression-character-searches-use-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -1531,6 +1532,20 @@
           "batch": "L05 help and folder paths use bounded views",
           "source_commit": "19ff02aa",
           "change": "WinHelp bounds its input to PATH_MAX before slicing/searching path separators. New-folder validation uses a string_view for empty, separator and dot-name checks.",
+          "macos_debug_build": "make compile passes with strict warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 font and compressed-character searches use bounded views",
+          "source_commit": "274525b0",
+          "change": "Font style extraction and compressed-character lookup use string_view searches. The compressed table view includes its trailing NUL, retaining the old strchr result for byte zero.",
           "macos_debug_build": "make compile passes with strict warnings.",
           "desktop_unit_tests": "18/18 pass.",
           "host_unit_tests": "29/29 pass.",
@@ -3069,7 +3084,7 @@
       "id": "L08",
       "status": "active",
       "current_macro_audit": {
-        "status": "Local source audit refreshed at 19ff02aa: no production C translation units or owned function-like API macros. Windows/Linux current-source qualification and chooser full-coverage review remain pending.",
+        "status": "Local source audit refreshed at 274525b0: no production C translation units or owned function-like API macros. Windows/Linux current-source qualification and chooser full-coverage review remain pending.",
         "change": "Replaced SDL_arraysize with std::size; SDL_zero with C++ aggregate initialization/reset; INT32_C/UINT32_C/UINT64_C with explicitly typed C++ integer literals. Updated resource constant extraction for typed forms.",
         "search": "No SDL convenience family or INT/UINT fixed-width literal macros remain in scanned owned application or ordinary test C++ sources. Remaining uses are isolated to SDK/reference fixtures and the independent C precision probe.",
         "remaining": "Qualify the current develop source on Windows and Linux, including Linux portal/X11 chooser coverage and Windows SDK/client build.",
@@ -3077,10 +3092,10 @@
         "api_like_names": "LOWORD, HIWORD, LOBYTE, HIBYTE and MAKELONG in src/platform/value.h are typed constexpr C++ functions. MAKEWPARAM, MAKELPARAM, MAKEINTRESOURCE, RGB, PALETTEINDEX, PALETTERGB and GET_*_WPARAM in wincompat_values.h are typed C++ functions/templates.",
         "preprocessor": "Remaining owned conditionals select platform/compiler/test configurations or guard headers. Third-party free-api headers retain SDK macros under compat/win32/upstream; these are excluded from owned-code cleanup.",
         "source_files": "44 tracked .c translation units remain, all under tests; none are production under src or compat/win32.",
-        "last_reviewed_source_head": "19ff02aa",
+        "last_reviewed_source_head": "274525b0",
         "last_reviewed_date": "2026-11-02",
         "final_local_inventory": {
-          "source_head": "19ff02aa",
+          "source_head": "274525b0",
           "date": "2026-11-02",
           "tracked_c_translation_units": 44,
           "production_c_translation_units": 0,
@@ -3094,7 +3109,7 @@
           "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
           "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
           "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-          "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified; local macOS and host verification passes through 19ff02aa."
+          "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified; local macOS and host verification passes through 274525b0."
         }
       },
       "linux_desktop_execution_budget": {
@@ -3165,7 +3180,7 @@
         "qualified_by": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41357206253"
       },
       "current_source_checkpoint": {
-        "source_head": "19ff02aa",
+        "source_head": "274525b0",
         "tracked_c_translation_units": 44,
         "production_c_translation_units": 0,
         "application_api_function_like_macros": 0,
@@ -26849,7 +26864,7 @@
     ],
     "parent": "78860907",
     "c_macro_audit": {
-      "source_head": "19ff02aa",
+      "source_head": "274525b0",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26863,7 +26878,7 @@
       "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 19ff02aa."
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 274525b0."
     }
   }
 }
