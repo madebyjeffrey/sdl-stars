@@ -2293,7 +2293,8 @@
         "ensure-native-directory-return-bool",
         "native-directory-enumeration-result-and-type-erased-callback-use-bool",
         "native-directory-context-callbacks-return-bool",
-        "native-stream-error-eof-predicates-return-bool"
+        "native-stream-error-eof-predicates-return-bool",
+        "vcr-stats-value-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -3208,6 +3209,23 @@
           "baseline": "Unchanged. Snapshot serialization and scanner selection behavior remain unchanged. Required snapshot arguments use const references and reject no representable state that was valid before.",
           "platform": "Current-source Windows and Linux qualification remains pending.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 VCR statistics return a value",
+          "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
+          "macos_sdl_debug_build": "make compile passes with strict warnings; all changed translation units compile.",
+          "desktop_unit_tests": "18/18 pass. The first full run timed out in sdl_test_turn3; that test passed alone and the complete suite passed on rerun.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. GetVCRStats preserves its calculations and now returns armor, DV, shields and ship count together; no disk or wire structures changed.",
+          "api_audit": "Removed the optional pointer-output interface. All three production call sites and the battle unit caller consume VCRSTATS by value.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
         }
       ],
       "roman_output": {
@@ -3467,6 +3485,29 @@
         "failure": "Allocation failure returns -1 with ENOMEM; oversized C++ container lengths return -1 with EOVERFLOW.",
         "verification": "Strict MinGW C++20 compile and link of the chooser contract test pass. Existing test covers Unicode conversion, filter framing, selection, cancellation, output bounds and CWD restoration. Wine could not launch: wineserver bind was denied by the sandbox. macOS Debug build, desktop/host units, full regressions and tutorial smoke pass.",
         "baseline": "Unchanged."
+      },
+      "vcr_stats_results": {
+        "status": "complete; locally verified",
+        "interface": "GetVCRStats returns VCRSTATS with armor, damage value, shield damage and remaining ship count. Nullable output pointers are removed.",
+        "callers": "Build hull selection, VCR summary rendering, and the battle unit check consume the named result fields.",
+        "contract": "Calculation order and values are unchanged; VCRSTATS is transient UI data and does not affect packed records or saved files.",
+        "verification": {
+          "batch": "L06 VCR statistics return a value",
+          "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
+          "macos_sdl_debug_build": "make compile passes with strict warnings; all changed translation units compile.",
+          "desktop_unit_tests": "18/18 pass. The first full run timed out in sdl_test_turn3; that test passed alone and the complete suite passed on rerun.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "baseline": "Unchanged. GetVCRStats preserves its calculations and now returns armor, DV, shields and ship count together; no disk or wire structures changed.",
+          "api_audit": "Removed the optional pointer-output interface. All three production call sites and the battle unit caller consume VCRSTATS by value.",
+          "platform": "Current-source Windows and Linux qualification remains outstanding.",
+          "diff_check": "Pass."
+        }
       }
     },
     {
@@ -27620,10 +27661,10 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 native file queries return bool",
-    "status": "Source commit 740a7c9b verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
-    "parent": "8d9c1d54",
-    "change": "FFileExists and FFileReadOnly now return bool instead of int16_t; every caller consumes them as conditions, and their exact 0/1 values remain unchanged.",
+    "batch": "L06 VCR statistics return a value",
+    "status": "Source commit 25513dc7 verified locally; ledger checkpoint pending publication.",
+    "parent": "926f2fa6459f17bd8d95c9affc18d98f4d646c44",
+    "change": "GetVCRStats returns a named VCRSTATS value instead of writing through four optional output pointers.",
     "verification": {
       "batch": "L06 native file queries return bool",
       "source_commits": [
@@ -28040,7 +28081,7 @@
       }
     ],
     "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "latest_change": "L05 import cleanup roots use string views",
+    "latest_change": "L06 VCR statistics return a value",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -28059,15 +28100,14 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
-    "latest_batch_status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
+    "latest_batch_status": "Source commit 25513dc7 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
-      "batch": "L05 import cleanup roots use string views",
-      "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
-      "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
-      "desktop_unit_tests": "18/18 pass.",
+      "batch": "L06 VCR statistics return a value",
+      "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
+      "macos_sdl_debug_build": "make compile passes with strict warnings; all changed translation units compile.",
+      "desktop_unit_tests": "18/18 pass. The first full run timed out in sdl_test_turn3; that test passed alone and the complete suite passed on rerun.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -28075,18 +28115,16 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
-      "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
-      "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass.",
-      "ledger_commit": "4155e4b0ee388e05d227dc38ca3b0b845b7141fa"
+      "baseline": "Unchanged. GetVCRStats preserves its calculations and now returns armor, DV, shields and ship count together; no disk or wire structures changed.",
+      "api_audit": "Removed the optional pointer-output interface. All three production call sites and the battle unit caller consume VCRSTATS by value.",
+      "platform": "Current-source Windows and Linux qualification remains outstanding.",
+      "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L05 import cleanup roots use string views",
-      "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
+      "batch": "L06 VCR statistics return a value",
+      "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
-      "desktop_unit_tests": "18/18 pass.",
+      "desktop_unit_tests": "18/18 pass on full rerun; the earlier isolated timeout passed alone and did not reproduce.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -28094,18 +28132,17 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
-      "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
-      "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
+      "baseline": "Unchanged; VCR combat calculations and serialized state are unchanged.",
+      "api_audit": "GetVCRStats now returns VCRSTATS by value; all callers migrated from optional output pointers.",
+      "platform": "Current-source Windows and Linux qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit 25513dc7 verified locally; ledger checkpoint pending publication.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification.",
-      "ledger_commit": "4155e4b0ee388e05d227dc38ca3b0b845b7141fa"
+      "next": "Continue remaining L05 bounded-text and scratch/borrowed-return audits, L06 buffer and native file/path results, and L08 Windows/Linux qualification."
     }
   },
   "milestone_d_checkpoint": {
@@ -28620,8 +28657,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
-  "latest_batch_status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
+  "latest_batch_status": "Source commit 25513dc7 verified locally. Strict macOS SDL Debug build, desktop units 18/18, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28745,13 +28782,12 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L05 import cleanup roots use string views",
+  "latest_change": "L06 VCR statistics return a value",
   "latest_batch_verification": {
-    "batch": "L05 import cleanup roots use string views",
-    "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
-    "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
-    "desktop_unit_tests": "18/18 pass.",
+    "batch": "L06 VCR statistics return a value",
+    "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
+    "macos_sdl_debug_build": "make compile passes with strict warnings; all changed translation units compile.",
+    "desktop_unit_tests": "18/18 pass. The first full run timed out in sdl_test_turn3; that test passed alone and the complete suite passed on rerun.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
@@ -28759,17 +28795,16 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
-    "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
-    "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
+    "baseline": "Unchanged. GetVCRStats preserves its calculations and now returns armor, DV, shields and ship count together; no disk or wire structures changed.",
+    "api_audit": "Removed the optional pointer-output interface. All three production call sites and the battle unit caller consume VCRSTATS by value.",
+    "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L05 import cleanup roots use string views",
-    "source_commit": "6391e1feb69fe6f7c06b518289b98d99a4a7e58a",
+    "batch": "L06 VCR statistics return a value",
+    "source_commit": "25513dc74897008b6985ea399f9230f0bc60f9ac",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_workflow_tests": "library-publication witness, game-library safety, game-library delete and file-workflow tests pass (4/4).",
-    "desktop_unit_tests": "18/18 pass.",
+    "desktop_unit_tests": "18/18 pass on full rerun; the earlier isolated timeout passed alone and did not reproduce.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
@@ -28777,16 +28812,16 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; recursive import/export cleanup still removes the same staged entries and directories.",
-    "api_audit": "RemoveImportFile, RemoveImportChild and RemoveImportTreeEntry now take std::string_view roots. Recursive FNativeEnumerateDirectory contexts carry bounded views for the duration of each synchronous enumeration.",
-    "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
+    "baseline": "Unchanged; VCR combat calculations and serialized state are unchanged.",
+    "api_audit": "GetVCRStats now returns VCRSTATS by value; all callers migrated from optional output pointers.",
+    "platform": "Current-source Windows and Linux qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit 6391e1fe verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "status": "Source commit 25513dc7 verified locally; ledger checkpoint pending publication.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
-    "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification."
+    "next": "Continue remaining L05 bounded-text and scratch/borrowed-return audits, L06 buffer and native file/path results, and L08 Windows/Linux qualification."
   }
 }
