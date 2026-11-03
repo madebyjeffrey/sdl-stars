@@ -28337,8 +28337,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "797ed2ce48736fbe34209f5aae1e4bc073880a1a",
-  "latest_batch_status": "Source committed as 797ed2ce. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "bac51916",
+  "latest_batch_status": "Source committed as 9c7ee0cf and bac51916. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28354,9 +28354,9 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Seventy-five redundant UI length rescans have been removed across tracked batches, including popup, report, message, VCR, mine and research result/count paths.",
-    "source_head": "797ed2ce48736fbe34209f5aae1e4bc073880a1a",
-    "strlen_occurrence_inventory": "42 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "ui_text_lengths": "Seventy-six redundant UI length rescans have been removed across tracked batches, including popup, report, message, VCR, mine, research and mine-window title paths.",
+    "source_head": "bac51916",
+    "strlen_occurrence_inventory": "41 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28374,6 +28374,35 @@
     "message_vcr_text_lengths": "Message DrawTextA reuses a single measured byte count; VCR damage labels use CchGetString counts. Two redundant std::strlen calls were removed.",
     "chooser_list_search_lengths": "The Linux portal sender name length is measured once and reused for admission and copy; the compatibility list search query is measured once before the item loop. Linux portal compilation remains pending current-source Linux qualification.",
     "portal_folder_zip_separator_lengths": "The Linux portal folder helper consumes std::string_view and its carried byte length; ZIP path sizing uses the constexpr separator length. Two std::strlen calls were removed; current Linux backend qualification remains pending.",
-    "mine_research_text_lengths": "Mine/trader catalog text uses the CchGetString count; the research chart reuses its captured numeric label length. Two redundant std::strlen calls were removed."
+    "mine_research_text_lengths": "Mine/trader catalog text uses the CchGetString count; the research chart reuses its captured numeric label length. Two redundant std::strlen calls were removed.",
+    "mine_title_length": "DrawMineTitle records the exact byte count returned by CchCopyUtf8Prefix; painting reuses that count rather than rescanning the fixed buffer.",
+    "unowned_planet_label": "DrawMineSurvey starts the fully surveyed unowned-planet label at byte zero; the prior strlen read an uninitialized local buffer. The UI fix is documented in CHANGELOG.md."
+  },
+  "latest_change": "DrawMineSurvey initializes the unowned-planet text offset, and mine-title painting uses the byte count returned by the bounded title copy.",
+  "latest_batch_verification": {
+    "batch": "L05 mine survey label initialization and title byte-count reuse",
+    "source_commits": [
+      "9c7ee0cf",
+      "bac51916"
+    ],
+    "macos_debug_build": "make compile passes with strict warnings and header checks.",
+    "desktop_unit_tests": "18/18 pass.",
+    "host_unit_tests": "29/29 pass.",
+    "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+    "native_regression": {
+      "matches": 519,
+      "warnings": 25,
+      "differences_errors": 0,
+      "skipped": 0
+    },
+    "host_regression": {
+      "matches": 519,
+      "warnings": 25,
+      "differences_errors": 0,
+      "skipped": 0
+    },
+    "baseline": "Unchanged. DrawMineSurvey fixes a UI read of uninitialized local storage; title-length reuse preserves text bytes and fixed storage.",
+    "platform": "Windows/Linux current-source qualification remains pending.",
+    "diff_check": "Pass."
   }
 }
