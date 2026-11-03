@@ -234,11 +234,12 @@
         "borrowed-library-import-and-backup-callback-views",
         "popup-menu-labels-as-optional-bounded-views",
         "bounded-scanner-snapshot-name-serialization",
-        "managed-race-reader-readonly-path-view"
+        "managed-race-reader-readonly-path-view",
+        "bounded-saved-fleet-name-record-view",
+        "audit-remaining-const-text-interfaces"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
-        "const-text-interfaces",
         "post-migration-scratch-storage-and-borrowed-return-audit"
       ],
       "metadata_scan": {
@@ -1423,6 +1424,20 @@
           "batch": "L05 managed race reader accepts a read-only path view",
           "source_commit": "4983e9ac",
           "change": "FReadManagedRace accepts std::string_view for its read-only path and passes the bounded input to native path/file services and FWasRaceFile.",
+          "macos_debug_build": "make compile passes with strict warnings and header checks.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
+          "tutorial": "1/1 available SDL tutorial smoke passes.",
+          "baseline": "Unchanged.",
+          "windows_linux": "Current-source Windows/Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L05 saved fleet-name record uses a string view",
+          "source_commit": "6a8f9bbe",
+          "change": "WriteRtString and the wire-name encoder accept std::string_view; the non-compressed form still writes marker, name bytes and NUL with the same 31-byte UTF-8 limit. FLEET layout is unchanged.",
           "macos_debug_build": "make compile passes with strict warnings and header checks.",
           "desktop_unit_tests": "18/18 pass.",
           "host_unit_tests": "29/29 pass.",
@@ -25257,7 +25272,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 managed race reader accepts a read-only path view",
+    "latest_batch": "L05 saved fleet-name record uses a string view",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25289,15 +25304,16 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 managed race reader accepts a read-only path view",
-    "source_commit": "4983e9ac",
-    "status": "Locally committed as 4983e9ac. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 saved fleet-name record uses a string view",
+    "source_commit": "6a8f9bbe",
+    "status": "Locally committed as 6a8f9bbe. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
       "Ampersand escaping uses dynamic string scratch storage; updated history-menu checks and transport-preset witness types.",
       "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
-      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services."
+      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services.",
+      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25318,7 +25334,7 @@
       "retained_preprocessor": "Header guards, NOMINMAX, generated STARS_VERSION_* resource tokens, platform/compiler/test conditionals, and #undef FSHIFT to avoid an SDK collision.",
       "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
-      "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
+      "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
       "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier.",
       "c_test_translation_units": {
@@ -25328,7 +25344,8 @@
       },
       "owned_cpp_c_standard_headers": 0,
       "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20.",
-      "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision."
+      "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
+      "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -25519,13 +25536,18 @@
       {
         "commit": "4983e9ac",
         "message": "Use a path view for managed race reads"
+      },
+      {
+        "commit": "6a8f9bbe",
+        "message": "Encode saved fleet names from string views"
       }
     ],
-    "latest_source_commit": "4983e9ac",
-    "latest_batch_status": "Locally committed as 4983e9ac. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "6a8f9bbe",
+    "latest_batch_status": "Locally committed as 6a8f9bbe. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
-      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "c_macro_audit": {
       "source_head": "4983e9ac",
@@ -25546,9 +25568,9 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L05 managed race reader accepts a read-only path view",
-    "status": "Locally committed as 4983e9ac. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "b98ddf39",
+    "batch": "L05 saved fleet-name record uses a string view",
+    "status": "Locally committed as 6a8f9bbe. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "267e56bd",
     "change": "DrawProductionItem accepts std::string_view rows; the owner-draw callback forwards the list control\u2019s returned text length and fixed metadata reads stay within the view.",
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and header checks.",
@@ -25575,7 +25597,8 @@
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending.",
       "local_cross_attempt": "The mingw-debug preset is disabled when hostSystemName is not Windows. A manual MinGW host-only configure reached CMake but stopped because the Python 3.14 cross-build environment lacks pinned PyYAML 6.0.3 and restricted network DNS could not reach pypi.org; no Windows SDL target was built.",
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
-      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25594,7 +25617,8 @@
       "Owner-draw uses the list control\u2019s returned length; its error path preserves the previous NUL-terminated fallback.",
       "The report-row caller supplies a view; row metadata and visible text use bounded indexing and subviews.",
       "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
-      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services."
+      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services.",
+      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -25603,7 +25627,7 @@
       "retained_preprocessor": "Header guards, NOMINMAX, generated STARS_VERSION_* resource tokens, platform/compiler/test conditionals, and #undef FSHIFT to avoid an SDK collision.",
       "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
-      "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
+      "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
       "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier.",
       "c_test_translation_units": {
@@ -25613,7 +25637,8 @@
       },
       "owned_cpp_c_standard_headers": 0,
       "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20.",
-      "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision."
+      "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
+      "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries."
     },
     "next": [
       "L05: finish bounded text destinations and const-text interfaces; complete scratch-storage and borrowed-return audit.",
@@ -25748,10 +25773,14 @@
       {
         "commit": "4983e9ac",
         "message": "Use a path view for managed race reads"
+      },
+      {
+        "commit": "6a8f9bbe",
+        "message": "Encode saved fleet names from string views"
       }
     ],
-    "source_commit": "4983e9ac",
-    "latest_change": "FReadManagedRace accepts std::string_view for its read-only path and passes the bounded input to native path/file services and FWasRaceFile.",
+    "source_commit": "6a8f9bbe",
+    "latest_change": "WriteRtString and the wire-name encoder accept std::string_view; the non-compressed form still writes marker, name bytes and NUL with the same 31-byte UTF-8 limit. FLEET layout is unchanged.",
     "c_macro_audit": {
       "source_head": "4983e9ac",
       "date": "2026-11-02",
@@ -25794,15 +25823,16 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 managed race reader accepts a read-only path view",
-    "source_commit": "4983e9ac",
-    "status": "Locally committed as 4983e9ac. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 saved fleet-name record uses a string view",
+    "source_commit": "6a8f9bbe",
+    "status": "Locally committed as 6a8f9bbe. macOS SDL Debug build, desktop/host unit suites, native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
       "Ampersand escaping uses dynamic string scratch storage; updated history-menu checks and transport-preset witness types.",
       "Scanner snapshot names are validated and escaped from a bounded view after checking the fixed field for a terminator.",
-      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services."
+      "FReadManagedRace accepts std::string_view for its read-only path and forwards the view to its path/file services.",
+      "WriteRtString and its wire-name encoder accept std::string_view; fixed FLEET layout and serialized wire bytes remain unchanged."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25823,12 +25853,13 @@
       "retained_preprocessor": "Header guards, NOMINMAX, generated STARS_VERSION_* resource tokens, platform/compiler/test conditionals, and #undef FSHIFT to avoid an SDK collision.",
       "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
-      "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
+      "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
       "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier.",
       "native_directory_entry_callback": "FNativeDirectoryEntryProc accepts std::string_view; synchronous enumeration and consumers were migrated and verified in the recorded L06 bounded native directory-entry callback views batch.",
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
-      "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20."
+      "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20.",
+      "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -25843,7 +25874,8 @@
       "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
       "current_source_rerun": "No workflow dispatch was available from this environment; current source is locally qualified on macOS and host, but Windows/Linux platform CI remains pending.",
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
-      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+      "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
+      "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -26152,9 +26184,13 @@
       {
         "commit": "4983e9ac",
         "message": "Use a path view for managed race reads"
+      },
+      {
+        "commit": "6a8f9bbe",
+        "message": "Encode saved fleet names from string views"
       }
     ],
-    "parent": "b98ddf39",
+    "parent": "267e56bd",
     "c_macro_audit": {
       "source_head": "4983e9ac",
       "date": "2026-11-02",
