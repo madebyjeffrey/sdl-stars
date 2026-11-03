@@ -783,7 +783,7 @@ std::uint16_t DibNumColors(void *pv) {
 
     lpbi = &bi;
     lpbc = &bc;
-    if (RawLoad32(pv) != 12) {
+    if (RawLoad32(std::span<const std::byte>{static_cast<const std::byte *>(pv), std::size_t{4}}) != 12) {
         std::memcpy(lpbi, pv, sizeof(bi));
         if (lpbi->biClrUsed != 0) {
             return LOWORD(lpbi->biClrUsed);
@@ -870,7 +870,7 @@ std::uint16_t PaletteSize(void *pv) {
 
     lpbi = static_cast<BITMAPINFOHEADER *>(pv);
     NumColors = DibNumColors(lpbi);
-    if (RawLoad32(lpbi) == 12) {
+    if (RawLoad32(std::span<const std::byte>{reinterpret_cast<const std::byte *>(lpbi), std::size_t{4}}) == 12) {
         return 3 * NumColors;
     }
     return NumColors * 4;
@@ -887,7 +887,7 @@ std::int16_t DibBlt(HDC hdc, std::int16_t x0, std::int16_t y0, std::int16_t dx, 
     if (!lpbi) {
         return 0;
     }
-    pBuf = reinterpret_cast<char *>(lpbi) + LOWORD(RawLoad32(lpbi)) + PaletteSize(lpbi);
+    pBuf = reinterpret_cast<char *>(lpbi) + LOWORD(RawLoad32(std::span<const std::byte>{reinterpret_cast<const std::byte *>(lpbi), std::size_t{4}})) + PaletteSize(lpbi);
     win32::StretchDIBits(hdc, x0, y0, dx, dy, x1, y1, dxSrc, dySrc, pBuf, reinterpret_cast<LPBITMAPINFO>(lpbi), 0, rop);
     win32::GlobalUnlock(hdib);
     return 1;

@@ -661,12 +661,12 @@ void DoBattles(APPSESSION &app, std::int16_t fPostMovement) {
     app.state.vlpwtCargo = nullptr;
     app.state.vrgtok = nullptr;
     if (app.state.lpbBattleT) {
-        RawStore16(app.state.lpbBattleT, 0xffff);
+        RawStore16(std::as_writable_bytes(std::span{app.state.lpbBattleT, std::size_t{2}}), 0xffff);
         HeapIO().pfnFree(app, app.state.lpbBattleT, htBattle);
         app.state.lpbBattleT = nullptr;
     }
     if (app.state.lpbBattleCur) {
-        RawStore16(app.state.lpbBattleCur, 0xffff);
+        RawStore16(std::as_writable_bytes(std::span{app.state.lpbBattleCur, std::size_t{2}}), 0xffff);
     }
     DoBombing(app);
     return;
@@ -2492,7 +2492,7 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
     /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
     lphb = LphbFromLpHt(app, lpbSav, htBattle);
     if (0xffc8 - static_cast<std::uint32_t>((lpbSav - reinterpret_cast<std::uint8_t *>(lphb) - sizeof(HB) + 16)) < static_cast<std::uint32_t>(BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).cbData())) {
-        RawStore16(lpbSav, 0xffff);
+        RawStore16(std::as_writable_bytes(std::span{lpbSav, std::size_t{2}}), 0xffff);
         app.state.lpbBattleT = nullptr;
     } else {
         std::memmove(lpbSav, lpbtldata, BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).cbData());

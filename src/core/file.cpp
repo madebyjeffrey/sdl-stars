@@ -438,7 +438,7 @@ LNextTurn:
                 /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
                 lphb = LphbFromLpHt(app, app.state.lpbBattleCur, htBattle);
                 if (0xffc8 - static_cast<std::uint32_t>((app.state.lpbBattleCur - reinterpret_cast<std::uint8_t *>(lphb) - sizeof(HB) + 16)) < static_cast<std::uint32_t>(NATIVEBATTLEDATAVIEW(std::as_writable_bytes(std::span(app.state.rgbCur)), 0).cbData())) {
-                    RawStore16(app.state.lpbBattleCur, 0xffff);
+                    RawStore16(std::as_writable_bytes(std::span{app.state.lpbBattleCur, std::size_t{2}}), 0xffff);
                     app.state.lpbBattleCur = LpAlloc<std::uint8_t>(app, 0xffc8, htBattle);
                 }
             }
@@ -447,7 +447,7 @@ LNextTurn:
             RecordIO().pfnReadRt(app);
         }
         if (app.state.lpbBattleCur) {
-            RawStore16(app.state.lpbBattleCur, 0xffff);
+            RawStore16(std::as_writable_bytes(std::span{app.state.lpbBattleCur, std::size_t{2}}), 0xffff);
             if (VerMinor(app.state.wVersFile) < 80) {
                 UpdateBattleRecords(app);
             }

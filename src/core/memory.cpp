@@ -169,7 +169,7 @@ void *LpAlloc(APPSESSION &app, std::uint16_t cb, HeapType ht) {
     }
     lpbTop = static_cast<std::byte *>(lphb->hmem) + lphb->ibTop;
     if (lphb->cbSlop >= cb) {
-        RawStore16(lpbTop, cb - 2);
+        RawStore16(std::span<std::byte>{lpbTop, std::size_t{2}}, cb - 2);
         lphb->ibTop += cb;
         lphb->cbFree -= cb;
         lphb->cbSlop -= cb;
@@ -178,17 +178,17 @@ void *LpAlloc(APPSESSION &app, std::uint16_t cb, HeapType ht) {
     lpb = static_cast<std::byte *>(lphb->hmem) + CbHbHeader(ht);
     while (lpb < lpbTop) {
         lpbPrev = lpb;
-        fFree = RawLoad16(lpb) & 1;
-        cbItem = RawLoad16(lpb) & 0xfffe;
+        fFree = RawLoad16(std::span<const std::byte>{lpb, std::size_t{2}}) & 1;
+        cbItem = RawLoad16(std::span<const std::byte>{lpb, std::size_t{2}}) & 0xfffe;
         lpb += 2 + cbItem;
         if (fFree) {
-            while (lpb < lpbTop && (RawLoad16(lpb) & 1) && lpb - lpbPrev < cb) {
-                lpb += 2 + (RawLoad16(lpb) & 0xfffe);
+            while (lpb < lpbTop && (RawLoad16(std::span<const std::byte>{lpb, std::size_t{2}}) & 1) && lpb - lpbPrev < cb) {
+                lpb += 2 + (RawLoad16(std::span<const std::byte>{lpb, std::size_t{2}}) & 0xfffe);
             }
             cbItem = lpb - lpbPrev - 2;
-            RawStore16(lpbPrev, cbItem | 1);
+            RawStore16(std::span<std::byte>{lpbPrev, std::size_t{2}}, cbItem | 1);
             if (static_cast<std::uint16_t>((cbItem + 2)) >= cb) {
-                RawStore16(lpbPrev, RawLoad16(lpbPrev) & 0xfffe);
+                RawStore16(std::span<std::byte>{lpbPrev, std::size_t{2}}, RawLoad16(std::span<const std::byte>{lpbPrev, std::size_t{2}}) & 0xfffe);
                 lpbPrev += 2;
                 lphb->cbFree -= cbItem + 2;
                 return lpbPrev;
@@ -222,7 +222,7 @@ void *LpReAlloc(APPSESSION &app, void *lp, std::uint16_t cb, HeapType ht) {
     lphb = LphbFromLpHt(app, lp, ht);
     lpb = static_cast<std::byte *>(lphb->hmem) +
           (reinterpret_cast<std::uintptr_t>(lp) - reinterpret_cast<std::uintptr_t>(lphb->hmem));
-    cbCur = RawLoad16(lpb - 2);
+    cbCur = RawLoad16(std::span<const std::byte>{lpb - 2, std::size_t{2}});
     cb = CbHeapItem(app, cb, ht) - 2;
     cbGrow = cb - cbCur;
     if (cb <= cbCur) {
@@ -233,7 +233,7 @@ LGrewHeap:
         lphb->cbSlop -= cbGrow;
         lphb->cbFree -= cbGrow;
         lphb->ibTop += cbGrow;
-        RawStore16(lpb - 2, cb);
+        RawStore16(std::span<std::byte>{lpb - 2, std::size_t{2}}, cb);
     } else if (ht == htPlanets || ht == htThings) {
         lphb = LphbReAlloc(app, lphb);
         lpb = static_cast<std::byte *>(lphb->hmem) + (CbHbHeader(ht) + 2);
@@ -257,8 +257,8 @@ void FreeLp(APPSESSION &app, void *lp, HeapType ht) {
         lphb = LphbFromLpHt(app, lp, ht);
         lpb = static_cast<std::byte *>(lphb->hmem) +
               (reinterpret_cast<std::uintptr_t>(lp) - reinterpret_cast<std::uintptr_t>(lphb->hmem));
-        cbFree = RawLoad16(lpb - 2) + 2;
-        RawStore16(lpb - 2, RawLoad16(lpb - 2) | 1);
+        cbFree = RawLoad16(std::span<const std::byte>{lpb - 2, std::size_t{2}}) + 2;
+        RawStore16(std::span<std::byte>{lpb - 2, std::size_t{2}}, RawLoad16(std::span<const std::byte>{lpb - 2, std::size_t{2}}) | 1);
         lphb->cbFree += cbFree;
         if (lpb - static_cast<std::byte *>(lphb->hmem) + cbFree - 2 == lphb->ibTop) {
             lphb->ibTop -= cbFree;
@@ -321,7 +321,7 @@ std::uint16_t CbPlSlot(APPSESSION &app, const void *lp) {
         HB *lphb = LphbFromLpHt(app, const_cast<void *>(lp), static_cast<HeapType>(i));
         if (lphb) {
             std::size_t ib = reinterpret_cast<std::uintptr_t>(lp) - reinterpret_cast<std::uintptr_t>(lphb->hmem);
-            return RawLoad16(static_cast<const std::byte *>(lphb->hmem) + ib - 2);
+            return RawLoad16(std::span<const std::byte>{static_cast<const std::byte *>(lphb->hmem) + ib - 2, std::size_t{2}});
         }
     }
     assert(false && "physical slot has no owning heap");

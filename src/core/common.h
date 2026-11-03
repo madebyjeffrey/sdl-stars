@@ -6,6 +6,7 @@ class APPSESSION;
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <span>
 
 #include <cctype>
 #include <cmath>
@@ -15,18 +16,18 @@ class APPSESSION;
 
 // Raw Win16 storage is byte-addressed and may be unaligned, so scalar
 // accesses through it copy bytes instead of dereferencing a cast pointer.
-static inline std::uint16_t RawLoad16(const void *p) {
+static inline std::uint16_t RawLoad16(std::span<const std::byte> rgb) {
     std::uint16_t v;
-    std::memcpy(&v, p, sizeof v);
+    std::memcpy(&v, rgb.data(), sizeof v);
     return v;
 }
-static inline std::uint32_t RawLoad32(const void *p) {
+static inline std::uint32_t RawLoad32(std::span<const std::byte> rgb) {
     std::uint32_t v;
-    std::memcpy(&v, p, sizeof v);
+    std::memcpy(&v, rgb.data(), sizeof v);
     return v;
 }
-static inline void RawStore16(void *p, std::uint16_t v) { std::memcpy(p, &v, sizeof v); }
-static inline void RawStore32(void *p, std::uint32_t v) { std::memcpy(p, &v, sizeof v); }
+static inline void RawStore16(std::span<std::byte> rgb, std::uint16_t v) { std::memcpy(rgb.data(), &v, sizeof v); }
+static inline void RawStore32(std::span<std::byte> rgb, std::uint32_t v) { std::memcpy(rgb.data(), &v, sizeof v); }
 
 #include "enums.h"
 #include "native.h"

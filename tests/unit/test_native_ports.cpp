@@ -118,10 +118,10 @@ void StarsTest_ReadRt(APPSESSION &app) {
     if (fLogRead && iRead == -2) {
         app.state.hdrCur.rt = rtBOF;
         app.state.hdrCur.cb = 16;
-        RawStore32(app.state.rgbCur + 4, app.state.game.lid);
-        RawStore16(app.state.rgbCur + 8, (2 << 12) | (85 << 5));
-        RawStore16(app.state.rgbCur + 10, app.state.game.turn);
-        RawStore16(app.state.rgbCur + 14, app.state.game.wGen << 13);
+        RawStore32(std::as_writable_bytes(std::span{app.state.rgbCur + 4, std::size_t{4}}), app.state.game.lid);
+        RawStore16(std::as_writable_bytes(std::span{app.state.rgbCur + 8, std::size_t{2}}), (2 << 12) | (85 << 5));
+        RawStore16(std::as_writable_bytes(std::span{app.state.rgbCur + 10, std::size_t{2}}), app.state.game.turn);
+        RawStore16(std::as_writable_bytes(std::span{app.state.rgbCur + 14, std::size_t{2}}), app.state.game.wGen << 13);
     } else if (fLogRead && iRead == -1) {
         app.state.hdrCur.rt = 9;
         app.state.hdrCur.cb = 17;
@@ -156,7 +156,7 @@ static MSGPLR *MakeMessage(int16_t from, int16_t to, int16_t len) {
 
 static void CheckRecord(int i, MSGPLR *mp) {
     TEST_ASSERT(rgcbRecord[i] == abs(mp->cLen) + 12);
-    TEST_ASSERT(RawLoad32(rgRecord[i]) == 0);
+    TEST_ASSERT(RawLoad32(std::as_bytes(std::span{rgRecord[i], std::size_t{4}})) == 0);
     TEST_ASSERT(memcmp(rgRecord[i] + 4, &mp->iPlrFrom, 8) == 0);
     TEST_ASSERT(memcmp(rgRecord[i] + 12, mp->rgbMsg(), abs(mp->cLen)) == 0);
 }
@@ -217,8 +217,8 @@ static void TestMessages(void) {
     CheckRecord(2, mp3);
 
     /* Old saves contain an arbitrary four-byte link. It must be ignored. */
-    RawStore32(rgRecord[0], 0xdeadbeef);
-    RawStore32(rgRecord[1], 0xffffffff);
+    RawStore32(std::as_writable_bytes(std::span{rgRecord[0], std::size_t{4}}), 0xdeadbeef);
+    RawStore32(std::as_writable_bytes(std::span{rgRecord[1], std::size_t{4}}), 0xffffffff);
     iRead = 0;
     fLogRead = 0;
     StarsTest_ReadRt(app);
@@ -370,7 +370,7 @@ static void TestBattleRollover(void) {
     TEST_ASSERT(BdvFromLp(app, lpbStart + 65448).cbData() == 14);
     TEST_ASSERT(FDoCoolBattle(app, &fl, 0, grfAttack, 0, 0) == 1);
     TEST_ASSERT(app.state.lpbBattleT == NULL);
-    TEST_ASSERT(RawLoad16(lpbStart + 65462) == 0xffff);
+    TEST_ASSERT(RawLoad16(std::as_bytes(std::span{lpbStart + 65462, std::size_t{2}})) == 0xffff);
     TEST_ASSERT(app.state.lpbBattleCur == lpbScratch + 14);
     FreeHb(app, app.state.rglphb[htBattle]);
     app.state.rglphb[htBattle] = NULL;

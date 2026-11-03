@@ -124,7 +124,7 @@ static void TestReuseAndGrowth(void) {
     lp3 = (uint8_t *)LpAlloc(app, 17, htMisc);
     lphb = app.state.rglphb[htMisc];
     // Request more than one allocation can hold, whatever its native alignment.
-    cbRequest = RawLoad16(lp1 - 2) + 1;
+    cbRequest = RawLoad16(std::as_bytes(std::span{lp1 - 2, std::size_t{2}})) + 1;
     // Consume the tail so the next allocation exercises coalescing, not slop.
     while (lphb->cbSlop >= cbRequest) {
         LpAlloc(app, 17, htMisc);

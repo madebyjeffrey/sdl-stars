@@ -450,11 +450,11 @@ static void test_FRunLogRecord_order_bytes(void) {
     ibFlag = reinterpret_cast<uintptr_t>(lpplord) - reinterpret_cast<uintptr_t>(lphb->hmem) - 8;
     TEST_ASSERT(ibFlag + 2 <= lphb->cbBlock);
     lpbFlag = static_cast<uint8_t *>(lphb->hmem) + ibFlag;
-    wBefore = RawLoad16(lpbFlag);
+    wBefore = RawLoad16(std::as_bytes(std::span{lpbFlag, std::size_t{2}}));
     rgb[4] = 3; rgb[5] = 0;
     fResult = FRunLogRecord(app, rtLogFleetOrderAttrNib, 6, rgb);
-    wAfter = RawLoad16(lpbFlag);
-    RawStore16(lpbFlag, wBefore);
+    wAfter = RawLoad16(std::as_bytes(std::span{lpbFlag, std::size_t{2}}));
+    RawStore16(std::as_writable_bytes(std::span{lpbFlag, std::size_t{2}}), wBefore);
     TEST_CHECK(fResult && wAfter == static_cast<uint16_t>((wBefore & 0xfff0) | 3));
 
     // Deleting two rows retains the high-bit flag and index interpretation.
