@@ -2085,7 +2085,8 @@
         "raw-scalar-memory-accessors-use-byte-spans",
         "heap-storage-lifetime-helpers-accept-byte-spans",
         "qsort16-accepts-bounded-byte-span",
-        "heap-copy-and-move-hooks-accept-byte-spans"
+        "heap-copy-and-move-hooks-accept-byte-spans",
+        "native-directory-enumeration-callbacks-use-typed-context"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2100,6 +2101,17 @@
         "pre_migration_reference_test_sites": 11
       },
       "verification": [
+        {
+          "batch": "L06 directory enumeration uses typed callback context",
+          "macos_debug_build": "Pass; no new warnings.",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "library_publication_witness": "Pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+          "baseline": "Behavior-neutral callback/context typing. Directory enumeration remains synchronous; native and frozen regression baselines are unchanged."
+        },
         {
           "batch": "L06a bounded user-string codec and record-reader interfaces",
           "debug_build": "Pass; no new warnings; public headers in both include orders.",
@@ -3404,7 +3416,7 @@
         "qualified_by": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41357206253"
       },
       "current_source_checkpoint": {
-        "source_head": "32deeaff",
+        "source_head": "7b8e00e1",
         "tracked_c_translation_units": 44,
         "production_c_translation_units": 0,
         "application_api_function_like_macros": 0,
@@ -3442,6 +3454,17 @@
         "owned_function_like_api_macros": 0,
         "owned_cpp_c_standard_headers": 0,
         "c_language_boundary": "CMake declares C++ as the project language; C is enabled only when independent tests or Windows SDK reference tests are built."
+      },
+      "latest_local_verification": {
+        "source_head": "7b8e00e1",
+        "macos_sdl_debug_build": "pass",
+        "desktop_units": "18/18",
+        "host_units": "29/29",
+        "library_publication_witness": "pass",
+        "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+        "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+        "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+        "remaining_platform_qualification": "Current-source Windows and Linux qualification remains open."
       }
     }
   ],
