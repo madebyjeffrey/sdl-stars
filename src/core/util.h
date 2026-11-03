@@ -71,7 +71,7 @@ std::int16_t  FLookupSelShip(APPSESSION &app, FLEET *pfl);
 FLEET   *LpflFromId(APPSESSION &app, std::int16_t idFleet);
 std::int16_t  FLookupFleet(APPSESSION &app, std::int16_t idFleet, FLEET *pfl);
 std::int16_t  FDupFleet(APPSESSION &app, FLEET *lpfl, FLEET *pfl);
-std::int16_t  FLookupObject(APPSESSION &app, GrobjClass grobj, std::int16_t id, void *pobj);
+std::int16_t  FLookupObject(APPSESSION &app, GrobjClass grobj, std::int16_t id, XFER::OBJECTTARGET objectTarget);
 std::int16_t  FLookupOrbitingXfer(APPSESSION &app, std::int16_t idPlanet, std::int16_t iNth, XFER *pxf, std::int16_t idSkip);
 std::array<char, 360> PszGetThingName(APPSESSION &app, std::int16_t id);
 std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id);

@@ -1822,8 +1822,8 @@ struct _xfer {
     std::int16_t iPlayerObj() const noexcept { return storage.ReadPrefix<std::int16_t>(2); }
     void SetIPlayerObj(std::int16_t value) noexcept { storage.WritePrefix(2, value); }
     std::uint16_t detObj() const noexcept { return storage.ReadPrefix<std::uint8_t>(4); }
-    // Lookup defaults to THING; cargo defaults to FLEET. Keep both old domains.
-    void *LpvLookup(GrobjClass kind) noexcept {
+    using OBJECTTARGET = std::variant<PLANET *, THING *, FLEET *>;
+    OBJECTTARGET LookupTarget(GrobjClass kind) noexcept {
         if (kind == grobjFleet) return &fl();
         if (kind == grobjPlanet) return &pl();
         return &th();

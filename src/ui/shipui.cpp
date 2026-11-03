@@ -1228,7 +1228,7 @@ std::int16_t TransferStuff(APPSESSION &app, std::int16_t id1, GrobjClass grobj1,
     app.lpui->mdXferDlg = mdXfer;
     for (i = 0; i < 2; i++) {
         if (xfer[i].grobj != grobjOther) {
-            if (!FLookupObject(app, xfer[i].grobj, xfer[i].id, xfer[i].LpvLookup(xfer[i].grobj))) {
+            if (!FLookupObject(app, xfer[i].grobj, xfer[i].id, xfer[i].LookupTarget(xfer[i].grobj))) {
                 return 0;
             }
             if (xfer[i].grobj == grobjPlanet) {

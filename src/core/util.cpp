@@ -695,14 +695,14 @@ std::int16_t FDupFleet(APPSESSION &app, FLEET *lpfl, FLEET *pfl) {
     return 1;
 }
 
-std::int16_t FLookupObject(APPSESSION &app, GrobjClass grobj, std::int16_t id, void *pobj) {
+std::int16_t FLookupObject(APPSESSION &app, GrobjClass grobj, std::int16_t id, XFER::OBJECTTARGET objectTarget) {
     if (grobj == grobjFleet) {
-        return FleetQueryIO().pfnLookup(app, id, static_cast<FLEET *>(pobj));
+        return FleetQueryIO().pfnLookup(app, id, std::get<FLEET *>(objectTarget));
     }
     if (grobj == grobjPlanet) {
-        return PlanetQueryIO().pfnLookup(app, id, static_cast<PLANET *>(pobj));
+        return PlanetQueryIO().pfnLookup(app, id, std::get<PLANET *>(objectTarget));
     }
-    return FLookupThing(app, id, static_cast<THING *>(pobj));
+    return FLookupThing(app, id, std::get<THING *>(objectTarget));
 }
 
 std::int16_t FLookupOrbitingXfer(APPSESSION &app, std::int16_t idPlanet, std::int16_t iNth, XFER *pxf, std::int16_t idSkip) {

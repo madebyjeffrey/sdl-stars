@@ -468,7 +468,7 @@ static void test_Xfer_lookup_and_cargo_fallbacks(void) {
     lpth->pt().Set({123, 456});
     id = lpth->idFull();
     xf.fl().rgwtMin[0] = 42;
-    TEST_ASSERT(FLookupObject(app, grobjOther, id, xf.LpvLookup(grobjOther)));
+    TEST_ASSERT(FLookupObject(app, grobjOther, id, xf.LookupTarget(grobjOther)));
     TEST_CHECK(xf.idObj() == id && xf.iPlayerObj() == 123);
     TEST_CHECK(ChgCargo(app, static_cast<GrobjClass>(3), id, static_cast<MineralType>(0), 0,
                         xf.CargoTarget(static_cast<GrobjClass>(3))) == 42);

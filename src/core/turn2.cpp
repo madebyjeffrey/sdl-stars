@@ -727,7 +727,7 @@ void TransferToOthers(APPSESSION &app) {
         lpxfCur = app.state.lpxf;
         lpxfMax = app.state.lpxf + app.state.cXferFull;
         for (; lpxfCur < lpxfMax; lpxfCur++) {
-            if (!FLookupObject(app, static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, rgxf[1].LpvLookup(static_cast<GrobjClass>(lpxfCur->grobj2))))
+            if (!FLookupObject(app, static_cast<GrobjClass>(lpxfCur->grobj2), lpxfCur->id2, rgxf[1].LookupTarget(static_cast<GrobjClass>(lpxfCur->grobj2))))
                 goto DoNext;
             if (lpxfCur->grobj1 == 1) {
                 rgxf[0].SetIPlayerObj(LpplFromId(app, lpxfCur->id1)->iPlayer);

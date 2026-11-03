@@ -837,11 +837,11 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     case rtLogCargoXfer8:
     case rtLogCargoXfer16:
     case rtLogCargoXfer32:
-        if (!FLookupObject(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), rgxf[0].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())))) {
+        if (!FLookupObject(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), rgxf[0].LookupTarget(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())))) {
             return 0;
         }
         rgxf[1].SetIdObj(idflNone);
-        if (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() != grobjOther && !FLookupObject(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2(), rgxf[1].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2())))) {
+        if (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() != grobjOther && !FLookupObject(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2(), rgxf[1].LookupTarget(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2())))) {
             if (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() == grobjFleet && (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2() >> 9 & 0xf) != app.state.idPlayer)
                 break;
             return 0;
@@ -985,7 +985,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     case rtLogFleetSplit:
     case rtLogFleetMerge:
         FReadFleetId({std::as_bytes(std::span(lpb, cbWireFleetId))}, 0, idFleet);
-        if (!FLookupObject(app, grobjFleet, idFleet, rgxf[0].LpvLookup(grobjFleet))) {
+        if (!FLookupObject(app, grobjFleet, idFleet, rgxf[0].LookupTarget(grobjFleet))) {
             return 0;
         }
         if (rt == rtLogFleetSplit) {
@@ -1025,11 +1025,11 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
         return 0;
     case rtLogFleetCargoXfer:
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb, 2))).FReadI16Le(idFleet);
-        if (!FLookupObject(app, grobjFleet, idFleet, rgxf[0].LpvLookup(grobjFleet))) {
+        if (!FLookupObject(app, grobjFleet, idFleet, rgxf[0].LookupTarget(grobjFleet))) {
             return 0;
         }
         NATIVEBYTEREADER(std::as_bytes(std::span(lpb + 2, 2))).FReadI16Le(idFleet);
-        if (!FLookupObject(app, grobjFleet, idFleet, rgxf[1].LpvLookup(grobjFleet))) {
+        if (!FLookupObject(app, grobjFleet, idFleet, rgxf[1].LookupTarget(grobjFleet))) {
             return 0;
         }
         if (rgxf[1].iPlayerObj() != rgxf[0].iPlayerObj()) {
