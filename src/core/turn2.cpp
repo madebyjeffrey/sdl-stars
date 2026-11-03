@@ -29,6 +29,7 @@ void Produce(APPSESSION &app) {
     PROD      *lpprod;
     PLANET    *lpplMac;
     std::int16_t    cMax2;
+    std::size_t     cprod;
 
     TurnIO().pfnMine(app);
     for (i = 0; i < app.state.game.cPlayer; i++) {
@@ -151,8 +152,9 @@ void Produce(APPSESSION &app) {
                             break;
                         }
                         if (iprodCur < lppl->lpplprod->iprodMac - 1) {
-                            HeapIO().pfnMove(lppl->lpplprod->rgprod() + (iprodCur - fPrevProdIsAlch), lppl->lpplprod->rgprod() + (iprodCur + 1),
-                                    (lppl->lpplprod->iprodMac - iprodCur - 1) * 4);
+                            cprod = static_cast<std::size_t>(lppl->lpplprod->iprodMac - iprodCur - 1);
+                            HeapIO().pfnMove(std::as_writable_bytes(std::span{lppl->lpplprod->rgprod() + (iprodCur - fPrevProdIsAlch), cprod}),
+                                    std::as_bytes(std::span{lppl->lpplprod->rgprod() + (iprodCur + 1), cprod}));
                         }
                         lppl->lpplprod->iprodMac -= fPrevProdIsAlch + 1;
                         iprodCur -= fPrevProdIsAlch + 1;
@@ -161,7 +163,8 @@ void Produce(APPSESSION &app) {
                             if (lppl->lpplprod->iprodMac == lppl->lpplprod->iprodMax) {
                                 lppl->lpplprod = LpplReAlloc(app, lppl->lpplprod, lppl->lpplprod->iprodMac + 1);
                             }
-                            HeapIO().pfnMove(&lppl->lpplprod->rgprod()[1], lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * sizeof(PROD));
+                            cprod = static_cast<std::size_t>(lppl->lpplprod->iprodMac);
+                            HeapIO().pfnMove(std::as_writable_bytes(std::span{&lppl->lpplprod->rgprod()[1], cprod}), std::as_bytes(std::span{lppl->lpplprod->rgprod(), cprod}));
                             lppl->lpplprod->rgprod()[0] = prodPartial;
                             lppl->lpplprod->iprodMac++;
                         }

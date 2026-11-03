@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstring>
 #include <new>
+#include <span>
 #include <type_traits>
 
 // Own the chains indexed by the legacy roots without moving any block. Reset
@@ -52,9 +53,18 @@ MSGPLR *LpmsgplrAlloc(APPSESSION &app, std::uint16_t cb);
 MSGPLR *LpmsgplrReAlloc(APPSESSION &app, MSGPLR *lpmp, std::uint16_t cb);
 
 // Queue storage can supply an allocator while retaining the real lifetime helpers.
+using HEAPBYTECOPY = void (*)(std::span<std::byte>, std::span<const std::byte>);
+inline void CopyHeapBytes(std::span<std::byte> rgbDst, std::span<const std::byte> rgbSrc) noexcept {
+    assert(rgbDst.size() == rgbSrc.size());
+    std::memcpy(rgbDst.data(), rgbSrc.data(), rgbDst.size());
+}
+inline void MoveHeapBytes(std::span<std::byte> rgbDst, std::span<const std::byte> rgbSrc) noexcept {
+    assert(rgbDst.size() == rgbSrc.size());
+    std::memmove(rgbDst.data(), rgbSrc.data(), rgbDst.size());
+}
 struct HEAPIO {
-    void *(*pfnCopy)(void *, const void *, std::size_t) = std::memcpy;
-    void *(*pfnMove)(void *, const void *, std::size_t) = std::memmove;
+    HEAPBYTECOPY pfnCopy = CopyHeapBytes;
+    HEAPBYTECOPY pfnMove = MoveHeapBytes;
     void *(*pfnAllocate)(APPSESSION &, std::uint16_t, HeapType) = static_cast<void *(*)(APPSESSION &, std::uint16_t, HeapType)>(&LpAlloc);
     void *(*pfnResize)(APPSESSION &, void *, std::uint16_t, HeapType) = static_cast<void *(*)(APPSESSION &, void *, std::uint16_t, HeapType)>(&LpReAlloc);
     decltype(&FreeLp) pfnFree = FreeLp;

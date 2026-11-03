@@ -80,8 +80,10 @@ static void TestFreeLp(APPSESSION &, void *p, HeapType ht) {
     frees++;
     free(p);
 }
-static void *TestcheckedMove(void *dst, const void *src, size_t size) {
-    uintptr_t a = (uintptr_t)dst, b = (uintptr_t)src;
+static void TestcheckedMove(std::span<std::byte> dst, std::span<const std::byte> src) {
+    assert(dst.size() == src.size());
+    size_t size = dst.size();
+    uintptr_t a = reinterpret_cast<uintptr_t>(dst.data()), b = reinterpret_cast<uintptr_t>(src.data());
     int       goodA = 0, goodB = 0;
     for (int i = 0; i < heaps; i++)
         if (heap[i].live) {
@@ -94,7 +96,7 @@ static void *TestcheckedMove(void *dst, const void *src, size_t size) {
     if (!goodA || !goodB)
         throw FIXTUREESCAPE{7};
     moves++;
-    return memmove(dst, src, size);
+    std::memmove(dst.data(), src.data(), size);
 }
 static void TestMineMinerals(APPSESSION &app) {
     event('M');

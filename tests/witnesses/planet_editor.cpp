@@ -118,15 +118,18 @@ static int planetRange(APPSESSION &app, const void *p, size_t n) {
     e = b + sizeof(app.state.sel.pl);
     return a >= b && a <= e && n <= e - a;
 }
-static void *TestcheckedMemcpy(void *dst, const void *src, size_t n) {
+static void TestcheckedMemcpy(std::span<std::byte> dst, std::span<const std::byte> src) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    guardBytes = n;
-    if (n && (uintptr_t)dst < (uintptr_t)src + n && (uintptr_t)src < (uintptr_t)dst + n)
+    assert(dst.size() == src.size());
+    guardBytes = dst.size();
+    if (!dst.empty() && reinterpret_cast<uintptr_t>(dst.data()) < reinterpret_cast<uintptr_t>(src.data()) + dst.size() &&
+        reinterpret_cast<uintptr_t>(src.data()) < reinterpret_cast<uintptr_t>(dst.data()) + dst.size())
         throw FIXTUREESCAPE{2};
-    if (!(within(dst, n) || planetRange(app, dst, n)) || !(within(src, n) || planetRange(app, src, n)))
+    if (!(within(dst.data(), dst.size()) || planetRange(app, dst.data(), dst.size())) ||
+        !(within(src.data(), src.size()) || planetRange(app, src.data(), src.size())))
         throw FIXTUREESCAPE{3};
-    return memcpy(dst, src, n);
+    std::memcpy(dst.data(), src.data(), dst.size());
 }
 #define CHECK(x)                                                                                                                                               \
     do {                                                                                                                                                       \

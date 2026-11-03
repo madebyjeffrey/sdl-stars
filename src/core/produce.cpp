@@ -16,6 +16,7 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     std::uint16_t u;
     std::int16_t  i;
     std::int16_t  ipl;
+    std::size_t   cprod;
     PART     part;
     PROD    *lpprod;
 
@@ -30,7 +31,7 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     }
     app.state.lpplProdGlob = LpplAlloc<PLPROD>(app, 4, i, htOrd);
     if (app.state.sel.pl.lpplprod) {
-        HeapIO().pfnCopy(app.state.lpplProdGlob->rgprod(), app.state.sel.pl.lpplprod->rgprod(), i * 4);
+        HeapIO().pfnCopy(std::as_writable_bytes(std::span{app.state.lpplProdGlob->rgprod(), static_cast<std::size_t>(i)}), std::as_bytes(std::span{app.state.sel.pl.lpplprod->rgprod(), static_cast<std::size_t>(i)}));
     } else {
         i = 0;
     }
@@ -130,7 +131,8 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
         }
         if (iSrc >= app.state.cProdGlob) {
             if (ipl + 1 < app.state.lpplProdGlob->iprodMac) {
-                HeapIO().pfnCopy(lpprod, lpprod + 1, (app.state.lpplProdGlob->iprodMac - (ipl + 1)) * sizeof(PROD));
+                cprod = static_cast<std::size_t>(app.state.lpplProdGlob->iprodMac - (ipl + 1));
+                HeapIO().pfnCopy(std::as_writable_bytes(std::span{lpprod, cprod}), std::as_bytes(std::span{lpprod + 1, cprod}));
                 ipl--;
             }
             app.state.lpplProdGlob->iprodMac--;
@@ -485,7 +487,7 @@ PRODUCTIONESTIMATE EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *
     }
     pl = *lppl;
     pl.lpplprod = LpplAlloc<PLPROD>(app, 4, lpplprod->iprodMax, htOrd);
-    HeapIO().pfnCopy(pl.lpplprod->rgprod(), lpplprod->rgprod(), lpplprod->iprodMac * 4);
+    HeapIO().pfnCopy(std::as_writable_bytes(std::span{pl.lpplprod->rgprod(), static_cast<std::size_t>(lpplprod->iprodMac)}), std::as_bytes(std::span{lpplprod->rgprod(), static_cast<std::size_t>(lpplprod->iprodMac)}));
     pl.lpplprod->iprodMac = lpplprod->iprodMac;
     iMac = lpplprod->iprodMac;
     prodPartial.cItem = 0;

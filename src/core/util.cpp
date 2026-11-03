@@ -47,7 +47,7 @@ std::int16_t FDupPlanet(APPSESSION &app, PLANET *lppl, PLANET *ppl) {
     } else if (static_cast<std::int16_t>(ppl->lpplprod->iprodMax) < lppl->lpplprod->iprodMac) {
         ppl->lpplprod = LpplReAlloc(app, ppl->lpplprod, lppl->lpplprod->iprodMax);
     }
-    HeapIO().pfnCopy(ppl->lpplprod->rgprod(), lppl->lpplprod->rgprod(), lppl->lpplprod->iprodMac * 4);
+    HeapIO().pfnCopy(std::as_writable_bytes(std::span{ppl->lpplprod->rgprod(), static_cast<std::size_t>(lppl->lpplprod->iprodMac)}), std::as_bytes(std::span{lppl->lpplprod->rgprod(), static_cast<std::size_t>(lppl->lpplprod->iprodMac)}));
     ppl->lpplprod->iprodMac = lppl->lpplprod->iprodMac;
     return 1;
 }
@@ -166,11 +166,11 @@ std::int16_t FLookupPlanet(APPSESSION &app, std::int16_t iPlanet, PLANET *ppl) {
                 if (static_cast<std::int16_t>(lpPl->lpplprod->iprodMax) < ppl->lpplprod->iprodMac) {
                     lpPl->lpplprod = LpplReAlloc(app, lpPl->lpplprod, ppl->lpplprod->iprodMac + 2);
                 }
-                HeapIO().pfnCopy(lpPl->lpplprod->rgprod(), ppl->lpplprod->rgprod(), ppl->lpplprod->iprodMac * 4);
+                HeapIO().pfnCopy(std::as_writable_bytes(std::span{lpPl->lpplprod->rgprod(), static_cast<std::size_t>(ppl->lpplprod->iprodMac)}), std::as_bytes(std::span{ppl->lpplprod->rgprod(), static_cast<std::size_t>(ppl->lpplprod->iprodMac)}));
                 lpPl->lpplprod->iprodMac = ppl->lpplprod->iprodMac;
             }
         FinishCopy:
-            HeapIO().pfnCopy(lpPl, ppl, 52);
+            HeapIO().pfnCopy(std::span<std::byte>{reinterpret_cast<std::byte *>(lpPl), std::size_t{52}}, std::span<const std::byte>{reinterpret_cast<const std::byte *>(ppl), std::size_t{52}});
             if (app.state.gd.fTutorial && app.state.idPlayer == 0) {
                 PresentationIO().pfnTutor(app);
             }
@@ -211,7 +211,7 @@ std::int16_t FLookupThing(APPSESSION &app, std::int16_t idth, THING *pth) {
     if (lpth && pth) {
         if (fWrite) {
             LogChangeThing(app, lpth, pth);
-            HeapIO().pfnCopy(lpth, pth, sizeof(THING));
+            HeapIO().pfnCopy(std::as_writable_bytes(std::span{lpth, std::size_t{1}}), std::as_bytes(std::span{pth, std::size_t{1}}));
             if (app.state.gd.fTutorial && app.state.idPlayer == 0) {
                 PresentationIO().pfnTutor(app);
             }
@@ -654,10 +654,10 @@ std::int16_t FLookupFleet(APPSESSION &app, std::int16_t idFleet, FLEET *pfl) {
                 if (lpfl->lpplord->iordMax < pfl->cord) {
                     lpfl->lpplord = LpplReAlloc(app, lpfl->lpplord, pfl->cord + 3);
                 }
-                HeapIO().pfnCopy(lpfl->lpplord->rgord(), pfl->lpplord->rgord(), pfl->lpplord->iordMac * 18);
+                HeapIO().pfnCopy(std::as_writable_bytes(std::span{lpfl->lpplord->rgord(), static_cast<std::size_t>(pfl->lpplord->iordMac)}), std::as_bytes(std::span{pfl->lpplord->rgord(), static_cast<std::size_t>(pfl->lpplord->iordMac)}));
                 lpfl->lpplord->iordMac = pfl->lpplord->iordMac;
             }
-            HeapIO().pfnCopy(lpfl, pfl, 100);
+            HeapIO().pfnCopy(std::span<std::byte>{reinterpret_cast<std::byte *>(lpfl), std::size_t{100}}, std::span<const std::byte>{reinterpret_cast<const std::byte *>(pfl), std::size_t{100}});
             if (app.state.gd.fTutorial && app.state.idPlayer == 0) {
                 PresentationIO().pfnTutor(app);
             }
@@ -690,7 +690,7 @@ std::int16_t FDupFleet(APPSESSION &app, FLEET *lpfl, FLEET *pfl) {
     } else if (static_cast<std::int16_t>(pfl->lpplord->iordMax) < lpfl->lpplord->iordMac) {
         pfl->lpplord = LpplReAlloc(app, pfl->lpplord, lpfl->lpplord->iordMax);
     }
-    HeapIO().pfnCopy(pfl->lpplord->rgord(), lpfl->lpplord->rgord(), lpfl->lpplord->iordMac * 18);
+    HeapIO().pfnCopy(std::as_writable_bytes(std::span{pfl->lpplord->rgord(), static_cast<std::size_t>(lpfl->lpplord->iordMac)}), std::as_bytes(std::span{lpfl->lpplord->rgord(), static_cast<std::size_t>(lpfl->lpplord->iordMac)}));
     pfl->lpplord->iordMac = lpfl->lpplord->iordMac;
     return 1;
 }
@@ -1078,7 +1078,7 @@ FLEET *LpflNewSplit(APPSESSION &app, FLEET *pfl) {
     if (lpflNew->lpplord->iordMax < iordMac) {
         lpflNew->lpplord = LpplReAlloc(app, lpflNew->lpplord, pfl->lpplord->iordMax);
     }
-    HeapIO().pfnCopy(lpflNew->lpplord->rgord(), pfl->lpplord->rgord(), iordMac * 18);
+    HeapIO().pfnCopy(std::as_writable_bytes(std::span{lpflNew->lpplord->rgord(), static_cast<std::size_t>(iordMac)}), std::as_bytes(std::span{pfl->lpplord->rgord(), static_cast<std::size_t>(iordMac)}));
     lpflNew->lpplord->iordMac = iordMac;
     lpflNew->cord = pfl->cord;
     LogSplitFleet(app, pfl->id);

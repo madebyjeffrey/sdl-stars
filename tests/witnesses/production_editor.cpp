@@ -84,16 +84,17 @@ static int TestGetRaceStat(void *p, int stat) {
     return primary;
 }
 static void  TestAdvanceTutor(APPSESSION &) { tutorials++; }
-static void *TestguardedMemcpy(void *dst, const void *src, size_t n) {
+static void TestguardedMemcpy(std::span<std::byte> dst, std::span<const std::byte> src) {
     APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
 
-    uintptr_t d = (uintptr_t)dst, s = (uintptr_t)src;
-    if (n && d < s + n && s < d + n) {
-        overlapBytes = n;
-        overlapOffset = ((char *)dst - (char *)app.state.lpplProdGlob->rgprod()) / 4;
+    assert(dst.size() == src.size());
+    uintptr_t d = reinterpret_cast<uintptr_t>(dst.data()), s = reinterpret_cast<uintptr_t>(src.data());
+    if (!dst.empty() && d < s + src.size() && s < d + dst.size()) {
+        overlapBytes = dst.size();
+        overlapOffset = (reinterpret_cast<char *>(dst.data()) - reinterpret_cast<char *>(app.state.lpplProdGlob->rgprod())) / 4;
         throw FIXTUREESCAPE{1};
     }
-    return memcpy(dst, src, n);
+    std::memcpy(dst.data(), src.data(), dst.size());
 }
 static int TestGetDlgItem(HWND hwnd, int id) {
     (void)hwnd;

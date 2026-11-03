@@ -167,8 +167,10 @@ static void TestEstMineralsMined(APPSESSION &app, PLANET *p, int32_t *out, int32
         out[i] = 999;
     } // estimator reads stocks, not out
 }
-static void *TestcheckedCopy(void *dst, const void *src, size_t n) {
-    uintptr_t a = (uintptr_t)dst, b = (uintptr_t)src;
+static void TestcheckedCopy(std::span<std::byte> dst, std::span<const std::byte> src) {
+    assert(dst.size() == src.size());
+    size_t n = dst.size();
+    uintptr_t a = reinterpret_cast<uintptr_t>(dst.data()), b = reinterpret_cast<uintptr_t>(src.data());
     int       goodDst = 0, goodSrc = 0;
     if (n && a < b + n && b < a + n) {
         guards++;
@@ -186,7 +188,7 @@ static void *TestcheckedCopy(void *dst, const void *src, size_t n) {
         guards++;
         throw FIXTUREESCAPE{6};
     }
-    return memcpy(dst, src, n);
+    std::memcpy(dst.data(), src.data(), n);
 }
 #define CHECK(x)                                                                                                                                               \
     do {                                                                                                                                                       \
