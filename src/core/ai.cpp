@@ -550,9 +550,9 @@ void EnsureRobotoidShdefs(APPSESSION &app) {
         if (app.state.rgshdef[ish].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 2 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= (ish - 11) * 3 + 4 &&
             (ish == 11 || static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 14)) {
             if (app.state.rgplr[app.state.idPlayer].rgTech[3] < 10) {
-                FCreateAiShdef(app, ish, ihuldefPrivateer, static_cast<std::uint8_t *>(&vrgRobAip[ish == 11 ? robRecipePrivateerBeam : robRecipePrivateerTorpedo]));
+                FCreateAiShdef(app, ish, ihuldefPrivateer, &vrgRobAip[ish == 11 ? robRecipePrivateerBeam : robRecipePrivateerTorpedo]);
             } else {
-                for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefMetaMorph, static_cast<std::uint8_t *>(&vrgRobAip[vrgRobIshAip[irobRecipeMetaMorphCargoBeamA + RandomIO().pfnRandom(app, 6)]])) == 0;
+                for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefMetaMorph, &vrgRobAip[vrgRobIshAip[irobRecipeMetaMorphCargoBeamA + RandomIO().pfnRandom(app, 6)]]) == 0;
                      i++) {
                 }
             }
@@ -560,14 +560,14 @@ void EnsureRobotoidShdefs(APPSESSION &app) {
     }
     if (app.state.rgshdef[14].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 6 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[0] >= 2) {
-        for (i = 0; i < 5 && (FCreateAiShdef(app, 14, ihuldefNubian, static_cast<std::uint8_t *>(&vrgRobAip[robRecipeNubianMixedBeams])) ||
-                              !FCreateAiShdef(app, 14, ihuldefDestroyer, static_cast<std::uint8_t *>(&vrgRobAip[vrgRobIshAip[irobRecipeDestroyerBeamA + RandomIO().pfnRandom(app, 4)]])));
+        for (i = 0; i < 5 && (FCreateAiShdef(app, 14, ihuldefNubian, &vrgRobAip[robRecipeNubianMixedBeams]) ||
+                              !FCreateAiShdef(app, 14, ihuldefDestroyer, &vrgRobAip[vrgRobIshAip[irobRecipeDestroyerBeamA + RandomIO().pfnRandom(app, 4)]]));
              i++) {
         }
     }
     if (app.state.rgshdef[15].fFree && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 10 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 8 && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9 &&
-        app.state.rgplr[app.state.idPlayer].rgTech[1] >= 14 && !FCreateAiShdef(app, 15, ihuldefNubian, static_cast<std::uint8_t *>(&vrgRobAip[robRecipeNubianMixedBeams]))) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 15, ihuldefDestroyer, static_cast<std::uint8_t *>(&vrgRobAip[vrgRobIshAip[irobRecipeDestroyerTorpedoShield + RandomIO().pfnRandom(app, 4)]])) == 0;
+        app.state.rgplr[app.state.idPlayer].rgTech[1] >= 14 && !FCreateAiShdef(app, 15, ihuldefNubian, &vrgRobAip[robRecipeNubianMixedBeams])) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 15, ihuldefDestroyer, &vrgRobAip[vrgRobIshAip[irobRecipeDestroyerTorpedoShield + RandomIO().pfnRandom(app, 4)]]) == 0;
              i++) {
         }
     }
@@ -575,7 +575,7 @@ void EnsureRobotoidShdefs(APPSESSION &app) {
         if (app.state.rgshdef[ish].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 10 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 10 && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9 &&
             app.state.rgplr[app.state.idPlayer].rgTech[0] >= 6 && (ish == 2 || (!app.state.rgshdef[ish - 1].fFree && static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 12))) {
             shBase = !((ish - 2) & 1) ? irobRecipeMetaMorphBeamDefense : irobRecipeMetaMorphMissileA;
-            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefMetaMorph, static_cast<std::uint8_t *>(&vrgRobAip[vrgRobIshAip[RandomIO().pfnRandom(app, 4) + shBase]])) == 0; i++) {
+            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefMetaMorph, &vrgRobAip[vrgRobIshAip[RandomIO().pfnRandom(app, 4) + shBase]]) == 0; i++) {
             }
         }
     }
@@ -584,15 +584,15 @@ void EnsureRobotoidShdefs(APPSESSION &app) {
             app.state.rgplr[app.state.idPlayer].rgTech[2] >= 12 && app.state.rgplr[app.state.idPlayer].rgTech[0] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 15 &&
             (ish == 6 || (!app.state.rgshdef[ish - 1].fFree && static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 20))) {
             shBase = ish == 6 ? irobRecipeBattleshipMissileBeam : irobRecipeBattleshipBeamA;
-            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefBattleship, static_cast<std::uint8_t *>(&vrgRobAip[vrgRobIshAip[RandomIO().pfnRandom(app, 4) + shBase]])) == 0; i++) {
+            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefBattleship, &vrgRobAip[vrgRobIshAip[RandomIO().pfnRandom(app, 4) + shBase]]) == 0; i++) {
             }
         }
     }
     for (ish = 9; ish <= 10; ish++) {
         if (app.state.rgshdef[ish].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 14 &&
             ((ish == 9 || (!app.state.rgshdef[ish - 1].fFree && static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 15)) &&
-             !FCreateAiShdef(app, ish, ihuldefBattleship, static_cast<std::uint8_t *>(&vrgRobAip[robRecipeBattleshipMcm])))) {
-            FCreateAiShdef(app, ish, ihuldefB52Bomber, static_cast<std::uint8_t *>(&vrgRobAip[ish == 9 ? robRecipeB52SmartThenNormal : robRecipeB52RetroThenSmart]));
+             !FCreateAiShdef(app, ish, ihuldefBattleship, &vrgRobAip[robRecipeBattleshipMcm]))) {
+            FCreateAiShdef(app, ish, ihuldefB52Bomber, &vrgRobAip[ish == 9 ? robRecipeB52SmartThenNormal : robRecipeB52RetroThenSmart]);
         }
     }
     if (app.state.rgshdef[0].hul.ihuldef != ihuldefFrigate && app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard && app.state.rgshdef[0].cExist == 0 && app.state.rgplr[app.state.idPlayer].rgTech[5] >= 4 &&
@@ -600,7 +600,7 @@ void EnsureRobotoidShdefs(APPSESSION &app) {
         shdef = app.state.rgshdef[0];
         shdef.fFree = 1;
         FChangeAiShdef(app, &shdef, 0);
-        FCreateAiShdef(app, 0, ihuldefFrigate, static_cast<std::uint8_t *>(&vrgRobAip[robRecipeFrigateScoutMineLayer]));
+        FCreateAiShdef(app, 0, ihuldefFrigate, &vrgRobAip[robRecipeFrigateScoutMineLayer]);
     }
     return;
 }
@@ -1421,14 +1421,14 @@ void EnsureTurinDroneShdefs(APPSESSION &app, std::int16_t iroCur) {
     std::int16_t i;
 
     if (app.state.rgshdef[8].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 8) {
-        FCreateAiShdef(app, 8, ihuldefRogue, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipeRogueCargoScanner]));
+        FCreateAiShdef(app, 8, ihuldefRogue, &vrgTDAip[tdRecipeRogueCargoScanner]);
     }
     if (app.state.rgshdef[9].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 11) {
-        FCreateAiShdef(app, 9, ihuldefGalleon, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipeGalleonCargoScanner]));
+        FCreateAiShdef(app, 9, ihuldefGalleon, &vrgTDAip[tdRecipeGalleonCargoScanner]);
     }
     if (app.state.rgshdef[10].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 4 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5) {
-        for (i = 0; i < 4 && FCreateAiShdef(app, 10, ihuldefDestroyer, static_cast<std::uint8_t *>(&vrgTDAip[vrgTDIshAip[itdRecipeDestroyerTorpedo + RandomIO().pfnRandom(app, 1)]])) == 0; i++) {
+        for (i = 0; i < 4 && FCreateAiShdef(app, 10, ihuldefDestroyer, &vrgTDAip[vrgTDIshAip[itdRecipeDestroyerTorpedo + RandomIO().pfnRandom(app, 1)]]) == 0; i++) {
         }
     }
     if (app.state.rgshdef[1].fFree || app.state.rgshdef[1].cExist == 0) {
@@ -1437,7 +1437,7 @@ void EnsureTurinDroneShdefs(APPSESSION &app, std::int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 1);
         }
-        FCreateAiShdef(app, 1, ihuldefColonyShip, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipeColonizer]));
+        FCreateAiShdef(app, 1, ihuldefColonyShip, &vrgTDAip[tdRecipeColonizer]);
     }
     if (app.state.rgshdef[0].fFree || app.state.rgshdef[0].cExist == 0) {
         if (!app.state.rgshdef[0].fFree) {
@@ -1445,7 +1445,7 @@ void EnsureTurinDroneShdefs(APPSESSION &app, std::int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 0);
         }
-        FCreateAiShdef(app, 0, ihuldefFrigate, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipeFrigateScout]));
+        FCreateAiShdef(app, 0, ihuldefFrigate, &vrgTDAip[tdRecipeFrigateScout]);
     }
     if ((app.state.rgshdef[2].fFree || app.state.rgshdef[2].cExist == 0) && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 7 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 4) {
         if (!app.state.rgshdef[2].fFree) {
@@ -1453,26 +1453,26 @@ void EnsureTurinDroneShdefs(APPSESSION &app, std::int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 2);
         }
-        FCreateAiShdef(app, 2, ihuldefMiner, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipeMiner]));
+        FCreateAiShdef(app, 2, ihuldefMiner, &vrgTDAip[tdRecipeMiner]);
     }
     if ((app.state.rgshdef[12].fFree || app.state.rgshdef[12].cExist == 0) && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 4 && app.state.rgplr[app.state.idPlayer].rgTech[5] >= 4) {
-        FCreateAiShdef(app, 12, ihuldefPrivateer, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipePrivateerMineLayer]));
+        FCreateAiShdef(app, 12, ihuldefPrivateer, &vrgTDAip[tdRecipePrivateerMineLayer]);
     }
     if (app.state.rgshdef[13].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 8 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 7 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 6) {
-        FCreateAiShdef(app, 13, ihuldefStealthBomber, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipeStealthBomber]));
+        FCreateAiShdef(app, 13, ihuldefStealthBomber, &vrgTDAip[tdRecipeStealthBomber]);
     }
     if (app.state.rgshdef[14].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 11 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 12 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 15 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9) {
-        FCreateAiShdef(app, 14, ihuldefStealthBomber, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipeStealthBomber]));
+        FCreateAiShdef(app, 14, ihuldefStealthBomber, &vrgTDAip[tdRecipeStealthBomber]);
     }
     if (app.state.rgshdef[4].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 13 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 4, ihuldefBattleship, static_cast<std::uint8_t *>(&vrgTDAip[vrgTDIshAip[itdRecipeBattleshipBeamA + RandomIO().pfnRandom(app, 4)]])) == 0; i++) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 4, ihuldefBattleship, &vrgTDAip[vrgTDIshAip[itdRecipeBattleshipBeamA + RandomIO().pfnRandom(app, 4)]]) == 0; i++) {
         }
     }
     if (app.state.rgshdef[15].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 13 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 15, ihuldefRogue, static_cast<std::uint8_t *>(&vrgTDAip[tdRecipeRogueCargoScanner])) == 0; i++) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 15, ihuldefRogue, &vrgTDAip[tdRecipeRogueCargoScanner]) == 0; i++) {
         }
     }
     return;

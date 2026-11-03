@@ -737,31 +737,31 @@ void EnsureMacintiShdefs(APPSESSION &app) {
         if (app.state.rgshdef[ish].fFree) {
             fAdvanced = app.state.rgplr[app.state.idPlayer].lvlAi >= lvlAiTough;
             if ((!fAdvanced || ish != 15 || app.state.rgplr[app.state.idPlayer].rgTech[3] >= 15) &&
-                !FCreateAiShdef(app, ish, static_cast<HulDef>(ihuldefUltraMiner - (fAdvanced == 0)), static_cast<std::uint8_t *>(&vrgMacAip[vrgMacIshAip[imacRecipeMaxiMiner + fAdvanced]])) && ish == 14) {
+                !FCreateAiShdef(app, ish, static_cast<HulDef>(ihuldefUltraMiner - (fAdvanced == 0)), &vrgMacAip[vrgMacIshAip[imacRecipeMaxiMiner + fAdvanced]]) && ish == 14) {
                 if (fAdvanced) {
-                    FCreateAiShdef(app, ish, ihuldefMiner, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeUltraMinerOrMiner]));
+                    FCreateAiShdef(app, ish, ihuldefMiner, &vrgMacAip[macRecipeUltraMinerOrMiner]);
                 } else {
-                    FCreateAiShdef(app, ish, ihuldefMiniMiner, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeMiniMiner]));
+                    FCreateAiShdef(app, ish, ihuldefMiniMiner, &vrgMacAip[macRecipeMiniMiner]);
                 }
             }
         }
     }
     if (app.state.rgshdef[12].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 6 &&
-        !FCreateAiShdef(app, 12, ihuldefNubian, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeNubianMixedBeams]))) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 12, ihuldefDestroyer, static_cast<std::uint8_t *>(&vrgMacAip[vrgMacIshAip[imacRecipeDestroyerBeamA + RandomIO().pfnRandom(app, 4)]])) == 0; i++) {
+        !FCreateAiShdef(app, 12, ihuldefNubian, &vrgMacAip[macRecipeNubianMixedBeams])) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 12, ihuldefDestroyer, &vrgMacAip[vrgMacIshAip[imacRecipeDestroyerBeamA + RandomIO().pfnRandom(app, 4)]]) == 0; i++) {
         }
     }
     if (app.state.rgshdef[13].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 10 && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9 &&
-        !FCreateAiShdef(app, 13, ihuldefNubian, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeNubianMixedBeams]))) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 13, ihuldefDestroyer, static_cast<std::uint8_t *>(&vrgMacAip[vrgMacIshAip[imacRecipeDestroyerTorpedoShield + RandomIO().pfnRandom(app, 4)]])) == 0;
+        !FCreateAiShdef(app, 13, ihuldefNubian, &vrgMacAip[macRecipeNubianMixedBeams])) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 13, ihuldefDestroyer, &vrgMacAip[vrgMacIshAip[imacRecipeDestroyerTorpedoShield + RandomIO().pfnRandom(app, 4)]]) == 0;
              i++) {
         }
     }
-    if (app.state.rgshdef[10].fFree && !FCreateAiShdef(app, 10, ihuldefLargeFreighter, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeFreighter]))) {
-        FCreateAiShdef(app, 10, ihuldefMediumFreighter, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeFreighter]));
+    if (app.state.rgshdef[10].fFree && !FCreateAiShdef(app, 10, ihuldefLargeFreighter, &vrgMacAip[macRecipeFreighter])) {
+        FCreateAiShdef(app, 10, ihuldefMediumFreighter, &vrgMacAip[macRecipeFreighter]);
     }
     if (app.state.rgshdef[11].fFree) {
-        FCreateAiShdef(app, 11, ihuldefLargeFreighter, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeFreighter]));
+        FCreateAiShdef(app, 11, ihuldefLargeFreighter, &vrgMacAip[macRecipeFreighter]);
     }
     if (app.state.game.turn < 20 && !app.state.rgshdef[2].fFree && app.state.rgshdef[2].cExist == 0) {
         shdef = app.state.rgshdef[2];
@@ -770,20 +770,20 @@ void EnsureMacintiShdefs(APPSESSION &app) {
     }
     for (ish = 2; ish <= 4; ish++) {
         if (app.state.rgshdef[ish].fFree && (ish == 2 || static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 20)) {
-            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefCruiser, static_cast<std::uint8_t *>(&vrgMacAip[vrgMacIshAip[imacRecipeCruiserAntiMatterMcm + RandomIO().pfnRandom(app, 4)]])) == 0;
+            for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefCruiser, &vrgMacAip[vrgMacIshAip[imacRecipeCruiserAntiMatterMcm + RandomIO().pfnRandom(app, 4)]]) == 0;
                  i++) {
             }
         }
     }
     if (app.state.game.turn < 40 && app.state.rgshdef[7].fFree) {
-        FCreateAiShdef(app, 7, ihuldefColonyShip, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeOrbitalConstructionColonizer]));
+        FCreateAiShdef(app, 7, ihuldefColonyShip, &vrgMacAip[macRecipeOrbitalConstructionColonizer]);
     }
     if (FLookupPartX(app, &part, hstEngine, iengineGalaxyScoop) == mdPartAvailAvailable && !app.state.rgshdef[1].fFree && app.state.rgshdef[1].cExist == 0 &&
         app.state.rgshdef[1].hul.rghs[0].iItem != iengineGalaxyScoop) {
         shdef = app.state.rgshdef[1];
         shdef.fFree = 1;
         FChangeAiShdef(app, &shdef, 1);
-        FCreateAiShdef(app, 1, ihuldefColonyShip, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeOrbitalConstructionColonizer]));
+        FCreateAiShdef(app, 1, ihuldefColonyShip, &vrgMacAip[macRecipeOrbitalConstructionColonizer]);
     }
     for (ish = 5; ish <= 7; ish++) {
         if (app.state.rgshdef[ish].fFree && (ish == 5 || (!app.state.rgshdef[ish - 1].fFree && static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 20))) {
@@ -791,8 +791,8 @@ void EnsureMacintiShdefs(APPSESSION &app) {
             if (ish == 7) {
                 shBase = RandomIO().pfnRandom(app, 2) == 0 ? imacRecipeBattleshipBeamA : imacRecipeBattleshipMissileBeam;
             }
-            if (RandomIO().pfnRandom(app, 3) == 0 || !FCreateAiShdef(app, ish, ihuldefNubian, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeNubianMixedBeamsMcm]))) {
-                for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefBattleship, static_cast<std::uint8_t *>(&vrgMacAip[vrgMacIshAip[RandomIO().pfnRandom(app, 4) + shBase]])) == 0; i++) {
+            if (RandomIO().pfnRandom(app, 3) == 0 || !FCreateAiShdef(app, ish, ihuldefNubian, &vrgMacAip[macRecipeNubianMixedBeamsMcm])) {
+                for (i = 0; i < 5 && FCreateAiShdef(app, ish, ihuldefBattleship, &vrgMacAip[vrgMacIshAip[RandomIO().pfnRandom(app, 4) + shBase]]) == 0; i++) {
                 }
             }
         }
@@ -800,8 +800,8 @@ void EnsureMacintiShdefs(APPSESSION &app) {
     for (ish = 8; ish <= 9; ish++) {
         if (app.state.rgshdef[ish].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 14 &&
             ((ish == 8 || (!app.state.rgshdef[ish - 1].fFree && static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[ish - 1].turn)) > 15)) &&
-             !FCreateAiShdef(app, ish, ihuldefBattleship, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeBattleshipMcm])))) {
-            FCreateAiShdef(app, ish, ihuldefB52Bomber, static_cast<std::uint8_t *>(&vrgMacAip[ish == 8 ? macRecipeB52SmartThenNormal : macRecipeB52RetroThenSmart]));
+             !FCreateAiShdef(app, ish, ihuldefBattleship, &vrgMacAip[macRecipeBattleshipMcm]))) {
+            FCreateAiShdef(app, ish, ihuldefB52Bomber, &vrgMacAip[ish == 8 ? macRecipeB52SmartThenNormal : macRecipeB52RetroThenSmart]);
         }
     }
     if (app.state.rgshdef[0].hul.ihuldef != ihuldefFrigate && app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard && app.state.rgshdef[0].cExist == 0 && app.state.rgplr[app.state.idPlayer].rgTech[5] >= 4 &&
@@ -809,7 +809,7 @@ void EnsureMacintiShdefs(APPSESSION &app) {
         shdef = app.state.rgshdef[0];
         shdef.fFree = 1;
         FChangeAiShdef(app, &shdef, 0);
-        FCreateAiShdef(app, 0, ihuldefFrigate, static_cast<std::uint8_t *>(&vrgMacAip[macRecipeFrigateScoutMineLayer]));
+        FCreateAiShdef(app, 0, ihuldefFrigate, &vrgMacAip[macRecipeFrigateScoutMineLayer]);
     }
     return;
 }

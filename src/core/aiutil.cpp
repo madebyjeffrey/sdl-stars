@@ -2305,7 +2305,7 @@ std::int16_t FCreateAiStarbase(APPSESSION &app, std::int16_t ishdef, std::int16_
             isb = isbhullSpaceStation;
         }
     }
-    if (!FCreateAiShdef(app, ishdefNone, static_cast<HulDef>(isb), static_cast<std::uint8_t *>(&vrgSBAip[aisb]))) {
+    if (!FCreateAiShdef(app, ishdefNone, static_cast<HulDef>(isb), &vrgSBAip[aisb])) {
         return 0;
     }
     shdef = app.state.shdefBuild;
