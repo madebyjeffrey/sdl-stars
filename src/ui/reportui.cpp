@@ -1403,11 +1403,11 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             }
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
             break;
-        case colFleetDestination:
-            szReportText = PszGetDestName(app, lpfl, hdc);
-            psz = szReportText.data();
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+        case colFleetDestination: {
+            const auto destination = PszGetDestName(app, lpfl, hdc);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, destination.data(), destination.cch, nullptr);
             break;
+        }
         case colFleetTask: {
             const auto taskName = PszGetTaskName(app, lpfl);
             szReportText = taskName.sz;
@@ -1999,10 +1999,10 @@ TryTier2:
             iRet = lpfl1->iplan - lpfl2->iplan;
             break;
         case colFleetDestination:
-            szReportText = PszGetDestName(app, lpfl1, nullptr);
+            szReportText = PszGetDestName(app, lpfl1, nullptr).sz;
             psz = szReportText.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
-            szReportText = PszGetDestName(app, lpfl2, nullptr);
+            szReportText = PszGetDestName(app, lpfl2, nullptr).sz;
             psz = szReportText.data();
             iRet = std::strcmp(szT, psz);
             if (iRet < 0) {

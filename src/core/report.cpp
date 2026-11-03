@@ -13,16 +13,18 @@ std::uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32,
 
 // Report labels may come from catalog values, game fields or work storage.
 // Copy at this boundary so callers retain one value through sorting/drawing.
-static std::array<char, 360> SzReportLabel(std::string_view sz, std::int16_t *pcch = nullptr) {
-    std::array<char, 360> szResult{};
-    const auto cch = CchCopyUtf8Prefix(std::span{szResult}, sz);
-    if (pcch) {
-        *pcch = static_cast<std::int16_t>(cch);
-    }
+static REPORTTEXTRESULT SzReportText(std::string_view sz) {
+    REPORTTEXTRESULT szResult{};
+    szResult.cch = static_cast<std::int16_t>(CchCopyUtf8Prefix(std::span{szResult.sz}, sz));
     return szResult;
 }
 
-std::array<char, 360> PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
+static std::array<char, 360> SzReportLabel(std::string_view sz) {
+    return SzReportText(sz).sz;
+}
+
+REPORTTEXTRESULT PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
+    std::array<char, 360> szLocation{};
     std::int16_t i;
     ORDER   ord;
 
@@ -50,16 +52,17 @@ std::array<char, 360> PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
             if (hdc) {
                 SetHdcTextColor(hdc, 127);
             }
-            return SzReportLabel(TextIO().pfnCompressed(app, idsDelayed).data());
+            return SzReportText(TextIO().pfnCompressed(app, idsDelayed).data());
         default:
             break;
         }
     }
     ord = lpfl->lpplord->rgord()[1];
-    return PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+    szLocation = PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+    return SzReportText(szLocation.data());
 
 LNoDest:
-    return SzReportLabel(app.state.szDblDash);
+    return SzReportText(app.state.szDblDash);
 }
 
 std::int16_t FDestIsWP0(FLEET *lpfl) {
@@ -95,10 +98,10 @@ std::int16_t FDestIsWP0(FLEET *lpfl) {
 FLEETETARESULT PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl) {
     POINT16 pt;
     std::int16_t c;
-    std::int16_t cch;
     std::int16_t i;
     ORDER   ord;
     char   *psz;
+    REPORTTEXTRESULT szLabel;
 
     ord = lpfl->lpplord->rgord()[0];
     pt = ord.pt;
@@ -135,10 +138,12 @@ FLEETETARESULT PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl) {
         if (c == 0) {
             c = 32000;
         }
-        return {SzReportLabel(std::string_view{app.state.szWork, static_cast<std::size_t>(c)}, &cch), c, cch};
+        szLabel = SzReportText(std::string_view{app.state.szWork, static_cast<std::size_t>(c)});
+        return {szLabel.sz, c, szLabel.cch};
     }
 LNoETA:
-    return {SzReportLabel(app.state.szDblDash, &cch), 0, cch};
+    szLabel = SzReportText(app.state.szDblDash);
+    return {szLabel.sz, 0, szLabel.cch};
 }
 
 TASKNAMERESULT PszGetTaskName(APPSESSION &app, FLEET *lpfl) {
@@ -640,7 +645,7 @@ void DumpFleets(APPSESSION &app) {
                 }
                 RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
                 if (lpfl->det == detAll) {
-                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetDestName(app, lpfl, nullptr).data());
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetDestName(app, lpfl, nullptr).view());
                 } else if (app.state.gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
                     cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->dirFltX()).data());
                     cchForm += CchAppendUtf8Prefix(std::span{szForm}.subspan(1), ".");

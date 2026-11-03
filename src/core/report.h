@@ -7,7 +7,15 @@
 
 extern std::uint16_t mpicolgrbitBU[12];
 
-std::array<char, 360> PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc);
+struct REPORTTEXTRESULT {
+    std::array<char, 360> sz{};
+    std::int16_t cch = 0;
+
+    char *data() noexcept { return sz.data(); }
+    const char *data() const noexcept { return sz.data(); }
+    std::string_view view() const noexcept { return {sz.data(), static_cast<std::size_t>(cch)}; }
+};
+REPORTTEXTRESULT PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc);
 std::int16_t FDestIsWP0(FLEET *lpfl);
 struct FLEETETARESULT {
     std::array<char, 360> sz;
