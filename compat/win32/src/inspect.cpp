@@ -8,7 +8,10 @@
 #include <cinttypes>
 #include <cstring>
 #include <span>
+#include <string>
 #include <string_view>
+#include <new>
+#include <stdexcept>
 #include "native.h"
 #include "inspect_styles.h"
 
@@ -215,7 +218,7 @@ static void InspectDetails(HWND hwnd) {
     int i = static_cast<int>(win32::SendMessageA(hwndList, win32::LB_GETCURSEL, 0, 0));
     LRESULT iItem;
     const STARSCOMPATWINDOW *lp;
-    char *psz;
+    std::string szDetails;
     char szStyle[2048], szExStyle[2048];
     std::size_t cb;
     if (i == win32::LB_ERR) return;
@@ -225,9 +228,15 @@ static void InspectDetails(HWND hwnd) {
     FormatStyles(lp, 0, std::span{szStyle});
     FormatStyles(lp, 1, std::span{szExStyle});
     cb = std::strlen(lp->pszClass) + std::strlen(lp->pszText) + std::strlen(szStyle) + std::strlen(szExStyle);
-    if (cb > std::numeric_limits<std::size_t>::max() - 640 || !(psz = static_cast<char *>((SDL_malloc(cb + 640))))) return;
-    NATIVEOWNER<char, SDL_free> pszOwner(psz);
-    CchSnprintf(std::span{psz, cb + 640},
+    if (cb > std::numeric_limits<std::size_t>::max() - 640) return;
+    try {
+        szDetails.resize(cb + 640);
+    } catch (const std::bad_alloc &) {
+        return;
+    } catch (const std::length_error &) {
+        return;
+    }
+    CchSnprintf(std::span{szDetails},
         "ID: %" PRIu64 "\r\nParent: %" PRIu64 "\r\nOwner: %" PRIu64 "\r\nControl ID: %" PRIdPTR
         "\r\nClass: %s\r\nControl kind: %u (%s)\r\nDialog: %d\r\nVisible: %d\r\nEnabled: %d\r\nFocus: %d"
         "\r\nCapture: %d\r\nStyle: 0x%08x\r\n%s\r\nExStyle: 0x%08x\r\n%s"
@@ -238,7 +247,7 @@ static void InspectDetails(HWND hwnd) {
         static_cast<unsigned>(lp->dwStyle), szStyle, static_cast<unsigned>(lp->dwExStyle), szExStyle,
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
         lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->pszText);
-    win32::SetWindowTextA(win32::GetDlgItem(hwnd, 2), psz);
+    win32::SetWindowTextA(win32::GetDlgItem(hwnd, 2), szDetails.c_str());
 }
 
 static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
