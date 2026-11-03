@@ -453,7 +453,7 @@ std::optional<std::size_t> FCompressUserString(APPSESSION &app, std::string_view
         return std::nullopt;
     }
     cOut = static_cast<std::size_t>(pchOut - szWork);
-    if (cOut != 0) std::memmove(szOut.data(), szWork, cOut);
+    if (cOut != 0) std::copy_n(std::as_bytes(std::span{szWork, cOut}).begin(), cOut, szOut.begin());
     return cOut;
 }
 
@@ -511,7 +511,7 @@ static std::optional<std::size_t> FDecompressUserStringInternal(APPSESSION &app,
         }
     }
     *pchOut = 0;
-    if (std::memchr(szWork, 0, static_cast<std::size_t>((pchOut - szWork))) != nullptr) goto invalid;
+    if (std::find(szWork, pchOut, 0) != pchOut) goto invalid;
     if (fUtf8 && !FUtf8Valid(std::string_view{szWork, static_cast<std::size_t>((pchOut - szWork))})) goto invalid;
     cOut = static_cast<std::size_t>(pchOut - szWork);
     std::copy_n(szWork, cOut + 1, szOut.data());

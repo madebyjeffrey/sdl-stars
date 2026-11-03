@@ -93,7 +93,7 @@ static BOOL FLoadProfile(const char *pszPath, COMPATPROFILE **lplp) {
         if (cbTotal > 8 * 1024 * 1024 || !FUtf8Valid(std::string_view{sz->data(), cbLine})) {
             win32::SetLastError(win32::ERROR_BAD_FORMAT); goto LReturn;
         }
-        if (cbTotal == cbLine && cbLine >= 3 && !std::memcmp(sz->data(), "\xef\xbb\xbf", 3))
+        if (cbTotal == cbLine && cbLine >= 3 && std::string_view{sz->data(), 3} == std::string_view{"\xef\xbb\xbf", 3})
             sz->erase(0, 3);
         *lplpNext = LpProfileLine(sz->c_str());
         if (!*lplpNext) { win32::SetLastError(win32::ERROR_NOT_ENOUGH_MEMORY); goto LReturn; }

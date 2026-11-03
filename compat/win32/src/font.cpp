@@ -8,6 +8,7 @@
 #include <limits>
 #include <new>
 #include <utility>
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <strings.h>
@@ -178,7 +179,7 @@ static COMPATFONT *LpNewFontRaster(const LOGFONTA *lplf, int cMax) {
 
     if (!lplf || static_cast<std::int64_t>(lplf->lfHeight) < -cMax || lplf->lfHeight > cMax ||
         lplf->lfWidth < 0 || lplf->lfWidth > cMax ||
-        !std::memchr(lplf->lfFaceName, 0, sizeof(lplf->lfFaceName)) ||
+        std::find(std::begin(lplf->lfFaceName), std::end(lplf->lfFaceName), 0) == std::end(lplf->lfFaceName) ||
         !FUtf8Valid(lplf->lfFaceName)) return nullptr;
     if (!library) {
         iFaceError = FT_Init_FreeType(&libraryNew);

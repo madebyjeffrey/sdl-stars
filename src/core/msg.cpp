@@ -753,7 +753,8 @@ MSGPLR *LpmsgplrFromRt(APPSESSION &app) {
     char szText[1001];
     std::int16_t cOut;
     std::int16_t cLen;
-    const char *pszEnd;
+    std::string_view szMsg;
+    std::size_t ichEnd;
 
     /* NATIVE: skip records too short for their header or text; see WIN16-PARITY.md. */
     if (app.state.hdrCur.cb < cbWirePlrMsg || std::abs(PmvCur(app).cLen()) + cbWirePlrMsg > app.state.hdrCur.cb)
@@ -763,9 +764,9 @@ MSGPLR *LpmsgplrFromRt(APPSESSION &app) {
         cOut = sizeof(szText) - 1;
         if (!FDecompressUserString(app, std::as_bytes(std::span(PmvCur(app).RgbMsg(), static_cast<std::size_t>(cLen))), std::span(szText, static_cast<std::size_t>(cOut) + 1))) return nullptr;
     } else {
-        pszEnd = static_cast<const char *>(std::memchr(PmvCur(app).RgbMsg(), 0, -cLen));
-        if (!pszEnd || pszEnd - reinterpret_cast<char *>(PmvCur(app).RgbMsg()) >= static_cast<int>(sizeof(szText)) ||
-            !FUtf8Valid(std::string_view{reinterpret_cast<char *>(PmvCur(app).RgbMsg()), static_cast<std::size_t>((pszEnd - reinterpret_cast<char *>(PmvCur(app).RgbMsg())))})) return nullptr;
+        szMsg = std::string_view{reinterpret_cast<char *>(PmvCur(app).RgbMsg()), static_cast<std::size_t>(-cLen)};
+        ichEnd = szMsg.find('\0');
+        if (ichEnd == std::string_view::npos || ichEnd >= sizeof(szText) || !FUtf8Valid(szMsg.substr(0, ichEnd))) return nullptr;
     }
     lpmp = LpmsgplrAlloc(app, sizeof(MSGPLR) + app.state.hdrCur.cb - cbWirePlrMsg);
     lpmp->lpmsgplrNext = nullptr;

@@ -647,7 +647,8 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     dwDialogError = 0;
     if (FStarsErrorPending()) return 0;
     if (!lpof || lpof->lStructSize != sizeof(*lpof)) { dwDialogError = win32::CDERR_STRUCTSIZE; return 0; }
-    if (!lpof->lpstrFile || lpof->nMaxFile == 0 || !std::memchr(lpof->lpstrFile, 0, lpof->nMaxFile)) {
+    if (!lpof->lpstrFile || lpof->nMaxFile == 0 ||
+        std::find(lpof->lpstrFile, lpof->lpstrFile + lpof->nMaxFile, 0) == lpof->lpstrFile + lpof->nMaxFile) {
         dwDialogError = win32::FNERR_INVALIDFILENAME; return 0;
     }
     if (!FUtf8Valid(lpof->lpstrFile) ||
