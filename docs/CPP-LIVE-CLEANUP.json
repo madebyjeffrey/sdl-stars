@@ -29243,7 +29243,23 @@
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
-    "c_macro_inventory": "Refreshed 2026-11-03 at 2ac0e6fc9147bef965393c343276062e19339fc7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
+    "current_remaining_inventory": {
+      "source_commit": "669556108047393bda163824d1c1be10cbcb0ba7",
+      "production_c_translation_units": 0,
+      "tracked_c_test_and_reference_translation_units": 44,
+      "owned_function_like_api_macros": 0,
+      "replaceable_legacy_string_and_numeric_calls": 0,
+      "replaceable_memcpy_calls": 0,
+      "remaining_code_audit_substeps": [
+        "L05 bounded-text-destinations",
+        "L05 post-migration-scratch-storage-and-borrowed-return-audit",
+        "L06 remaining-buffer-and-length-interfaces",
+        "L06 remaining-native-file-path-results"
+      ],
+      "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser coverage.",
+      "interpretation": "The four code substeps are audits, not a known count of edits. They remain open until reviewed site by site; no candidate replacement total is claimed."
+    },
+    "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
     "memcpy_call_audit": {
       "source_head": "d5d82d87",
@@ -29255,7 +29271,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "a250299b7ff5a51c9cbc7c036f1d48d49ebc6ce5",
+    "source_head": "669556108047393bda163824d1c1be10cbcb0ba7",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -29305,7 +29321,7 @@
     "cocoa_chooser_path_length": "IChooseCocoaFile creates one bounded view for the selected native path and reuses its byte length for capacity admission and copy, removing a duplicate std::strlen scan.",
     "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed.",
     "strlen_occurrence_classification": {
-      "source_head": "6c185819",
+      "source_head": "669556108047393bda163824d1c1be10cbcb0ba7",
       "total": 3,
       "c_string_api_or_input_boundaries": 3,
       "owned_or_fixed_text_length_reads": 0,
@@ -29315,7 +29331,8 @@
         "compat/win32/src/edit.cpp: ReplaceEdit LPCSTR input"
       ],
       "length_read_sites": [],
-      "interpretation": "All remaining production std::strlen calls measure incoming NUL-terminated API/input strings; no owned or fixed-storage text-length reads remain."
+      "bounded_scan_api_boundary": "compat/win32/src/paint.cpp: TextOut-style input with cch == -1 is scanned up to its existing 1 MiB limit.",
+      "interpretation": "All three production std::strlen calls measure incoming NUL-terminated API/input strings; the one remaining bounded strnlen is an adapter input boundary. No owned or fixed-storage text-length reads remain."
     },
     "paint_region_merge_result": "CrcMergeRegion accepts a span of active rectangles and returns the merged count; it no longer mutates a size_t output pointer.",
     "paint_update_region_ownership": "HWND pending update rectangles and HDC paint rectangles are vector-owned; add/subtract helpers mutate a vector, and the separate count fields and realloc-based temporary ownership are removed.",
