@@ -313,7 +313,8 @@
         "help-internal-operation-flags-use-bool",
         "typed-fixed-array-size-queries",
         "bounded-help-filename-case-comparison",
-        "scanner-private-boolean-helper-results"
+        "scanner-private-boolean-helper-results",
+        "message-format-result-byte-count"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -2728,7 +2729,9 @@
         "fixed-sixteen-entry-ai-design-split-span",
         "log-replay-byte-payload-span"
       ],
-      "pending_substeps": [],
+      "pending_substeps": [
+        "remaining-buffer-and-length-interfaces"
+      ],
       "user_string_codecs": {
         "status": "complete; verified",
         "evidence": "docs/CPP-LIVE-CODECS.json",
@@ -30346,14 +30349,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "dc444ad2",
-  "latest_batch_status": "Source commit dc444ad2 verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "29a731f9",
+  "latest_batch_status": "Source commit 29a731f9 verified locally; L05/L06 reports recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "dc444ad2",
+      "source_commit": "29a731f9",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -30413,7 +30416,7 @@
         ],
         "result": "Fresh lexical scan of src and compat/win32/include/src; comments/literals not parsed separately by this quick check. Maintained cleanup manifests remain authoritative for full audits."
       },
-      "last_verified_batch": "FRunLogRecord physical payload is span-based; 18 desktop tests, 29 host tests, both 519-checkpoint regressions and tutorial smoke pass.",
+      "last_verified_batch": "PszFormatString and PszFormatIds carry exact UTF-8 byte counts through MESSAGETEXTRESULT; 18 desktop tests, 29 host tests, both 519-checkpoint regressions, and tutorial smoke pass.",
       "typed_battle_damage_result": "DAMAGERESULT replaces the mutable beam-damage output and optional mutable torpedo kill-limit pointer.",
       "typed_ai_result": "MACWARFLEETPOTENCYRESULT replaces the nullable cEquiv output pointer.",
       "typed_ai_results": "MACWARFLEETPOTENCYRESULT, COLONIZERBUILDRESULT, COLONIZABLEPLANETRESULT, AISHDEFSTATUSRESULT, SALVAGETARGETRESULT and UNKNOWNPLANETRESULT replace AI output-pointer interfaces; fixed-size AI buffers use spans.",
@@ -30431,7 +30434,8 @@
       "fixed_four_element_ai_starbase_status_pointer_interfaces": 0,
       "fixed_sixteen_entry_ai_design_status_pointer_interfaces": 0,
       "log_replay_record_byte_pointer_interfaces": 0,
-      "log_replay_payload_interface": "FRunLogRecord receives its physical payload extent as a span; the signed record length remains separate because replay preserves legacy declared-length and adjacent-buffer semantics."
+      "log_replay_payload_interface": "FRunLogRecord receives its physical payload extent as a span; the signed record length remains separate because replay preserves legacy declared-length and adjacent-buffer semantics.",
+      "message_format_result_interface": "PszFormatString, PszFormatIds, and TEXTIO::pfnFormat return MESSAGETEXTRESULT with exact UTF-8 byte count."
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -30445,7 +30449,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "dc444ad2",
+    "source_head": "29a731f9",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -30490,7 +30494,7 @@
     "race_file_prefix_view": "FSaveRace now uses string_view::starts_with to preserve the prior strncmp(..., strlen(currentPath)) prefix semantics while removing the explicit length scan.",
     "group_control_title_length": "The compatibility group-control painter now passes HWND__::cchTitle to GetTextExtentPoint32A instead of rescanning the same owned title with SDL_strlen.",
     "entry_argument_views": "ICompatMain measures each argv item once through string_view, rejects whitespace with find_first_of, compares native options with typed view equality and copies the exact byte range before writing the final NUL. The obsolete <cstring> include is removed.",
-    "message_format_results": "PszFormatMessage and PszGetMessageN return MESSAGETEXTRESULT carrying exact UTF-8 byte counts from formatter output; MessageWndProc reuses the count for drawing and sizing. The general array-returning PszFormatString API remains unchanged.",
+    "message_format_results": "PszFormatMessage, PszGetMessageN, PszFormatString, and PszFormatIds return MESSAGETEXTRESULT with exact UTF-8 byte counts; TEXTIO::pfnFormat preserves the result through its callback.",
     "inspector_style_lengths": "FormatStyles and its append/decode helpers carry byte counts as style labels are written. InspectDetails reuses the generated style lengths when sizing details text, removing two scratch-buffer strlen calls.",
     "cocoa_chooser_path_length": "IChooseCocoaFile creates one bounded view for the selected native path and reuses its byte length for capacity admission and copy, removing a duplicate std::strlen scan.",
     "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed.",
@@ -30605,13 +30609,14 @@
       "platform_boundary": "Raw Win32/POSIX path calls remain only inside the platform service and Win32 chooser adapters; no application-owned output-pointer path interface remains."
     },
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
-    "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
+    "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds.",
+    "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format C-string arguments remain at null-check, %s/%p and CRT formatting boundaries."
   },
-  "latest_change": "FRunLogRecord now receives the physical log payload as std::span<std::uint8_t>. The signed declared record length remains separate to preserve replay behavior.",
+  "latest_change": "PszFormatString and PszFormatIds now preserve MESSAGETEXTRESULT byte counts through the TEXTIO formatter API.",
   "latest_batch_verification": {
-    "batch": "Pass log replay payloads as spans",
-    "parent": "ea280bdd",
-    "source_commit": "dc444ad2",
+    "batch": "Return formatted message byte counts",
+    "parent": "26f1d628",
+    "source_commit": "29a731f9",
     "macos_sdl_debug_build": "make test-unit rebuilt strict SDL Debug targets and passed all 18 desktop unit tests.",
     "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30628,14 +30633,14 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
-    "api_audit": "FRunLogRecord takes a byte span for physical payload capacity. Its signed cb wire field remains independent, preserving existing truncated/adjacent-record replay semantics. The production caller spans the same 32,000-byte allocation; array tests provide their full physical extents.",
+    "api_audit": "PszFormatString, PszFormatIds and TEXTIO::pfnFormat preserve MESSAGETEXTRESULT, including its exact UTF-8 byte count. Formatting output and buffer capacity remain unchanged.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Pass log replay payloads as spans",
-    "parent": "ea280bdd",
-    "source_commit": "dc444ad2",
+    "batch": "Return formatted message byte counts",
+    "parent": "26f1d628",
+    "source_commit": "29a731f9",
     "macos_sdl_debug_build": "make test-unit rebuilt strict SDL Debug targets and passed all 18 desktop unit tests.",
     "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30652,15 +30657,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
-    "api_audit": "FRunLogRecord takes a byte span for physical payload capacity. Its signed cb wire field remains independent, preserving existing truncated/adjacent-record replay semantics. The production caller spans the same 32,000-byte allocation; array tests provide their full physical extents.",
+    "api_audit": "PszFormatString, PszFormatIds and TEXTIO::pfnFormat preserve MESSAGETEXTRESULT, including its exact UTF-8 byte count. Formatting output and buffer capacity remain unchanged.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit dc444ad2 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit 29a731f9 verified locally; L05/L06 reports recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
-    "next": "Continue L05 bounded-text and scratch/borrowed-return audits and the L06 general buffer/length audit; then qualify current source on Windows/Linux and close chooser coverage."
+    "next": "Use docs/CPP-LIVE-L05-REPORT.md and docs/CPP-LIVE-L06-REPORT.md to close the remaining text/ownership and buffer/length audits, then qualify the current source on Windows/Linux and close chooser coverage."
   }
 }
