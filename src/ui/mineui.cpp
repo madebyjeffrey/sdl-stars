@@ -142,7 +142,7 @@ void InvalidateMineralBars(APPSESSION &app) {
 }
 
 void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
-    std::array<char, 360> szDisplayLabel{};
+    PLANETTEXTRESULT szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::array<char, cchCatalogText> szCatalogPszT{};
@@ -634,7 +634,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 if (pl.det >= detSome) {
                     szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(i), iCur);
                     psz = szDisplayLabel.data();
-                    c = std::strlen(psz);
+                    c = static_cast<std::int16_t>(szDisplayLabel.cch);
                     win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                     win32::TextOutA(hdc, xR + 2, yCur + dy, psz, c);
                 }

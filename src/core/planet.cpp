@@ -34,9 +34,9 @@ std::int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart) {
 }
 
 // Preserve the session work text while callers retain an independent label.
-static std::array<char, 360> SzPlanetLabel(std::string_view sz) {
-    std::array<char, 360> szResult{};
-    CchCopyUtf8Prefix(std::span{szResult}, sz);
+static PLANETTEXTRESULT SzPlanetLabel(std::string_view sz) {
+    PLANETTEXTRESULT szResult{};
+    szResult.cch = CchCopyUtf8Prefix(std::span{szResult.sz}, sz);
     return szResult;
 }
 
@@ -44,6 +44,7 @@ PRODUCTIONETARESULT PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lppl
     std::int16_t  iTurnEnd;
     std::int16_t  iTurnBegin;
     std::int16_t  c;
+    PLANETTEXTRESULT szLabel;
     StringId ids;
 
     if (!lpplprod) {
@@ -77,7 +78,8 @@ PRODUCTIONETARESULT PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lppl
     } else {
         c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDDYears).data(), iTurnBegin, iTurnEnd);
     }
-    return {SzPlanetLabel(app.state.szWork), iTurnBegin, iTurnEnd, c};
+    szLabel = SzPlanetLabel(std::string_view{app.state.szWork, static_cast<std::size_t>(c)});
+    return {szLabel.sz, iTurnBegin, iTurnEnd, static_cast<std::int16_t>(szLabel.cch)};
 }
 
 void ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel) {
@@ -294,23 +296,27 @@ std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp) {
     return iBest;
 }
 
-std::array<char, 360> PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar) {
+PLANETTEXTRESULT PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar) {
+    int cch;
+
     switch (iEnv) {
     case Gravity:
     default:
         return PszCalcGravity(app, iVar);
     case Temperature:
-        CchSprintf(app.state.szWork, "%dºC", iVar * 4 - 200);
+        cch = CchSprintf(app.state.szWork, "%dºC", iVar * 4 - 200);
         break;
     case Radiation:
-        CchSprintf(app.state.szWork, "%dmR", iVar);
+        cch = CchSprintf(app.state.szWork, "%dmR", iVar);
+        break;
     }
-    return SzPlanetLabel(app.state.szWork);
+    return SzPlanetLabel(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
 }
 
-std::array<char, 360> PszCalcGravity(APPSESSION &app, std::int16_t iGravity) {
+PLANETTEXTRESULT PszCalcGravity(APPSESSION &app, std::int16_t iGravity) {
     std::int16_t d;
     std::int16_t iVal;
+    int cch;
 
     d = std::abs(iGravity - 50);
     if (d <= 25) {
@@ -321,8 +327,8 @@ std::array<char, 360> PszCalcGravity(APPSESSION &app, std::int16_t iGravity) {
     if (iGravity < 50) {
         iVal = 10000 / iVal;
     }
-    CchSprintf(app.state.szWork, "%d.%02dg", iVal / 100, iVal % 100);
-    return SzPlanetLabel(app.state.szWork);
+    cch = CchSprintf(app.state.szWork, "%d.%02dg", iVal / 100, iVal % 100);
+    return SzPlanetLabel(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
 }
 
 std::int16_t PctPlanetCapacity(APPSESSION &app, PLANET *lppl) {
@@ -1058,10 +1064,10 @@ std::array<char, 360> PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpp
         for (i = 0; i < lpplprod->iprodMac; i++) {
             if (FProdItemLine(app, lppl, lpplprod, i, 0, szLine)) {
                 CchCopyUtf8Prefix(std::span{app.state.szWork}, szLine);
-                return SzPlanetLabel(app.state.szWork);
+                return SzPlanetLabel(app.state.szWork).sz;
             }
         }
         TextIO().pfnCchGetString(app, idsQueueEmpty, std::span{app.state.szWork});
     }
-    return SzPlanetLabel(app.state.szWork);
+    return SzPlanetLabel(app.state.szWork).sz;
 }

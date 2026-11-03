@@ -494,7 +494,7 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
-    std::array<char, 360> szDisplayLabel{};
+    PLANETTEXTRESULT szDisplayLabel{};
     std::int16_t iPit;
     std::int16_t bt;
     std::int16_t iMax;
@@ -506,7 +506,6 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
     std::int16_t xRLabel;
     std::int16_t i;
     std::int16_t iMod;
-    char   *psz;
     std::int16_t dx;
     std::int16_t cch;
     std::int16_t bt1;
@@ -538,13 +537,11 @@ void DrawRace2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8, std::string_view{szT, static_cast<std::size_t>(cch)});
             } else {
                 szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMin[i]);
-                psz = szDisplayLabel.data();
-                CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1, std::string_view{szDisplayLabel.data()});
+                CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1, szDisplayLabel.view());
                 cch = TextIO().pfnCchGetString(app, idsTo2, std::span{szT});
                 CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8, std::string_view{szT, static_cast<std::size_t>(cch)});
                 szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(i), app.state.vplr.rgEnvVarMax[i]);
-                psz = szDisplayLabel.data();
-                CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8 * 2, std::string_view{szDisplayLabel.data()});
+                CtrTextOut(hdc, xRLabel, app.lpui->vrgrcRCW[5 * i + 2].top + 1 + app.state.dyArial8 * 2, szDisplayLabel.view());
             }
             if (iDraw == -1) {
                 RightTextOut(app, hdc, app.lpui->vrgrcRCW[5 * i].left - 4, app.state.dyArial8 / 4 + app.lpui->vrgrcRCW[5 * i].top, app.state.rgszPlanetAttr[i], 0, 0);

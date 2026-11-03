@@ -470,11 +470,11 @@ void DumpPlanets(APPSESSION &app) {
                 if (app.state.gd.fPerPlayerDumps) {
                     if (lppl->det >= detSome) {
                         for (i = 0; i < 3; i++) {
-                            cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]).data());
+                            cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]).view());
                             RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
                         }
                         for (i = 0; i < 3; i++) {
-                            cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]).data());
+                            cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]).view());
                             RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
                         }
                         cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer)).data());

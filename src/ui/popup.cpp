@@ -533,7 +533,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
     DxStreamTextOut(hdc, x, y, std::string_view{TextIO().pfnCompressed(app, idsCurrently).data()}, fPrint);
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     if (app.lpui->GlobalPD.iPlanVal >= 0) {
-        DxStreamTextOut(hdc, x, y, std::string_view{PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanVal).data()}, fPrint);
+        DxStreamTextOut(hdc, x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanVal).view(), fPrint);
     } else {
         DxStreamTextOut(hdc, x, y, std::string_view{TextIO().pfnCompressed(app, idsUnknown2).data()}, fPrint);
     }
@@ -564,11 +564,11 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
         DxStreamTextOut(hdc, x, y, std::string_view{app.state.rgszPlanetAttr[app.lpui->GlobalPD.iPlanetVar]}, fPrint);
         DxStreamTextOut(hdc, x, y, std::string_view{TextIO().pfnCompressed(app, idsBetween).data()}, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        DxStreamTextOut(hdc, x, y, std::string_view{PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlrMin).data()}, fPrint);
+        DxStreamTextOut(hdc, x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlrMin).view(), fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         DxStreamTextOut(hdc, x, y, std::string_view{TextIO().pfnCompressed(app, idsAnd).data()}, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        DxStreamTextOut(hdc, x, y, std::string_view{PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlrMax).data()}, fPrint);
+        DxStreamTextOut(hdc, x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlrMax).view(), fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         DxStreamTextOut(hdc, x, y, std::string_view{".", static_cast<std::size_t>(1)}, fPrint);
     }
@@ -597,11 +597,11 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
         y += app.state.dyArial8;
         DxStreamTextOut(hdc, x, y, std::string_view{TextIO().pfnCompressed(app, idsWithinRange).data()}, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        DxStreamTextOut(hdc, x, y, std::string_view{PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanMin).data()}, fPrint);
+        DxStreamTextOut(hdc, x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanMin).view(), fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         DxStreamTextOut(hdc, x, y, std::string_view{TextIO().pfnCompressed(app, idsTo).data()}, fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        DxStreamTextOut(hdc, x, y, std::string_view{PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanMax).data()}, fPrint);
+        DxStreamTextOut(hdc, x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), app.lpui->GlobalPD.iPlanMax).view(), fPrint);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         DxStreamTextOut(hdc, x, y, std::string_view{".", static_cast<std::size_t>(1)}, fPrint);
         if (x > xMax) {
@@ -634,7 +634,7 @@ POINT16 PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint) 
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 WrapTextOut(app, hdc, x, y, std::string_view{TextIO().pfnCompressed(app, idsTo).data()}, 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-                WrapTextOut(app, hdc, x, y, std::string_view{PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal).data()}, 4, xMax - 4, nullptr, 0, fPrint);
+                WrapTextOut(app, hdc, x, y, PszCalcEnvVar(app, static_cast<EnvType>(app.lpui->GlobalPD.iPlanetVar), iNewVal).view(), 4, xMax - 4, nullptr, 0, fPrint);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 cch = TextIO().pfnCchGetString(app, idsPlanetsValueWouldImprove, std::span{app.state.szWork});
                 WrapTextOut(app, hdc, x, y, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(cch)}, 4, xMax - 4, nullptr, 0, fPrint);

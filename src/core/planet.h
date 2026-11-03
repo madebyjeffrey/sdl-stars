@@ -14,12 +14,20 @@ struct PRODUCTIONETARESULT {
     std::string_view view() const noexcept { return {sz.data(), static_cast<std::size_t>(cch)}; }
 };
 PRODUCTIONETARESULT PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem);
+struct PLANETTEXTRESULT {
+    std::array<char, 360> sz{};
+    std::size_t cch = 0;
+
+    char *data() noexcept { return sz.data(); }
+    const char *data() const noexcept { return sz.data(); }
+    std::string_view view() const noexcept { return {sz.data(), cch}; }
+};
 void    ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel);
 void    SelectAdjPlanet(APPSESSION &app, std::int16_t dInc, std::int16_t idPlanet);
 std::int16_t IdFindAdjStarbase(APPSESSION &app, std::int16_t idPlanet, std::int16_t fNext);
 std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp);
-std::array<char, 360> PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar);
-std::array<char, 360> PszCalcGravity(APPSESSION &app, std::int16_t iGravity);
+PLANETTEXTRESULT PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar);
+PLANETTEXTRESULT PszCalcGravity(APPSESSION &app, std::int16_t iGravity);
 std::int16_t PctPlanetCapacity(APPSESSION &app, PLANET *lppl);
 std::int16_t PctPlanetOptValue(APPSESSION &app, PLANET *lppl, std::int16_t iPlr);
 std::int16_t PctPlanetDesirability(APPSESSION &app, PLANET *lppl, std::int16_t iPlr);

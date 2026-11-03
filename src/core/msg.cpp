@@ -367,7 +367,7 @@ std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszForma
                 pchT = app.state.rgszPlanetAttr[pParams.front()];
                 goto FinishString;
             case 'E':
-                szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(pParams.front()) >> 8 & 0xff & 0xff), pParams.front() & 0xff);
+                szDisplayLabel = PszCalcEnvVar(app, static_cast<EnvType>(static_cast<std::uint16_t>(pParams.front()) >> 8 & 0xff & 0xff), pParams.front() & 0xff).sz;
                 pchT = szDisplayLabel.data();
                 goto FinishString;
             case 'I':
