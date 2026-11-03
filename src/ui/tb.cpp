@@ -90,7 +90,7 @@ LRESULT  TbWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         hbmpSav = static_cast<HBITMAP>(win32::SelectObject(hdcMem, hbmp));
         if (!hdcMem || !hbmp || !win32::StretchDIBits(hdcMem, 0, 0, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight,
                 0, 0, lpbi->bmiHeader.biWidth, lpbi->bmiHeader.biHeight,
-                reinterpret_cast<BYTE *>(lpbi) + lpbi->bmiHeader.biSize + PaletteSize(&lpbi->bmiHeader), lpbi, win32::DIB_RGB_COLORS, win32::SRCCOPY)) {
+                reinterpret_cast<BYTE *>(lpbi) + lpbi->bmiHeader.biSize + PaletteSize(std::as_bytes(std::span{&lpbi->bmiHeader, std::size_t{1}})), lpbi, win32::DIB_RGB_COLORS, win32::SRCCOPY)) {
             if (hbmpSav) win32::SelectObject(hdcMem, hbmpSav);
             win32::DeleteDC(hdcMem); if (hbmp) win32::DeleteObject(hbmp);
             win32::ReleaseDC(hwndButtons, hdc); win32::GlobalUnlock(app.lpui->hdibToolbar);

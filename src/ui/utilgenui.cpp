@@ -779,7 +779,7 @@ void FreeHbr(APPSESSION &app, HBRUSH hbr) {
     goto DeleteBrush;
 }
 
-std::uint16_t DibNumColors(void *pv) {
+std::uint16_t DibNumColors(std::span<const std::byte> rgbDib) {
     std::int16_t           bits;
     BITMAPCOREHEADER *lpbc;
     BITMAPINFOHEADER *lpbi;
@@ -788,14 +788,23 @@ std::uint16_t DibNumColors(void *pv) {
 
     lpbi = &bi;
     lpbc = &bc;
-    if (RawLoad32(std::span<const std::byte>{static_cast<const std::byte *>(pv), std::size_t{4}}) != 12) {
-        std::memcpy(lpbi, pv, sizeof(bi));
+    if (rgbDib.size() < sizeof(std::uint32_t)) {
+        return 0;
+    }
+    if (RawLoad32(rgbDib.first(sizeof(std::uint32_t))) != 12) {
+        if (rgbDib.size() < sizeof(bi)) {
+            return 0;
+        }
+        std::memcpy(lpbi, rgbDib.data(), sizeof(bi));
         if (lpbi->biClrUsed != 0) {
             return LOWORD(lpbi->biClrUsed);
         }
         bits = lpbi->biBitCount;
     } else {
-        std::memcpy(lpbc, pv, sizeof(bc));
+        if (rgbDib.size() < sizeof(bc)) {
+            return 0;
+        }
+        std::memcpy(lpbc, rgbDib.data(), sizeof(bc));
         bits = lpbc->bcBitCount;
     }
     switch (bits) {
@@ -817,16 +826,16 @@ HPALETTE HpalFromDib(HGLOBAL hdib) {
     std::int16_t           i;
     std::uint8_t           bT;
     char             *lpb;
-    BITMAPINFOHEADER *lpbi;
     LOGPALETTE       *ppal;
+    std::span<const std::byte> rgbDib;
 
     lpb = static_cast<char *>(win32::LockResource(hdib));
     if (!lpb) {
         return nullptr;
     }
-    lpbi = reinterpret_cast<BITMAPINFOHEADER *>(lpb);
-    cColors = DibNumColors(lpbi);
-    if (cColors > 256) {
+    rgbDib = std::span<const std::byte>{reinterpret_cast<const std::byte *>(lpb), static_cast<std::size_t>(win32::GlobalSize(hdib))};
+    cColors = DibNumColors(rgbDib);
+    if (cColors > 256 || rgbDib.size() < static_cast<std::size_t>(40 + cColors * 4)) {
         win32::GlobalUnlock(hdib);
         return nullptr;
     }
@@ -869,13 +878,14 @@ HPALETTE HpalBlackReserved() {
     return hpal;
 }
 
-std::uint16_t PaletteSize(void *pv) {
+std::uint16_t PaletteSize(std::span<const std::byte> rgbDib) {
     std::uint16_t          NumColors;
-    BITMAPINFOHEADER *lpbi;
 
-    lpbi = static_cast<BITMAPINFOHEADER *>(pv);
-    NumColors = DibNumColors(lpbi);
-    if (RawLoad32(std::span<const std::byte>{reinterpret_cast<const std::byte *>(lpbi), std::size_t{4}}) == 12) {
+    if (rgbDib.size() < sizeof(std::uint32_t)) {
+        return 0;
+    }
+    NumColors = DibNumColors(rgbDib);
+    if (RawLoad32(rgbDib.first(sizeof(std::uint32_t))) == 12) {
         return 3 * NumColors;
     }
     return NumColors * 4;
@@ -892,7 +902,7 @@ std::int16_t DibBlt(HDC hdc, std::int16_t x0, std::int16_t y0, std::int16_t dx, 
     if (!lpbi) {
         return 0;
     }
-    pBuf = reinterpret_cast<char *>(lpbi) + LOWORD(RawLoad32(std::span<const std::byte>{reinterpret_cast<const std::byte *>(lpbi), std::size_t{4}})) + PaletteSize(lpbi);
+    pBuf = reinterpret_cast<char *>(lpbi) + LOWORD(RawLoad32(std::span<const std::byte>{reinterpret_cast<const std::byte *>(lpbi), std::size_t{4}})) + PaletteSize(std::span<const std::byte>{reinterpret_cast<const std::byte *>(lpbi), static_cast<std::size_t>(win32::GlobalSize(hdib))});
     win32::StretchDIBits(hdc, x0, y0, dx, dy, x1, y1, dxSrc, dySrc, pBuf, reinterpret_cast<LPBITMAPINFO>(lpbi), 0, rop);
     win32::GlobalUnlock(hdib);
     return 1;
@@ -938,7 +948,7 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, std::uint32_t biStyle, std::uint16_t biBits, 
     bi.biYPelsPerMeter = 0;
     bi.biClrUsed = 0;
     bi.biClrImportant = 0;
-    dwLen = static_cast<std::uint32_t>(PaletteSize(&bi)) + bi.biSize;
+    dwLen = static_cast<std::uint32_t>(PaletteSize(std::as_bytes(std::span{&bi, std::size_t{1}}))) + bi.biSize;
     hdc = win32::GetDC(nullptr);
     hpal = win32::SelectPalette(hdc, hpal, 0);
     win32::RealizePalette(hdc);
@@ -958,14 +968,14 @@ HGLOBAL DibFromBitmap(HBITMAP hbm, std::uint32_t biStyle, std::uint16_t biBits, 
             bi.biSizeImage = static_cast<std::uint32_t>((static_cast<std::uint32_t>((bi.biSizeImage * 3)) / 2));
         }
     }
-    dwLen = static_cast<std::uint32_t>(PaletteSize(&bi)) + bi.biSize + bi.biSizeImage;
+    dwLen = static_cast<std::uint32_t>(PaletteSize(std::as_bytes(std::span{&bi, std::size_t{1}}))) + bi.biSize + bi.biSizeImage;
     h = win32::GlobalReAlloc(hdib, dwLen, 0);
     if (h) {
         dib.release();
         hdib = h;
         dib.reset(hdib);
         lpbi = static_cast<BITMAPINFOHEADER *>(win32::GlobalLock(hdib)); fLocked = lpbi != nullptr;
-        if (win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), reinterpret_cast<std::uint8_t *>(lpbi) + LOWORD(lpbi->biSize) + PaletteSize(lpbi), reinterpret_cast<BITMAPINFO *>(lpbi), 0) == 0) {
+        if (win32::GetDIBits(hdc, hbm, 0, LOWORD(bi.biHeight), reinterpret_cast<std::uint8_t *>(lpbi) + LOWORD(lpbi->biSize) + PaletteSize(std::span<const std::byte>{reinterpret_cast<const std::byte *>(lpbi), static_cast<std::size_t>(win32::GlobalSize(hdib))}), reinterpret_cast<BITMAPINFO *>(lpbi), 0) == 0) {
             win32::GlobalUnlock(hdib); fLocked = false;
             return nullptr;
         }
