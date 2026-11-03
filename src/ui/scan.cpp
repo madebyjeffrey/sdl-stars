@@ -2808,18 +2808,21 @@ std::int16_t FSelectSz(APPSESSION &app, std::string_view szName) {
     FLEET  *lpfl;
     std::int16_t ipl;
     std::int16_t cch;
+    std::size_t cchName;
     char    szT[20];
     std::array<char, 40> szNameTerminated{};
     std::int16_t iplPartial;
     SCAN    scan;
 
     if (szName.size() >= szNameTerminated.size()) return 0;
+    cchName = szName.find('\0');
+    if (cchName == std::string_view::npos) cchName = szName.size();
     std::copy(szName.begin(), szName.end(), szNameTerminated.begin());
     pszName = szNameTerminated.data();
     iplPartial = -1;
     scan.iwp = iwpNone;
     for (ipl = 0; ipl < app.state.game.cPlanMax && strcmpi(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), pszName) != 0; ipl++) {
-        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), pszName, std::strlen(pszName)) == 0) {
+        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), pszName, cchName) == 0) {
             iplPartial = ipl;
         }
     }
