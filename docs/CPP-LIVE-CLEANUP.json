@@ -28741,9 +28741,9 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 minefield counts return a value",
-    "status": "Source commit e19247c1 verified locally; ledger checkpoint pending publication.",
-    "parent": "ca92208046114da33a21cc7794efa60894496229",
+    "batch": "Use bool for private compatibility state",
+    "status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
+    "parent": "a893086a",
     "change": "GetMineFieldCounts returns MINEFIELDCOUNTSRESULT rather than writing through two output pointers.",
     "verification": {
       "batch": "L06 native file queries return bool",
@@ -28805,7 +28805,7 @@
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
-      "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
+      "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
     ],
     "untracked_user_assets": [
       "title-modernized.png and prompt",
@@ -29160,11 +29160,11 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "latest_change": "L06 minefield counts return a value",
+    "source_commit": "fcb27bc9",
+    "latest_change": "Use bool for private compatibility state",
     "c_macro_audit": {
-      "source_head": "a2450ffd",
-      "date": "2026-11-02",
+      "source_head": "fcb27bc9",
+      "date": "2026-11-03",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
       "categories": {
@@ -29177,18 +29177,20 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
+      "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "e19247c1c01998cab2967130fa1a9f22c28d379b",
-    "latest_batch_status": "Source commit e19247c1 verified locally. Strict macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_source_commit": "fcb27bc9",
+    "latest_batch_status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
     "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
-      "batch": "L06 minefield counts return a value",
-      "source_commit": "e19247c1c01998cab2967130fa1a9f22c28d379b",
-      "macos_sdl_debug_build": "make compile passes with strict warnings.",
+      "batch": "Use bool for private compatibility state",
+      "parent": "a893086a",
+      "source_commit": "fcb27bc9",
+      "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -29201,18 +29203,20 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged. Minefield ordinals and totals use the same player-owned traversal and retain the same 16-bit result widths.",
-      "api_audit": "GetMineFieldCounts now returns MINEFIELDCOUNTSRESULT rather than writing to two required output pointers.",
-      "platform": "Current-source Windows and Linux qualification remains outstanding.",
+      "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
+      "api_audit": "Private compatibility runtime/window state and internal helper flags now use bool. Win32 SDK API declarations, callback contracts, and public BOOL parameters remain unchanged.",
+      "inventory": "44 tracked C translation units remain, all in independent tests/reference/scaffold targets; 0 production C translation units. 0 owned function-like API macros and 0 raw strcpy/strcat/strncpy/strncat calls. Three std::strlen calls remain at incoming C-string/API boundaries.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains open; Linux portal code and chooser coverage require that platform.",
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "L06 minefield counts return a value",
-      "source_commit": "e19247c1c01998cab2967130fa1a9f22c28d379b",
-      "macos_sdl_debug_build": "make compile passes with strict warnings.",
+      "batch": "Use bool for private compatibility state",
+      "parent": "a893086a",
+      "source_commit": "fcb27bc9",
+      "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -29225,18 +29229,18 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; the same 16-bit minefield ordinal and total are returned.",
-      "api_audit": "GetMineFieldCounts returns two named count fields as one value, removing the output-pointer API.",
-      "platform": "Current-source Windows and Linux qualification remains outstanding.",
+      "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
+      "api_audit": "Private compatibility runtime/window state and internal helper flags now use bool. Win32 SDK API declarations, callback contracts, and public BOOL parameters remain unchanged.",
+      "inventory": "44 tracked C translation units remain, all in independent tests/reference/scaffold targets; 0 production C translation units. 0 owned function-like API macros and 0 raw strcpy/strcat/strncpy/strncat calls. Three std::strlen calls remain at incoming C-string/API boundaries.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains open; Linux portal code and chooser coverage require that platform.",
       "diff_check": "Pass.",
-      "status": "Source commit e19247c1 verified locally; ledger checkpoint pending publication.",
+      "status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
-        "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
+        "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
       ],
-      "next": "Continue remaining L05 bounded-text and scratch/borrowed-return audits, L06 buffer and native file/path results, and L08 Windows/Linux qualification."
+      "next": "Continue the five open L05/L06/L08 audit buckets, then qualify current develop on Windows and Linux."
     },
     "followup": {
       "batch": "L06 transport quantity selection returns a value",
@@ -29304,7 +29308,7 @@
   "remaining_work": [
     "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
     "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
-    "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
+    "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
   ],
   "working_tree_checkpoint": {
     "date": "2026-11-03",
@@ -29797,8 +29801,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "f091c67e",
-  "latest_batch_status": "Source commit f091c67e verified locally: macOS SDL Debug build, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. L05/L06 audits and current-source Windows/Linux qualification remain open.",
+  "latest_source_commit": "fcb27bc90f56f2c7b7cd0143ee7812b52a7a7fcc",
+  "latest_batch_status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -29878,7 +29882,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "f091c67e",
+    "source_head": "fcb27bc90f56f2c7b7cd0143ee7812b52a7a7fcc",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -29928,7 +29932,7 @@
     "cocoa_chooser_path_length": "IChooseCocoaFile creates one bounded view for the selected native path and reuses its byte length for capacity admission and copy, removing a duplicate std::strlen scan.",
     "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed.",
     "strlen_occurrence_classification": {
-      "source_head": "669556108047393bda163824d1c1be10cbcb0ba7",
+      "source_head": "fcb27bc90f56f2c7b7cd0143ee7812b52a7a7fcc",
       "total": 3,
       "c_string_api_or_input_boundaries": 3,
       "owned_or_fixed_text_length_reads": 0,
@@ -30013,13 +30017,27 @@
       "source_commit": "71a0fc2c",
       "unbounded_case_insensitive_filename_comparisons_remaining_in_help": 0,
       "comparison": "Exact length plus SDL_strncasecmp over the basename view."
+    },
+    "private_BOOL_state": "Private compatibility runtime/window flags and internal helper parameters converted to bool; SDK-facing contracts remain BOOL.",
+    "remaining_strlen_occurrences": {
+      "count": 3,
+      "classification": "Incoming C-string/API boundaries; no confirmed replacement."
+    },
+    "legacy_string_copy_calls": {
+      "count": 0,
+      "spellings_checked": [
+        "strcpy",
+        "strcat",
+        "strncpy",
+        "strncat"
+      ]
     }
   },
-  "latest_change": "Use bool for private list state",
+  "latest_change": "Use bool for private compatibility state",
   "latest_batch_verification": {
-    "batch": "Use bool for private list state",
-    "parent": "e920d7d6",
-    "source_commit": "f091c67e",
+    "batch": "Use bool for private compatibility state",
+    "parent": "a893086a",
+    "source_commit": "fcb27bc9",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30036,15 +30054,16 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; both regressions match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Private COMPATLIST selection/scroll state and helper flags use bool; no BOOL spelling remains in list.cpp. Win32 list-box messages and API return contracts remain unchanged.",
-    "platform": "Current-source Windows and Linux qualification remains open.",
+    "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
+    "api_audit": "Private compatibility runtime/window state and internal helper flags now use bool. Win32 SDK API declarations, callback contracts, and public BOOL parameters remain unchanged.",
+    "inventory": "44 tracked C translation units remain, all in independent tests/reference/scaffold targets; 0 production C translation units. 0 owned function-like API macros and 0 raw strcpy/strcat/strncpy/strncat calls. Three std::strlen calls remain at incoming C-string/API boundaries.",
+    "platform": "Current-source Windows SDL and Linux desktop qualification remains open; Linux portal code and chooser coverage require that platform.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use bool for private list state",
-    "parent": "e920d7d6",
-    "source_commit": "f091c67e",
+    "batch": "Use bool for private compatibility state",
+    "parent": "a893086a",
+    "source_commit": "fcb27bc9",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30061,16 +30080,17 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; both regressions match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Private COMPATLIST selection/scroll state and helper flags use bool; no BOOL spelling remains in list.cpp. Win32 list-box messages and API return contracts remain unchanged.",
-    "platform": "Current-source Windows and Linux qualification remains open.",
+    "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
+    "api_audit": "Private compatibility runtime/window state and internal helper flags now use bool. Win32 SDK API declarations, callback contracts, and public BOOL parameters remain unchanged.",
+    "inventory": "44 tracked C translation units remain, all in independent tests/reference/scaffold targets; 0 production C translation units. 0 owned function-like API macros and 0 raw strcpy/strcat/strncpy/strncat calls. Three std::strlen calls remain at incoming C-string/API boundaries.",
+    "platform": "Current-source Windows SDL and Linux desktop qualification remains open; Linux portal code and chooser coverage require that platform.",
     "diff_check": "Pass.",
-    "status": "Source commit f091c67e verified locally; ledger checkpoint recorded.",
+    "status": "Source commit fcb27bc9 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
-      "L05: finish bounded text destination review and post-migration scratch/borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path results; Linux portal compile and chooser suite remain pending.",
-      "L08: current-source Windows/Linux qualification and final inventory review."
+      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
+      "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
     ],
-    "next": "Continue line-by-line L05 text/ownership and L06 service/path audits; qualify the Linux portal change and current develop on Windows/Linux."
+    "next": "Continue the five open L05/L06/L08 audit buckets, then qualify current develop on Windows and Linux."
   }
 }
