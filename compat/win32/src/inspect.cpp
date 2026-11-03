@@ -253,21 +253,17 @@ static void InspectDetails(HWND hwnd) {
 static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
     std::size_t i;
     int iRow;
-    char sz[512], szText[180], *lpch, *pszUtf;
-    std::size_t cb, cch;
+    char sz[512], szText[180], *lpch;
+    std::size_t cch;
+    std::string_view szSource;
     const STARSCOMPATWINDOW *lp;
     if (cDepth >= 64) return;
     for (i = 0; i < snapInspector.cWindow; i++) {
         lp = &snapInspector.rgWindow[i];
         if (lp->idParent != idParent) continue;
-        cb = std::strlen(lp->pszText);
-        if (cb > (std::numeric_limits<std::size_t>::max() - 1) / 3) continue;
-        pszUtf = static_cast<char *>((SDL_malloc(cb * 3 + 1)));
-        NATIVEOWNER<char, SDL_free> pszOwner(pszUtf);
-        if (!pszUtf) continue;
-        std::memcpy(pszUtf, lp->pszText, cb + 1);
-        cch = CchUtf8Prefix(pszUtf, sizeof(szText) - 1);
-        std::memcpy(szText, pszUtf, cch); szText[cch] = 0; pszOwner.reset();
+        szSource = lp->pszText;
+        cch = CchUtf8Prefix(szSource, sizeof(szText) - 1);
+        std::memcpy(szText, szSource.data(), cch); szText[cch] = 0;
         for (lpch = szText; *lpch; lpch++) if (*lpch == '\r' || *lpch == '\n' || *lpch == '\t') *lpch = ' ';
         CchSnprintf(std::span{sz}, "%*s[%" PRIu64 "] %s #%" PRIdPTR " %s%s", cDepth * 2, "",
                  lp->id, lp->pszClass, static_cast<std::intptr_t>(lp->idControl), szText, lp->fVisible ? "" : " (hidden)");
