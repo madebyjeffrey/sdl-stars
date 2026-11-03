@@ -1,7 +1,9 @@
 /* Decode standard dialog resources before creating any window or control. */
 #include "internal.h"
-#include <cstdlib>
-#include <cstring>
+#include <limits>
+#include <new>
+#include <stdexcept>
+#include <utility>
 
 static BOOL FDlgWord(const BYTE *rgb, std::size_t cb, std::size_t *lpib, WORD *lpw) {
     if (*lpib > cb || cb - *lpib < 2) return 0;
@@ -22,63 +24,61 @@ static BOOL FDlgRect(const BYTE *rgb, std::size_t cb, std::size_t *lpib, std::in
     *lpx = static_cast<std::int16_t>(x); *lpy = static_cast<std::int16_t>(y); *lpcx = static_cast<std::int16_t>(cx); *lpcy = static_cast<std::int16_t>(cy);
     return *lpcx >= 0 && *lpcy >= 0;
 }
-static BOOL FDlgField(const BYTE *rgb, std::size_t cb, std::size_t *lpib, WORD *lpid, char **lppsz) {
+static BOOL FDlgField(const BYTE *rgb, std::size_t cb, std::size_t *lpib, WORD *lpid,
+                      std::optional<std::string> *lpsz) {
     WORD w;
     std::size_t ibStart = *lpib, cch = 0;
-    char *psz;
     if (!FDlgWord(rgb, cb, lpib, &w)) return 0;
-    if (w == 65535) return FDlgWord(rgb, cb, lpib, lpid);
+    if (w == 65535) {
+        lpsz->reset();
+        return FDlgWord(rgb, cb, lpib, lpid);
+    }
     while (w) {
         cch++;
         if (!FDlgWord(rgb, cb, lpib, &w)) return 0;
     }
-    psz = static_cast<char *>((std::malloc(cch * 3 + 1)));
-    NATIVEOWNER<char, std::free> pszOwner(psz);
-    if (!psz) return 0;
-    if (CchUtf16leToUtf8(std::span{psz, cch * 3 + 1},
-                         std::span{reinterpret_cast<const std::byte *>(rgb + ibStart), cch * sizeof(WORD)}) < 0) return 0;
-    *lppsz = pszOwner.release();
+    if (cch > (static_cast<std::size_t>(std::numeric_limits<int>::max()) - 1) / 3) return 0;
+    std::string sz(cch * 3 + 1, '\0');
+    int cchUtf8 = CchUtf16leToUtf8(std::span{sz},
+                                   std::span{reinterpret_cast<const std::byte *>(rgb + ibStart), cch * sizeof(WORD)});
+    if (cchUtf8 < 0) return 0;
+    sz.resize(static_cast<std::size_t>(cchUtf8));
+    *lpsz = std::move(sz);
     return 1;
 }
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg) {
-    WORD i;
     if (!lpdlg) return;
-    for (i = 0; lpdlg->rgItems && i < lpdlg->cItems; i++) {
-        std::free(lpdlg->rgItems[i].pszClass); std::free(lpdlg->rgItems[i].pszTitle);
-    }
-    std::free(lpdlg->rgItems); std::free(lpdlg->pszMenu); std::free(lpdlg->pszClass);
-    std::free(lpdlg->pszTitle); std::free(lpdlg->pszFont);
     *lpdlg = {};
 }
 BOOL FCompatDialogTemplate(const BYTE *rgb, std::size_t cb, COMPATDLGTEMPLATE *lpdlg) {
+    try {
     COMPATDLGTEMPLATE dlg = {};
     COMPATDLGITEM *lpitem;
     std::size_t ib = 0;
     WORD i, idFont = 0;
-    NATIVECLEANUPSCOPE dlgOwner([&]() noexcept { CompatFreeDialogTemplate(&dlg); });
     if (!rgb || !lpdlg || (cb >= 4 && rgb[2] == 255 && rgb[3] == 255) ||
         !FDlgDword(rgb, cb, &ib, &dlg.dwStyle) ||
         !FDlgDword(rgb, cb, &ib, &dlg.dwExStyle) ||
         !FDlgWord(rgb, cb, &ib, &dlg.cItems) ||
         !FDlgRect(rgb, cb, &ib, &dlg.x, &dlg.y, &dlg.cx, &dlg.cy) ||
-        !FDlgField(rgb, cb, &ib, &dlg.idMenu, &dlg.pszMenu) ||
-        !FDlgField(rgb, cb, &ib, &dlg.idClass, &dlg.pszClass) ||
-        !FDlgField(rgb, cb, &ib, &idFont, &dlg.pszTitle) || idFont) goto fail;
+        !FDlgField(rgb, cb, &ib, &dlg.idMenu, &dlg.szMenu) ||
+        !FDlgField(rgb, cb, &ib, &dlg.idClass, &dlg.szClass) ||
+        !FDlgField(rgb, cb, &ib, &idFont, &dlg.szTitle) || idFont) goto fail;
     if (dlg.dwStyle & win32::DS_SETFONT) {
         if (!FDlgWord(rgb, cb, &ib, &dlg.cPoints) ||
-            !FDlgField(rgb, cb, &ib, &idFont, &dlg.pszFont) || idFont) goto fail;
+            !FDlgField(rgb, cb, &ib, &idFont, &dlg.szFont) || idFont) goto fail;
     }
     // Even an ordinal class/title needs a complete fixed header and three fields.
     if (dlg.cItems > (cb - ib) / 24) goto fail;
-    if (dlg.cItems && !(dlg.rgItems = static_cast<COMPATDLGITEM *>((std::calloc(dlg.cItems, sizeof(*dlg.rgItems)))))) goto fail;
+    dlg.rgItems.resize(dlg.cItems);
     for (i = 0; i < dlg.cItems; i++) {
         ib += (4 - ib % 4) % 4;
         lpitem = &dlg.rgItems[i];
         if (!FDlgDword(rgb, cb, &ib, &lpitem->dwStyle) || !FDlgDword(rgb, cb, &ib, &lpitem->dwExStyle) ||
             !FDlgRect(rgb, cb, &ib, &lpitem->x, &lpitem->y, &lpitem->cx, &lpitem->cy) ||
             !FDlgWord(rgb, cb, &ib, &lpitem->id) ||
-            !FDlgField(rgb, cb, &ib, &lpitem->idClass, &lpitem->pszClass) ||
-            !FDlgField(rgb, cb, &ib, &lpitem->idTitle, &lpitem->pszTitle) ||
+            !FDlgField(rgb, cb, &ib, &lpitem->idClass, &lpitem->szClass) ||
+            !FDlgField(rgb, cb, &ib, &lpitem->idTitle, &lpitem->szTitle) ||
             !FDlgWord(rgb, cb, &ib, &lpitem->cbCreate)) goto fail;
         if (lpitem->cbCreate) {
             // The byte count includes its own WORD in a standard template.
@@ -88,7 +88,12 @@ BOOL FCompatDialogTemplate(const BYTE *rgb, std::size_t cb, COMPATDLGTEMPLATE *l
     }
     if (ib > cb || cb - ib > 3) goto fail;
     while (ib < cb) if (rgb[ib++]) goto fail;
-    *lpdlg = dlg; dlg = {}; return 1;
+    *lpdlg = std::move(dlg); return 1;
 fail:
     return 0;
+    } catch (const std::bad_alloc &) {
+        return 0;
+    } catch (const std::length_error &) {
+        return 0;
+    }
 }

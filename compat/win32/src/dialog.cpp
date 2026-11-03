@@ -85,7 +85,7 @@ static BOOL FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
     const char *pszFont;
     lf.lfHeight = lpdlg->cPoints ? -win32::MulDiv(lpdlg->cPoints, 96, 72) : -11;
     lf.lfWeight = win32::FW_NORMAL;
-    pszFont = lpdlg->pszFont ? lpdlg->pszFont : "MS Sans Serif";
+    pszFont = lpdlg->szFont ? lpdlg->szFont->c_str() : "MS Sans Serif";
     CchCopyUtf8(std::span{lf.lfFaceName}, std::string_view{pszFont, CchUtf8Prefix(pszFont, sizeof(lf.lfFaceName) - 1)});
     lpc->hfont = win32::CreateFontIndirectA(&lf);
     if (!lpc->hfont || !(hdc = win32::CreateCompatibleDC(nullptr))) return 0;
@@ -111,7 +111,7 @@ HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, co
 }
 static LPCSTR PszDialogClass(COMPATDLGITEM *lpitem) {
     static const char *rgpsz[] = {"Button", "Edit", "Static", "ListBox", "ScrollBar", "ComboBox"};
-    if (lpitem->pszClass && *lpitem->pszClass) return lpitem->pszClass;
+    if (lpitem->szClass && !lpitem->szClass->empty()) return lpitem->szClass->c_str();
     return lpitem->idClass >= 0x80 && lpitem->idClass <= 0x85 ? rgpsz[lpitem->idClass - 0x80] : nullptr;
 }
 static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param, BOOL fModal) {
@@ -133,10 +133,10 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     if (!hinst) hinst = win32::GetModuleHandleA(nullptr);
     hrsrc = win32::FindResourceA(hinst, psz, win32::RT_DIALOG);
     if (!FCompatDialogTemplate(static_cast<const BYTE *>((win32::LockResource(win32::LoadResource(hinst, hrsrc)))), win32::SizeofResource(hinst, hrsrc), &dlg)) return nullptr;
-    if (dlg.idClass || (dlg.pszClass && *dlg.pszClass) || dlg.idMenu || (dlg.pszMenu && *dlg.pszMenu)) goto done;
+    if (dlg.idClass || (dlg.szClass && !dlg.szClass->empty()) || dlg.idMenu || (dlg.szMenu && !dlg.szMenu->empty())) goto done;
     dc.lpfn = lpfn; dc.fModal = fModal;
     if (!FDialogUnits(&dlg, &dc)) goto done;
-    hwnd = win32::CreateWindowExA(dlg.dwExStyle, "#32770", dlg.pszTitle, dlg.dwStyle & ~win32::WS_VISIBLE,
+    hwnd = win32::CreateWindowExA(dlg.dwExStyle, "#32770", dlg.szTitle ? dlg.szTitle->c_str() : nullptr, dlg.dwStyle & ~win32::WS_VISIBLE,
                          win32::MulDiv(dlg.x, dc.cxUnit, 4), win32::MulDiv(dlg.y, dc.cyUnit, 8),
                          win32::MulDiv(dlg.cx, dc.cxUnit, 4), win32::MulDiv(dlg.cy, dc.cyUnit, 8), hwndOwner, nullptr, hinst, &dc);
     // The dialog record owns the font after WM_NCCREATE, including failure cleanup.
@@ -148,7 +148,7 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     if (!fModal && FStarsErrorPending()) goto fail;
     for (i = 0; i < dlg.cItems; i++) {
         lpitem = &dlg.rgItems[i]; pszClass = PszDialogClass(lpitem);
-        pszTitle = lpitem->pszTitle ? lpitem->pszTitle : win32::MAKEINTRESOURCE(lpitem->idTitle);
+        pszTitle = lpitem->szTitle ? lpitem->szTitle->c_str() : win32::MAKEINTRESOURCE(lpitem->idTitle);
         if (!pszClass || lpitem->cbCreate || reinterpret_cast<UINT_PTR>(pszTitle) <= std::numeric_limits<std::uint16_t>::max()) goto fail;
         rc = RECT{lpitem->x, lpitem->y, lpitem->cx, lpitem->cy};
         win32::MapDialogRect(hwnd, &rc);

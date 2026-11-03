@@ -1,5 +1,8 @@
 #ifndef STARS_COMPAT_INTERNAL_H
 #define STARS_COMPAT_INTERNAL_H
+#include <optional>
+#include <string>
+#include <vector>
 #include <windows.h>
 #include <callbackcontext.h>
 #include "encoding.h"
@@ -189,7 +192,7 @@ struct COMPATDLGITEM {
     DWORD dwStyle, dwExStyle;
     std::int16_t x, y, cx, cy;
     WORD id, idClass, idTitle;
-    char *pszClass, *pszTitle;
+    std::optional<std::string> szClass, szTitle;
     const BYTE *rgbCreate;
     WORD cbCreate;
 };
@@ -197,8 +200,8 @@ struct COMPATDLGTEMPLATE {
     DWORD dwStyle, dwExStyle;
     std::int16_t x, y, cx, cy;
     WORD cItems, idMenu, idClass, cPoints;
-    char *pszMenu, *pszClass, *pszTitle, *pszFont;
-    COMPATDLGITEM *rgItems;
+    std::optional<std::string> szMenu, szClass, szTitle, szFont;
+    std::vector<COMPATDLGITEM> rgItems;
 };
 BOOL FCompatDialogTemplate(const BYTE *rgb, std::size_t cb, COMPATDLGTEMPLATE *lpdlg);
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg);

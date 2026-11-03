@@ -52,7 +52,7 @@ int main(void) {
     char sz[80];
     int i, cBefore, cTutorial = 0;
 #ifndef _WIN32
-    COMPATDLGTEMPLATE dlg = {0};
+    COMPATDLGTEMPLATE dlg = {};
     WORD j;
     int cDialogs = 0, cControls = 0;
     const BYTE rgbExtended[26] = {1, 0, 255, 255};
@@ -81,9 +81,9 @@ int main(void) {
             for (ib = 0; ib < cb; ib++) CHECK(!HmenuCompatTemplate(rgb, ib));
         } else if ((UINT_PTR)rgUIManifest[i].pszType == 5) {
             CHECK(FCompatDialogTemplate(rgb, cb, &dlg));
-            CHECK(dlg.pszTitle && dlg.pszFont && dlg.cPoints == 8);
+            CHECK(dlg.szTitle && dlg.szFont && dlg.cPoints == 8);
             for (j = 0; j < dlg.cItems; j++) {
-                CHECK(dlg.rgItems[j].pszClass && dlg.rgItems[j].pszTitle);
+                CHECK(dlg.rgItems[j].szClass && dlg.rgItems[j].szTitle);
                 CHECK(dlg.rgItems[j].cbCreate == 0);
             }
             cDialogs++; cControls += dlg.cItems;
