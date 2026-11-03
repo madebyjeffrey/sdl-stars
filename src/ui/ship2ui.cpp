@@ -95,8 +95,8 @@ INT_PTR  ZipOrderDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::SetTextColor(hdc, app.lpui->rgcrMinerals[i]);
                 RightTextOut(app, hdc, xCtr, rcGBox.top, app.state.rgszMinerals[i], 0, 0);
                 win32::SetTextColor(hdc, 0);
-                FormatTransportPresetAction(app, i);
-                win32::TextOutA(hdc, xCtr + 6, rcGBox.top, app.state.szWork, std::strlen(app.state.szWork));
+                cch = FormatTransportPresetAction(app, i);
+                win32::TextOutA(hdc, xCtr + 6, rcGBox.top, app.state.szWork, cch);
                 rcGBox.top += app.state.dyArial8;
             }
         } else {
@@ -365,12 +365,15 @@ INT_PTR  MergeFleetsDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-void FormatTransportPresetAction(APPSESSION &app, std::int16_t i) {
+std::int16_t FormatTransportPresetAction(APPSESSION &app, std::int16_t i) {
     std::int16_t cch;
+    std::int16_t cchTail;
     XferActionType iAction;
                 iAction = static_cast<XferActionType>(app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].iAction());
                 cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsAction + static_cast<int>(iAction)), std::span{app.state.szWork});
                 if (app.state.szWork[cch - 1] == '.') {
-                    CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cch - 3)), " %dkT", app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].cQuan());
+                    cchTail = cch - 3;
+                    cch = static_cast<std::int16_t>(cchTail + CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cchTail)), " %dkT", app.state.vrgZip[app.lpui->iResTechNow].txp.rgia[i].cQuan()));
                 }
+    return cch;
 }
