@@ -2169,7 +2169,8 @@
         "typed-dialog-template-parser-results",
         "utf8-font-sizing-returns-optional-size",
         "utf8-font-metrics-returns-optional-value",
-        "scanner-snapshots-return-optional-owned-values"
+        "scanner-snapshots-return-optional-owned-values",
+        "scanner-snapshot-consumers-use-required-references"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -3058,6 +3059,18 @@
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
           "baseline": "Unchanged. Snapshot contents, scanner ordering, game-state side effects, scratch-buffer restoration and serialized output remain unchanged. Snapshot allocations are released automatically on all exits.",
+          "platform": "Current-source Windows and Linux qualification remains pending.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 scanner snapshot consumers require references",
+          "source_commit": "eaa9db426e627a5ea5e715132ca725ed411f1cec",
+          "macos_sdl_debug_build": "make compile passes with strict warnings.",
+          "focused_compatibility_tests": "win32_client_startup_dummy passes (1/1); scanner snapshot export and selection paths remain covered.",
+          "desktop_units": "18/18 pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
+          "baseline": "Unchanged. Snapshot data, stale-key checks, selection effects and JSON bytes remain unchanged. Required snapshots now use const references instead of nullable pointers.",
           "platform": "Current-source Windows and Linux qualification remains pending.",
           "diff_check": "Pass."
         }
@@ -27472,19 +27485,19 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 scanner snapshots return optional owned values",
-    "status": "Source committed as 52567262. Strict macOS SDL Debug build, focused scanner startup test, desktop units, native regression and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "parent": "93d60f34f8b2ddac5e3ca303049ec69e160bcdb0",
-    "change": "RgCaptureScanner returns an optional owning SCANSNAPSHOT. Scanner UI, startup workflows and tutorial capture use the returned value; FreeScannerSnapshot and its output pointer are retired.",
+    "batch": "L06 scanner snapshot consumers require references",
+    "status": "Source committed as eaa9db42. Strict macOS SDL Debug build, scanner startup test, desktop units, native regression and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "parent": "52567262bd3b6132c800b35a8cb79efc5a821a60",
+    "change": "FWriteScannerSnapshot and FSelectScannerObject now take required const SCANSNAPSHOT references; nullable snapshot checks and pointer-based calls are removed.",
     "verification": {
-      "batch": "L06 scanner snapshots return optional owned values",
-      "source_commit": "52567262bd3b6132c800b35a8cb79efc5a821a60",
+      "batch": "L06 scanner snapshot consumers require references",
+      "source_commit": "eaa9db426e627a5ea5e715132ca725ed411f1cec",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_compatibility_tests": "win32_client_startup_dummy passes (1/1); scanner capture, export, selection and workflow coverage remains green.",
+      "focused_compatibility_tests": "win32_client_startup_dummy passes (1/1); scanner snapshot export and selection paths remain covered.",
       "desktop_units": "18/18 pass.",
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
       "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
-      "baseline": "Unchanged. Snapshot contents, scanner ordering, game-state side effects, scratch-buffer restoration and serialized output remain unchanged. Snapshot allocations are released automatically on all exits.",
+      "baseline": "Unchanged. Snapshot data, stale-key checks, selection effects and JSON bytes remain unchanged. Required snapshots now use const references instead of nullable pointers.",
       "platform": "Current-source Windows and Linux qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -27876,8 +27889,8 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "52567262bd3b6132c800b35a8cb79efc5a821a60",
-    "latest_change": "L06 scanner snapshots return optional owned values",
+    "source_commit": "eaa9db426e627a5ea5e715132ca725ed411f1cec",
+    "latest_change": "L06 scanner snapshot consumers require references",
     "c_macro_audit": {
       "source_head": "a2450ffd",
       "date": "2026-11-02",
@@ -27896,8 +27909,8 @@
       "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through a2450ffd.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "52567262bd3b6132c800b35a8cb79efc5a821a60",
-    "latest_batch_status": "Committed as 52567262; local verification passes, Windows/Linux qualification remains pending.",
+    "latest_source_commit": "eaa9db426e627a5ea5e715132ca725ed411f1cec",
+    "latest_batch_status": "Committed as eaa9db42; local verification passes, Windows/Linux qualification remains pending.",
     "latest_published_head": "ef24142a",
     "latest_batch_verification": {
       "batch": "Return planet name byte lengths",
@@ -28438,8 +28451,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "52567262bd3b6132c800b35a8cb79efc5a821a60",
-  "latest_batch_status": "Source committed as 52567262. Strict macOS SDL Debug build, focused scanner startup test, desktop units, native regression and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "eaa9db426e627a5ea5e715132ca725ed411f1cec",
+  "latest_batch_status": "Source committed as eaa9db42. Strict macOS SDL Debug build, scanner startup test, desktop units, native regression and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28456,7 +28469,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "52567262",
+    "source_head": "eaa9db42",
     "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. This raw count is not a replacement count: four measure C-string API/input boundaries and seven measure text already held in owned or fixed storage; those seven are candidates for carried lengths, subject to confirming that extra state is worthwhile.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28529,16 +28542,16 @@
     "dialog_template_parser_results": "Dialog-template parser helpers return optional typed WORD, DWORD, rectangle and field results rather than bool plus output references; field strings remain owned.",
     "font_size_service": "FCompatFontSizeUtf8 returns std::optional<SIZE>; text sizing keeps the Win32 SIZE pointer only at GetTextExtentPoint32A.",
     "font_metrics_service": "FCompatFontMetrics returns std::optional<TEXTMETRICA>; only GetTextMetricsA copies the value into the Win32 output pointer.",
-    "scanner_snapshot_result": "RgCaptureScanner returns std::optional<SCANSNAPSHOT>; FreeScannerSnapshot and the boolean-plus-output-pointer interface are removed. The unique_ptr-owned snapshot releases itself on failure and scope exit."
+    "scanner_snapshot_result": "RgCaptureScanner returns std::optional<SCANSNAPSHOT>; snapshot consumers take const references. FreeScannerSnapshot and nullable pointer handoffs are removed."
   },
-  "latest_change": "L06 scanner snapshots return optional owned values",
+  "latest_change": "L06 scanner snapshot consumers require references",
   "latest_batch_verification": {
-    "batch": "L06 scanner snapshots return optional owned values",
-    "source_commit": "52567262bd3b6132c800b35a8cb79efc5a821a60",
+    "batch": "L06 scanner snapshot consumers require references",
+    "source_commit": "eaa9db426e627a5ea5e715132ca725ed411f1cec",
     "macos_debug_build": "make compile passes with strict warnings.",
-    "focused_compatibility_tests": "win32_client_startup_dummy passes (1/1); scanner capture, export, selection and workflow coverage remains green.",
+    "focused_compatibility_tests": "win32_client_startup_dummy passes (1/1); scanner snapshot export and selection paths remain covered.",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "Not required; this batch changes only scanner UI snapshot ownership and test adapters.",
+    "host_unit_tests": "Not required; this batch changes only scanner UI interfaces, tests and usage documentation.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
       "matches": 519,
@@ -28547,7 +28560,7 @@
       "skipped": 0
     },
     "host_regression": "Not required; no core/game code changed.",
-    "baseline": "Unchanged. Snapshot contents, scanner ordering, game-state side effects, scratch-buffer restoration and serialized output remain unchanged. Snapshot allocations are released automatically on all exits.",
+    "baseline": "Unchanged. Snapshot data, stale-key checks, selection effects and JSON bytes remain unchanged. Required snapshots now use const references instead of nullable pointers.",
     "platform": "Current-source Windows and Linux qualification remains pending.",
     "diff_check": "Pass."
   }
