@@ -12,7 +12,7 @@
 static std::int16_t dWheelMessages;
 
 LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    std::array<char, 256> szMessage{};
+    MESSAGETEXTRESULT szMessage{};
     std::array<char, cchCatalogText> szCatalogLpsz{};
     PLAYERNAMERESULT szPlayerName{};
     APPSESSION &app = AppCompatCallbackContext();
@@ -39,6 +39,8 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     RECT        rcActual;
     std::int16_t     cch;
     std::size_t cchText;
+    std::string_view szText;
+    BOOL fTextLengthKnown;
     std::int16_t     iMode;
     char        szT[32];
     MSGPLR     *lpmsgplr;
@@ -194,6 +196,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::SelectObject(hdc, hbrSav);
         ExpandRc(&rc, -4, -4);
         if (!app.state.gd.fSendMsgMode) {
+            fTextLengthKnown = 0;
             if (app.state.iMsgCur >= app.state.cMsg) {
                 lpmsgplr = app.state.vlpmsgplrIn;
                 for (i = app.state.cMsg; i < app.state.iMsgCur; i++) {
@@ -226,6 +229,8 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 } else {
                     szMessage = PszGetMessageN(app, app.state.iMsgCur);
                     lpsz = szMessage.data();
+                    fTextLengthKnown = 1;
+                    cchText = static_cast<std::size_t>(szMessage.cch);
                 }
             }
             win32::SetTextColor(hdc, 0xffffff);
@@ -236,10 +241,15 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 DiaganolTextOut(app, hdc, &rc, std::string_view{std::span{app.state.szWork}.data(), static_cast<std::size_t>(cch)});
                 szMessage = PszGetMessageN(app, app.state.iMsgCur);
                 lpsz = szMessage.data();
+                fTextLengthKnown = 1;
+                cchText = static_cast<std::size_t>(szMessage.cch);
             }
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             rcActual = rc;
-            cchText = std::strlen(lpsz);
+            if (!fTextLengthKnown) {
+                szText = lpsz;
+                cchText = szText.size();
+            }
             win32::DrawTextA(hdc, lpsz, static_cast<int>(cchText), &rcActual, win32::DT_WORDBREAK | win32::DT_CALCRECT | win32::DT_NOPREFIX);
             if (rcActual.bottom <= rc.bottom && rcActual.right <= rc.right) {
                 ui::ShowWindow(app.lpui->hwndMsgScroll, win32::SW_HIDE);

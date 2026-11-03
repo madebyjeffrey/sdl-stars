@@ -259,22 +259,24 @@ std::int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb) {
 }
 
 // Keep current message/cache effects while callers retain independent text.
-static std::array<char, 256> SzMessageLabel(std::string_view sz) {
-    std::array<char, 256> szResult{};
-    CchCopyUtf8Prefix(std::span{szResult}, sz);
+static MESSAGETEXTRESULT SzMessageText(std::string_view sz) {
+    MESSAGETEXTRESULT szResult{};
+    szResult.cch = static_cast<std::int16_t>(CchCopyUtf8Prefix(std::span{szResult.sz}, sz));
     return szResult;
 }
 
-std::array<char, 256> PszGetMessageN(APPSESSION &app, std::int16_t iMsg) {
+static std::array<char, 256> SzMessageLabel(std::string_view sz) {
+    return SzMessageText(sz).sz;
+}
+
+MESSAGETEXTRESULT PszGetMessageN(APPSESSION &app, std::int16_t iMsg) {
     MSGBIG mb;
-    std::array<char, 256> psz{};
 
     if (!FGetNMsgbig(app, static_cast<MessageId>(iMsg), &mb)) {
         app.state.szMsgBuf[0] = 0;
-        return SzMessageLabel(app.state.szMsgBuf);
+        return SzMessageText(app.state.szMsgBuf);
     }
-    psz = PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), std::span<const std::int16_t>{mb.rgParam}.first(static_cast<std::size_t>(rgcMsgArgs[mb.iMsg])));
-    return psz;
+    return PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), std::span<const std::int16_t>{mb.rgParam}.first(static_cast<std::size_t>(rgcMsgArgs[mb.iMsg])));
 }
 
 // Required readable values for one complete message expansion. Filename
@@ -295,7 +297,7 @@ static std::size_t CParamMessageCode(char ch) {
     }
 }
 
-std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszFormat, std::span<const std::int16_t> pParamsReal) {
+static MESSAGETEXTRESULT PszFormatStringResult(APPSESSION &app, std::string_view pszFormat, std::span<const std::int16_t> pParamsReal) {
     std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPchT{};
@@ -559,11 +561,14 @@ std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszForma
         }
     }
     *pch = 0;
-    app.state.szMsgBuf[CchUtf8Prefix(app.state.szMsgBuf, sizeof(app.state.szMsgBuf) - 1)] = 0;
-    return SzMessageLabel(app.state.szMsgBuf);
+    const std::size_t cchMessage = CchUtf8Prefix(app.state.szMsgBuf, sizeof(app.state.szMsgBuf) - 1);
+    app.state.szMsgBuf[cchMessage] = 0;
+    return SzMessageText(std::string_view{app.state.szMsgBuf, cchMessage});
 }
 
-std::array<char, 256> PszFormatMessage(APPSESSION &app, MessageId idm, std::span<const std::int16_t> pParams) { return PszFormatString(app, PszGetCompressedMessage(app, idm).data(), pParams); }
+MESSAGETEXTRESULT PszFormatMessage(APPSESSION &app, MessageId idm, std::span<const std::int16_t> pParams) { return PszFormatStringResult(app, PszGetCompressedMessage(app, idm).data(), pParams); }
+
+std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszFormat, std::span<const std::int16_t> pParamsReal) { return PszFormatStringResult(app, pszFormat, pParamsReal).sz; }
 
 std::array<char, 256> PszFormatIds(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }
 
