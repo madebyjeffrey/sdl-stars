@@ -13,29 +13,30 @@ static HWND hwndOwner;
 static char szChosen[PATH_MAX];
 static int iAction, fSaveExpected, cCalls, fBad;
 
-int StarsTest_IChooseWindowsFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
-                              const char *pszName, const WINDOWSFILEFILTER *rgfilter, int cFilter,
-                              int *lpiFilter, char *pszPath, size_t cbPath,
-                              int (*pfnPump)(void *), void *lpv) {
-    (void)lpWindow; (void)pszFolder; (void)pszName;
+win32::files::FILESELECTIONRESULT StarsTest_IChooseWindowsFile(
+    void *lpWindow, const win32::files::FILESELECTIONREQUEST &request,
+    const win32::files::FILESELECTIONPUMP &pfnPump) {
+    (void)lpWindow;
     cCalls++;
-    if (fSave != fSaveExpected || strcmp(pszTitle, "Picker \xc3\xa9") != 0 || cFilter != 2 ||
-        strcmp(rgfilter[0].pszPattern, "*.m?;*.hst") != 0 || *lpiFilter != 0 ||
+    if (static_cast<int>(request.mode == win32::files::FILESELECTIONMODE::save) != fSaveExpected ||
+        request.szTitle != "Picker \xc3\xa9" || request.rgFilters.size() != 2 ||
+        request.rgFilters[0].szPattern != "*.m?;*.hst" || request.iFilter != 0 ||
         win32::IsWindowEnabled(hwndOwner) || hwndOwner->cNativeFileDialogs != 1) fBad = 1;
-    if (iAction == 1) return 0;
+    if (iAction == 1) return win32::files::FILESELECTIONCANCELLED{};
     if (iAction == 2) {
         win32::PostQuitMessage(73);
-        if (pfnPump(lpv) != 0) fBad = 1;
-        return 0;
+        if (pfnPump()) fBad = 1;
+        return win32::files::FILESELECTIONCANCELLED{};
     }
     if (iAction == 3) {
         win32::DestroyWindow(hwndOwner);
-        if (pfnPump(lpv) != 0) fBad = 1;
-        return 0;
+        if (pfnPump()) fBad = 1;
+        return win32::files::FILESELECTIONCANCELLED{};
     }
-    if (SDL_strlcpy(pszPath, szChosen, cbPath) >= cbPath) return -1;
-    *lpiFilter = 1;
-    return 1;
+    win32::files::FILESELECTIONSELECTED selected;
+    selected.szPath = szChosen;
+    selected.iFilter = 1;
+    return selected;
 }
 
 int main(void) {

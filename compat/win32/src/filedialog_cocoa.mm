@@ -3,6 +3,7 @@
 #include "filedialog_cocoa_bridge.h"
 #include "../../../src/platform/errors.h"
 #include <algorithm>
+#include <limits.h>
 #include <string_view>
 
 @interface StarsFilePanelDelegate : NSObject <NSOpenSavePanelDelegate>
@@ -29,37 +30,37 @@
 }
 @end
 
-int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
-                     const char *pszName, const COCOAFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, std::size_t cbPath,
-                     int (*pfnPump)(void *), void *lpv) {
+win32::files::FILESELECTIONRESULT IChooseCocoaFile(
+    void *lpWindow, const win32::files::FILESELECTIONREQUEST &request,
+    const win32::files::FILESELECTIONPUMP &pfnPump) {
     @autoreleasepool {
-        NSSavePanel *panel = fSave ? [NSSavePanel savePanel] : [NSOpenPanel openPanel];
-        const char *pszSelectedPath;
+        NSSavePanel *panel = request.mode == win32::files::FILESELECTIONMODE::save ? [NSSavePanel savePanel] : [NSOpenPanel openPanel];
         std::string_view szPathView;
-        NSString *title = [NSString stringWithUTF8String:pszTitle];
-        NSString *folder = [NSString stringWithUTF8String:pszFolder];
-        NSString *name = [NSString stringWithUTF8String:pszName];
-        if (!panel || !title || !folder || !name) return -1;
+        NSString *title = [NSString stringWithUTF8String:request.szTitle.c_str()];
+        NSString *folder = [NSString stringWithUTF8String:request.szInitialDirectory.c_str()];
+        NSString *name = [NSString stringWithUTF8String:request.szInitialPath.c_str()];
+        if (!panel || !title || !folder || !name) return win32::files::FILESELECTIONFAILURE{win32::files::FILESELECTIONERROR::backendFailure};
         panel.title = title; panel.directoryURL = [NSURL fileURLWithPath:folder isDirectory:YES];
         panel.nameFieldStringValue = name; panel.canCreateDirectories = YES;
-        if (!fSave) {
+        if (request.mode != win32::files::FILESELECTIONMODE::save) {
             NSOpenPanel *open = static_cast<NSOpenPanel *>(panel);
             open.canChooseFiles = YES; open.canChooseDirectories = NO; open.allowsMultipleSelection = NO;
         }
         StarsFilePanelDelegate *delegate = [StarsFilePanelDelegate new];
         NSMutableArray<NSString *> *patterns = [NSMutableArray array];
-        if (cFilter != 0) {
+        if (!request.rgFilters.empty()) {
             NSPopUpButton *popup = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 300, 26) pullsDown:NO];
-            for (int i = 0; i < cFilter; i++) {
-                NSString *label = [NSString stringWithUTF8String:rgfilter[i].pszName];
-                NSString *pattern = [NSString stringWithUTF8String:rgfilter[i].pszPattern];
-                if (!label || !pattern) return -1;
+            for (const win32::files::FILESELECTIONFILTER &filter : request.rgFilters) {
+                NSString *label = [NSString stringWithUTF8String:filter.szName.c_str()];
+                NSString *pattern = [NSString stringWithUTF8String:filter.szPattern.c_str()];
+                if (!label || !pattern) return win32::files::FILESELECTIONFAILURE{win32::files::FILESELECTIONERROR::backendFailure};
                 [popup addItemWithTitle:label]; [patterns addObject:pattern];
             }
-            delegate.rgPatterns = patterns; delegate.iFilter = *lpiFilter; delegate.panel = panel;
+            delegate.rgPatterns = patterns;
+            delegate.iFilter = request.iFilter < request.rgFilters.size() ? static_cast<NSInteger>(request.iFilter) : 0;
+            delegate.panel = panel;
             popup.target = delegate; popup.action = @selector(changeFilter:);
-            [popup selectItemAtIndex:*lpiFilter]; panel.accessoryView = popup; panel.delegate = delegate;
+            [popup selectItemAtIndex:delegate.iFilter]; panel.accessoryView = popup; panel.delegate = delegate;
         }
         __block BOOL fDone = NO;
         __block NSInteger result = NSModalResponseCancel;
@@ -70,8 +71,8 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
         BOOL fCanceled = NO;
         while (!fDone) {
             if (!fCanceled) {
-                int fPump = 0;
-                try { fPump = pfnPump(lpv); }
+                bool fPump = false;
+                try { fPump = pfnPump(); }
                 catch (...) { StarsCapturePendingError(); }
                 if (!fPump) { fCanceled = YES; [panel cancel:nil]; }
             }
@@ -80,13 +81,14 @@ int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char
             if (event) [NSApp sendEvent:event];
             [NSApp updateWindows];
         }
-        if (fCanceled || result != NSModalResponseOK) return 0;
-        pszSelectedPath = panel.URL.fileSystemRepresentation;
-        if (!pszSelectedPath) return -1;
+        if (fCanceled || result != NSModalResponseOK) return win32::files::FILESELECTIONCANCELLED{};
+        const char *pszSelectedPath = panel.URL.fileSystemRepresentation;
+        if (!pszSelectedPath) return win32::files::FILESELECTIONFAILURE{win32::files::FILESELECTIONERROR::backendFailure};
         szPathView = pszSelectedPath;
-        if (szPathView.size() >= cbPath) return -1;
-        std::copy_n(szPathView.data(), szPathView.size() + 1, pszPath);
-        if (cFilter != 0) *lpiFilter = static_cast<int>(delegate.iFilter);
-        return 1;
+        if (szPathView.size() >= PATH_MAX) return win32::files::FILESELECTIONFAILURE{win32::files::FILESELECTIONERROR::backendFailure};
+        win32::files::FILESELECTIONSELECTED selected;
+        selected.szPath = szPathView;
+        if (!request.rgFilters.empty()) selected.iFilter = static_cast<std::size_t>(delegate.iFilter);
+        return selected;
     }
 }

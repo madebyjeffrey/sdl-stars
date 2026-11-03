@@ -6,18 +6,24 @@
 
 static int cChoose, iResult = 1;
 
-int IChooseCocoaFile(void *lpWindow, int fSave, const char *pszTitle, const char *pszFolder,
-                     const char *pszName, const COCOAFILEFILTER *rgfilter, int cFilter,
-                     int *lpiFilter, char *pszPath, size_t cbPath,
-                     int (*pfnPump)(void *), void *lpv) {
+win32::files::FILESELECTIONRESULT IChooseCocoaFile(
+    void *lpWindow, const win32::files::FILESELECTIONREQUEST &request,
+    const win32::files::FILESELECTIONPUMP &pfnPump) {
     (void)lpWindow;
     cChoose++;
-    if (!fSave || strcmp(pszTitle, "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d") ||
-        strcmp(pszFolder, "/tmp/\xe6\x98\x9f") || strcmp(pszName, "\xe6\x98\x9f.xy") ||
-        cFilter != 1 || *lpiFilter != 0 || strcmp(rgfilter[0].pszName, "Games \xe2\x80\x93 Stars!") ||
-        strcmp(rgfilter[0].pszPattern, "*.xy") || !pfnPump || lpv || cbPath < 32) return -2;
-    if (iResult == 1) strcpy(pszPath, "/tmp/\xe6\x98\x9f/game.xy");
-    return iResult;
+    if (request.mode != win32::files::FILESELECTIONMODE::save ||
+        request.szTitle != "Choose \xe2\x80\x9cNew Game\xe2\x80\x9d" ||
+        request.szInitialDirectory != "/tmp/\xe6\x98\x9f" || request.szInitialPath != "\xe6\x98\x9f.xy" ||
+        request.rgFilters.size() != 1 || request.iFilter != 0 ||
+        request.rgFilters[0].szName != "Games \xe2\x80\x93 Stars!" ||
+        request.rgFilters[0].szPattern != "*.xy" || !pfnPump) {
+        return win32::files::FILESELECTIONFAILURE{win32::files::FILESELECTIONERROR::backendFailure};
+    }
+    if (iResult == 0) return win32::files::FILESELECTIONCANCELLED{};
+    win32::files::FILESELECTIONSELECTED selected;
+    selected.szPath = "/tmp/\xe6\x98\x9f/game.xy";
+    selected.iFilter = 0;
+    return selected;
 }
 
 int main(void) {
