@@ -55,7 +55,7 @@ std::uint32_t UlFleetPower(APPSESSION &app, FLEET *lpfl);
 UNKNOWNPLANETRESULT IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl);
 void     AddMinesToBlockedQueues(APPSESSION &app);
 std::int16_t  FFleetInField(FLEET *lpfl, THING *lpth);
-void     SetAiFleetIdealSpeed(APPSESSION &app, FLEET *lpfl, std::int16_t wtFuelMax, std::int16_t cMinefields, THING **rglpth);
+void     SetAiFleetIdealSpeed(APPSESSION &app, FLEET *lpfl, std::int16_t wtFuelMax, std::optional<std::span<THING * const>> rgMinefields);
 std::int16_t  IdTargetAttack(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans);
 std::int16_t  IdTargetFreighter(APPSESSION &app, FLEET *lpflFr, PLANET *lpplHome);
 SALVAGETARGETRESULT FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16_t fNeedy, std::int16_t iWorst, std::int16_t pctFull, std::int32_t wtCargoMax, std::int32_t scoreBest,

@@ -579,37 +579,33 @@ std::int16_t FFleetInField(FLEET *lpfl, THING *lpth) {
     return 0;
 }
 
-void SetAiFleetIdealSpeed(APPSESSION &app, FLEET *lpfl, std::int16_t wtFuelMax, std::int16_t cMinefields, THING **rglpth) {
+void SetAiFleetIdealSpeed(APPSESSION &app, FLEET *lpfl, std::int16_t wtFuelMax, std::optional<std::span<THING * const>> rgMinefields) {
     THING  *lpth;
     std::int16_t i;
     std::int16_t j;
     std::int16_t ith;
+    std::size_t iMinefield;
     THING  *lpthMac;
-    std::int16_t fMinefield;
+    bool fMinefield;
 
-    fMinefield = 0;
-    switch (cMinefields) {
-    case 0:
-        break;
-    case -1:
+    fMinefield = false;
+    if (!rgMinefields) {
         lpth = app.state.lpThings;
         lpthMac = app.state.lpThings + app.state.cThing;
         for (; lpth < lpthMac; lpth++) {
             if (lpth->ith() == ithMinefield && lpth->iplr() != app.state.idPlayer && lpth->thm().iType() != mineSpeedBump && FFleetInField(lpfl, lpth)) {
-                fMinefield = 1;
+                fMinefield = true;
                 goto LSelectFleet;
             }
         }
-        break;
-    default:
-        for (ith = 0; ith < cMinefields; ith++) {
-            if (FFleetInField(lpfl, rglpth[ith])) {
-                lpth = rglpth[ith];
-                fMinefield = 1;
+    } else {
+        for (iMinefield = 0; iMinefield < rgMinefields->size(); iMinefield++) {
+            if (FFleetInField(lpfl, (*rgMinefields)[iMinefield])) {
+                lpth = (*rgMinefields)[iMinefield];
+                fMinefield = true;
                 goto LSelectFleet;
             }
         }
-        break;
     }
 LSelectFleet:
     ChangeMainObjSel(app, grobjFleet, lpfl->id);
@@ -1245,6 +1241,7 @@ void KeepFleetsMoving(APPSESSION &app) {
     THING  *rglpth[100];
     std::int16_t ith;
     THING  *lpthMac;
+    std::optional<std::span<THING * const>> rgMinefields;
 
     ith = 0;
     lpth = app.state.lpThings;
@@ -1272,7 +1269,12 @@ LKeepMovn:
                     i = 30;
                 }
             }
-            SetAiFleetIdealSpeed(app, lpfl, i, ith, rglpth);
+            if (ith < 0) {
+                rgMinefields = std::nullopt;
+            } else {
+                rgMinefields = std::span<THING * const>{rglpth, static_cast<std::size_t>(ith)};
+            }
+            SetAiFleetIdealSpeed(app, lpfl, i, rgMinefields);
         }
     }
     return;
