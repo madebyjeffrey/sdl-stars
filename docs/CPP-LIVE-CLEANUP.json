@@ -27984,8 +27984,8 @@
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
     "latest_source_commit": "ed7efb4a91ccee21712e53ad58b282bf9550251a",
-    "latest_batch_status": "Source commit ed7efb4a verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
-    "latest_published_head": "6cee4543",
+    "latest_batch_status": "Source commit ed7efb4a and ledger checkpoint 09ce49cf are published on origin/develop. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_published_head": "09ce49cf",
     "latest_batch_verification": {
       "batch": "L05 move game library name buffer into UI session state",
       "source_commit": "ed7efb4a91ccee21712e53ad58b282bf9550251a",
@@ -28002,7 +28002,8 @@
       "baseline": "Unchanged; game-library creation, naming, conflict handling and publication retain the same path capacity and behavior.",
       "api_audit": "APPUISTATE owns the prompted game-library name. LIBRARYPATHS carries it as a fixed-extent span; the shared libraryui.cpp name buffer was removed.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass."
+      "diff_check": "Pass.",
+      "ledger_commit": "09ce49cfc8b9ecafeed560c5a619ba371b8daa80"
     },
     "latest_progress_batch": {
       "batch": "L05 move game library name buffer into UI session state",
@@ -28021,13 +28022,14 @@
       "api_audit": "APPUISTATE owns the prompted game-library name. LIBRARYPATHS carries it as a fixed-extent span; the shared libraryui.cpp name buffer was removed.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit ed7efb4a verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit ed7efb4a and ledger checkpoint 09ce49cf are published on origin/develop. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the three shared library path/name arrays; then continue L06 service interfaces and L08 platform qualification."
+      "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the three shared library path/name arrays; then continue L06 service interfaces and L08 platform qualification.",
+      "ledger_commit": "09ce49cfc8b9ecafeed560c5a619ba371b8daa80"
     }
   },
   "milestone_d_checkpoint": {
@@ -28488,7 +28490,7 @@
       "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification passes through 32deeaff."
     },
     "latest_source_commit": "ed7efb4a91ccee21712e53ad58b282bf9550251a",
-    "latest_batch_status": "Source commit ed7efb4a verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "latest_batch_status": "Source commit ed7efb4a and ledger checkpoint 09ce49cf are published on origin/develop. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
     "latest_change": "L05 move game library name buffer into UI session state",
     "latest_batch_verification": {
       "batch": "L05 move game library name buffer into UI session state",
@@ -28506,7 +28508,8 @@
       "baseline": "Unchanged; game-library creation, naming, conflict handling and publication retain the same path capacity and behavior.",
       "api_audit": "APPUISTATE owns the prompted game-library name. LIBRARYPATHS carries it as a fixed-extent span; the shared libraryui.cpp name buffer was removed.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-      "diff_check": "Pass."
+      "diff_check": "Pass.",
+      "ledger_commit": "09ce49cfc8b9ecafeed560c5a619ba371b8daa80"
     },
     "latest_progress_batch": {
       "batch": "L05 move game library name buffer into UI session state",
@@ -28525,23 +28528,24 @@
       "api_audit": "APPUISTATE owns the prompted game-library name. LIBRARYPATHS carries it as a fixed-extent span; the shared libraryui.cpp name buffer was removed.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass.",
-      "status": "Source commit ed7efb4a verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+      "status": "Source commit ed7efb4a and ledger checkpoint 09ce49cf are published on origin/develop. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
-      "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the three shared library path/name arrays; then continue L06 service interfaces and L08 platform qualification."
+      "next": "Continue L05 bounded text destinations and scratch/borrowed-state review of the three shared library path/name arrays; then continue L06 service interfaces and L08 platform qualification.",
+      "ledger_commit": "09ce49cfc8b9ecafeed560c5a619ba371b8daa80"
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
-    "latest_published_head": "6cee4543"
+    "latest_published_head": "09ce49cf"
   },
   "latest_source_commit": "ed7efb4a91ccee21712e53ad58b282bf9550251a",
-  "latest_batch_status": "Source commit ed7efb4a verified locally; ledger checkpoint pending publication. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_batch_status": "Source commit ed7efb4a and ledger checkpoint 09ce49cf are published on origin/develop. macOS SDL Debug build, focused library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
