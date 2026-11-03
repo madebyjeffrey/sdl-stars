@@ -1830,7 +1830,8 @@ TryTier2:
                 iRet = -1;
                 break;
             }
-            iRet = std::strcmp(app.state.rglpshdefSB[app.state.idPlayer][lppl1->isb].hul.szClass, app.state.rglpshdefSB[app.state.idPlayer][lppl2->isb].hul.szClass);
+            iRet = std::string_view{app.state.rglpshdefSB[app.state.idPlayer][lppl1->isb].hul.szClass}.compare(
+                app.state.rglpshdefSB[app.state.idPlayer][lppl2->isb].hul.szClass);
             break;
         case colPlanetRoutingDest:
             if (lppl1->idRoute == 0) {
@@ -1990,7 +1991,7 @@ TryTier2:
             CchCopyUtf8Prefix(std::span{szT}, psz);
             szObjectName = PszGetFleetName(app, lpfl2->id);
             psz = szObjectName.data();
-            iRet = std::strcmp(szT, psz);
+            iRet = std::string_view{szT}.compare(psz);
             break;
         case colFleetLocation:
             if (lpfl1->idPlanet != idPlanetDeepSpace) {
@@ -2007,7 +2008,7 @@ TryTier2:
                 CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
                 psz = app.state.szWork;
             }
-            iRet = std::strcmp(szT, psz);
+            iRet = std::string_view{szT}.compare(psz);
             break;
         case colFleetBattlePlan:
             iRet = lpfl1->iplan - lpfl2->iplan;
@@ -2018,7 +2019,7 @@ TryTier2:
             CchCopyUtf8Prefix(std::span{szT}, psz);
             szReportText = PszGetDestName(app, lpfl2, nullptr).sz;
             psz = szReportText.data();
-            iRet = std::strcmp(szT, psz);
+            iRet = std::string_view{szT}.compare(psz);
             if (iRet < 0) {
                 iRet = -1;
                 break;
@@ -2042,7 +2043,7 @@ TryTier2:
             if (l1 == l2) {
                 iRet = lpfl1->rgcsh[l1] - lpfl2->rgcsh[l2];
             } else {
-                iRet = std::strcmp(app.state.rgshdef[l1].hul.szClass, app.state.rgshdef[l2].hul.szClass);
+                iRet = std::string_view{app.state.rgshdef[l1].hul.szClass}.compare(app.state.rgshdef[l2].hul.szClass);
                 if (iRet == 0) {
                     iRet = lpfl1->rgcsh[l1] - lpfl2->rgcsh[l2];
                 }
@@ -2064,7 +2065,7 @@ TryTier2:
             szReportText = taskName.sz.sz;
             i2 = taskName.icr;
             psz = szReportText.data();
-            iRet = std::strcmp(szT, psz);
+            iRet = std::string_view{szT}.compare(psz);
             if (iRet < 0) {
                 iRet = -1;
                 break;
@@ -2147,7 +2148,7 @@ TryTier2:
                 CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), obdv2->pt().x(), obdv2->pt().y());
                 psz = app.state.szWork;
             }
-            iRet = std::strcmp(szT, psz);
+            iRet = std::string_view{szT}.compare(psz);
             break;
         case colBattleStarbase:
             l1 = CBattleUnits(app, *obdv1, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
@@ -2220,7 +2221,7 @@ TryTier2:
                 CchCopyUtf8Prefix(std::span{szT}, psz);
                 szObjectName = PszGetFleetName(app, lpfl2->id);
                 psz = szObjectName.data();
-                iRet = std::strcmp(szT, psz);
+                iRet = std::string_view{szT}.compare(psz);
                 break;
             case colEnemyFleetLocation:
                 if (lpfl1->idPlanet != idPlanetDeepSpace) {
@@ -2237,7 +2238,7 @@ TryTier2:
                     CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), lpfl2->pt.x, lpfl2->pt.y);
                     psz = app.state.szWork;
                 }
-                iRet = std::strcmp(szT, psz);
+                iRet = std::string_view{szT}.compare(psz);
                 break;
             case colEnemyFleetComposition:
                 l1 = IshdefPrimaryFromLpfl(app, lpfl1, &i1);
@@ -2245,7 +2246,8 @@ TryTier2:
                 if (l1 == l2) {
                     iRet = lpfl1->rgcsh[l1] - lpfl2->rgcsh[l2];
                 } else {
-                    iRet = std::strcmp(app.state.rglpshdef[lpfl1->iPlayer][l1].hul.szClass, app.state.rglpshdef[lpfl2->iPlayer][l2].hul.szClass);
+                    iRet = std::string_view{app.state.rglpshdef[lpfl1->iPlayer][l1].hul.szClass}.compare(
+                        app.state.rglpshdef[lpfl2->iPlayer][l2].hul.szClass);
                     if (iRet == 0) {
                         iRet = lpfl1->rgcsh[l1] - lpfl2->rgcsh[l2];
                     }
