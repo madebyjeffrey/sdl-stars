@@ -229,7 +229,8 @@
         "native-bounded-format-interface-uses-only-string-view",
         "bounded-library-name-availability-and-chooser-views",
         "bounded-library-tree-removal-path-view",
-        "bounded-library-staging-backup-and-conflict-turn-views"
+        "bounded-library-staging-backup-and-conflict-turn-views",
+        "bounded-remaining-library-publication-path-interfaces"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25080,6 +25081,32 @@
       "api_audit": "Library staging, backup and conflict-turn services use string_view. Recursive copy state borrows views only during synchronous directory enumeration.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 bounded remaining library publication path interfaces",
+      "parent": "4cc75b95",
+      "source_commit": "735a56ab",
+      "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "The publication witness compiles and links with view-based staging and publication entry points.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; this changes synchronous library UI workflow inputs only.",
+      "api_audit": "Conflict replacement/copy, subsequent-turn publication and imported-game publication consume string_view paths and names.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -25100,7 +25127,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded library staging and conflict path views",
+    "latest_batch": "L05 bounded remaining library publication path interfaces",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25132,13 +25159,12 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 bounded library staging and conflict path views",
-    "source_commit": "e15831ee",
-    "status": "Locally committed as e15831ee. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 bounded remaining library publication path interfaces",
+    "source_commit": "735a56ab",
+    "status": "Locally committed as 735a56ab. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "FCreateLibraryGameStage, FBackupConflictingPlayerFiles and FStageConflictingTurn accept string_view inputs.",
-      "Recursive library-copy state stores bounded views for the duration of synchronous directory enumeration.",
-      "Updated the family-path formatter and publication witness callbacks for bounded inputs."
+      "Conflict replacement/copy, subsequent-turn publication and imported-game publication now accept string_view paths and names.",
+      "The library publication workflow keeps bounded inputs throughout synchronous callbacks and staging operations."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25334,10 +25360,14 @@
       {
         "commit": "e15831ee",
         "message": "Pass library staging names as bounded views"
+      },
+      {
+        "commit": "735a56ab",
+        "message": "Pass library publication paths as views"
       }
     ],
-    "latest_source_commit": "e15831ee",
-    "latest_batch_status": "Locally committed as e15831ee. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "735a56ab",
+    "latest_batch_status": "Locally committed as 735a56ab. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
@@ -25556,13 +25586,12 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded library staging and conflict path views",
-    "source_commit": "e15831ee",
-    "status": "Locally committed as e15831ee. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 bounded remaining library publication path interfaces",
+    "source_commit": "735a56ab",
+    "status": "Locally committed as 735a56ab. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "FCreateLibraryGameStage, FBackupConflictingPlayerFiles and FStageConflictingTurn accept string_view inputs.",
-      "Recursive library-copy state stores bounded views for the duration of synchronous directory enumeration.",
-      "Updated the family-path formatter and publication witness callbacks for bounded inputs."
+      "Conflict replacement/copy, subsequent-turn publication and imported-game publication now accept string_view paths and names.",
+      "The library publication workflow keeps bounded inputs throughout synchronous callbacks and staging operations."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25883,6 +25912,10 @@
       {
         "commit": "e15831ee",
         "message": "Pass library staging names as bounded views"
+      },
+      {
+        "commit": "735a56ab",
+        "message": "Pass library publication paths as views"
       }
     ],
     "parent": "4867b0c5"
