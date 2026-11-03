@@ -592,10 +592,10 @@ static std::int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, std::
     fShortened = cbName >= sizeof(pplr->szName) || cbNames >= sizeof(pplr->szNames);
     if (fShortened) {
         cbKeep = CchUtf8Prefix(szName, sizeof(pplr->szName) - 1);
-        std::memmove(pplr->szName, szName, cbKeep);
+        std::copy_n(szName, cbKeep, pplr->szName);
         pplr->szName[cbKeep] = 0;
         cbKeep = CchUtf8Prefix(szNames, sizeof(pplr->szNames) - 1);
-        std::memmove(pplr->szNames, szNames, cbKeep);
+        std::copy_n(szNames, cbKeep, pplr->szNames);
         pplr->szNames[cbKeep] = 0;
         if (!FConfirmLegacyRaceNames(app, pplr->szName, pplr->szNames)) return -1;
     } else {

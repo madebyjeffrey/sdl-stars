@@ -304,7 +304,7 @@ std::int16_t CchGetString(APPSESSION &app, StringId ids, std::span<char> psz) {
     const std::string_view szT(szCatalog.data());
     const std::size_t cch = CchUtf8Prefix(szT, psz.size() - 1);
 
-    std::memmove(psz.data(), szT.data(), cch);
+    std::copy_n(szT.data(), cch, psz.data());
     psz[cch] = 0;
     return static_cast<std::int16_t>(cch);
 }
@@ -514,7 +514,7 @@ static std::optional<std::size_t> FDecompressUserStringInternal(APPSESSION &app,
     if (std::memchr(szWork, 0, static_cast<std::size_t>((pchOut - szWork))) != nullptr) goto invalid;
     if (fUtf8 && !FUtf8Valid(std::string_view{szWork, static_cast<std::size_t>((pchOut - szWork))})) goto invalid;
     cOut = static_cast<std::size_t>(pchOut - szWork);
-    std::memmove(szOut.data(), szWork, cOut + 1);
+    std::copy_n(szWork, cOut + 1, szOut.data());
     return cOut;
 invalid:
     szOut[0] = 0;
