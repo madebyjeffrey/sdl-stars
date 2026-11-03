@@ -3819,7 +3819,7 @@
     "production_calls": 78,
     "providers": "TEXTIO derives the exact owned return type; lifecycle, location and native-file-UI providers return independent 360-byte arrays.",
     "effects": "Existing work-buffer writes remain for message work expansion and explicit workspace consumers. Names, UTF-8 budgets, ownership prefixes, orbit flags, missing-object behavior and all formatter expressions stay unchanged. No allocation, record layout or compatibility overload is added.",
-    "remaining": "Encoded labels and messages now return owned values. Remaining readonly interfaces, scratch-storage review and three mineral-summary appends remain pending.",
+    "remaining": "Encoded labels and messages now return owned values. The mineral title composes its summary in the owned object-name array and copies the final bytes to szWork to preserve the existing side effect. Remaining readonly interfaces and scratch-storage review remain pending.",
     "calls": [
       {
         "path": "src/core/msg.cpp",
