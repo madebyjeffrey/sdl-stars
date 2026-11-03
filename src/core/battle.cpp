@@ -687,7 +687,7 @@ void RegenShield(APPSESSION &app, TOK *ptok) {
     return;
 }
 
-std::int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t *ppctBC) {
+HULLINITIATIVERESULT InitFromHuldef(APPSESSION &app, HUL *lphul) {
     std::int16_t ihs;
     std::int16_t i;
     std::int16_t pct;
@@ -726,25 +726,23 @@ std::int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t *ppctBC) {
             }
         }
     }
-    if (ppctBC) {
-        *ppctBC = pct;
-    }
     initBase += cbc;
     if (initBase >= 64) {
         initBase = 63;
     }
-    return initBase;
+    return {initBase, pct};
 }
 
 void CheckInitiative(APPSESSION &app, TOK *ptok) {
     SHDEF  *lpshdef;
-    std::int16_t pctBC;
+    HULLINITIATIVERESULT initiative;
 
     lpshdef = LpshdefFromTok(app, ptok);
     app.state.idPlayer = ptok->iplr;
-    ptok->initBase = InitFromHuldef(app, &lpshdef->hul, &pctBC);
+    initiative = InitFromHuldef(app, &lpshdef->hul);
     app.state.idPlayer = iplrNone;
-    ptok->pctBC = pctBC;
+    ptok->initBase = initiative.initBase;
+    ptok->pctBC = initiative.pctBC;
     return;
 }
 

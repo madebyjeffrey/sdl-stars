@@ -17,6 +17,11 @@ struct MOVEMENTRANGECANDIDATE {
     std::uint8_t brcOOR;
 };
 
+struct HULLINITIATIVERESULT {
+    std::int16_t initBase;
+    std::int16_t pctBC;
+};
+
 std::int16_t FDeleteBattlePlan(APPSESSION &app, std::int16_t iplan, std::int16_t fWarn);
 std::int16_t FFleetHasBombs(APPSESSION &app, FLEET *lpfl);
 std::int16_t FHullHasBombs(HUL *lphul);
@@ -32,7 +37,7 @@ SHDEF  *LpshdefFromTok(APPSESSION &app, TOK *ptok);
 std::int16_t FCanKillTok(APPSESSION &app, TOK *ptok1, TOK *ptok2);
 void    DoBattles(APPSESSION &app, std::int16_t fPostMovement);
 void    RegenShield(APPSESSION &app, TOK *ptok);
-std::int16_t InitFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t *ppctBC);
+HULLINITIATIVERESULT InitFromHuldef(APPSESSION &app, HUL *lphul);
 void    CheckInitiative(APPSESSION &app, TOK *ptok);
 void    CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, std::span<std::uint8_t, 64> rgfInit);
 void    RandomizeTokOrder(APPSESSION &app);

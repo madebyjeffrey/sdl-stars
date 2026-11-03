@@ -1336,7 +1336,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             cch = TextIO().pfnCchGetString(app, idsCloakJam, std::span{app.state.szWork});
             win32::TextOutA(hdc, rc.left, rc.top, app.state.szWork, cch);
             rc.top += app.state.dyArial8;
-            i = InitFromHuldef(app, &app.lpui->lpshdefBuild->hul, nullptr);
+            i = InitFromHuldef(app, &app.lpui->lpshdefBuild->hul).initBase;
             if (app.state.fStarbaseMode || app.lpui->lpshdefBuild->hul.rghs[0].cItem == 0) {
                 j = 0;
             } else {
