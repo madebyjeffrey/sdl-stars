@@ -222,8 +222,8 @@ static void SuggestRaceFilename(APPSESSION &app, std::span<char, 256> pszName) {
     pszName[0] = 0;
 }
 
-static std::int16_t FFormatLibraryFamilyPath(char *pszPath, std::size_t cchPath, const char *pszDirectory,
-                                        const char *pszName, DtFileType dt, int iplr) {
+static std::int16_t FFormatLibraryFamilyPath(char *pszPath, std::size_t cchPath, std::string_view pszDirectory,
+                                             std::string_view pszName, DtFileType dt, int iplr) {
     const char *pszExtension;
     int cch;
     if (dt == dtXY) pszExtension = "xy";
@@ -1432,10 +1432,10 @@ static bool FMalformedImportFamilyMember(std::string_view pszName, std::string_v
 }
 
 struct LIBRARYGAMECOPY {
-    const char *pszSource;
-    const char *pszTarget;
-    const char *pszSourceName;
-    const char *pszTargetName;
+    std::string_view pszSource;
+    std::string_view pszTarget;
+    std::string_view pszSourceName;
+    std::string_view pszTargetName;
     std::int16_t fBad;
 };
 
@@ -2277,9 +2277,9 @@ std::int16_t RemoveLibraryGameTree(APPSESSION &app, std::string_view pszDirector
     return RemoveNativePath(pszDirectory) == 0;
 }
 
-std::int16_t FCreateLibraryGameStage(APPSESSION &app, const char *pszSource, const char *pszSourceName,
-                                       const char *pszTargetName, const char *pszStage,
-                                       int iplr, long long lPlayed, const char *pszExchangeName) {
+std::int16_t FCreateLibraryGameStage(APPSESSION &app, std::string_view pszSource, std::string_view pszSourceName,
+                                     std::string_view pszTargetName, std::string_view pszStage,
+                                     int iplr, long long lPlayed, std::string_view pszExchangeName) {
     LIBRARYGAMECOPY lgc;
     char szSourceUniverse[512];
     std::optional<std::int64_t> cbFile;
@@ -2627,8 +2627,8 @@ static std::int16_t FCopyOptionalConflictFile(std::string_view pszSource, std::s
     return errno == ENOENT;
 }
 
-std::int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char *pszName,
-                                             int iplr, std::span<char> pszBackup) {
+std::int16_t FBackupConflictingPlayerFiles(std::string_view pszDirectory, std::string_view pszName,
+                                           int iplr, std::span<char> pszBackup) {
     char szSource[512], szTarget[512], szExt[8];
     int i, cch;
 
@@ -2661,9 +2661,9 @@ std::int16_t FBackupConflictingPlayerFiles(const char *pszDirectory, const char 
     return cch > 0 && static_cast<std::size_t>(cch) < sizeof(szTarget) && FCopyOptionalConflictFile(szSource, szTarget);
 }
 
-std::int16_t FStageConflictingTurn(const char *pszStage, const char *pszName,
-                                     const char *pszSource, int iplr,
-                                     std::int32_t lidGame, std::uint16_t turn) {
+std::int16_t FStageConflictingTurn(std::string_view pszStage, std::string_view pszName,
+                                  std::string_view pszSource, int iplr,
+                                  std::int32_t lidGame, std::uint16_t turn) {
     char szTarget[512], szIncoming[512];
     std::int32_t lidStaged;
     std::uint16_t turnStaged, wGenStaged;

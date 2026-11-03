@@ -200,23 +200,25 @@ static int build(int tag) {
     event("build", tag, 3, ok, objects[3]);
     return ok;
 }
-static int TestFCreateLibraryGameStage(APPSESSION &, const char *source, const char *old, const char *name, const char *stage, int player, long long played,
-                                       const char *exchange) {
-    assert(role(source) == 5 && role(stage) == 3 && !strcmp(old, "Game") && !strcmp(exchange, "external"));
+static int TestFCreateLibraryGameStage(APPSESSION &, std::string_view source, std::string_view old, std::string_view name,
+                                       std::string_view stage, int player, long long played,
+                                       std::string_view exchange) {
+    assert(role(source) == 5 && role(stage) == 3 && old == "Game" && exchange == "external");
     if (profile == 2) {
-        assert(!strcmp(name, "Game") && player == 4 && played == 321);
+        assert(name == "Game" && player == 4 && played == 321);
         return build(1);
     }
-    assert(profile == 3 && !strcmp(name, "Copy") && player == 0 && played == 0);
+    assert(profile == 3 && name == "Copy" && player == 0 && played == 0);
     return build(4);
 }
-static int TestFBackupConflictingPlayerFiles(const char *stage, const char *name, int player, std::span<char> backup) {
-    assert(role(stage) == 3 && !strcmp(name, "Game") && player == 0 && backup.size() > 6);
+static int TestFBackupConflictingPlayerFiles(std::string_view stage, std::string_view name, int player, std::span<char> backup) {
+    assert(role(stage) == 3 && name == "Game" && player == 0 && backup.size() > 6);
     std::copy_n("backup", 7, backup.begin());
     return build(2);
 }
-static int TestFStageConflictingTurn(const char *stage, const char *name, const char *source, int player, int32_t id, uint16_t turn) {
-    assert(role(stage) == 3 && !strcmp(name, profile == 2 ? "Game" : "Copy") && role(source) == 0 && player == 0 && id == 123 && turn == 11);
+static int TestFStageConflictingTurn(std::string_view stage, std::string_view name, std::string_view source,
+                                     int player, int32_t id, uint16_t turn) {
+    assert(role(stage) == 3 && name == (profile == 2 ? "Game" : "Copy") && role(source) == 0 && player == 0 && id == 123 && turn == 11);
     return build(3);
 }
 static int TestFChooseSeparateCopyName(APPSESSION &, HWND hwnd, std::string_view name) {
