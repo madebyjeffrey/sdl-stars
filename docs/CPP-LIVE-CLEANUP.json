@@ -2850,7 +2850,8 @@
           "baseline": "Unchanged; copy/move operation choice, physical byte counts, and object/wire representations are unchanged.",
           "api_audit": "HEAPIO copy/move hooks now receive mutable and readonly byte spans with equal extents. All production call sites and four witness adapters pass their former byte lengths as spans.",
           "platform": "Windows/Linux current-source qualification remains pending.",
-          "diff_check": "Pass."
+          "diff_check": "Pass.",
+          "heap_copy_move_witnesses": "production-editor 19,415; production-forecast 272,841; planet-editor 17,432,153; host-production 1,362,708 assertions passed."
         }
       ],
       "roman_output": {
@@ -26455,7 +26456,8 @@
       "baseline": "Unchanged; copy/move operation choice, physical byte counts, and object/wire representations are unchanged.",
       "api_audit": "HEAPIO copy/move hooks now receive mutable and readonly byte spans with equal extents. All production call sites and four witness adapters pass their former byte lengths as spans.",
       "platform": "Windows/Linux current-source qualification remains pending.",
-      "diff_check": "Pass."
+      "diff_check": "Pass.",
+      "heap_copy_move_witnesses": "production-editor 19,415; production-forecast 272,841; planet-editor 17,432,153; host-production 1,362,708 assertions passed."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -26912,7 +26914,8 @@
       "diff_check": "Pass.",
       "macos_sdl_debug": "make compile passes with strict warnings and header checks.",
       "profile_functional_witnesses": "win32_profile_save, win32_sdl_resource_profile and win32_utf8_profile pass 3/3.",
-      "profile_leak_instrumentation": "win32_sdl_leaks_profile times out after 60 seconds; macOS leaks reports it cannot obtain the launched process task port. The profile program itself reports its profile checks passed."
+      "profile_leak_instrumentation": "win32_sdl_leaks_profile times out after 60 seconds; macOS leaks reports it cannot obtain the launched process task port. The profile program itself reports its profile checks passed.",
+      "heap_copy_move_witnesses": "production-editor 19,415; production-forecast 272,841; planet-editor 17,432,153; host-production 1,362,708 assertions passed."
     },
     "current_source_audits": {
       "tracked_c_translation_units": 44,
