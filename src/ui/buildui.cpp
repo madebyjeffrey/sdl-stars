@@ -1565,6 +1565,7 @@ void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
     std::int16_t fAdded;
     std::int16_t i;
     std::int16_t j;
+    std::int16_t cch;
     SHDEF  *lpshdef;
     RECT    rc;
     PART    part;
@@ -1619,8 +1620,8 @@ void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
                 if (lpshdef) {
                     for (j = 0; j < ishdefMac; j++) {
                         if (!lpshdef[j].fFree) {
-                            CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 0, 0, 0, nullptr).data());
-                            CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " %s", lpshdef[j].hul.szClass);
+                            cch = static_cast<std::int16_t>(CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 0, 0, 0, nullptr).data()));
+                            CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cch)), " %s", lpshdef[j].hul.szClass);
                             ControlIO().pfnSendMessage(hwndDD, win32::CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(app.state.szWork));
                         }
                     }

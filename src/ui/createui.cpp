@@ -722,46 +722,46 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         iPlr = app.state.vrgplrTypeNew[i] >> 2 & 0xf;
         if (app.state.fRCWReadOnly) {
             if (app.state.rgplr[i].fInclude) {
-                CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).data());
+                cch = static_cast<std::int16_t>(CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, i, 1, 1, 1, 0, nullptr).data()));
                 if (!app.state.rgplr[i].fDead)
                     goto DisplayName;
-                CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(std::strlen(app.state.szWork))), " (%s)", TextIO().pfnCompressed(app, idsDeceased).data());
+                cch += CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(cch)), " (%s)", TextIO().pfnCompressed(app, idsDeceased).data());
                 win32::SetTextColor(hdc, 127);
                 goto DisplayName;
             }
-            TextIO().pfnCchGetString(app, idsUnknownPlayer, std::span{app.state.szWork});
+            cch = TextIO().pfnCchGetString(app, idsUnknownPlayer, std::span{app.state.szWork});
             goto DisplayName;
         }
         switch (app.state.vrgplrTypeNew[i] & 3) {
         case 0:
-            TextIO().pfnCchGetString(app, idsPlayer2, std::span{app.state.szWork});
+            cch = TextIO().pfnCchGetString(app, idsPlayer2, std::span{app.state.szWork});
             break;
         case 1:
             if (iPlr >= 6) {
                 ids = iPlr == 6 ? (app.state.fRCWReadOnly ? idsUnknownPlayer : idsRandom) : idsExpansionPlayer;
-                TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
+                cch = TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
                 break;
             }
             TextIO().pfnCchGetString(app, idsS, std::span{szT});
-            CchSprintf(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr)).data());
+            cch = CchSprintf(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr)).data());
             break;
         case 2:
             pszFile = rgszLibraryRaceNew[iPlr][0] ? rgszLibraryRaceNew[iPlr] : app.lpui->vrgszFileNew + iPlr * 13;
             if (!app.state.fRCWReadOnly && app.state.gd.fNoHostNames && pszFile[0] != 0) {
-                CchSprintf(app.state.szWork, " %s", pszFile);
+                cch = CchSprintf(app.state.szWork, " %s", pszFile);
                 break;
             }
             if (pszFile[0] != 0) {
-                CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, !app.state.fRCWReadOnly ? idsSS2 : idsS).data(), app.lpui->vrgplrNew[iPlr].szNames, pszFile);
+                cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, !app.state.fRCWReadOnly ? idsSS2 : idsS).data(), app.lpui->vrgplrNew[iPlr].szNames, pszFile);
                 break;
             }
-            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsS).data(), app.lpui->vrgplrNew[iPlr].szNames);
+            cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsS).data(), app.lpui->vrgplrNew[iPlr].szNames);
             break;
         case 3:
-            CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSSComputerPlayer).data(), app.lpui->vrgszComputerPlayers[iPlr & 7], app.lpui->vrgszComputerLevel[app.state.vrgplrTypeNew[i] >> 5]);
+            cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSSComputerPlayer).data(), app.lpui->vrgszComputerPlayers[iPlr & 7], app.lpui->vrgszComputerLevel[app.state.vrgplrTypeNew[i] >> 5]);
         }
     DisplayName:
-        win32::TextOutA(hdc, rcDiamond.right + 6, yCur, app.state.szWork, std::strlen(app.state.szWork));
+        win32::TextOutA(hdc, rcDiamond.right + 6, yCur, app.state.szWork, cch);
         win32::SetTextColor(hdc, app.lpui->crButtonText);
         win32::OffsetRect(&rcDiamond, 0, app.state.dyArial8 + 4);
         yCur += app.state.dyArial8 + 4;
