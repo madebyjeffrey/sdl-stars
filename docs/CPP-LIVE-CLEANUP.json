@@ -271,7 +271,8 @@
         "carry-message-format-byte-lengths-to-ui",
         "carry-generated-inspector-style-lengths",
         "bounded-cocoa-chooser-result-path-length",
-        "carry-owned-toolbar-label-lengths"
+        "carry-owned-toolbar-label-lengths",
+        "owned-toolbar-collections-with-vectors"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -10941,7 +10942,7 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 22,
       "code": "free(rgbtn); free(rgbmp);",
-      "disposition": "reviewed-L04",
+      "disposition": "replaced-by-vectors-and-SDL-label-owner-L05-toolbar",
       "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
@@ -10949,7 +10950,7 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 22,
       "code": "free(rgbtn); free(rgbmp);",
-      "disposition": "reviewed-L04",
+      "disposition": "replaced-by-vectors-and-SDL-label-owner-L05-toolbar",
       "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
@@ -10957,7 +10958,7 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 86,
       "code": "rgNew = (COMPATTOOLBUTTON *)(calloc(c + (size_t)lp->c + 1, sizeof(*rgNew)));",
-      "disposition": "reviewed-L04",
+      "disposition": "replaced-by-vectors-and-SDL-label-owner-L05-toolbar",
       "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
@@ -10965,7 +10966,7 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 99,
       "code": "free(rgNew); return 0;",
-      "disposition": "reviewed-L04",
+      "disposition": "replaced-by-vectors-and-SDL-label-owner-L05-toolbar",
       "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
@@ -10973,7 +10974,7 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 103,
       "code": "free(lp->rgbtn); lp->rgbtn = rgNew; lp->c += (int)c;",
-      "disposition": "reviewed-L04",
+      "disposition": "replaced-by-vectors-and-SDL-label-owner-L05-toolbar",
       "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
@@ -10981,7 +10982,7 @@
       "path": "compat/win32/src/toolbar.cpp",
       "line": 137,
       "code": "rgbmp = (COMPATTOOLBITMAP *)(realloc(lp->rgbmp, (size_t)(lp->cbmp + 1) * sizeof(*rgbmp)));",
-      "disposition": "reviewed-L04",
+      "disposition": "replaced-by-vectors-and-SDL-label-owner-L05-toolbar",
       "evidence": "docs/CPP-LIVE-OWNERSHIP.json"
     },
     {
@@ -27498,19 +27499,19 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 scanner consumers use required snapshot references",
-    "status": "Source committed as 6a7d2ec4. Strict macOS SDL Debug build, scanner startup test, desktop units, native regression and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "parent": "14b784b6ffebea25ea178bd9bf39552178b5758d",
-    "change": "FWriteScannerSnapshot and FSelectScannerObject accept required const snapshot references. Startup/tutorial call sites, unit coverage and inspection documentation use the new contract.",
+    "batch": "L05 toolbar collections and label ownership",
+    "status": "Source committed as b022c4d4. Strict macOS SDL Debug build, desktop units, native regression and tutorial pass; one focused leak test could not get a macOS task port. Windows/Linux qualification remains outstanding.",
+    "parent": "eaa9db42",
+    "change": "COMPATTOOLBAR button/bitmap collections use std::vector; button labels use NATIVEOWNER<char, SDL_free>. Insert/delete no longer manually free or memmove raw records.",
     "verification": {
-      "batch": "L06 scanner consumers use required snapshot references",
-      "source_commit": "6a7d2ec49b138782a69027d087f7cd7efe72f4d9",
+      "batch": "L05 toolbar collections and label ownership",
+      "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_compatibility_tests": "win32_client_startup_dummy passes (1/1); scanner selection and snapshot writing paths remain covered.",
+      "focused_compatibility_tests": "win32_sdl_resource_toolbar passes (1/1). win32_sdl_leaks_toolbar timed out because macOS leaks could not get a task port for the launched process.",
       "desktop_units": "18/18 pass.",
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
       "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs.",
-      "baseline": "Unchanged. Snapshot serialization and scanner selection behavior remain unchanged. Required snapshot arguments use const references and reject no representable state that was valid before.",
+      "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
       "platform": "Current-source Windows and Linux qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -28464,8 +28465,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "6a7d2ec49b138782a69027d087f7cd7efe72f4d9",
-  "latest_batch_status": "Source committed as 6a7d2ec4. Strict macOS SDL Debug build, scanner startup test, desktop units, native regression and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+  "latest_batch_status": "Source committed as b022c4d4. Strict macOS SDL Debug build, desktop units, native regression and tutorial pass; one focused leak test could not get a macOS task port. Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28482,7 +28483,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "6a7d2ec4",
+    "source_head": "b022c4d4",
     "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. This raw count is not a replacement count: four measure C-string API/input boundaries and seven measure text already held in owned or fixed storage; those seven are candidates for carried lengths, subject to confirming that extra state is worthwhile.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28555,16 +28556,17 @@
     "dialog_template_parser_results": "Dialog-template parser helpers return optional typed WORD, DWORD, rectangle and field results rather than bool plus output references; field strings remain owned.",
     "font_size_service": "FCompatFontSizeUtf8 returns std::optional<SIZE>; text sizing keeps the Win32 SIZE pointer only at GetTextExtentPoint32A.",
     "font_metrics_service": "FCompatFontMetrics returns std::optional<TEXTMETRICA>; only GetTextMetricsA copies the value into the Win32 output pointer.",
-    "scanner_snapshot_result": "RgCaptureScanner returns std::optional<SCANSNAPSHOT>; FWriteScannerSnapshot and FSelectScannerObject take required const references. FreeScannerSnapshot and nullable snapshot handoffs are removed."
+    "scanner_snapshot_result": "RgCaptureScanner returns std::optional<SCANSNAPSHOT>; FWriteScannerSnapshot and FSelectScannerObject take required const references. FreeScannerSnapshot and nullable snapshot handoffs are removed.",
+    "toolbar_owned_collections": "COMPATTOOLBAR button/bitmap arrays use std::vector and labels use NATIVEOWNER<char, SDL_free>; count fields derive from collection sizes."
   },
-  "latest_change": "L06 scanner consumers use required snapshot references",
+  "latest_change": "L05 toolbar collections and label ownership",
   "latest_batch_verification": {
-    "batch": "L06 scanner consumers use required snapshot references",
-    "source_commit": "6a7d2ec49b138782a69027d087f7cd7efe72f4d9",
-    "macos_debug_build": "make compile passes with strict warnings.",
-    "focused_compatibility_tests": "win32_client_startup_dummy passes (1/1); scanner selection and snapshot writing paths remain covered.",
+    "batch": "L05 toolbar collections and label ownership",
+    "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
+    "macos_sdl_debug_build": "make compile passes with strict warnings.",
+    "focused_compatibility_tests": "win32_sdl_resource_toolbar passes (1/1). win32_sdl_leaks_toolbar timed out because macOS leaks could not get a task port for the launched process.",
     "desktop_unit_tests": "18/18 pass.",
-    "host_unit_tests": "Not required; this batch changes only scanner UI interfaces, tests and usage documentation.",
+    "host_unit_tests": "Not required; this is a UI compatibility change.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
       "matches": 519,
@@ -28573,7 +28575,8 @@
       "skipped": 0
     },
     "host_regression": "Not required; no core/game code changed.",
-    "baseline": "Unchanged. Snapshot serialization and scanner selection behavior remain unchanged. Required snapshot arguments use const references and reject no representable state that was valid before.",
+    "baseline": "Unchanged; toolbar buttons, labels, bitmaps and drawing behavior remain unchanged.",
+    "api_audit": "No C translation units, application API macros, or std::strlen occurrences changed.",
     "platform": "Current-source Windows and Linux qualification remains pending.",
     "diff_check": "Pass."
   }

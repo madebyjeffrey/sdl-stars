@@ -1,5 +1,5 @@
 {
-  "source_parent": "ea947f5c",
+  "source_parent": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd",
   "scope": [
     "src",
     "compat/win32/include",
@@ -545,28 +545,28 @@
       "path": "compat/win32/src/toolbar.cpp",
       "scope": "~COMPATTOOLBAR",
       "owner": "shared COMPATTOOLBAR owner",
-      "reason": "The shared control owner retains byte-swappable button/bitmap records and each copied SDL label; logical deletion and destruction release their real allocations and owned GDI handles."
+      "reason": "Button and bitmap records use vectors; each UTF-8 label is an SDL-aware unique owner. Destruction releases labels automatically and deletes each owned GDI bitmap."
     },
     {
       "id": "78",
       "path": "compat/win32/src/toolbar.cpp",
       "scope": "AddButtons",
-      "owner": "buttonsOwner -> shared toolbar collection",
-      "reason": "The temporary calloc array owns new button records and their SDL-allocated UTF-8 labels. Each label copy retains its exact byte count; failure releases staged labels, while old records and labels transfer with the byte copies before atomic publication."
+      "owner": "local staged vector -> shared toolbar collection",
+      "reason": "AddButtons stages vector-owned button records and SDL-aware label owners. Failed parsing/allocation discards staged values; successful insertion transfers owners without moving label bytes."
     },
     {
       "id": "79",
       "path": "compat/win32/src/toolbar.cpp",
       "scope": "AddBitmap",
-      "owner": "copyOwner -> shared toolbar bitmap collection",
-      "reason": "Keep realloc inside the native bitmap registry. New callback-safe scopes restore selected objects and close both DCs/source bitmap before publishing the copied bitmap; failure cannot strand it."
+      "owner": "copyOwner -> vector-owned toolbar bitmap collection",
+      "reason": "AddBitmap closes/restores selected objects and DCs before publishing the copied bitmap to the vector; failed vector growth leaves copyOwner responsible for cleanup."
     },
     {
       "id": "80",
       "path": "compat/win32/src/toolbar.cpp",
       "scope": "CompatToolbarProc",
       "owner": "shared COMPATTOOLBAR owner",
-      "reason": "The shared control owner retains byte-swappable button/bitmap records and each copied SDL label; logical deletion and destruction release their real allocations and owned GDI handles."
+      "reason": "Button and bitmap records use vectors; each UTF-8 label is an SDL-aware unique owner. Destruction releases labels automatically and deletes each owned GDI bitmap."
     },
     {
       "id": "81",
@@ -2672,6 +2672,7 @@
       "normalized_call": "std::malloc(static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)+1)",
       "compiler_context": true,
       "disposition": "L05 packaged guide body migrated to std::string in ea947f5c"
-    }
+    },
+    {"batch": "L05 toolbar collection ownership", "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd", "retired_heap_sites": 9, "change": "Toolbar button/bitmap collection allocations and label frees are replaced by vectors and SDL-aware unique owners.", "verification": "make compile; desktop units 18/18; native regression 519 matches, 25 warnings, zero differences/errors; tutorial smoke 1/1; toolbar resource test 1/1. Leak instrumentation could not obtain a macOS task port.", "baseline": "Unchanged."}
   ]
 }
