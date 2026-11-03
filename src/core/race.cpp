@@ -495,9 +495,9 @@ std::uint16_t IRaceChecksum(PLAYER *pplr) {
        stale bytes, which aren't saved, so the race file failed its
        checksum when loaded. */
     plr = *pplr;
-    cch = strnlen(plr.szName, sizeof(plr.szName));
+    cch = static_cast<std::size_t>(std::ranges::find(plr.szName, '\0') - std::begin(plr.szName));
     std::fill_n(plr.szName + cch, sizeof(plr.szName) - cch, 0);
-    cch = strnlen(plr.szNames, sizeof(plr.szNames));
+    cch = static_cast<std::size_t>(std::ranges::find(plr.szNames, '\0') - std::begin(plr.szNames));
     std::fill_n(plr.szNames + cch, sizeof(plr.szNames) - cch, 0);
     FEncodePlayer(plr, rgb);
     NATIVEBYTEREADER input(rgb);
