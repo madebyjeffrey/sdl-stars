@@ -1185,16 +1185,17 @@ void AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, G
     return;
 }
 
-std::int16_t IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, std::int16_t *pishdefSBLatest, std::int16_t pct) {
+AIENSURERESULT IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, bool fEnsureStarbase, std::int16_t pct) {
     std::int16_t iSmallest;
     std::int16_t i;
     std::int16_t pctTech;
     std::int16_t ilvl;
     std::size_t iResOrder;
+    std::optional<std::int16_t> ishdefSBLatest;
 
-    if (pishdefSBLatest) {
+    if (fEnsureStarbase) {
         EnsureAiStarbaseDesigns(app);
-        *pishdefSBLatest = IshdefAiSBLatest(app);
+        ishdefSBLatest = IshdefAiSBLatest(app);
         ValidateStarbaseHistory(app);
     }
     app.state.rgplr[app.state.idPlayer].pctResearch = pct;
@@ -1214,7 +1215,7 @@ std::int16_t IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrd
             }
             pctTech = app.state.rgplr[app.state.idPlayer].pctResearch + app.state.rgplr[app.state.idPlayer].iTechCur * 256;
             WriteMemResearch(app, pctTech);
-            return static_cast<std::int16_t>(iResOrder);
+            return {static_cast<std::int16_t>(iResOrder), ishdefSBLatest};
         }
     }
     iSmallest = 0;
@@ -1231,7 +1232,7 @@ std::int16_t IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrd
         pctTech = app.state.rgplr[app.state.idPlayer].pctResearch + app.state.rgplr[app.state.idPlayer].iTechCur * 256;
         WriteMemResearch(app, pctTech);
     }
-    return 926;
+    return {926, ishdefSBLatest};
 }
 
 void KeepFleetsMoving(APPSESSION &app) {

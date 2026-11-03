@@ -75,7 +75,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
 
     iAiLvl = app.state.rgplr[app.state.idPlayer].lvlAi;
     iPlanet = app.state.rgplr[app.state.idPlayer].idPlanetHome;
-    iroCur = IroEnsureAi(app, std::span<const std::uint8_t>{vrgAiMacintiResOrder, static_cast<std::size_t>(cAiMacintiResOrder)}, nullptr, 15);
+    iroCur = IroEnsureAi(app, std::span<const std::uint8_t>{vrgAiMacintiResOrder, static_cast<std::size_t>(cAiMacintiResOrder)}, false, 15).iro;
     if (app.state.game.turn < 40 || (!app.state.rgshdef[7].fFree && app.state.rgshdef[7].hul.ihuldef == ihuldefColonyShip)) {
         fUsingTempColonizer = 1;
         if (FLookupPartX(app, &part, hstEngine, iengineGalaxyScoop) == mdPartAvailAvailable && app.state.rgshdef[7].cExist == 0) {

@@ -3,6 +3,12 @@
 
 #include "common.h"
 #include <cstdint>
+#include <optional>
+
+struct AIENSURERESULT {
+    std::int16_t iro;
+    std::optional<std::int16_t> ishdefSBLatest;
+};
 
 extern std::int32_t vrgAiPacketDist[2];
 extern std::uint8_t vrgSBAip[cvrgSBAip];
@@ -30,7 +36,7 @@ std::int16_t  FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int1
                                   std::int16_t *pidBest);
 std::int16_t  FMoveAiFleet(APPSESSION &app, FLEET *lpfl, ORDER *pord, std::int16_t fAppend);
 void     AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, GrobjClass grobj, AddItemMode mdAddItem);
-std::int16_t  IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, std::int16_t *pishdefSBLatest, std::int16_t pct);
+AIENSURERESULT IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, bool fEnsureStarbase, std::int16_t pct);
 void     KeepFleetsMoving(APPSESSION &app);
 std::int16_t  FShouldWeBuildColonizers(APPSESSION &app, std::int16_t *pcCol);
 std::int16_t  FIsAiAttack(APPSESSION &app, FLEET *lpfl);
