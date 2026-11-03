@@ -7,13 +7,13 @@
 #include <limits>
 #include <string_view>
 
-struct COMPATLISTITEM { char *psz; std::size_t cch; LPARAM lData; BOOL fSelected; };
+struct COMPATLISTITEM { char *psz; std::size_t cch; LPARAM lData; bool fSelected; };
 struct COMPATLIST {
     COMPATLISTITEM *rgitem;
     int cItem, cAlloc, iSel, iCaret, iTop, cyItem, iAnchor, iDrag;
     DWORD grfDrag;
     int cxExtent, xOffset;
-    BOOL fScrollSync, fScrollV, fScrollH;
+    bool fScrollSync, fScrollV, fScrollH;
     BYTE *rgSelectedDrag;
     int cSelectedDrag;
     UINT_PTR idDragTimer;
@@ -52,7 +52,7 @@ static void ClampList(HWND hwnd) {
     lp->iTop = (((StarsMax(0, lp->iTop)) < ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd))))) ? (StarsMax(0, lp->iTop)) : ((((0) > (lp->cItem - CListPage(hwnd))) ? (0) : (lp->cItem - CListPage(hwnd)))));
     lp->iCaret = (((StarsMax(0, lp->iCaret)) < (StarsMax(0, lp->cItem - 1))) ? (StarsMax(0, lp->iCaret)) : (StarsMax(0, lp->cItem - 1)));
     if (!hwnd->lpcombo && !lp->fScrollSync && !hwnd->fDestroying) {
-        StarsRestore<BOOL> restoreSync(lp->fScrollSync);
+        StarsRestore<bool> restoreSync(lp->fScrollSync);
         lp->fScrollSync = 1;
         if (hwnd->dwStyle & win32::LBS_DISABLENOSCROLL) si.fMask |= win32::SIF_DISABLENOSCROLL;
         si.nMax = StarsMax(0, lp->cItem - 1); si.nPage = static_cast<UINT>(CListPage(hwnd)); si.nPos = lp->iTop;
@@ -84,7 +84,7 @@ static void DeleteNotice(HWND hwnd, UINT i, LPARAM lData) {
     ds.itemID = i; ds.hwndItem = hwnd; ds.itemData = static_cast<ULONG_PTR>(lData);
     win32::SendMessageA(hwnd->hwndParent, win32::WM_DELETEITEM, static_cast<WPARAM>(hwnd->idChild), reinterpret_cast<LPARAM>(&ds));
 }
-static void EndListDrag(HWND hwnd, BOOL fRelease);
+static void EndListDrag(HWND hwnd, bool fRelease);
 static void ResetList(HWND hwnd) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
@@ -97,7 +97,7 @@ static void ResetList(HWND hwnd) {
     std::unique_ptr<COMPATLISTITEM[], decltype(freeItems)> rgKeep(rg, freeItems);
     lp->rgitem = nullptr; lp->cItem = lp->cAlloc = lp->iTop = lp->iCaret = 0; lp->iSel = -1; lp->nMutation++;
     lp->iAnchor = -1; lp->szSearch[0] = 0; lp->cchSearch = 0;
-    EndListDrag(hwnd, 1);
+    EndListDrag(hwnd, true);
     win32::InvalidateRect(hwnd, nullptr, 1);
     for (i = 0; i < c; i++) { SDL_free(rg[i].psz); rg[i].psz = nullptr; rg[i].cch = 0; DeleteNotice(hwnd, static_cast<UINT>(i), rg[i].lData); }
     rgKeep.reset();
@@ -132,7 +132,7 @@ static LRESULT AddList(HWND hwnd, int i, LPCSTR psz) {
     return i;
 }
 static void DrawListSelection(HWND hwnd, int iOld);
-static void UserSelectList(HWND hwnd, int i, BOOL fToggle, BOOL fNotify) {
+static void UserSelectList(HWND hwnd, int i, bool fToggle, bool fNotify) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     int j, iOld = lp->iSel;
@@ -147,7 +147,7 @@ static void UserSelectList(HWND hwnd, int i, BOOL fToggle, BOOL fNotify) {
     if (win32::IsWindow(hwnd)) DrawListSelection(hwnd, iOld);
     if (fNotify && win32::IsWindow(hwnd)) NotifyList(hwnd, win32::LBN_SELCHANGE);
 }
-static void ExtendedSelectList(HWND hwnd, int i, BOOL fCtrl, BOOL fShift, BOOL fNotify) {
+static void ExtendedSelectList(HWND hwnd, int i, bool fCtrl, bool fShift, bool fNotify) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     int j, iFirst, iLast;
@@ -171,7 +171,7 @@ static void ExtendedSelectList(HWND hwnd, int i, BOOL fCtrl, BOOL fShift, BOOL f
     if (fNotify) NotifyList(hwnd, win32::LBN_SELCHANGE);
 }
 
-static void EndListDrag(HWND hwnd, BOOL fRelease) {
+static void EndListDrag(HWND hwnd, bool fRelease) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     hwnd->fTracking = 0;
@@ -198,15 +198,15 @@ static void DragList(HWND hwnd, LPARAM l) {
         for (j = 0; j < lp->cItem; j++)
             lp->rgitem[j].fSelected = lp->rgSelectedDrag[j] ^ (j >= iFirst && j <= iLast);
         lp->iCaret = i; RevealList(hwnd, i);
-    } else if (hwnd->dwStyle & win32::LBS_EXTENDEDSEL) ExtendedSelectList(hwnd, i, (lp->grfDrag & win32::MK_CONTROL) != 0, 1, 0);
-    else UserSelectList(hwnd, i, FMulti(hwnd), 0);
+    } else if (hwnd->dwStyle & win32::LBS_EXTENDEDSEL) ExtendedSelectList(hwnd, i, (lp->grfDrag & win32::MK_CONTROL) != 0, true, false);
+    else UserSelectList(hwnd, i, FMulti(hwnd), false);
 }
-static bool FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, BOOL fFocus, const RECT *lprcItem) {
+static bool FDrawOwnerList(HWND hwnd, HDC hdc, int i, UINT action, bool fFocus, const RECT *lprcItem) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     DRAWITEMSTRUCT ds = {};
     RECT rc;
-    BOOL fItem = i >= 0 && i < lp->cItem;
+    bool fItem = i >= 0 && i < lp->cItem;
     ds.CtlType = win32::ODT_LISTBOX; ds.CtlID = static_cast<UINT>(hwnd->idChild);
     ds.itemID = static_cast<UINT>(i); ds.itemAction = action;
     ds.itemState = (fItem && (FMulti(hwnd) ? lp->rgitem[i].fSelected : i == lp->iSel) ? win32::ODS_SELECTED : 0) |
@@ -245,7 +245,7 @@ static void DrawListSelection(HWND hwnd, int iOld) {
     }
     win32::ReleaseDC(hwnd, hdc);
 }
-static void DrawListFocus(HWND hwnd, BOOL fFocus) {
+static void DrawListFocus(HWND hwnd, bool fFocus) {
     auto lplistKeep = hwnd->lplist;
     COMPATLIST *lp = lplistKeep.get();
     HDC hdc;
@@ -272,7 +272,7 @@ static void PaintList(HWND hwnd) {
     RECT rc, rcItem;
     int i, y;
     unsigned n;
-    BOOL fSel, fFocus = win32::GetFocus() == hwnd;
+    bool fSel, fFocus = win32::GetFocus() == hwnd;
     if (!hdc) return;
     win32::GetClientRect(hwnd, &rc);
     if (hwnd->hfontControl) hfontOld = static_cast<HFONT>(win32::SelectObject(hdc, hwnd->hfontControl));
@@ -286,7 +286,7 @@ static void PaintList(HWND hwnd) {
     if (lp->cItem == 0 && FOwnerList(hwnd) && fFocus) {
         win32::SetRect(&rcItem, 0, 0, rc.right, lp->cyItem);
         // Stars handles itemID == -1 by drawing just the empty focus indicator.
-        if (!FDrawOwnerList(hwnd, hdc, -1, win32::ODA_FOCUS, 1, &rcItem)) {
+        if (!FDrawOwnerList(hwnd, hdc, -1, win32::ODA_FOCUS, true, &rcItem)) {
             if (hbrOwn) win32::DeleteObject(hbrOwn);
             return;
         }
@@ -485,7 +485,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
                 for (j = 0; j < lp->cItem; j++) lp->rgSelectedDrag[j] = static_cast<BYTE>(lp->rgitem[j].fSelected);
             }
         }
-        ExtendedSelectList(hwnd, i, (w & win32::MK_CONTROL) != 0, (w & win32::MK_SHIFT) != 0, 0);
+        ExtendedSelectList(hwnd, i, (w & win32::MK_CONTROL) != 0, (w & win32::MK_SHIFT) != 0, false);
         if (!win32::IsWindow(hwnd)) return 0;
         if (msg == win32::WM_LBUTTONDBLCLK) NotifyList(hwnd, win32::LBN_DBLCLK);
         else {
@@ -503,7 +503,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (w == lp->idDragTimer && lpwin->fTracking && win32::GetCapture() == hwnd) DragList(hwnd, lp->lDragPoint);
         return 0;
     case win32::WM_LBUTTONUP:
-        c = lpwin->fTracking; EndListDrag(hwnd, 1);
+        c = lpwin->fTracking; EndListDrag(hwnd, true);
         if (c != 0 && win32::IsWindow(hwnd)) NotifyList(hwnd, win32::LBN_SELCHANGE);
         return 0;
     case win32::WM_CAPTURECHANGED: case win32::WM_CANCELMODE:
@@ -524,9 +524,9 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         else return 0;
         i = (((StarsMax(0, i)) < (lp->cItem - 1)) ? (StarsMax(0, i)) : (lp->cItem - 1));
         if ((lpwin->dwStyle & win32::LBS_EXTENDEDSEL) && !(win32::GetKeyState(win32::VK_CONTROL) & 0x8000))
-            ExtendedSelectList(hwnd, i, 0, (win32::GetKeyState(win32::VK_SHIFT) & 0x8000) != 0, 1);
+            ExtendedSelectList(hwnd, i, false, (win32::GetKeyState(win32::VK_SHIFT) & 0x8000) != 0, true);
         else if (FMulti(hwnd)) { lp->iCaret = StarsMax(0, i); RevealList(hwnd, StarsMax(0, i)); }
-        else UserSelectList(hwnd, i, 0, 1);
+        else UserSelectList(hwnd, i, false, true);
         return 0;
     case win32::WM_CHAR:
         if (w < 32 || w > 255 || lp->cItem == 0) return 0;
@@ -535,7 +535,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
             (c == 1 && static_cast<BYTE>(lp->szSearch[0]) == static_cast<BYTE>(w))) c = 0;
         lp->szSearch[c] = static_cast<char>(w); lp->szSearch[c + 1] = 0; lp->cchSearch = c + 1; lp->msSearch = CompatTimeIO().pfnGetTicks();
         i = static_cast<int>(CompatListProc(hwnd, win32::LB_FINDSTRING, c != 0 ? lp->iCaret - 1 : lp->iCaret, reinterpret_cast<LPARAM>(lp->szSearch)));
-        if (i != win32::LB_ERR) ExtendedSelectList(hwnd, i, 0, 0, 1);
+        if (i != win32::LB_ERR) ExtendedSelectList(hwnd, i, false, false, true);
         return 0;
     case win32::WM_HSCROLL:
         win32::GetClientRect(hwnd, &rc);
