@@ -2701,7 +2701,8 @@
         "profile-save-path-view-and-bool-result",
         "profile-load-path-view-and-bool-result",
         "typed-native-dib-decoder-interface",
-        "compatibility-status-apis-use-bool"
+        "compatibility-status-apis-use-bool",
+        "private-window-state-bools"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -4342,6 +4343,12 @@
         "ui_wrapper_BOOL_results_converted_in_batch": 1,
         "boolean_parameters_converted_in_batch": 1,
         "source_commit": "3caf76a9"
+      },
+      "private_window_state_bools": {
+        "status": "complete; locally verified",
+        "source_commit": "e7d7dd30",
+        "scope": "Private state, local flags and static/internal helper parameters in compat/win32/src/window.cpp; CompatWindowState declaration and callers.",
+        "preserved": "Win32 API entry points and COMPATWINDOW storage fields retain BOOL."
       }
     },
     {
@@ -28156,6 +28163,31 @@
       "api_audit": "Converted nine application-owned StarsCompat status APIs, the FSetNativeWindowTitle wrapper, and the alert-sounds flag from BOOL to bool. These are private C++ helper contracts; Win32 SDK callback/API signatures and compatibility record fields are unchanged.",
       "platform": "Current-source Windows and Linux qualification remains open.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Use bool for private window state",
+      "parent": "a96b4251",
+      "source_commit": "e7d7dd30",
+      "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; both regressions match all 519 checkpoints with zero differences/errors.",
+      "api_audit": "Private compatibility window state, local flags and static helper boolean parameters now use bool, including the internal CompatWindowState contract. Modeled Win32 API entry points and COMPATWINDOW storage fields keep BOOL.",
+      "platform": "Current-source Windows and Linux qualification remains open.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -29633,14 +29665,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "3caf76a9",
-  "latest_batch_status": "Source commit 3caf76a9 verified locally: macOS SDL Debug build, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. L05/L06 audits and current-source Windows/Linux qualification remain open.",
+  "latest_source_commit": "e7d7dd30",
+  "latest_batch_status": "Source commit e7d7dd30 verified locally: macOS SDL Debug build, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. L05/L06 audits and current-source Windows/Linux qualification remain open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "3caf76a9",
+      "source_commit": "e7d7dd30",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -29653,7 +29685,7 @@
         "L06 remaining-native-file-path-results"
       ],
       "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser coverage.",
-      "interpretation": "Four broad code audit substeps remain open; they are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private compatibility BOOL API results, scanner helper BOOL results, or application StarsCompat BOOL status results. Remaining L05 text/ownership and L06 service/path audits still need line-by-line closure; current-source Windows/Linux qualification and chooser coverage are also pending.",
+      "interpretation": "Four broad code audit substeps remain open; they are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private compatibility BOOL API results, scanner helper BOOL results, application StarsCompat BOOL status results, or private window-state BOOL helper parameters. Remaining L05 text/ownership and L06 service/path audits still need line-by-line closure; current-source Windows/Linux qualification and chooser coverage are also pending.",
       "production_cost_output_api": "GetProductionCosts uses std::span<std::int32_t, 4>; callers no longer reinterpret signed int32 arrays as uint32_t output pointers. Fixed extent, storage widths, and legacy 32-bit wrap behavior are preserved.",
       "posix_getcwd_and_mkdir_compatibility_shims": 0,
       "redundant_ai_recipe_byte_pointer_casts": 0,
@@ -29676,7 +29708,8 @@
       "stars_compat_BOOL_status_results_remaining": 0,
       "stars_compat_BOOL_status_results_converted_in_batch": 9,
       "app_ui_BOOL_status_results_remaining": 0,
-      "app_ui_BOOL_status_results_converted_in_batch": 1
+      "app_ui_BOOL_status_results_converted_in_batch": 1,
+      "private_window_state_BOOL_helpers_remaining": 0
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -29690,7 +29723,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "3caf76a9",
+    "source_head": "e7d7dd30",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -29827,11 +29860,11 @@
       "comparison": "Exact length plus SDL_strncasecmp over the basename view."
     }
   },
-  "latest_change": "Use bool for compatibility status APIs",
+  "latest_change": "Use bool for private window state",
   "latest_batch_verification": {
-    "batch": "Use bool for compatibility status APIs",
-    "parent": "1c2011aa",
-    "source_commit": "3caf76a9",
+    "batch": "Use bool for private window state",
+    "parent": "a96b4251",
+    "source_commit": "e7d7dd30",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -29849,14 +29882,14 @@
       "skipped": 0
     },
     "baseline": "Unchanged; both regressions match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Converted nine application-owned StarsCompat status APIs, the FSetNativeWindowTitle wrapper, and the alert-sounds flag from BOOL to bool. These are private C++ helper contracts; Win32 SDK callback/API signatures and compatibility record fields are unchanged.",
+    "api_audit": "Private compatibility window state, local flags and static helper boolean parameters now use bool, including the internal CompatWindowState contract. Modeled Win32 API entry points and COMPATWINDOW storage fields keep BOOL.",
     "platform": "Current-source Windows and Linux qualification remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use bool for compatibility status APIs",
-    "parent": "1c2011aa",
-    "source_commit": "3caf76a9",
+    "batch": "Use bool for private window state",
+    "parent": "a96b4251",
+    "source_commit": "e7d7dd30",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -29874,15 +29907,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; both regressions match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Converted nine application-owned StarsCompat status APIs, the FSetNativeWindowTitle wrapper, and the alert-sounds flag from BOOL to bool. These are private C++ helper contracts; Win32 SDK callback/API signatures and compatibility record fields are unchanged.",
+    "api_audit": "Private compatibility window state, local flags and static helper boolean parameters now use bool, including the internal CompatWindowState contract. Modeled Win32 API entry points and COMPATWINDOW storage fields keep BOOL.",
     "platform": "Current-source Windows and Linux qualification remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit 3caf76a9 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit e7d7dd30 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish bounded text destination review and post-migration scratch/borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path results.",
       "L08: current-source Windows/Linux qualification and full final inventory review."
     ],
-    "next": "Continue auditing remaining application-owned text, ownership, buffer and native file/path interfaces, then qualify current-source Windows/Linux."
+    "next": "Continue auditing the remaining L05 text/ownership and L06 buffer/path surfaces, then qualify current-source Windows/Linux."
   }
 }
