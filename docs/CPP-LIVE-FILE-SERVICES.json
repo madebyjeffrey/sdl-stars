@@ -372,7 +372,7 @@
     }
   ],
   "pending": {
-    "byte_io": "Native/token byte IO, record streams, bounded memory sources, WriteRt/RECORDIO, typed element streams and the sized text writer are complete. Other buffer interfaces and batch-input audits remain.",
+    "byte_io": "Native/token byte IO, record streams, bounded memory sources, WriteRt/RECORDIO, typed element streams and the sized text writer are complete. CbNativeFile now returns an optional full-width size. Other buffer interfaces and batch-input audits remain.",
     "seek": "Scoped seek origins complete; existing position-result widths and native/SDK error mappings are retained.",
     "stream_open": "Scoped modes, returned metadata and owned/bounded path, line, directory and temporary results are complete. Other interfaces and file-selection migration remain open.",
     "selection": "Milestone D remains open; no picker backend or user workflow was changed by this batch.",
@@ -5825,5 +5825,12 @@
       "remaining": "Other buffer/service interfaces, Milestone D, remaining L05 copies/const text/scratch results and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l06r/"
     }
+  },
+  "native_file_size_result": {
+    "status": "complete; locally verified",
+    "interface": "CbNativeFile returns std::optional<std::int64_t>; a valid zero-byte file returns 0, and invalid handles or native size failures return nullopt while retaining errno.",
+    "callers": "Win32 GetFileSize reads both DWORD halves from the present value; CbNativeSizeLegacy forwards the optional result; owned host/unit/compatibility callers are updated.",
+    "verification": "make compile, desktop 18/18, host 29/29, native/host regressions 519 matches with zero differences, tutorial smoke 1/1.",
+    "remaining": "Current-source Windows/Linux qualification and other remaining native file/path result interfaces remain open."
   }
 }
