@@ -960,23 +960,24 @@ int win32::SelectClipRgn(HDC hdc, HRGN hrgn) {
     return hrgn ? IRegionKind(crc) : win32::SIMPLEREGION;
 }
 
-static void MergeRegion(RECT *rgrc, std::size_t *lpcrc) {
-    std::size_t i, j;
+static std::size_t CrcMergeRegion(std::span<RECT> rgrc) {
+    std::size_t crc = rgrc.size(), i, j;
     RECT *a, *b;
     BOOL fAgain = 1;
 
     while (fAgain) {
         fAgain = 0;
-        for (i = 0; i < *lpcrc && !fAgain; i++) for (j = i + 1; j < *lpcrc; j++) {
+        for (i = 0; i < crc && !fAgain; i++) for (j = i + 1; j < crc; j++) {
             a = &rgrc[i]; b = &rgrc[j];
             if (a->left == b->left && a->right == b->right && (a->bottom == b->top || b->bottom == a->top)) {
                 a->top = StarsMin(a->top, b->top); a->bottom = StarsMax(a->bottom, b->bottom);
             } else if (a->top == b->top && a->bottom == b->bottom && (a->right == b->left || b->right == a->left)) {
                 a->left = StarsMin(a->left, b->left); a->right = StarsMax(a->right, b->right);
             } else continue;
-            rgrc[j] = rgrc[--*lpcrc]; fAgain = 1; break;
+            rgrc[j] = rgrc[--crc]; fAgain = 1; break;
         }
     }
+    return crc;
 }
 
 static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fExclude) {
@@ -1010,7 +1011,7 @@ static int IClipRect(HDC hdc, int left, int top, int right, int bottom, BOOL fEx
             if (rcHit.right < rc.right) rgrc[crc++] = RECT{rcHit.right, rcHit.top, rc.right, rcHit.bottom};
         }
     }
-    MergeRegion(rgrc, &crc);
+    crc = CrcMergeRegion(std::span{rgrc, crc});
     lpdc->rgrcRegion = std::move(rgrcOwner); lpdc->crcRegion = crc; lpdc->fRegion = 1;
     return IRegionKind(crc);
 }
