@@ -294,7 +294,8 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
             app.state.lpplProdGlob = LpplReAlloc(app, app.state.lpplProdGlob, iMac + 4);
         }
         if (iDst != iMac) {
-            std::memmove(&app.state.lpplProdGlob->rgprod()[iDst + 1], &app.state.lpplProdGlob->rgprod()[iDst], (iMac - iDst) * 4);
+            std::move_backward(app.state.lpplProdGlob->rgprod() + iDst, app.state.lpplProdGlob->rgprod() + iMac,
+                               app.state.lpplProdGlob->rgprod() + iMac + 1);
         }
         app.state.lpplProdGlob->rgprod()[iDst] = prod;
         app.state.lpplProdGlob->iprodMac++;
@@ -337,7 +338,8 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         app.state.lpplProdGlob->rgprod()[lSel].cItem -= c;
         if (app.state.lpplProdGlob->rgprod()[lSel].cItem == 0) {
             if (static_cast<std::int32_t>((lSel + 1)) < iMac) {
-                std::memmove(&app.state.lpplProdGlob->rgprod()[lSel], &app.state.lpplProdGlob->rgprod()[lSel + 1], (iMac - LOWORD(lSel) - 1) * sizeof(PROD));
+                std::move(app.state.lpplProdGlob->rgprod() + lSel + 1, app.state.lpplProdGlob->rgprod() + iMac,
+                          app.state.lpplProdGlob->rgprod() + lSel);
             } else {
                 lSel--;
             }
