@@ -31,7 +31,7 @@ std::int16_t FReplaceConflictingLibraryTurn(APPSESSION &app, const LIBRARYPATHS 
 std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &paths, HWND hwnd, const char *pszName, const char *pszSource, int iplr, std::int32_t lidGame,
                                      std::uint16_t turn);
 std::int16_t FInspectImportFile(std::string_view pszFile, DtFileType dt, int iplr, std::int32_t &lidGame, std::uint16_t *pturn, std::uint16_t *pwGen, std::int16_t &fMulti);
-std::int16_t FValidManagedLibraryGame(APPSESSION &app, const char *pszName, std::span<char> pszDirectory,
+std::int16_t FValidManagedLibraryGame(APPSESSION &app, std::string_view pszName, std::span<char> pszDirectory,
                                       int &iplr, long long &lPlayed, std::span<char> pszExchangeName);
 std::int16_t FCreateLibraryGameStagePath(std::span<char> pszStage);
 std::int16_t FCreateLibraryGameHoldPath(std::span<char> pszHold);

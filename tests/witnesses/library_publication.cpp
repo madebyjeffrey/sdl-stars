@@ -163,9 +163,9 @@ static int TestFNativeDirectoryExists(std::string_view path) {
     event("probe", 3, p, ok, 0);
     return ok;
 }
-static int TestFValidManagedLibraryGame(APPSESSION &, const char *name, std::span<char> dir, int &remember, long long &played,
+static int TestFValidManagedLibraryGame(APPSESSION &, std::string_view name, std::span<char> dir, int &remember, long long &played,
                                          std::span<char> exchange) {
-    assert(!strcmp(name, "Game"));
+    assert(name == "Game");
     int p = role(dir.data()), ok = decision() && objects[p] >= 100;
     remember = 4;
     played = 321;
