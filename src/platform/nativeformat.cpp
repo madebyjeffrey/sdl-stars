@@ -82,7 +82,7 @@ int CchConvert(std::span<char> rgch, std::string szFormat, const NATIVEFORMATARG
         default: return InvalidFormat();
         }
     }
-    if (std::strchr("fFeEgGaA", chType)) {
+    if (std::string_view{"fFeEgGaA"}.find(chType) != std::string_view::npos) {
         if (mdLength == LENGTH::L) return CchFloat<long double>(rgch, szFormat.c_str(), arg);
         if (mdLength == LENGTH::normal || mdLength == LENGTH::l) return CchFloat<double>(rgch, szFormat.c_str(), arg);
         return InvalidFormat();
@@ -153,7 +153,7 @@ int CchFormat(std::span<char> rgch, std::string_view szFormat, std::span<const N
             continue;
         }
         std::string szSpec = "%";
-        while (i < szFormat.size() && szFormat[i] != 0 && std::strchr("-+ #0'", szFormat[i])) szSpec += szFormat[i++];
+        while (i < szFormat.size() && szFormat[i] != 0 && std::string_view{"-+ #0'"}.find(szFormat[i]) != std::string_view::npos) szSpec += szFormat[i++];
         if (i < szFormat.size() && szFormat[i] == '*') {
             if (iArg == rgArgs.size() || !FInteger(rgArgs[iArg++], dx)) return InvalidFormat();
             // Use a signed 64-bit magnitude so INT_MIN never overflows here.

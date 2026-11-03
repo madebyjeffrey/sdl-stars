@@ -138,6 +138,11 @@ static std::int16_t FRaceLibraryNameAvailable(APPSESSION &app, std::string_view 
     return FLibraryNameAvailable(app, szRaceLibraryRoot, pszName);
 }
 
+static bool FInvalidPortableFilenameByte(unsigned char ch) {
+    constexpr std::string_view szInvalid = "<>:\"/\\|?*";
+    return szInvalid.find(static_cast<char>(ch)) != std::string_view::npos;
+}
+
 static std::int16_t FPortableRaceFilename(APPSESSION &app, std::string_view pszName) {
     char szDevice[256];
     const std::size_t cch = pszName.size();
@@ -160,7 +165,7 @@ static std::int16_t FPortableRaceFilename(APPSESSION &app, std::string_view pszN
         if (pszName[i] < '0' || pszName[i] > '9') return 0;
     for (char ch : pszName) {
         const auto uch = static_cast<unsigned char>(ch);
-        if (uch < 32 || uch == 127 || std::strchr("<>:\"/\\|?*", uch)) return 0;
+        if (uch < 32 || uch == 127 || FInvalidPortableFilenameByte(uch)) return 0;
     }
     if (std::string_view(szRaceLibraryRoot).size() + cch + 2 >= sizeof(app.state.szBase)) return 0;
     return 1;
@@ -296,7 +301,7 @@ static std::int16_t FPortableLibraryName(APPSESSION &app, std::string_view pszNa
     if (cch == 0 || cch >= sizeof(szDevice) || pszName[0] == ' ' || pszName[0] == '.' || pszName[cch - 1] == ' ' || pszName[cch - 1] == '.') return 0;
     for (char ch : pszName) {
         const auto uch = static_cast<unsigned char>(ch);
-        if (uch < 32 || uch == 127 || std::strchr("<>:\"/\\|?*", uch)) return 0;
+        if (uch < 32 || uch == 127 || FInvalidPortableFilenameByte(uch)) return 0;
     }
     /* Windows reserves these stems even when followed by an extension. */
     for (i = 0; i < cch && pszName[i] != '.'; i++) szDevice[i] = pszName[i];
@@ -335,7 +340,7 @@ static void GetGameLibraryName(APPSESSION &app, std::string_view pszName, std::s
 
     cch = static_cast<std::size_t>(std::max(0, CchCopyUtf8(pszNameOut, pszName.substr(0, CchUtf8Prefix(pszName, static_cast<std::size_t>(cchMax))))));
     for (i = 0; i < cch; i++)
-        if (static_cast<unsigned char>(pszNameOut[i]) < 32 || pszNameOut[i] == 127 || std::strchr("<>:\"/\\|?*", pszNameOut[i])) pszNameOut[i] = '_';
+        if (static_cast<unsigned char>(pszNameOut[i]) < 32 || pszNameOut[i] == 127 || FInvalidPortableFilenameByte(static_cast<unsigned char>(pszNameOut[i]))) pszNameOut[i] = '_';
     while (cch != 0 && (pszNameOut[cch - 1] == ' ' || pszNameOut[cch - 1] == '.')) pszNameOut[--cch] = 0;
     while (cch != 0 && (pszNameOut[0] == ' ' || pszNameOut[0] == '.')) std::memmove(pszNameOut.data(), pszNameOut.data() + 1, cch--);
     // The game loader treats the last period as a file extension.
@@ -747,7 +752,7 @@ static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, std::span<c
     CchSnprintf(pszStem, "%s", pszName);
     cch = std::string_view(pszStem.data()).size();
     for (i = 0; i < cch; i++)
-        if (static_cast<unsigned char>(pszStem[i]) < 32 || pszStem[i] == 127 || std::strchr("<>:\"/\\|?*", pszStem[i])) pszStem[i] = '_';
+        if (static_cast<unsigned char>(pszStem[i]) < 32 || pszStem[i] == 127 || FInvalidPortableFilenameByte(static_cast<unsigned char>(pszStem[i]))) pszStem[i] = '_';
     while (cch != 0 && (pszStem[cch - 1] == ' ' || pszStem[cch - 1] == '.')) pszStem[--cch] = 0;
     while (cch != 0 && (pszStem[0] == ' ' || pszStem[0] == '.')) std::memmove(pszStem.data(), pszStem.data() + 1, cch--);
     if (cch == 0) {

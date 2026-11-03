@@ -27,7 +27,7 @@ std::optional<std::string> SzCompatFileUri(const char *pszPath) {
         for (; *lpch; lpch++) {
             ch = *lpch;
             if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-                (ch >= '0' && ch <= '9') || std::strchr("/-._~", ch)
+                (ch >= '0' && ch <= '9') || std::string_view{"/-._~"}.find(static_cast<char>(ch)) != std::string_view::npos
 #ifdef _WIN32
                 || (ch == ':' && lpch == reinterpret_cast<const unsigned char *>(pszAbsolute) + 1)
 #endif

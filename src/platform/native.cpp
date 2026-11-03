@@ -111,10 +111,10 @@ int CchSprintfFields(std::span<char> sz, std::string_view szFormat, std::span<co
         if (szFormat[i++] != '%') {
             continue;
         }
-        while (i < iEnd && std::strchr("-+ #0123456789.", szFormat[i])) {
+        while (i < iEnd && std::string_view{"-+ #0123456789."}.find(szFormat[i]) != std::string_view::npos) {
             szFmt.push_back(szFormat[i++]);
         }
-        if (i + 1 < iEnd && szFormat[i] == 'l' && std::strchr("diuxX", szFormat[i + 1])) {
+        if (i + 1 < iEnd && szFormat[i] == 'l' && std::string_view{"diuxX"}.find(szFormat[i + 1]) != std::string_view::npos) {
             i++;
         }
         if (i < iEnd) {
