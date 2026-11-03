@@ -52,6 +52,15 @@ struct FLEETNAMERESULT {
     std::size_t size() const noexcept { return cch; }
     std::string_view view() const noexcept { return {rgch.data(), cch}; }
 };
+struct HULLNAMERESULT {
+    std::array<char, 40> rgch{};
+    std::size_t cch = 0;
+
+    char *data() noexcept { return rgch.data(); }
+    const char *data() const noexcept { return rgch.data(); }
+    std::size_t size() const noexcept { return cch; }
+    std::string_view view() const noexcept { return {rgch.data(), cch}; }
+};
 PLAYERNAMERESULT PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr);
 std::int16_t  FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, std::int32_t *pdmgPeople, std::int32_t *pdmgPeopleMin, std::int32_t *pdmgPeopleSmart, std::int32_t *pdmgBldg, std::int32_t *ppctTerra,
                               std::int16_t *pfMulti);
@@ -92,6 +101,7 @@ std::int32_t  LCalcFuelGainFromRamScoops(APPSESSION &app, FLEET *lpfl, std::int1
 std::int32_t  CalcPlayerScore(APPSESSION &app, std::int16_t iPlr, SCORE *pscore);
 void     GetTrueHullCost(std::int16_t iPlayer, HUL *lphul, std::uint16_t *rgCost);
 std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish);
+HULLNAMERESULT DecorateHullNameResult(APPSESSION &app, std::int16_t iplr, std::int16_t ish);
 std::int16_t  FMatchTarget(APPSESSION &app, FLEET *lpflTarget, MdTarget mdTarget, std::int16_t fExact);
 void     ValidateWaypoints(APPSESSION &app);
 std::int32_t  ChgPopFromPlanet(APPSESSION &app, PLANET *lppl, std::int16_t fUpdate);

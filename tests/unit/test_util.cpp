@@ -131,8 +131,9 @@ static void test_DecorateHullName_owned(void) {
     for (auto &shdef : rgshdef) strcpy(shdef.hul.szClass, pszName);
     const auto szFirst = DecorateHullName(app, iplr, 0);
     for (int16_t ish = 0; ish < 16; ish++) {
-        const auto szName = DecorateHullName(app, iplr, ish);
+        const auto szName = DecorateHullNameResult(app, iplr, ish);
         TEST_CHECK(std::string(pszName) + " (" + rgszRoman[ish] + ")" == szName.data());
+        TEST_CHECK(szName.size() == szName.view().size());
         TEST_CHECK(FUtf8Valid(szName.data()));
     }
     TEST_CHECK(std::string(pszName) + " (I)" == szFirst.data());

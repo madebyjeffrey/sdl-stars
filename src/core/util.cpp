@@ -2051,17 +2051,18 @@ void GetTrueHullCost(std::int16_t iPlayer, HUL *lphul, std::uint16_t *rgCost) {
     return;
 }
 
-std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish) {
+HULLNAMERESULT DecorateHullNameResult(APPSESSION &app, std::int16_t iplr, std::int16_t ish) {
     std::int16_t i;
     std::int16_t c;
     std::size_t cchName;
     SHDEF  *lpshdef;
     std::int16_t iVal;
-    std::array<char, 40> psz{};
+    HULLNAMERESULT szResult{};
 
     lpshdef = app.state.rglpshdef[iplr] + ish;
     if (!lpshdef->fFree) {
-        cchName = CchCopyUtf8Prefix(std::span{psz}, lpshdef->hul.szClass);
+        cchName = CchCopyUtf8Prefix(std::span{szResult.rgch}, lpshdef->hul.szClass);
+        szResult.cch = cchName;
         if (iplr != app.state.idPlayer) {
             c = 0;
             iVal = 1;
@@ -2074,16 +2075,20 @@ std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::i
                 }
             }
             if (c != 0) {
-                psz[cchName] = ' ';
-                psz[cchName + 1] = '(';
+                szResult.rgch[cchName] = ' ';
+                szResult.rgch[cchName + 1] = '(';
                 // At most 16 designs: 31 name bytes + three punctuation
                 // bytes + at most four Roman digits fit the existing budget.
-                IntToRoman(iVal, std::span{psz}.subspan(cchName + 2));
-                CchAppendUtf8Prefix(std::span{psz}, ")");
+                szResult.cch += 2 + IntToRoman(iVal, std::span{szResult.rgch}.subspan(cchName + 2)).value_or(0);
+                szResult.cch += CchAppendUtf8Prefix(std::span{szResult.rgch}, ")");
             }
         }
     }
-    return psz;
+    return szResult;
+}
+
+std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish) {
+    return DecorateHullNameResult(app, iplr, ish).rgch;
 }
 
 std::int16_t FMatchTarget(APPSESSION &app, FLEET *lpflTarget, MdTarget mdTarget, std::int16_t fExact) {
