@@ -280,33 +280,31 @@ BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm) {
     return 1;
 }
 
-BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz, SIZE &size) {
+std::optional<SIZE> FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz) {
     std::size_t i = 0;
     std::optional<UTF8CHAR> uch;
     std::int64_t dx = 0;
     COMPATGLYPH *lp;
-    if (!lpfont) return 0;
+    if (!lpfont) return std::nullopt;
     while (i < sz.size()) {
         uch = DecodeUtf8Char(sz.substr(i));
-        if (!uch) return 0;
-        lp = LpGlyphUtf8(lpfont, uch->ch); if (!lp) return 0;
+        if (!uch) return std::nullopt;
+        lp = LpGlyphUtf8(lpfont, uch->ch); if (!lp) return std::nullopt;
         dx += lp->dx; i += uch->cch;
     }
-    if (dx > std::numeric_limits<int>::max()) return 0;
-    size = SIZE{static_cast<LONG>(dx), lpfont->tm.tmHeight};
-    return 1;
+    if (dx > std::numeric_limits<int>::max()) return std::nullopt;
+    return SIZE{static_cast<LONG>(dx), lpfont->tm.tmHeight};
 }
 
 BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
                           void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
     LOGFONTA lf;
-    SIZE size;
     COMPATGLYPH *lp, *lpRaster;
     int i = 0, j, x, y;
     std::optional<UTF8CHAR> uch;
     std::int64_t dx = 0;
 
-    if (iScale < 1 || iScale > 4 || !FCompatFontSizeUtf8(lpfont, sz, size)) return 0;
+    if (iScale < 1 || iScale > 4 || !FCompatFontSizeUtf8(lpfont, sz)) return 0;
     if (sz.empty()) return 1;
     if (iScale != 1 && lpfont->iScale != iScale) {
         lf = lpfont->lf;

@@ -1642,16 +1642,20 @@ struct COMPATTEXTDRAW {
     double cs, sn;
 };
 
-static BOOL FTextSize(HDC lpdc, std::string_view sz, SIZE &size) {
-    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), sz, size);
+static std::optional<SIZE> RgTextSize(HDC lpdc, std::string_view sz) {
+    return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), sz);
 }
 
 BOOL win32::GetTextExtentPoint32A(HDC hdc, LPCSTR psz, int cch, LPSIZE lpsize) {
     HDC lpdc = LpDC(hdc);
     std::string_view sz;
+    std::optional<SIZE> size;
     if (!lpdc || !lpsize || cch < 0 || cch > 1024 * 1024 || (!psz && cch != 0)) return 0;
     if (cch) sz = std::string_view{psz, static_cast<std::size_t>(cch)};
-    return FTextSize(lpdc, sz, *lpsize);
+    size = RgTextSize(lpdc, sz);
+    if (!size) return 0;
+    *lpsize = *size;
+    return 1;
 }
 
 BOOL win32::GetTextMetricsA(HDC hdc, LPTEXTMETRICA lptm) {
@@ -1727,13 +1731,14 @@ static void DrawFontRect(COMPATTEXTDRAW *lpdraw, std::int64_t dx, int yTop, int 
 static BOOL FDrawText(HDC lpdc, int x, int y, std::string_view sz, UINT options,
                       const RECT *lprc, std::span<const INT> rgdx) {
     COMPATTEXTDRAW draw;
-    SIZE size;
+    std::optional<SIZE> textSize;
     TEXTMETRICA tm;
     double angle;
     std::size_t i;
     std::int64_t dx;
     RECT rcDevice;
-    if (!FTextSize(lpdc, sz, size) || !FClip(lpdc, &draw.rc) ||
+    textSize = RgTextSize(lpdc, sz);
+    if (!textSize || !FClip(lpdc, &draw.rc) ||
         ((options & (win32::ETO_OPAQUE | win32::ETO_CLIPPED)) && !lprc)) return 0;
     if (lprc) { rcDevice = RcDevice(lpdc, *lprc); lprc = &rcDevice; }
     // ETO_OPAQUE uses the DC background color, independent of its selected brush.
@@ -1747,7 +1752,7 @@ static BOOL FDrawText(HDC lpdc, int x, int y, std::string_view sz, UINT options,
     draw.lpdc = lpdc; draw.x = static_cast<std::int64_t>(x) - lpdc->ptOrg.x; draw.y = static_cast<std::int64_t>(y) - lpdc->ptOrg.y;
     angle = (lpdc->lpfont->lf.lfEscapement % 3600) * (3.14159265358979323846 / 1800.0);
     draw.cs = std::cos(angle); draw.sn = std::sin(angle);
-    dx = size.cx;
+    dx = textSize->cx;
     if (!rgdx.empty()) { dx = 0; for (i = 0; i < rgdx.size(); i++) dx += rgdx[i]; }
     FCompatFontMetrics(lpdc->lpfont->lpFont.get(), &tm);
     if (lpdc->iBkMode == win32::OPAQUE) DrawFontRect(&draw, dx, 0, tm.tmHeight, lpdc->crBk);

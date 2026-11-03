@@ -50,7 +50,7 @@ extern const COMPATFONTDATA rgCompatFontData[12];
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
 void FreeCompatFont(COMPATFONT *lpfont) noexcept;
 BOOL FCompatFontMetrics(COMPATFONT *lpfont, LPTEXTMETRICA lptm);
-BOOL FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz, SIZE &size);
+std::optional<SIZE> FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz);
 BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
                           void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);
 void CompatShutdownFonts(void);
