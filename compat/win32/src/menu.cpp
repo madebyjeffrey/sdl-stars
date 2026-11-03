@@ -11,6 +11,7 @@
 struct COMPATMENUITEM {
     UINT flags;
     UINT_PTR id;
+    std::size_t cch = 0;
     NATIVEOWNER<char, SDL_free> psz;
     HMENU hsub;
 };
@@ -99,6 +100,7 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
                 if (hp == hsub || ++cDepth >= 64) return 0;
             if (!FMenuDepth(hsub, cDepth)) return 0;
         }
+        item.cch = std::string_view{psz ? psz : ""}.size();
         item.psz.reset(SDL_strdup(psz ? psz : ""));
         if (!item.psz) return 0;
     }
@@ -183,7 +185,7 @@ int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) 
     int i;
     lpitem = LpItem(hmenu, id, flags, &lp, &i);
     if (!lpitem || !lpitem->psz) { if (psz && cch > 0) psz[0] = 0; return 0; }
-    c = std::strlen(lpitem->psz.get());
+    c = lpitem->cch;
     if (!psz || cch <= 0) return static_cast<int>((((c) < (static_cast<std::size_t>(std::numeric_limits<int>::max()))) ? (c) : (static_cast<std::size_t>(std::numeric_limits<int>::max()))));
     c = CchUtf8Prefix(lpitem->psz.get(), static_cast<std::size_t>(cch) - 1);
     std::copy_n(lpitem->psz.get(), c, psz); psz[c] = 0;
@@ -460,7 +462,7 @@ static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) 
     win32::GetTextMetricsA(hdc, &tm); cyRow = StarsMax(20, tm.tmHeight + 8);
     for (i = 0; i < lp->citem; i++) {
         size.cx = 0;
-        if (lp->rgitem[i].psz && !win32::GetTextExtentPoint32A(hdc, lp->rgitem[i].psz.get(), static_cast<int>(std::strlen(lp->rgitem[i].psz.get())), &size)) break;
+        if (lp->rgitem[i].psz && !win32::GetTextExtentPoint32A(hdc, lp->rgitem[i].psz.get(), static_cast<int>(lp->rgitem[i].cch), &size)) break;
         if (size.cx > 8100 || cy > 32000 - cyRow) break;
         cx = StarsMax(cx, size.cx + 72);
         dy = lp->rgitem[i].flags & win32::MF_SEPARATOR ? 8 : cyRow;
