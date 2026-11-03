@@ -3276,20 +3276,20 @@ static std::int16_t FSelectedLibraryGameName(HWND hwnd, std::span<char> pszName)
     return cch > 0 && static_cast<std::size_t>(cch) < pszName.size();
 }
 
-static std::int16_t FChooseLibraryGameActionName(APPSESSION &app, HWND hwnd, const char *pszCurrentName, std::span<char, 256> pszNewName) {
+static std::int16_t FChooseLibraryGameActionName(APPSESSION &app, HWND hwnd, std::string_view pszCurrentName, std::span<char, 256> pszNewName) {
     int cch;
-    cch = CchSnprintf(std::span{app.lpui->szLibraryName}, "%s", pszCurrentName);
+    cch = CchCopyUtf8(std::span{app.lpui->szLibraryName}, pszCurrentName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= app.lpui->szLibraryName.size()) return 0;
     SuggestLibraryName(app, std::span{app.lpui->szLibraryName}, 0);
     if (!app.lpui->szLibraryName[0] || IdPromptLibraryName(app, hwnd, std::span{app.lpui->szLibraryName}) != 1) return 0;
-    cch = CchSnprintf(pszNewName, "%s", app.lpui->szLibraryName.data());
+    cch = CchCopyUtf8(pszNewName, std::string_view{app.lpui->szLibraryName.data()});
     return cch > 0 && cch < 256;
 }
 
 std::int16_t FActOnSelectedLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fRename) {
     char szName[256], szNewName[256];
     if (!FSelectedLibraryGameName(hwnd, szName) ||
-        !FChooseLibraryGameActionName(app, hwnd, szName, szNewName)) return 0;
+        !FChooseLibraryGameActionName(app, hwnd, std::string_view{szName}, szNewName)) return 0;
     return fRename ? FRenameLibraryGame(app, hwnd, szName, szNewName) :
                      FDuplicateLibraryGame(app, hwnd, szName, szNewName);
 }
