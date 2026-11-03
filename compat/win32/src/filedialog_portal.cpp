@@ -209,6 +209,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     Uint64 nsStart;
     int iResult = -1;
     std::size_t iFilter = request.iFilter;
+    std::size_t cchUnique;
     PORTALRESPONSES responses = {};
     int i;
     BOOL fFilter = 0;
@@ -274,9 +275,11 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     for (i = 0; i < 16; i++)
         CchSnprintf(std::span{szToken}.subspan(static_cast<std::size_t>(6 + i * 2), std::size_t{3}), "%02x", static_cast<unsigned int>(rgbToken[i]));
     pszUnique = dbus_bus_get_unique_name(lpBus);
-    if (!pszUnique || std::strlen(pszUnique) >= sizeof(szSender)) goto done;
+    if (!pszUnique) goto done;
+    cchUnique = std::strlen(pszUnique);
+    if (cchUnique >= sizeof(szSender)) goto done;
     {
-        const auto rgchSender = std::span{szSender}.first(std::strlen(pszUnique));
+        const auto rgchSender = std::span{szSender}.first(cchUnique);
         std::copy_n(pszUnique + 1, rgchSender.size(), rgchSender.begin());
     }
     for (i = 0; szSender[i]; i++) if (szSender[i] == '.') szSender[i] = '_';

@@ -326,6 +326,7 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     WINDOWPOS *lpwp;
     std::int64_t yItem;
     LPARAM lData;
+    std::size_t cchSearch;
     if (!lpwin) return 0;
     lplistKeep = lpwin->lplist;
     lp = lplistKeep.get();
@@ -443,10 +444,11 @@ LRESULT  CompatListProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::LB_FINDSTRING: case win32::LB_FINDSTRINGEXACT:
         if (!l || lp->cItem == 0) return win32::LB_ERR;
         if (i < -1 || i >= lp->cItem) i = -1;
+        if (msg == win32::LB_FINDSTRING) cchSearch = std::strlen(reinterpret_cast<LPCSTR>(l));
         for (j = 1; j <= lp->cItem; j++) {
             iNext = static_cast<int>(((static_cast<std::int64_t>(i) + j) % lp->cItem));
             if ((msg == win32::LB_FINDSTRINGEXACT ? SDL_strcasecmp(lp->rgitem[iNext].psz, reinterpret_cast<LPCSTR>(l)) :
-                 SDL_strncasecmp(lp->rgitem[iNext].psz, reinterpret_cast<LPCSTR>(l), std::strlen(reinterpret_cast<LPCSTR>(l)))) == 0) return iNext;
+                 SDL_strncasecmp(lp->rgitem[iNext].psz, reinterpret_cast<LPCSTR>(l), cchSearch)) == 0) return iNext;
         }
         return win32::LB_ERR;
     case win32::WM_GETDLGCODE: return win32::DLGC_WANTARROWS | win32::DLGC_WANTCHARS;
