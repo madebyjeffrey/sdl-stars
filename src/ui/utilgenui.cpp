@@ -91,90 +91,58 @@ std::int16_t DxStreamTextOut(HDC hdc, std::int16_t &x, std::int16_t y, std::stri
 
 void WrapTextOut(APPSESSION &app, HDC hdc, std::int16_t &x, std::int16_t &y, std::string_view szText, std::int16_t xLeft, std::int16_t dxWidth, std::int16_t *pxMax, std::int16_t fNewLine, std::int16_t fPrint) {
     std::int16_t dxRemain;
-    const char   *pchEnd;
-    std::int16_t fItFit;
-    std::int16_t xRight;
+    std::size_t cchEnd;
+    bool fItFit;
     std::int16_t dx;
-    const char   *pchStart;
-    const char   *pch;
-    const char   *psz;
-    std::int16_t cLen;
+    std::string_view szRemaining;
+    const char *pszRemaining;
 
-    psz = szText.empty() ? "" : szText.data();
-    cLen = static_cast<std::int16_t>(szText.size());
-    xRight = xLeft + dxWidth;
+    szRemaining = szText;
     dxRemain = dxWidth - (x - xLeft);
     if (fNewLine) {
         y += app.state.dyArial8;
         x = xLeft;
     }
-    pchStart = psz;
 Top:
-    pch = pchStart;
-    pchEnd = pchStart + cLen;
-    ChopTrailingSpaces(pch, &pchEnd);
-    dx = LOWORD(GetTextExtent(hdc, pch, pchEnd - pch));
-    fItFit = 1;
-    for (; dx > dxRemain && pch < pchEnd && dx > 0; dx = LOWORD(GetTextExtent(hdc, pch, pchEnd - pch))) {
+    pszRemaining = szRemaining.empty() ? "" : szRemaining.data();
+    cchEnd = szRemaining.size();
+    while (cchEnd > 0 && szRemaining[cchEnd - 1] == ' ') cchEnd--;
+    dx = LOWORD(GetTextExtent(hdc, pszRemaining, static_cast<int>(cchEnd)));
+    fItFit = true;
+    for (; dx > dxRemain && cchEnd > 0 && dx > 0; dx = LOWORD(GetTextExtent(hdc, pszRemaining, static_cast<int>(cchEnd)))) {
         fItFit = 0;
-        ChopLastWord(pch, &pchEnd);
+        while (cchEnd > 0 && szRemaining[cchEnd - 1] == ' ') cchEnd--;
+        while (cchEnd > 0 && szRemaining[cchEnd - 1] != ' ') cchEnd--;
+        while (cchEnd > 0 && szRemaining[cchEnd - 1] == ' ') cchEnd--;
     }
     if (fItFit) {
-        AddBackTrailingSpaces(&pchEnd, pchStart + cLen);
-        dx = LOWORD(GetTextExtent(hdc, pchStart, pchEnd - pchStart));
+        while (cchEnd < szRemaining.size() && szRemaining[cchEnd] == ' ') cchEnd++;
+        dx = LOWORD(GetTextExtent(hdc, pszRemaining, static_cast<int>(cchEnd)));
     }
-    if (pchStart == pchEnd) {
+    if (cchEnd == 0) {
         if (x != xLeft)
             goto WrapIt;
-        pchEnd = pchStart + cLen;
-        dx = LOWORD(GetTextExtent(hdc, pchStart, pchEnd - pchStart));
+        cchEnd = szRemaining.size();
+        dx = LOWORD(GetTextExtent(hdc, pszRemaining, static_cast<int>(cchEnd)));
     }
     if (fPrint) {
-        win32::TextOutA(hdc, x, y, pchStart, pchEnd - pchStart);
+        win32::TextOutA(hdc, x, y, pszRemaining, static_cast<int>(cchEnd));
     }
     x += dx;
     if (pxMax && x > *pxMax) {
         *pxMax = x;
     }
-    if (pchEnd == pchStart + cLen)
+    if (cchEnd == szRemaining.size())
         goto Done;
 WrapIt:
-    AddBackTrailingSpaces(&pchEnd, pchStart + cLen);
-    cLen -= pchEnd - pchStart;
-    pchStart = pchEnd;
+    while (cchEnd < szRemaining.size() && szRemaining[cchEnd] == ' ') cchEnd++;
+    szRemaining.remove_prefix(cchEnd);
     y += app.state.dyArial8;
     x = xLeft;
     dxRemain = dxWidth;
 
     goto Top;
 Done:
-    return;
-}
-
-void AddBackTrailingSpaces(const char **ppch, const char *pchEnd) {
-    while (*ppch < pchEnd && **ppch == ' ') {
-        (*ppch)++;
-    }
-    return;
-}
-
-void ChopLastWord(const char *pBeg, const char **ppEnd) {
-    while (*ppEnd > pBeg && (*ppEnd)[-1] == ' ') {
-        (*ppEnd)--;
-    }
-    while (*ppEnd > pBeg && (*ppEnd)[-1] != ' ') {
-        (*ppEnd)--;
-    }
-    while (*ppEnd > pBeg && (*ppEnd)[-1] == ' ') {
-        (*ppEnd)--;
-    }
-    return;
-}
-
-void ChopTrailingSpaces(const char *pBeg, const char **ppEnd) {
-    while (*ppEnd > pBeg && (*ppEnd)[-1] == ' ') {
-        (*ppEnd)--;
-    }
     return;
 }
 
