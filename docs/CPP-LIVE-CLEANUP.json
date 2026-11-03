@@ -28414,6 +28414,31 @@
       "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Use a span for legacy race player input",
+      "parent": "f72b2119",
+      "source_commit": "28417798",
+      "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
+      "api_audit": "FReadLegacyRacePlayer now receives a bounded byte span and derives its bounds from the span. The saved player and legacy wire layouts are unchanged.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -29254,8 +29279,8 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "7ab50e82",
-    "latest_change": "Use spans for compatibility resources",
+    "source_commit": "28417798",
+    "latest_change": "Use a span for legacy race player input",
     "c_macro_audit": {
       "source_head": "fcb27bc9",
       "date": "2026-11-03",
@@ -29274,13 +29299,13 @@
       "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "7ab50e82",
-    "latest_batch_status": "Source commit 7ab50e82 verified locally; ledger checkpoint recorded.",
+    "latest_source_commit": "28417798",
+    "latest_batch_status": "Source commit 28417798 verified locally; ledger checkpoint recorded.",
     "latest_published_head": "4155e4b0",
     "latest_batch_verification": {
-      "batch": "Use spans for compatibility resources",
-      "parent": "665a5080",
-      "source_commit": "7ab50e82",
+      "batch": "Use a span for legacy race player input",
+      "parent": "f72b2119",
+      "source_commit": "28417798",
       "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -29298,14 +29323,14 @@
         "skipped": 0
       },
       "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-      "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
+      "api_audit": "FReadLegacyRacePlayer now receives a bounded byte span and derives its bounds from the span. The saved player and legacy wire layouts are unchanged.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass."
     },
     "latest_progress_batch": {
-      "batch": "Use spans for compatibility resources",
-      "parent": "665a5080",
-      "source_commit": "7ab50e82",
+      "batch": "Use a span for legacy race player input",
+      "parent": "f72b2119",
+      "source_commit": "28417798",
       "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -29323,16 +29348,16 @@
         "skipped": 0
       },
       "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-      "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
+      "api_audit": "FReadLegacyRacePlayer now receives a bounded byte span and derives its bounds from the span. The saved player and legacy wire layouts are unchanged.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass.",
-      "status": "Source commit 7ab50e82 verified locally; ledger checkpoint recorded.",
+      "status": "Source commit 28417798 verified locally; ledger checkpoint recorded.",
       "remaining_work": [
         "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
       ],
-      "next": "Continue auditing owned APIs for pointer-plus-length/output-pointer shapes; finish L05 scratch/text and L08 platform qualification."
+      "next": "Continue the general buffer/length API and L05 text/scratch audits, then qualify current develop on Windows and Linux."
     },
     "followup": {
       "batch": "L06 transport quantity selection returns a value",
@@ -29893,8 +29918,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "7ab50e824580a5d4a6069f231613d07da4868e0f",
-  "latest_batch_status": "Source commit 7ab50e82 verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "28417798790ce313827ae35bbb426fffa4314b00",
+  "latest_batch_status": "Source commit 28417798 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -29974,7 +29999,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "7ab50e824580a5d4a6069f231613d07da4868e0f",
+    "source_head": "28417798790ce313827ae35bbb426fffa4314b00",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -30024,7 +30049,7 @@
     "cocoa_chooser_path_length": "IChooseCocoaFile creates one bounded view for the selected native path and reuses its byte length for capacity admission and copy, removing a duplicate std::strlen scan.",
     "toolbar_label_lengths": "COMPATTOOLBUTTON stores the copied UTF-8 label byte count; AddButtons copies the input once into SDL-owned storage, and drawing, tooltip sizing, and TB_GETBUTTONTEXTA reuse the count. One redundant std::strlen scan was removed.",
     "strlen_occurrence_classification": {
-      "source_head": "7ab50e824580a5d4a6069f231613d07da4868e0f",
+      "source_head": "28417798790ce313827ae35bbb426fffa4314b00",
       "total": 3,
       "c_string_api_or_input_boundaries": 3,
       "owned_or_fixed_text_length_reads": 0,
@@ -30133,13 +30158,14 @@
       "owned_values": "Canonical paths, cwd, directory entries, file metadata, identity and open metadata return std::optional owned/value results.",
       "platform_boundary": "Raw Win32/POSIX path calls remain only inside the platform service and Win32 chooser adapters; no application-owned output-pointer path interface remains."
     },
-    "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain."
+    "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
+    "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
   },
-  "latest_change": "Use spans for compatibility resources",
+  "latest_change": "Use a span for legacy race player input",
   "latest_batch_verification": {
-    "batch": "Use spans for compatibility resources",
-    "parent": "665a5080",
-    "source_commit": "7ab50e82",
+    "batch": "Use a span for legacy race player input",
+    "parent": "f72b2119",
+    "source_commit": "28417798",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30157,14 +30183,14 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
+    "api_audit": "FReadLegacyRacePlayer now receives a bounded byte span and derives its bounds from the span. The saved player and legacy wire layouts are unchanged.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use spans for compatibility resources",
-    "parent": "665a5080",
-    "source_commit": "7ab50e82",
+    "batch": "Use a span for legacy race player input",
+    "parent": "f72b2119",
+    "source_commit": "28417798",
     "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -30182,15 +30208,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "Private HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate inputs now use std::span<const BYTE>; resource sizes are carried by the span. Win32 resource-loading APIs retain their SDK signatures.",
+    "api_audit": "FReadLegacyRacePlayer now receives a bounded byte span and derives its bounds from the span. The saved player and legacy wire layouts are unchanged.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit 7ab50e82 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit 28417798 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
-    "next": "Continue auditing owned APIs for pointer-plus-length/output-pointer shapes; finish L05 scratch/text and L08 platform qualification."
+    "next": "Continue the general buffer/length API and L05 text/scratch audits, then qualify current develop on Windows and Linux."
   }
 }
