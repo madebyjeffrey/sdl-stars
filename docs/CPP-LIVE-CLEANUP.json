@@ -276,7 +276,8 @@
         "retire-lstrlenA-compatibility-shim",
         "bounded-fixed-hull-labels-in-report-drawing",
         "carry-bounded-game-name-length-for-map-printing",
-        "bounded-battle-plan-name-length"
+        "bounded-battle-plan-name-length",
+        "typed-production-queue-array-shifts"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -27504,17 +27505,24 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L06 owned inspector snapshots and bounded final battle-plan name scan",
-    "status": "Source commit 6c185819 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, focused compatibility tests 11/11, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
-    "parent": "ce705395",
-    "change": "Inspector snapshots now return optional owned vectors and strings, eliminating manual malloc/free and an always-true UTF-8 flag; battle-plan name sizing is bounded.",
+    "batch": "L05 typed production-queue array shifts",
+    "status": "Source commit 74d6c9c5 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+    "parent": "2b75a5a6",
+    "change": "The production queue inserts and removes PROD entries with std::move_backward/std::move over typed ranges, replacing two byte-count memmove calls (including a literal four-byte multiplier).",
     "verification": {
-      "batch": "L05 bounded report hull names and carried game-name length for map printing",
+      "batch": "L05 typed production-queue array shifts",
       "source_commits": [
-        "6c185819"
+        "74d6c9c5"
       ],
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -27522,8 +27530,8 @@
         "skipped": 0
       },
       "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-      "baseline": "Unchanged; report rendering uses the same valid hull-name bytes, and print-map draws the same valid game-name bytes.",
-      "api_audit": "Removed three unbounded std::strlen calls for fixed hull-name fields. Map printing reuses one bounded game-name length across all page draws.",
+      "baseline": "Unchanged. Production queue insertion/removal retains the same source and destination slot ranges; no game state, record layout, or serialization changed.",
+      "api_audit": "Two overlapping byte-count shifts of typed PROD records now use standard C++ range algorithms and element pointers.",
       "remaining_strlen": "Three production std::strlen calls remain, all incoming C-string API/input boundaries; zero owned/fixed text scans remain.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
@@ -28477,8 +28485,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "6c185819",
-  "latest_batch_status": "Source commit 6c185819 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, focused compatibility tests 11/11, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_source_commit": "74d6c9c5",
+  "latest_batch_status": "Source commit 74d6c9c5 verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28495,7 +28503,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "6c185819",
+    "source_head": "74d6c9c5",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -28567,25 +28575,33 @@
     "win32_length_helper": "win32::lstrlenA is retired; UI spans are measured within their bounds, and scanner labels reuse copied UTF-8 byte counts.",
     "report_hull_names": "Planet starbase, fleet composition, and enemy-fleet composition report cells use SzvPartName bounded views for fixed 32-byte hull-name fields; no record layout changes.",
     "map_print_game_name": "CommandHandler measures the fixed game-name field once within its array extent and reuses the byte count across printed map pages.",
-    "inspector_snapshot_result": "Hierarchy capture returns std::optional<std::vector<STARSCOMPATWINDOW>> with owned std::string class/text fields; callers use value ownership without manual allocation/free or an always-true UTF-8 flag. JSON output and window inspection behavior remain unchanged."
+    "inspector_snapshot_result": "Hierarchy capture returns std::optional<std::vector<STARSCOMPATWINDOW>> with owned std::string class/text fields; callers use value ownership without manual allocation/free or an always-true UTF-8 flag. JSON output and window inspection behavior remain unchanged.",
+    "typed_production_queue_shifts": "Production queue insertion/removal shifts PROD ranges with std::move_backward/std::move instead of byte-count memmove; the literal four-byte stride and sizeof-based byte count are removed."
   },
-  "latest_change": "L06 owned inspector snapshots and bounded the final owned battle-plan name scan",
+  "latest_change": "L05 typed production-queue array shifts",
   "latest_batch_verification": {
-    "batch": "L06 owned inspector snapshots and bounded the final owned battle-plan name scan",
+    "batch": "L05 typed production-queue array shifts",
     "source_commits": [
-      "6c185819"
+      "74d6c9c5"
     ],
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
+    "host_unit_tests": "29/29 pass.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
+    "host_regression": {
+      "matches": 519,
+      "warnings": 25,
+      "differences_errors": 0,
+      "skipped": 0
+    },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged for valid input; the inspector serializes the same window data, and battle-plan suffix handling now bounds the name scan and guards short names.",
-    "api_audit": "Inspector snapshots now use optional/vector/string ownership, removing manual allocation/free and the always-true fUtf8Text flag. The last owned/fixed text scan uses a bounded array search.",
+    "baseline": "Unchanged. Production queue insertion/removal retains the same source and destination slot ranges; no game state, record layout, or serialization changed.",
+    "api_audit": "Two overlapping byte-count shifts of typed PROD records now use standard C++ range algorithms and element pointers.",
     "remaining_strlen": "Three production std::strlen calls remain, all incoming C-string API/input boundaries; zero owned/fixed text scans remain.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass."
