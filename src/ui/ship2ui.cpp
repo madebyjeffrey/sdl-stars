@@ -223,7 +223,8 @@ INT_PTR  RenameZipDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             ControlIO().pfnEndDialog(hwnd, LOWORD(wParam) == IDOK);
             return 1;
         case IDC_HELP:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<std::uint32_t>((!app.lpui->hwndZipOrderDlg ? 1106 : 3103)));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT,
+                            !app.lpui->hwndZipOrderDlg ? idhCustomizeProductionTemplatesDialog : idhCreatingACustomTransportZipOrder);
             return 1;
         }
     }

@@ -604,7 +604,8 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 return 1;
             }
         } else if (LOWORD(wParam) == IDC_HELP) {
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<std::uint32_t>((app.lpui->mdBuild == mdBuildEdit ? 3039 : 1066)));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT,
+                            app.lpui->mdBuild == mdBuildEdit ? idhDesigningANewShipFromScratch : idhShipDesigner);
             return 1;
         }
         break;

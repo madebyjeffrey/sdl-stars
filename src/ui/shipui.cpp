@@ -1420,7 +1420,8 @@ INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             }
             return 1;
         case IDC_HELP:
-            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT, static_cast<std::uint32_t>((app.lpui->mdXferDlg == mdXferShips ? 1080 : 1075)));
+            win32::WinHelpA(hwnd, app.lpui->szHelpFile, win32::HELP_CONTEXT,
+                            app.lpui->mdXferDlg == mdXferShips ? idhShipTransferDialog : idhCargoTransferDialogs);
             return 1;
         }
         /* fallthrough */
