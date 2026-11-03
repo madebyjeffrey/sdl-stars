@@ -637,6 +637,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
     const char *psz, *pszPattern;
     win32::files::FILESELECTIONRESULT result;
     const char *pchBase, *pchExtension;
+    std::size_t cchFilter, cchPattern;
 
     dwDialogError = 0;
     if (FStarsErrorPending()) return 0;
@@ -664,17 +665,27 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
         request.fConfirmOverwrite = (lpof->Flags & win32::OFN_OVERWRITEPROMPT) != 0;
         request.fChangeCurrentDirectory = (lpof->Flags & win32::OFN_NOCHANGEDIR) == 0;
         for (psz = lpof->lpstrFilter; psz && *psz;) {
-            if (request.rgFilters.size() == MAX_FILE_FILTERS || SDL_strnlen(psz, 4097) > 4096) {
+            if (request.rgFilters.size() == MAX_FILE_FILTERS) {
                 dwDialogError = win32::CDERR_INITIALIZATION;
                 return 0;
             }
-            pszPattern = psz + std::strlen(psz) + 1;
-            if (!*pszPattern || SDL_strnlen(pszPattern, 4097) > 4096) {
+            cchFilter = SDL_strnlen(psz, 4097);
+            if (cchFilter > 4096) {
                 dwDialogError = win32::CDERR_INITIALIZATION;
                 return 0;
             }
-            request.rgFilters.push_back({psz, pszPattern});
-            psz = pszPattern + std::strlen(pszPattern) + 1;
+            pszPattern = psz + cchFilter + 1;
+            if (!*pszPattern) {
+                dwDialogError = win32::CDERR_INITIALIZATION;
+                return 0;
+            }
+            cchPattern = SDL_strnlen(pszPattern, 4097);
+            if (cchPattern > 4096) {
+                dwDialogError = win32::CDERR_INITIALIZATION;
+                return 0;
+            }
+            request.rgFilters.push_back({std::string{psz, cchFilter}, std::string{pszPattern, cchPattern}});
+            psz = pszPattern + cchPattern + 1;
         }
     } catch (const std::bad_alloc &) {
         dwDialogError = win32::CDERR_MEMALLOCFAILURE;
