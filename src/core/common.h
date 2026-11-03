@@ -35,8 +35,6 @@ static inline void RawStore32(std::span<std::byte> rgb, std::uint32_t v) { std::
 // Comparator for qsort and bsearch, which call it through the native int
 // return type.
 using QSORTCOMPARE = int (*)(const void *, const void *);
-// Owned sorting passes its report/game owner; the foreign search ABI stays separate.
-using APPQSORTCOMPARE = int (*)(APPSESSION &, const void *, const void *);
 
 #include "structs.h"
 #include "streamcodec.h"

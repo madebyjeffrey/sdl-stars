@@ -1,5 +1,6 @@
 #include "common.h"
 #include <algorithm>
+#include <bit>
 #include <new>
 #include "appstate.h"
 #include "text_io.h"
@@ -16,6 +17,13 @@ std::int16_t vrgvcMax[10] = {16, 18, 4, 19, 28, 49, 29, 87, 7, 47};
 char    rgNG3Width[9][2] = {{-3}, {2, 1}, {5}, {-3}, {3}, {3}, {3}, {1}, {3}};
 std::uint8_t vrgWormholeMin[5] = {0, 1, 1, 3, 4};
 std::uint8_t vrgWormholeVar[5] = {3, 3, 5, 4, 5};
+
+static int ICompPlanPoint(APPSESSION &app, POINT16 *ppt1, POINT16 *ppt2) {
+    static_assert(sizeof(POINT16) == sizeof(std::int32_t));
+    std::int32_t l1 = std::bit_cast<std::int32_t>(*ppt1);
+    std::int32_t l2 = std::bit_cast<std::int32_t>(*ppt2);
+    return ICompLong(app, &l1, &l2);
+}
 
 void InitBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, std::int16_t iplan, std::int16_t iplr) {
     *lpbtlplan = rgbtlplanT[iplan];
@@ -105,7 +113,7 @@ std::int16_t GenerateWorld(APPSESSION &app, std::int16_t fBatchMode) {
         app.state.rgptPlan[i].x = RandomIO().pfnRandom(app, dy) + dx;
         app.state.rgptPlan[i].y = RandomIO().pfnRandom(app, dy) + dx;
     }
-    qsort16(app, std::as_writable_bytes(std::span{app.state.rgptPlan, static_cast<std::size_t>(iMax)}), sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
+    qsort16(app, std::span{app.state.rgptPlan, static_cast<std::size_t>(iMax)}, ICompPlanPoint);
     pptMax = &app.state.rgptPlan[iMax];
     for (ppt = app.state.rgptPlan; ppt < pptMax; ppt++) {
         if (ppt->y >= 0) {
@@ -171,7 +179,7 @@ std::int16_t GenerateWorld(APPSESSION &app, std::int16_t fBatchMode) {
                 }
             }
         }
-        qsort16(app, std::as_writable_bytes(std::span{app.state.rgptPlan, static_cast<std::size_t>(cPlanMax)}), sizeof(POINT16), reinterpret_cast<APPQSORTCOMPARE>(ICompLong));
+        qsort16(app, std::span{app.state.rgptPlan, static_cast<std::size_t>(cPlanMax)}, ICompPlanPoint);
     }
     std::ranges::fill(grUsed, 0);
     for (i = 0; i < cPlanMax; i++) {

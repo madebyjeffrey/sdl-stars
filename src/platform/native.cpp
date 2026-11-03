@@ -18,22 +18,16 @@ static void qsortSwap16(unsigned char *a, unsigned char *b, std::size_t width) {
     }
 }
 
-// qsort16 preserves the ordering of equal keys in Stars' Win16 CRT qsort.
-// Reconstructed from 0024:0866-09c6, matching qsort.asm in C700 and MSVC
-// MLIBCEW.LIB. The initial sorted check, first-element pivot, and strict
-// partition boundaries matter: ICompLong compares planet X coordinates only.
-void qsort16(APPSESSION &app, std::span<std::byte> rgb, std::size_t width, int (*compare)(APPSESSION &, const void *, const void *)) {
-    if (width == 0)
-        return;
-    assert(rgb.size() % width == 0);
-    std::size_t count = rgb.size() / width;
+template <typename T>
+static void Qsort16Typed(APPSESSION &app, std::span<T> rg, int (*compare)(APPSESSION &, T *, T *)) {
+    std::size_t count = rg.size();
     if (count < 2)
         return;
 
-    unsigned char *items = reinterpret_cast<unsigned char *>(rgb.data());
+    T *items = rg.data();
     std::size_t         i;
     for (i = 1; i < count; ++i) {
-        if (static_cast<std::int16_t>(compare(app, items + i * width, items + (i - 1) * width)) < 0)
+        if (static_cast<std::int16_t>(compare(app, items + i, items + (i - 1))) < 0)
             break;
     }
     if (i == count)
@@ -48,7 +42,7 @@ void qsort16(APPSESSION &app, std::span<std::byte> rgb, std::size_t width, int (
             std::size_t lastLess = lo, firstGreater = hi;
             for (;;) {
                 while (++left != hi) {
-                    int order = static_cast<std::int16_t>(compare(app, items + left * width, items + lo * width));
+                    int order = static_cast<std::int16_t>(compare(app, items + left, items + lo));
                     if (order > 0)
                         break;
                     if (order < 0)
@@ -56,7 +50,7 @@ void qsort16(APPSESSION &app, std::span<std::byte> rgb, std::size_t width, int (
                 }
                 for (;;) {
                     --right;
-                    int order = static_cast<std::int16_t>(compare(app, items + lo * width, items + right * width));
+                    int order = static_cast<std::int16_t>(compare(app, items + lo, items + right));
                     if (order > 0)
                         break;
                     if (order < 0)
@@ -66,11 +60,11 @@ void qsort16(APPSESSION &app, std::span<std::byte> rgb, std::size_t width, int (
                 }
                 if (right <= left)
                     break;
-                qsortSwap16(items + left * width, items + right * width, width);
+                qsortSwap16(reinterpret_cast<unsigned char *>(items + left), reinterpret_cast<unsigned char *>(items + right), sizeof(T));
                 firstGreater = right;
                 lastLess = left;
             }
-            qsortSwap16(items + lo * width, items + right * width, width);
+            qsortSwap16(reinterpret_cast<unsigned char *>(items + lo), reinterpret_cast<unsigned char *>(items + right), sizeof(T));
 
             if (hi - firstGreater >= lastLess - lo) {
                 lows[pending] = firstGreater;
@@ -88,6 +82,18 @@ void qsort16(APPSESSION &app, std::span<std::byte> rgb, std::size_t width, int (
             hi = highs[pending];
         }
     }
+}
+
+// qsort16 preserves the ordering of equal keys in Stars' Win16 CRT qsort.
+// Reconstructed from 0024:0866-09c6, matching qsort.asm in C700 and MSVC
+// MLIBCEW.LIB. The initial sorted check, first-element pivot, and strict
+// partition boundaries matter: ICompLong compares planet X coordinates only.
+void qsort16(APPSESSION &app, std::span<POINT16> rgpt, int (*compare)(APPSESSION &, POINT16 *, POINT16 *)) {
+    Qsort16Typed(app, rgpt, compare);
+}
+
+void qsort16(APPSESSION &app, std::span<std::uint16_t> rgid, int (*compare)(APPSESSION &, std::uint16_t *, std::uint16_t *)) {
+    Qsort16Typed(app, rgid, compare);
 }
 
 // CchSprintf drops the l from each %ld, %li, %lu, %lx or %lX in szFormat
