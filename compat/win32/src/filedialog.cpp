@@ -675,7 +675,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
                 dwDialogError = win32::CDERR_INITIALIZATION;
                 return 0;
             }
-            cchFilter = SDL_strnlen(psz, 4097);
+            cchFilter = static_cast<std::size_t>(std::find(psz, psz + 4097, 0) - psz);
             if (cchFilter > 4096) {
                 dwDialogError = win32::CDERR_INITIALIZATION;
                 return 0;
@@ -685,7 +685,7 @@ static BOOL FFileDialog(OPENFILENAMEA *lpof, BOOL fSave) {
                 dwDialogError = win32::CDERR_INITIALIZATION;
                 return 0;
             }
-            cchPattern = SDL_strnlen(pszPattern, 4097);
+            cchPattern = static_cast<std::size_t>(std::find(pszPattern, pszPattern + 4097, 0) - pszPattern);
             if (cchPattern > 4096) {
                 dwDialogError = win32::CDERR_INITIALIZATION;
                 return 0;

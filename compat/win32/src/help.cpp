@@ -2,6 +2,7 @@
 #include "internal.h"
 #include "native.h"
 #include "path_io.h"
+#include <algorithm>
 #include <SDL3/SDL.h>
 #include <cerrno>
 #include <cstdio>
@@ -133,7 +134,7 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return 0;
     }
-    szHelp = std::string_view{pszHelp, SDL_strnlen(pszHelp, PATH_MAX)};
+    szHelp = std::string_view{pszHelp, static_cast<std::size_t>(std::find(pszHelp, pszHelp + PATH_MAX, 0) - pszHelp)};
     if (szHelp.empty() || szHelp.size() >= PATH_MAX) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         return 0;
