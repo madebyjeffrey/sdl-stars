@@ -789,6 +789,8 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
     std::int16_t ish;
     std::int16_t ishPrimary;
     FLEET  *lpflBest;
+    FLEETNAMERESULT szFleetNameResult;
+    std::size_t cchFleetName, cchFleetNameNew;
 
     fPercent = 0;
     if (HIWORD(wParam) == 0) {
@@ -799,12 +801,14 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[5] && HIWORD(wParam) == 0) {
         PresentationIO().pfnSelectFleet(app, 1, 0);
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[6] && HIWORD(wParam) == 0) {
-        CchSprintf(szFleetName, "%s", PszGetFleetName(app, app.state.sel.fl.id).data());
-        CchCopyUtf8Prefix(std::span{app.state.szWork}, szFleetName);
+        szFleetNameResult = PszGetFleetNameResult(app, app.state.sel.fl.id);
+        cchFleetName = CchCopyUtf8Prefix(std::span{szFleetName}, szFleetNameResult.view());
+        CchCopyUtf8Prefix(std::span{app.state.szWork}, std::string_view{szFleetName, cchFleetName});
         ControlIO().pfnStickyDlgPos(hwnd, &app.lpui->ptStickyRenameDlg, 0);
         if (ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_RENAME), app.lpui->hwndFrame, RenameDlg, 0) != 0) {
             CchCopyUtf8Prefix(std::span{szT}, app.state.szWork);
-            if (std::strcmp(szT, PszGetFleetName(app, app.state.sel.fl.id).data()) != 0 &&
+            cchFleetNameNew = static_cast<std::size_t>(std::find(std::begin(szT), std::end(szT), '\0') - std::begin(szT));
+            if (std::string_view{szT, cchFleetNameNew} != szFleetNameResult.view() &&
                 LogChangeName(app, grobjFleet, app.state.sel.fl.id, szT)) {
                 PresentationIO().pfnInvalidateReport(app, rptFleets, 1);
                 FillOrdersLB(app);
