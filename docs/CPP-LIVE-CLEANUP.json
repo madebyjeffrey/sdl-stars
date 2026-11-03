@@ -28496,7 +28496,7 @@
     }
   },
   "latest_source_commit": "6665dd0d9738069a456dca9209bf21df0fd42254",
-  "latest_batch_status": "Source commit 6665dd0d verified locally; ledger checkpoint pending publication. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
+  "latest_batch_status": "Source commit 6665dd0d and its ledger checkpoint are published on develop. macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each match all 519 checkpoints with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28616,6 +28616,7 @@
     "baseline": "Unchanged. Four non-overlapping text-buffer copy ranges use std::copy_n with the same byte counts; existing terminator writes and legacy truncation behavior remain unchanged.",
     "api_audit": "Removed four std::memmove calls from catalog text copying, decoded user text output, and converted legacy race-name truncation.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
-    "diff_check": "Pass."
+    "diff_check": "Pass.",
+    "ledger_commit": "34431f79"
   }
 }
