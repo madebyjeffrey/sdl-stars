@@ -622,7 +622,7 @@ static void TestScannerSnapshotUtf8(void) {
     snap.cObject = 1;
     pftemp = NfoNativeTemporary(); pf = pftemp.get(); TEST_ASSERT(pf);
     TEST_ASSERT(FWriteScannerSnapshot(snap, pf));
-    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), pf); sz[cb] = 0;
+    LSeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), pf); sz[cb] = 0;
     TEST_CHECK(FUtf8Valid(std::string_view{sz, cb}));
     TEST_CHECK(strstr(sz, psz) != NULL && strstr(sz, "\\u000d\\u000a") != NULL);
     strcpy(obj.szName, "\xff");

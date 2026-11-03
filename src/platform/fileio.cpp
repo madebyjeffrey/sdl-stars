@@ -348,7 +348,6 @@ std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN o
     if (!pf) { errno = EBADF; return -1; }
     return FileCall<std::int64_t>(pf, -1, [&] { return pf->Seek(ib, origin); });
 }
-int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN origin) { return LSeekNativeFile(pf, ib, origin) < 0 ? -1 : 0; }
 std::optional<std::int64_t> LNativePosition(NATIVEFILE *pf) {
     if (!pf) { errno = EBADF; return std::nullopt; }
     return pf->ib;

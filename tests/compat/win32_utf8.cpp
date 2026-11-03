@@ -147,7 +147,7 @@ int main(void) {
     CHECK(fFound && (szSnapshotDir = SzFilesystemTempDir()));
     CHECK(snprintf(szSnapshotPath, sizeof(szSnapshotPath), "%s/hierarchy.json", szSnapshotDir->c_str()) < (int)sizeof(szSnapshotPath));
     CHECK((pf = PfNativeOpen(szSnapshotPath, NATIVEFILEMODE::readWriteTruncate)) && StarsCompatWriteHierarchy(*snap, pf));
-    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szJson}.first(sizeof(szJson) - 1), pf); szJson[cb] = 0;
+    LSeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szJson}.first(sizeof(szJson) - 1), pf); szJson[cb] = 0;
     CHECK(strstr(szJson, psz));
     CHECK(ICloseNativeFile(pf) == 0 && FFilesystemRemove(szSnapshotPath) && FFilesystemRemove(*szSnapshotDir));
     hwndPassword = win32::CreateWindowExA(0, "EDIT", "old", win32::WS_CHILD | win32::ES_PASSWORD, 0, 0, 100, 24,

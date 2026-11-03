@@ -70,7 +70,7 @@ static int TestStyles(void) {
     for (i = 0; i < std::size(rg); i++) {
         item.iControl = rg[i].iControl; item.fDialog = rg[i].fDialog; item.dwStyle = rg[i].dw;
         nftemp = NfoNativeTemporary(); lpfile = nftemp.get(); CHECK(lpfile && StarsCompatWriteHierarchy(snap, lpfile));
-        ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile); sz[cb] = 0; nftemp.reset();
+        LSeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile); sz[cb] = 0; nftemp.reset();
         CHECK(strstr(sz, rg[i].psz) && !strstr(sz, rg[i].pszAbsent));
         CHECK(strstr(sz, "WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | 0x40000000"));
     }
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     CHECK(rgidNative[0] == rgidNative[1] && !StarsCompatResolveWindow(rgidDialog[1]));
     StarsCompatEndDialogSequence();
     nftemp = NfoNativeTemporary(); lpfile = nftemp.get(); CHECK(lpfile && StarsCompatWriteHierarchy(*snap, lpfile));
-    ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile); sz[cb] = 0; nftemp.reset();
+    LSeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{sz}.first(sizeof(sz) - 1), lpfile); sz[cb] = 0; nftemp.reset();
     CHECK(strstr(sz, "\\\"quote\\\"") && strstr(sz, "\\\\") && strstr(sz, "\\u000d\\u000a"));
     CHECK(strstr(sz, "\342\202\254") && strstr(sz, "[password]") && !strstr(sz, "secret"));
     if (argc == 2) { lpfile = PfNativeOpen(argv[1], NATIVEFILEMODE::writeTruncate); CHECK(lpfile && StarsCompatWriteHierarchy(*snap, lpfile)); CHECK(ICloseNativeFile(lpfile) == 0); }

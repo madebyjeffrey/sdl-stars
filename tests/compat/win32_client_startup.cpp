@@ -388,7 +388,7 @@ static BOOL FCheckMapInspection(APPSESSION &app) {
     nftemp = NfoNativeTemporary(); lpfile = nftemp.get();
     if (!lpfile) goto LDone;
     if (!FWriteScannerSnapshot(*fresh, lpfile)) goto LDone;
-    ISeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szExport}.first(sizeof(szExport) - 1), lpfile); szExport[cb] = 0; nftemp.reset();
+    LSeekNativeFile(lpfile, 0, NATIVESEEKORIGIN::begin); cb = CReadNative(std::span{szExport}.first(sizeof(szExport) - 1), lpfile); szExport[cb] = 0; nftemp.reset();
     if (!strstr(szExport, "\xc3\xa9\xe2\x82\xac") || !strstr(szExport, "\\u000d\\u000a")) goto LDone;
     memcpy(fresh->rgobj[0].szName, szNameSav, sizeof(szNameSav));
     if (pszCapture) {

@@ -56,9 +56,9 @@ static std::int16_t FReadHostIni(APPSESSION &app, std::string_view szFile) {
         return 0;
     }
     NATIVEFILEOWNER file(pf, ICloseNativeFile);
-    ISeekNativeFile(file.get(), 0, NATIVESEEKORIGIN::end);
+    LSeekNativeFile(file.get(), 0, NATIVESEEKORIGIN::end);
     cb = LNativePosition(file.get());
-    ISeekNativeFile(file.get(), 0, NATIVESEEKORIGIN::begin);
+    LSeekNativeFile(file.get(), 0, NATIVESEEKORIGIN::begin);
     if (!cb || *cb < 0 || static_cast<std::uint64_t>(*cb) > szText.max_size()) {
         return 0;
     }
