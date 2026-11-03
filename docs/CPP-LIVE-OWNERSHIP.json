@@ -1,5 +1,5 @@
 {
-  "source_parent": "9ceadec6",
+  "source_parent": "9a84165b",
   "scope": [
     "src",
     "compat/win32/include",
@@ -509,8 +509,8 @@
       "id": "72",
       "path": "compat/win32/src/resource.cpp",
       "scope": "HmenuTemplateItems",
-      "owner": "pszOwner and native menu hierarchy",
-      "reason": "Decoded UTF-8 labels stay owned until AppendMenu copies them. Rejected or interrupted decoding releases the label while the native menu failure path destroys the hierarchy."
+      "owner": "std::string szText per menu label",
+      "reason": "Each converted label is owned as a local string until AppendMenuA copies it. UTF-16 decoding and rejected/interrupted menu hierarchy cleanup retain the same failure behavior."
     },
     {
       "id": "73",
@@ -2009,16 +2009,6 @@
       "contract": "70"
     },
     {
-      "path": "compat/win32/src/resource.cpp",
-      "line": 119,
-      "scope": "HmenuTemplateItems",
-      "operation": "malloc",
-      "code": "std::malloc(cch * 3 + 1)",
-      "normalized_call": "std::malloc(cch*3+1)",
-      "compiler_context": true,
-      "contract": "72"
-    },
-    {
       "path": "compat/win32/src/timer.cpp",
       "line": 41,
       "scope": "SetTimer",
@@ -2514,6 +2504,14 @@
       "change": "InspectRows uses the snapshot-owned text view and writes the bounded UTF-8 prefix directly to its stack row buffer.",
       "verification": "macOS SDL Debug build; startup contract test 1/1; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
       "baseline": "Unchanged."
+    },
+    {
+      "batch": "L05 menu-resource label ownership",
+      "source_commit": "9a84165b",
+      "retired_heap_sites": 1,
+      "change": "HmenuTemplateItems uses a local string for each decoded UTF-8 label instead of a malloc buffer.",
+      "verification": "macOS SDL Debug build; resource-menu test 1/1; desktop units 18/18; host units 29/29; native and host regressions each 519 matches with 25 existing warnings and zero differences/errors; tutorial smoke 1/1.",
+      "baseline": "Unchanged."
     }
   ],
   "retired_path_text_sites": [
@@ -2632,6 +2630,17 @@
       "compiler_context": true,
       "contract": "39",
       "disposition": "L05 borrowed the existing snapshot text and copied its bounded UTF-8 prefix in 9ceadec6"
+    },
+    {
+      "path": "compat/win32/src/resource.cpp",
+      "line": 119,
+      "scope": "HmenuTemplateItems",
+      "operation": "malloc",
+      "code": "std::malloc(cch * 3 + 1)",
+      "normalized_call": "std::malloc(cch*3+1)",
+      "compiler_context": true,
+      "contract": "72",
+      "disposition": "L05 per-label scratch moved to std::string in 9a84165b"
     }
   ]
 }
