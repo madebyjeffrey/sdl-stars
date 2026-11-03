@@ -13,6 +13,7 @@ struct REPORTTEXTRESULT {
 
     char *data() noexcept { return sz.data(); }
     const char *data() const noexcept { return sz.data(); }
+    // The view borrows this result's array and cannot outlive the result.
     std::string_view view() const noexcept { return {sz.data(), static_cast<std::size_t>(cch)}; }
 };
 REPORTTEXTRESULT PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc);

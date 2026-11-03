@@ -77,6 +77,8 @@ std::int16_t FSaveLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszNa
 std::int16_t FSaveCurrentLibraryRace(APPSESSION &app, HWND hwnd, PLAYER *pplr);
 std::int16_t FHasCurrentLibraryRace(APPSESSION &app);
 std::int16_t FLoadLibraryRace(APPSESSION &app, HWND hwnd, std::string_view pszName);
+// Borrows the basename from APPUISTATE::szRaceLibraryPath; copy before
+// changing that path or ending the owning app session.
 std::string_view PszCurrentLibraryRaceName(APPSESSION &app);
 std::int16_t FCustomizeLibraryRace(APPSESSION &app, HWND hwnd, std::span<char, 256> pszName);
 std::int16_t FBeginLibraryRace(APPSESSION &app, HWND hwnd);

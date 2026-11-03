@@ -99,7 +99,7 @@
     },
     {
       "id": "L05",
-      "status": "active",
+      "status": "complete",
       "completed_substeps": [
         "typed-metadata-scan-destinations",
         "formatter-destination-capacities",
@@ -316,11 +316,10 @@
         "scanner-private-boolean-helper-results",
         "message-format-result-byte-count",
         "bounded-text-destination-classification",
-        "snprintf-style-caller-return-audit"
-      ],
-      "pending_substeps": [
+        "snprintf-style-caller-return-audit",
         "post-migration-scratch-storage-and-borrowed-return-audit"
       ],
+      "pending_substeps": [],
       "metadata_scan": {
         "interface": "Typed integer field pack and span; no C varargs or va_arg.",
         "valid_input_contract": "Same %d/%lld grammar, widths, whitespace, character consumption, EOF/seek behavior, partial assignment and range checks.",
@@ -30368,8 +30367,8 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "8da637d3",
-  "latest_batch_status": "Source commits 658fdc6a and 8da637d3 complete the snprintf-style caller-return audit; static review and git diff --check pass. Runtime suites were not run for this audit batch.",
+  "latest_source_commit": "d9ce84ab",
+  "latest_batch_status": "The production scratch and borrowed-view audit is closed by static source review at d9ce84ab. No dangling view or modal/session teardown defect was found; report-label helpers copy into result-owned arrays. Lifetime contracts were documented. git diff --check passes; runtime suites were not run for this comment/documentation batch.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -30383,11 +30382,10 @@
       "replaceable_memcpy_calls": 0,
       "remaining_code_audit_substeps": [
         "L05 bounded-text-destinations",
-        "L05 post-migration-scratch-storage-and-borrowed-return-audit",
         "L06 remaining-buffer-and-length-interfaces"
       ],
       "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser coverage.",
-      "interpretation": "Three broad code audit substeps remain open; they are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private BOOL helper results and private UI/list BOOL flags. Remaining L05 text/ownership and L06 buffer/length audits still need line-by-line closure. Current-source Windows/Linux qualification and chooser coverage are also pending.",
+      "interpretation": "Two broad code audit substeps remain open: L05 bounded text destinations and L06 remaining buffer/length interfaces. They are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private BOOL helper results and private UI/list BOOL flags. Current-source Windows/Linux qualification and chooser coverage are also pending.",
       "production_cost_output_api": "GetProductionCosts uses std::span<std::int32_t, 4>; callers no longer reinterpret signed int32 arrays as uint32_t output pointers. Fixed extent, storage widths, and legacy 32-bit wrap behavior are preserved.",
       "posix_getcwd_and_mkdir_compatibility_shims": 0,
       "redundant_ai_recipe_byte_pointer_casts": 0,
@@ -30493,7 +30491,19 @@
     "build_list_text_length": "DrawDlgLBEntireItem reuses the byte count returned by LB_GETTEXT and subtracts the four-byte hull prefix instead of rescanning the suffix.",
     "message_title_length": "SetMsgTitle stores the exact byte count returned by CchCopyUtf8Prefix in APPUISTATE; message-title painting reuses that count.",
     "library_root_length": "FInitLibrary stores the byte count returned by CchSnprintf and resets it with the root path; three path-capacity checks reuse it instead of rescanning.",
-    "borrowed_return_audit": "Reviewed production functions returning string_view/span: returned views reference caller input, fixed/static storage, owner-backed profile/library data, or result-owned arrays; report label helpers copy before returning. No dangling return was found in this pass. The broader scratch-owner audit remains open.",
+    "borrowed_return_audit": {
+      "source_head": "d9ce84ab",
+      "result": "No dangling production string_view/span return or retained view across callback return, modal tracking, or app/session teardown was found in the audited producer-to-consumer paths.",
+      "report_labels": "SzReportText/SzReportLabel copy catalog, game-field, local-buffer, and app scratch inputs into REPORTTEXTRESULT fixed arrays with a complete UTF-8 prefix. The result view borrows only that result array.",
+      "contracts_documented": [
+        "FNativeEnumerateDirectory callback entry view is valid through the synchronous callback only.",
+        "PszGetLine borrows unchanged caller input storage.",
+        "PszCurrentLibraryRaceName borrows APPUISTATE::szRaceLibraryPath until mutation or session teardown.",
+        "REPORTTEXTRESULT::view borrows its result-owned array."
+      ],
+      "detailed_inventory": "docs/CPP-LIVE-L05-SCRATCH-LIFETIMES.md",
+      "runtime_verification": "Not run; documentation and lifetime comments only."
+    },
     "recent_file_label_length": "AddMRUFile uses the count returned by CchGetString for idsFile1 to replace the final digit without rescanning the fixed label.",
     "planet_search_length": "FSelectSz uses the incoming bounded string_view length, stopping at any embedded NUL to preserve the prior terminated-buffer comparison behavior.",
     "library_export_path_length": "FExportLibraryOrders builds one bounded view of the selected path and reuses its size and separator/extension indices; path truncation at the first NUL and suffix replacement semantics are unchanged.",
@@ -30552,21 +30562,17 @@
     "bounded_sdl_string_scans": "All four production SDL_strnlen calls were replaced by bounded std::find scans using the same maximum lengths. No SDL_strnlen or SDL_strlen calls remain; the three std::strlen sites are incoming C-string/API boundaries.",
     "native_stream_predicates": "FNativeStreamError and FNativeStreamEof return bool. All production call sites consume predicates; legacy reference declarations remain int.",
     "ui_scratch_storage": {
-      "source_head": "ae40d864",
+      "source_head": "d9ce84ab",
       "completed": [
-        "Race-file suggestion cache is stored in APPUISTATE and cleared during that app session teardown.",
-        "Sixteen new-game library race filename buffers are stored in APPUISTATE and reset at new-game wizard entry.",
-        "The race-import name override is passed as an optional string_view to a local implementation; the process-global borrowed view and its reset were removed.",
-        "The current selected race-library path is a 512-byte std::array in APPUISTATE; session-aware query/accessor APIs and shutdown clearing use that owner.",
-        "The race-save staging path is a local std::array owned by FSaveLibraryRace for the duration of the synchronous operation.",
-        "The prompted/imported race-library filename is a 256-byte std::array in APPUISTATE and is cleared at session shutdown.",
-        "The pending game-library directory is a 256-byte std::array in APPUISTATE, retained across game generation and passed through LIBRARYPATHS as a fixed-extent span.",
-        "The prompted game-library name is a 256-byte std::array in APPUISTATE; LIBRARYPATHS exposes it as a fixed-extent span, and the libraryui.cpp global was removed.",
-        "The remembered game exchange basename is a 256-byte std::array in APPUISTATE; metadata publication receives APPSESSION and uses that session-owned value.",
-        "The race-library root is a 256-byte std::array in APPUISTATE; library initialization and managed-race path checks use the owning session.",
-        "The game-library root and its cached byte length are owned by APPUISTATE; LIBRARYPATHS carries the root as a fixed-extent span, and the shared libraryui.cpp globals were removed."
+        "Race-file suggestion cache and sixteen new-game race filename buffers are APPUISTATE-owned and cleared at session teardown or wizard entry.",
+        "Current race path, race-library prompted name, pending game-library path, prompted game-library name, exchange basename, race-library root, game-library root and cached byte length are APPUISTATE-owned; mutation/reset boundaries are documented in the existing scratch inventory.",
+        "Race-save staging paths and other transient library paths are operation-local and remain alive through their synchronous consumers.",
+        "APPSESSION::state.szWork and szBase are shared per-session scratch; audited views are consumed synchronously or copied into owned result/path storage before later use.",
+        "Popup optional<string_view> labels are consumed by PopupMenu and copied into menu-owned text before TrackPopupMenu enters its modal tracking loop.",
+        "FILESELECTIONREQUEST owns its text and filter collections across the chooser modal pump; selected results own their path.",
+        "Directory callback views, PszGetLine, profile views, byte/record views, order-storage spans, catalog part-name views, and report result views have owner and validity boundaries recorded in the scratch lifetime audit."
       ],
-      "remaining_observed": "No shared library path/name arrays remain in libraryui.cpp. The broader post-migration scratch-storage and borrowed-return audit remains open."
+      "remaining_observed": "No identified scratch/view lifetime defect remains in the audited producer-to-consumer paths. Full per-interface owner and modal/teardown notes are in docs/CPP-LIVE-L05-SCRATCH-LIFETIMES.md."
     },
     "import_cleanup_roots": {
       "source_head": "6391e1fe",

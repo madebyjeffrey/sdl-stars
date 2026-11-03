@@ -54,7 +54,9 @@ std::int16_t FCheckPassword(APPSESSION &app);
 std::int32_t LSaltFromSz(std::string_view psz);
 std::int32_t LDistance2(POINT16 pt1, POINT16 pt2);
 // Borrow the next line, trimming leading spaces and consuming CR/LF/CRLF.
-// Input bytes remain unchanged; exhausted input stays exhausted.
+// The returned view is backed by the original input and must not outlive or
+// overlap mutation of that storage. Input bytes remain unchanged; exhausted
+// input stays exhausted.
 std::string_view PszGetLine(std::string_view &ppszBeg);
 // Space-separated unsigned decimal fields retain modulo-32-bit values and
 // partial assignments on invalid input. Stop at NUL/end or full output capacity.

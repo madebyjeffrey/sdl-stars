@@ -76,6 +76,10 @@ void    MakeDir(std::string_view szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
 int     CreateNativeDir(std::string_view pszDir);
 using FNativeDirectoryEntryProc = std::function<bool(APPSESSION &, std::string_view)>;
+// pszDir is borrowed for this synchronous call. Each callback entry name is
+// backed by the enumerator and is valid only until that callback returns.
+// Callbacks may use the name during the call, including while a modal loop
+// runs, but must copy it to retain it or use it after enumeration.
 bool FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, const FNativeDirectoryEntryProc &pfnEntry);
 template<class TContext>
 bool FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir,
