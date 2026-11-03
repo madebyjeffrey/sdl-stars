@@ -2917,14 +2917,33 @@
       "id": "L08",
       "status": "active",
       "current_macro_audit": {
-        "status": "Current source macro and C language inventories reconciled; only platform qualification and chooser full-coverage review remain.",
+        "status": "Local source audit refreshed at 4983e9ac: no production C translation units or owned function-like API macros. Windows/Linux current-source qualification and chooser full-coverage review remain pending.",
         "change": "Replaced SDL_arraysize with std::size; SDL_zero with C++ aggregate initialization/reset; INT32_C/UINT32_C/UINT64_C with explicitly typed C++ integer literals. Updated resource constant extraction for typed forms.",
         "search": "No SDL convenience family or INT/UINT fixed-width literal macros remain in scanned owned application or ordinary test C++ sources. Remaining uses are isolated to SDK/reference fixtures and the independent C precision probe.",
         "remaining": "Qualify the current develop source on Windows and Linux, including Linux portal/X11 chooser coverage and Windows SDK/client build.",
         "owned_definitions": "No owned function-like macros remain in src or compat/win32/include/src. Aside from include guards, the retained owned definitions are NOMINMAX; FSHIFT is undefined to prevent an SDK-name collision.",
         "api_like_names": "LOWORD, HIWORD, LOBYTE, HIBYTE and MAKELONG in src/platform/value.h are typed constexpr C++ functions. MAKEWPARAM, MAKELPARAM, MAKEINTRESOURCE, RGB, PALETTEINDEX, PALETTERGB and GET_*_WPARAM in wincompat_values.h are typed C++ functions/templates.",
         "preprocessor": "Remaining owned conditionals select platform/compiler/test configurations or guard headers. Third-party free-api headers retain SDK macros under compat/win32/upstream; these are excluded from owned-code cleanup.",
-        "source_files": "44 tracked .c translation units remain, all under tests; none are production under src or compat/win32."
+        "source_files": "44 tracked .c translation units remain, all under tests; none are production under src or compat/win32.",
+        "last_reviewed_source_head": "4983e9ac",
+        "last_reviewed_date": "2026-11-02",
+        "final_local_inventory": {
+          "source_head": "4983e9ac",
+          "date": "2026-11-02",
+          "tracked_c_translation_units": 44,
+          "production_c_translation_units": 0,
+          "categories": {
+            "compatibility_witnesses": 3,
+            "sdk_reference_witnesses": 38,
+            "tutorial_observer": 1,
+            "precision_scaffold": 2
+          },
+          "owned_function_like_api_macros": 0,
+          "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
+          "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
+          "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
+          "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification is current."
+        }
       },
       "linux_desktop_execution_budget": {
         "status": "complete; verified at 2bbd5afa",
@@ -25308,7 +25327,8 @@
         "scaffold": 2
       },
       "owned_cpp_c_standard_headers": 0,
-      "c_language_boundary": "CMake declares C++ as the project language; C is enabled only for independent tests/reference targets."
+      "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20.",
+      "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision."
     },
     "next": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -25506,6 +25526,23 @@
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit."
+    },
+    "c_macro_audit": {
+      "source_head": "4983e9ac",
+      "date": "2026-11-02",
+      "tracked_c_translation_units": 44,
+      "production_c_translation_units": 0,
+      "categories": {
+        "compatibility_witnesses": 3,
+        "sdk_reference_witnesses": 38,
+        "tutorial_observer": 1,
+        "precision_scaffold": 2
+      },
+      "owned_function_like_api_macros": 0,
+      "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
+      "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
+      "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification is current."
     }
   },
   "current_checkpoint": {
@@ -25575,7 +25612,8 @@
         "scaffold": 2
       },
       "owned_cpp_c_standard_headers": 0,
-      "c_language_boundary": "CMake declares C++ as the project language; C is enabled only for independent tests/reference targets."
+      "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20.",
+      "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision."
     },
     "next": [
       "L05: finish bounded text destinations and const-text interfaces; complete scratch-storage and borrowed-return audit.",
@@ -25713,7 +25751,24 @@
       }
     ],
     "source_commit": "4983e9ac",
-    "latest_change": "FReadManagedRace accepts std::string_view for its read-only path and passes the bounded input to native path/file services and FWasRaceFile."
+    "latest_change": "FReadManagedRace accepts std::string_view for its read-only path and passes the bounded input to native path/file services and FWasRaceFile.",
+    "c_macro_audit": {
+      "source_head": "4983e9ac",
+      "date": "2026-11-02",
+      "tracked_c_translation_units": 44,
+      "production_c_translation_units": 0,
+      "categories": {
+        "compatibility_witnesses": 3,
+        "sdk_reference_witnesses": 38,
+        "tutorial_observer": 1,
+        "precision_scaffold": 2
+      },
+      "owned_function_like_api_macros": 0,
+      "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
+      "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
+      "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification is current."
+    }
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
@@ -25771,7 +25826,9 @@
       "core_strlen_residual": "src/core/save.cpp:804 in WriteRtString. Its sole caller passes FLEET::lpszName, a legacy heap-owned C string with no stored length; adding a size to FLEET would change a layout-sensitive debug-symbol struct. Keep this at the serialization C-string boundary unless ownership API is deliberately redesigned.",
       "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
       "platform_qualification": "Full Windows SDL desktop and Linux desktop CI remain unqualified. Current-source workflow dispatch was previously rejected with HTTP 403 (admin rights required), and local SDL cross-configuration lacks a MinGW zlib package; the current MinGW host/core service build passed earlier.",
-      "native_directory_entry_callback": "FNativeDirectoryEntryProc accepts std::string_view; synchronous enumeration and consumers were migrated and verified in the recorded L06 bounded native directory-entry callback views batch."
+      "native_directory_entry_callback": "FNativeDirectoryEntryProc accepts std::string_view; synchronous enumeration and consumers were migrated and verified in the recorded L06 bounded native directory-entry callback views batch.",
+      "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
+      "c_language_boundary": "44 independent test/reference C translation units only; production sources remain C++20/Objective-C++20."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -26097,6 +26154,23 @@
         "message": "Use a path view for managed race reads"
       }
     ],
-    "parent": "b98ddf39"
+    "parent": "b98ddf39",
+    "c_macro_audit": {
+      "source_head": "4983e9ac",
+      "date": "2026-11-02",
+      "tracked_c_translation_units": 44,
+      "production_c_translation_units": 0,
+      "categories": {
+        "compatibility_witnesses": 3,
+        "sdk_reference_witnesses": 38,
+        "tutorial_observer": 1,
+        "precision_scaffold": 2
+      },
+      "owned_function_like_api_macros": 0,
+      "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
+      "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
+      "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
+      "platform_qualification": "Windows SDL and Linux desktop CI are not current-source qualified. Existing CI evidence predates the latest source commit; local macOS/host verification is current."
+    }
   }
 }
