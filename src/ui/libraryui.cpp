@@ -556,13 +556,15 @@ static std::int16_t FCompleteGeneratedFile(APPSESSION &app, std::string_view psz
     NATIVEFILE *pf;
     HDR hdr;
     RTBOF rtbof;
-    long cbFile, ib;
+    long cbFile;
+    std::optional<std::int64_t> ib;
     std::int16_t fComplete;
 
     pf = PfOpenNativeFile(pszFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
     fComplete = 0;
-    if (ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) != 0) goto LDone;
+    if (ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) != 0 || !(ib = LNativePosition(pf)) || *ib < 22 || ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) != 0) goto LDone;
+    cbFile = static_cast<long>(*ib);
     if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != 16 ||
         !FReadLibraryBof(pf, &rtbof) || std::memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.lidGame != app.state.game.lid || rtbof.turn != app.state.game.turn || rtbof.dt != dt || rtbof.iPlayer != iplr) goto LDone;
@@ -574,9 +576,9 @@ static std::int16_t FCompleteGeneratedFile(APPSESSION &app, std::string_view psz
     }
     while (FReadLibraryHdr(pf, &hdr)) {
         ib = LNativePosition(pf);
-        if (ib < 0 || ib + hdr.cb > cbFile) break;
+        if (!ib || *ib < 0 || *ib + hdr.cb > cbFile) break;
         if (hdr.rt == rtEOF) {
-            fComplete = hdr.cb == 2 && ib + hdr.cb == cbFile;
+            fComplete = hdr.cb == 2 && *ib + hdr.cb == cbFile;
             break;
         }
         if (ISeekNativeFile(pf, hdr.cb, NATIVESEEKORIGIN::current) != 0) break;
@@ -1331,13 +1333,14 @@ std::int16_t FInspectImportFile(std::string_view pszFile, DtFileType dt, int ipl
     HDR hdr;
     RTBOF rtbof;
     std::int64_t cbFile;
-    long ib;
+    std::optional<std::int64_t> ib;
     std::int16_t fComplete;
 
     pf = PfOpenNativeFile(pszFile, NATIVEFILEMODE::read);
     if (!pf) return 0;
     fComplete = 0;
-    if (ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) != 0 || (cbFile = LNativePosition(pf)) < 22 || ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) != 0) goto LDone;
+    if (ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) != 0 || !(ib = LNativePosition(pf)) || *ib < 22 || ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) != 0) goto LDone;
+    cbFile = *ib;
     if (!FReadLibraryHdr(pf, &hdr) || hdr.rt != rtBOF || hdr.cb != cbWireBof ||
         !FReadLibraryBof(pf, &rtbof) || std::memcmp(rtbof.rgid, "J3J3", 4) ||
         rtbof.verMajor != 2 || rtbof.verMinor != 85 || rtbof.dt != dt ||
@@ -1356,12 +1359,12 @@ std::int16_t FInspectImportFile(std::string_view pszFile, DtFileType dt, int ipl
     }
     while (FReadLibraryHdr(pf, &hdr)) {
         ib = LNativePosition(pf);
-        if (ib < 0 || ib + hdr.cb > cbFile) break;
+        if (!ib || *ib < 0 || *ib + hdr.cb > cbFile) break;
         if (hdr.rt == rtEOF) {
             /* Orders and history writers use an empty EOF; host and turn
              * files carry the two-byte trailer. Both must end at EOF. */
             if (hdr.cb != 2 && !(hdr.cb == 0 && (dt == dtLog || dt == dtHist))) break;
-            if (ib + hdr.cb != cbFile) break;
+            if (*ib + hdr.cb != cbFile) break;
             fComplete = 1;
             break;
         }

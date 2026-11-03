@@ -349,7 +349,10 @@ std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN o
     return FileCall<std::int64_t>(pf, -1, [&] { return pf->Seek(ib, origin); });
 }
 int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN origin) { return LSeekNativeFile(pf, ib, origin) < 0 ? -1 : 0; }
-std::int64_t LNativePosition(NATIVEFILE *pf) { if (!pf) { errno = EBADF; return -1; } return pf->ib; }
+std::optional<std::int64_t> LNativePosition(NATIVEFILE *pf) {
+    if (!pf) { errno = EBADF; return std::nullopt; }
+    return pf->ib;
+}
 std::optional<std::int64_t> CbNativeFile(NATIVEFILE *pf) {
     if (!pf) { errno = EBADF; return std::nullopt; }
     const std::int64_t cb = FileCall<std::int64_t>(pf, -1, [&] { return pf->Size(); });
@@ -786,7 +789,8 @@ std::optional<std::size_t> CbNativeWriteLegacy(std::int16_t hf, std::span<const 
     std::lock_guard<std::mutex> guard(Files().lock); NATIVEFILE *pf = LegacyFile(hf);
 #ifdef _WIN32
     if (rgb.empty()) {
-        if (!pf || ITruncateNativeFile(pf, LNativePosition(pf)) < 0) return std::nullopt;
+        const auto ib = LNativePosition(pf);
+        if (!ib || ITruncateNativeFile(pf, *ib) < 0) return std::nullopt;
         return 0;
     }
 #endif

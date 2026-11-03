@@ -85,7 +85,7 @@ std::size_t CWriteNative(std::span<T, N> rg, NATIVEFILE *pf) {
 }
 std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN iOrigin);
 int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN iOrigin);
-std::int64_t LNativePosition(NATIVEFILE *pf);
+std::optional<std::int64_t> LNativePosition(NATIVEFILE *pf);
 std::optional<std::int64_t> CbNativeFile(NATIVEFILE *pf);
 int ITruncateNativeFile(NATIVEFILE *pf, std::int64_t cb);
 int IFlushNativeFile(NATIVEFILE *pf);

@@ -18,6 +18,7 @@ int main(void) {
     const char *dir;
     std::optional<NATIVEFILEINFO> info, opened;
     std::optional<NATIVEFILEIDENTITY> nfiTemp, nfiPath;
+    errno=0;CHECK(!LNativePosition(nullptr) && errno==EBADF);
     CHECK((szTempDir = SzFilesystemTempDir()));
     dir = szTempDir->c_str();
     {

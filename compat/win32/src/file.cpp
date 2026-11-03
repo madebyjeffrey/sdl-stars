@@ -191,7 +191,7 @@ UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
     COMPATFILE *lp;
     ssize_t cbWrite = -1;
     std::optional<std::size_t> cbNative;
-    std::int64_t pos;
+    std::optional<std::int64_t> pos;
 
     std::unique_lock lockFiles(fFileLock); lp = LpFile(hf);
     if (lp) {
@@ -199,7 +199,7 @@ UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
         else if (!rgb && cb != 0) win32::SetLastError(win32::ERROR_INVALID_PARAMETER);
         else if (cb == 0) {
             pos = LNativePosition(lp->pf);
-            if (pos >= 0 && ITruncateNativeFile(lp->pf, pos) == 0) cbWrite = 0;
+            if (pos && *pos >= 0 && ITruncateNativeFile(lp->pf, *pos) == 0) cbWrite = 0;
             else win32::SetLastError(DwFileError());
         } else {
             do { cbNative = CbWriteNativeFile(lp->pf, std::as_bytes(std::span{rgb, static_cast<std::size_t>(cb)})); } while (!cbNative && errno == EINTR);

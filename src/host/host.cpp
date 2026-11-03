@@ -46,7 +46,7 @@ std::int16_t IdAlertBox(std::string_view sz, std::int16_t mbType) {
 // password, per-player dump files, host names in -v output and the number
 // of backup directories.
 static std::int16_t FReadHostIni(APPSESSION &app, std::string_view szFile) {
-    long  cb;
+    std::optional<std::int64_t> cb;
     std::string szText;
     std::string_view szIni;
     NATIVEFILE *pf;
@@ -59,11 +59,11 @@ static std::int16_t FReadHostIni(APPSESSION &app, std::string_view szFile) {
     ISeekNativeFile(file.get(), 0, NATIVESEEKORIGIN::end);
     cb = LNativePosition(file.get());
     ISeekNativeFile(file.get(), 0, NATIVESEEKORIGIN::begin);
-    if (cb < 0 || static_cast<std::size_t>(cb) > szText.max_size()) {
+    if (!cb || *cb < 0 || static_cast<std::uint64_t>(*cb) > szText.max_size()) {
         return 0;
     }
     try {
-        szText.resize(static_cast<std::size_t>(cb));
+        szText.resize(static_cast<std::size_t>(*cb));
     } catch (const std::bad_alloc &) {
         return 0;
     }
