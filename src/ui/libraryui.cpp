@@ -32,6 +32,7 @@
 /* Desktop metadata is deliberately outside the legacy game records. A folder
  * is listed only after its complete generated family and metadata are saved. */
 static char szLibraryRoot[256];
+static std::size_t cchLibraryRoot;
 static char szLibraryPending[256];
 static char szLibraryName[256];
 static char szLibraryExchangeName[256];
@@ -253,7 +254,8 @@ static std::int16_t FInitLibrary(void) {
                       pszOverride ? pszOverride : pszSettings ? pszSettings : pszRoot,
                       pszOverride || pszSettings ? szDirSep : "");
     rootPath.reset();
-    return cch > 0 && cch < static_cast<int>(sizeof(szLibraryRoot)) && FEnsureNativeDir(szLibraryRoot);
+    cchLibraryRoot = cch > 0 && cch < static_cast<int>(sizeof(szLibraryRoot)) ? static_cast<std::size_t>(cch) : 0;
+    return cchLibraryRoot != 0 && FEnsureNativeDir(szLibraryRoot);
 }
 
 std::int16_t FPathUnderLibrary(std::string_view szRoot, std::string_view szFile) {
@@ -449,7 +451,7 @@ std::int16_t FChooseLibraryGameName(APPSESSION &app, HWND hwnd, std::span<char, 
     char *pch;
     char szMessage[256];
 
-    if (!FInitLibrary() || std::strlen(szLibraryRoot) + 20 >= sizeof(app.state.szBase)) goto LFail;
+    if (!FInitLibrary() || cchLibraryRoot + 20 >= sizeof(app.state.szBase)) goto LFail;
     szLibraryExchangeName[0] = 0;
     if (pszName) GetGameLibraryName(app, *pszName, std::span{szLibraryName});
     else {
@@ -2358,7 +2360,7 @@ std::int16_t FDuplicateLibraryGame(APPSESSION &app, HWND hwnd, std::string_view 
                                                   std::span{szExchangeName}) ||
         !FLibraryNameAvailableExcept(app, szCopyName, std::nullopt) ||
         (cchTarget = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", szLibraryRoot, szDirSep, szCopyName)) <= 0 ||
-        static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || std::strlen(szLibraryRoot) + 2 * pszCopyName.size() + 18 >= sizeof(app.state.szBase) ||
+        static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || cchLibraryRoot + 2 * pszCopyName.size() + 18 >= sizeof(app.state.szBase) ||
         !FCreateLibraryGameStagePath(std::span{szStage})) return 0;
     if (FCreateLibraryGameStage(app, szSource, szSourceName, szCopyName, szStage, -1, 0, szExchangeName) &&
         RenameNativeFile(szStage, szTarget) == 0) fResult = 1;
@@ -2387,7 +2389,7 @@ std::int16_t FRenameLibraryGame(APPSESSION &app, HWND hwnd, std::string_view psz
                                                  std::span{szExchangeName}) ||
         !FLibraryNameAvailableExcept(app, szNewName, std::string_view{szSourceName}) ||
         (cchTarget = CchSnprintf(std::span{szTarget, sizeof(szTarget)}, "%s%s%s", szLibraryRoot, szDirSep, szNewName)) <= 0 ||
-        static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || std::strlen(szLibraryRoot) + 2 * pszNewName.size() + 18 >= sizeof(app.state.szBase) ||
+        static_cast<std::size_t>(cchTarget) >= sizeof(szTarget) || cchLibraryRoot + 2 * pszNewName.size() + 18 >= sizeof(app.state.szBase) ||
         !FCreateLibraryGameStagePath(std::span{szStage})) return 0;
     if (!FCreateLibraryGameStage(app, szSource, szSourceName, szNewName, szStage, iplr, lPlayed, szExchangeName) ||
         !FCreateLibraryGameHoldPath(std::span{szHold}) || RenameNativeFile(szSource, szHold) != 0) goto LDone;
@@ -3311,6 +3313,7 @@ void RememberLibraryGame(APPSESSION &app) {
 void CloseLibraryUiSession() noexcept {
     ClearLibraryGameList();
     szLibraryRoot[0] = szLibraryPending[0] = szLibraryName[0] = szLibraryExchangeName[0] = 0;
+    cchLibraryRoot = 0;
     szRaceLibraryRoot[0] = szRaceLibraryPath[0] = szRaceLibraryName[0] = szRaceLibraryTemp[0] = 0;
     fRaceLibraryNameDialog = fNewLibraryRace = fHostLibraryView = 0;
     pszRaceLibraryNameOverride.reset();
