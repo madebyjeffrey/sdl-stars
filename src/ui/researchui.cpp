@@ -939,7 +939,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
         yCur = yStart;
         dxStr = 0;
         for (i = 0; i <= 5; i++) {
-            dxT = LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[i], win32::lstrlenA(app.state.rgszMinerals[i])));
+            dxT = LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[i], static_cast<int>(APPGAMESTATE::rgsvMinerals[i].size())));
             if (dxT > dxStr) {
                 dxStr = dxT;
             }

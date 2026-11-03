@@ -60,10 +60,12 @@ struct APPGAMESTATE {
     alignas(std::max_align_t) const char     *PCTDXPCTDPCTPCT = "%d.%d%%";
     alignas(std::max_align_t) const char     *PCTLD = "%ld";
     inline static constexpr std::array<std::string_view, 8> mpdtsz = {"xy", "x", "hst", "m", "h", "r", "log", "chk"};
+    inline static constexpr std::array<std::string_view, 6> rgsvMinerals = {"Ironium", "Boranium", "Germanium", "Colonists", "Fuel", "Resources"};
+    inline static constexpr std::array<std::string_view, 3> rgsvPlanetAttr = {"Gravity", "Temperature", "Radiation"};
     alignas(std::max_align_t) const char     *rgchcompstrlower = " aehilnorstbcdfgjkmpquvwxyz";
     alignas(std::max_align_t) const char     *rgszMineField[3] = {"Standard", "Heavy", "Speed Bump"};
-    alignas(std::max_align_t) const char     *rgszMinerals[6] = {"Ironium", "Boranium", "Germanium", "Colonists", "Fuel", "Resources"};
-    alignas(std::max_align_t) const char     *rgszPlanetAttr[3] = {"Gravity", "Temperature", "Radiation"};
+    alignas(std::max_align_t) const char     *rgszMinerals[6] = {rgsvMinerals[0].data(), rgsvMinerals[1].data(), rgsvMinerals[2].data(), rgsvMinerals[3].data(), rgsvMinerals[4].data(), rgsvMinerals[5].data()};
+    alignas(std::max_align_t) const char     *rgszPlanetAttr[3] = {rgsvPlanetAttr[0].data(), rgsvPlanetAttr[1].data(), rgsvPlanetAttr[2].data()};
     alignas(std::max_align_t) const char     *vrgszUnits[6] = {"kT", "kT", "kT", "00", "mg", "% "};
     alignas(std::max_align_t) char      iLastGet = -1;
     alignas(std::max_align_t) char      iLastMsgGet = -1;

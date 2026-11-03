@@ -553,7 +553,7 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
                 rc.bottom += app.state.dyArial8;
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 win32::SetTextColor(hdc, app.lpui->rgcrMinerals[c]);
-                win32::TextOutA(hdc, rc.left, rc.bottom, app.state.rgszMinerals[c], win32::lstrlenA(app.state.rgszMinerals[c]));
+                win32::TextOutA(hdc, rc.left, rc.bottom, app.state.rgszMinerals[c], static_cast<int>(APPGAMESTATE::rgsvMinerals[c].size()));
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 win32::SetTextColor(hdc, app.lpui->crWindowText);
                 c = CchSprintf(app.state.szWork, app.state.PCTLD, rgCost[k]);

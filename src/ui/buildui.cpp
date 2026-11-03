@@ -1143,7 +1143,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             rc.top += app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             win32::SetTextColor(hdc, app.lpui->rgcrMinerals[k]);
-            win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[k], win32::lstrlenA(app.state.rgszMinerals[k]));
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[k], static_cast<int>(APPGAMESTATE::rgsvMinerals[k].size()));
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             win32::SetTextColor(hdc, app.lpui->crWindowText);
             cch = CchSprintf(app.state.szWork, app.state.PCTLD, static_cast<std::uint32_t>((c * static_cast<std::uint32_t>(rgCosts[k]))));
@@ -1153,7 +1153,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         rc.top += app.state.dyArial8;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetTextColor(hdc, app.lpui->rgcrMinerals[5]);
-        win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[5], win32::lstrlenA(app.state.rgszMinerals[5]));
+        win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[5], static_cast<int>(APPGAMESTATE::rgsvMinerals[5].size()));
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         win32::SetTextColor(hdc, app.lpui->crWindowText);
         cch = CchSprintf(app.state.szWork, app.state.PCTLD, static_cast<std::uint32_t>((c * static_cast<std::uint32_t>(rgCosts[3]))));
@@ -1222,7 +1222,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
         win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         dxkT = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsKt).data(), 2));
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-        dxMineral = LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[2], std::strlen(app.state.rgszMinerals[2]))) + 6;
+        dxMineral = LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[2], static_cast<int>(APPGAMESTATE::rgsvMinerals[2].size()))) + 6;
         crForeSav = win32::SetTextColor(hdc, 0);
         crBackSav = win32::SetBkColor(hdc, app.lpui->crButtonFace);
         if (app.lpui->hwndPopup && app.lpui->GlobalPD.grPopup == grPopupShdef && app.lpui->GlobalPD.fToken) {
@@ -1266,7 +1266,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             rc.top += app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
             win32::SetTextColor(hdc, app.lpui->rgcrMinerals[k]);
-            win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[k], win32::lstrlenA(app.state.rgszMinerals[k]));
+            win32::TextOutA(hdc, rc.left, rc.top, app.state.rgszMinerals[k], static_cast<int>(APPGAMESTATE::rgsvMinerals[k].size()));
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             win32::SetTextColor(hdc, app.lpui->crWindowText);
             cch = CchSprintf(app.state.szWork, app.state.PCTD, k == 5 ? rgCosts[3] : rgCosts[k]);

@@ -119,7 +119,7 @@ void InvalidateMineralBars(APPSESSION &app) {
     rc.right -= LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsN999mr).data(), 5)) + 6;
     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
     dxPop = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsPopulation1000000).data(), 21)) + 6;
-    dx = LOWORD(GetTextExtent(hdc, app.state.rgszPlanetAttr[1], std::strlen(app.state.rgszPlanetAttr[1]))) + 6;
+    dx = LOWORD(GetTextExtent(hdc, app.state.rgszPlanetAttr[1], static_cast<int>(APPGAMESTATE::rgsvPlanetAttr[1].size()))) + 6;
     if (dx * 4 > rc.right) {
         rc.left += LOWORD(GetTextExtent(hdc, app.state.rgszPlanetAttr[1], 4)) + 6;
     } else {
@@ -412,7 +412,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                 win32::TextOutA(hdc, xLeft, yTop, szT, c);
             }
             yTop += static_cast<std::int16_t>((3 * app.state.dyArial8)) / 2;
-            xLeft += LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[2], std::strlen(app.state.rgszMinerals[2])));
+            xLeft += LOWORD(GetTextExtent(hdc, app.state.rgszMinerals[2], static_cast<int>(APPGAMESTATE::rgsvMinerals[2].size())));
             for (i = 0; i < 3; i++) {
                 c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsS2).data(), app.state.rgszMinerals[i]);
                 RightTextOut(app, hdc, xLeft, yTop, app.state.szWork, c, 0);
@@ -522,7 +522,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             dxRLabels = LOWORD(GetTextExtent(hdc, TextIO().pfnCompressed(app, idsN999mr).data(), 5)) + 6;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
-            dxLabels = LOWORD(GetTextExtent(hdc, app.state.rgszPlanetAttr[1], std::strlen(app.state.rgszPlanetAttr[1]))) + 6;
+            dxLabels = LOWORD(GetTextExtent(hdc, app.state.rgszPlanetAttr[1], static_cast<int>(APPGAMESTATE::rgsvPlanetAttr[1].size()))) + 6;
             if (dxLabels * 4 > rc.right) {
                 fShortLabels = 1;
                 dxLabels = LOWORD(GetTextExtent(hdc, app.state.rgszPlanetAttr[1], 4)) + 6;
@@ -750,7 +750,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             i = 0;
             while (i <= 2) {
                 win32::SetTextColor(hdc, app.lpui->rgcrMinerals[i]);
-                RightTextOut(app, hdc, xL - 2, yCur + dy, app.state.rgszMinerals[i], fShortLabels ? 4 : std::strlen(app.state.rgszMinerals[i]), 0);
+                RightTextOut(app, hdc, xL - 2, yCur + dy, APPGAMESTATE::rgsvMinerals[i], fShortLabels ? 4 : static_cast<std::int16_t>(APPGAMESTATE::rgsvMinerals[i].size()), 0);
                 dx = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((dxBar * (app.lpui->cMinGrafMax < rgl[i] + pl.rgwtMin[i] ? app.lpui->cMinGrafMax : rgl[i] + pl.rgwtMin[i]))) / app.lpui->cMinGrafMax)));
                 win32::SetRect(&rcGauge, xL + 1, yCur + 4, xL + dx + 1, yCur + dyRow - 1);
                 if (dx != 0) {

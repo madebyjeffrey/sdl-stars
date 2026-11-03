@@ -633,7 +633,7 @@ void DrawShipCargo(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                 if (!ptile->fMinDraw) {
                     win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                     win32::SetTextColor(hdc, app.lpui->rgcrMinerals[i]);
-                    win32::TextOutA(hdc, xLeft, yTop, app.state.rgszMinerals[i], win32::lstrlenA(app.state.rgszMinerals[i]));
+                    win32::TextOutA(hdc, xLeft, yTop, app.state.rgszMinerals[i], static_cast<int>(APPGAMESTATE::rgsvMinerals[i].size()));
                 }
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
                 win32::SetTextColor(hdc, app.lpui->crButtonText);
