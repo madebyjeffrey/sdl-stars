@@ -2006,11 +2006,11 @@ std::int16_t FImportConflictingTurnAsCopy(APPSESSION &app, const LIBRARYPATHS &p
                                           std::string_view pszName, std::string_view pszSource, int iplr,
                                           std::int32_t lidGame, std::uint16_t turn);
 
-static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUniverse, int iplr);
+static std::int16_t FInspectImportPlayer(APPSESSION &app, std::string_view pszUniverse, int iplr);
 
-static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char *pszSource) {
+static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, std::string_view pszSource) {
     char szUniverse[512], szTarget[512];
-    const char *pszFile, *pszExt, *pchSlash;
+    std::string_view szFile, szExt;
     LIBRARYTURNMATCH lm;
     std::int32_t lidGame, lidCurrent;
     std::uint16_t turn, turnCurrent;
@@ -2021,16 +2021,15 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
     NATIVEFILE *pf;
     int cch;
 
-    pszFile = std::strrchr(pszSource, '/');
-    pchSlash = std::strrchr(pszSource, '\\');
-    if (pchSlash && (!pszFile || pchSlash > pszFile)) pszFile = pchSlash;
-    pszFile = pszFile ? pszFile + 1 : pszSource;
-    pszExt = std::strrchr(pszFile, '.');
-    if (!pszExt || (SDL_tolower(pszExt[1]) != 'm' && SDL_tolower(pszExt[1]) != 'M') ||
-        pszExt[2] < '1' || pszExt[2] > '9' || (pszExt[3] && (pszExt[3] < '0' || pszExt[3] > '9')) ||
-        (pszExt[3] && pszExt[4])) return 0;
-    iplr = pszExt[2] - '0';
-    if (pszExt[3]) iplr = iplr * 10 + pszExt[3] - '0';
+    const std::size_t ichFile = pszSource.find_last_of("/\\");
+    szFile = pszSource.substr(ichFile == std::string_view::npos ? 0 : ichFile + 1);
+    const std::size_t ichExt = szFile.rfind('.');
+    if (ichExt == std::string_view::npos) return 0;
+    szExt = szFile.substr(ichExt);
+    if ((szExt.size() != 3 && szExt.size() != 4) || SDL_tolower(szExt[1]) != 'm' ||
+        szExt[2] < '1' || szExt[2] > '9' || (szExt.size() == 4 && (szExt[3] < '0' || szExt[3] > '9'))) return 0;
+    iplr = szExt[2] - '0';
+    if (szExt.size() == 4) iplr = iplr * 10 + szExt[3] - '0';
     iplr--;
     if (iplr < 0 || iplr >= 16) return 0;
     if (!FInspectImportFile(pszSource, dtTurn, iplr, lidGame, &turn, nullptr, fMulti)) {
@@ -2071,7 +2070,7 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, const char
         cch = CchSnprintf(std::span{szUniverse, sizeof(szUniverse)}, "%s%s%s%s%s.xy",
                           app.lpui->szLibraryRoot.data(), szDirSep, lm.szSelected, szDirSep, lm.szSelected);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szUniverse)) return 0;
-        if (FNativePathInfo(szTarget) || !FInspectImportPlayer(app, szUniverse, iplr)) {
+        if (FNativePathInfo(szTarget) || !FInspectImportPlayer(app, std::string_view{szUniverse}, iplr)) {
             AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryTurnPlayerInvalid).data(), win32::MB_ICONEXCLAMATION);
             return 0;
         }
@@ -2187,7 +2186,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
     if (ichExt != std::string_view::npos && ichExt + 1 < pszSourceView.size() &&
         SDL_tolower(pszSourceView[ichExt + 1]) == 'm') {
         if (!FInitLibrary(app)) return 0;
-        fImported = FImportSubsequentTurn(app, hwnd, szSource);
+        fImported = FImportSubsequentTurn(app, hwnd, pszSourceView);
         if (fImported >= 0) return fImported;
     }
     if (FNativeDirectoryExists(szSource)) {
@@ -2509,7 +2508,7 @@ std::int16_t FDeleteSelectedLibraryGame(APPSESSION &app, HWND hwnd) {
     return FDeleteLibraryGame(app, hwnd, szName);
 }
 
-static std::int16_t FInspectImportPlayer(APPSESSION &app, const char *pszUniverse, int iplr) {
+static std::int16_t FInspectImportPlayer(APPSESSION &app, std::string_view pszUniverse, int iplr) {
     NATIVEFILE *pf;
     HDR hdr;
     RTBOF rtbof;
@@ -2592,7 +2591,7 @@ std::int16_t FImportLibraryOrders(APPSESSION &app, HWND hwnd, std::optional<std:
     if (!FInspectImportFile(szHost, dtHost, iplrNone, lidHost, &turnHost, &wGenHost, fMulti) ||
         !FInspectImportFile(szUniverse, dtXY, iplrNone, lidUniverse, nullptr, nullptr, fMulti) ||
         lidHost != lidUniverse || lidOrders != lidHost || turnOrders != turnHost || wGenOrders != wGenHost ||
-        !FInspectImportPlayer(app, szUniverse, iplr)) {
+        !FInspectImportPlayer(app, std::string_view{szUniverse}, iplr)) {
         AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryOrdersMismatch).data(), win32::MB_ICONEXCLAMATION);
         return 0;
     }
