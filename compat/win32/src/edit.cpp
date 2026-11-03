@@ -18,16 +18,19 @@ static void SyncEditScroll(HWND hwnd);
 
 void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch) {
     char *psz;
+    std::string_view szComposition;
     static_cast<void>(ich); static_cast<void>(cch);
     if (!win32::IsWindow(hwnd) || hwnd->iControl != 3 || (hwnd->dwStyle & win32::ES_READONLY)) return;
     if (!pszUtf) pszUtf = "";
-    if (!FUtf8Valid(pszUtf) || !(psz = SDL_strdup(pszUtf))) return;
+    szComposition = pszUtf;
+    if (!FUtf8Valid(szComposition) || !(psz = SDL_strdup(pszUtf))) return;
     SDL_free(hwnd->pszEditComposition); hwnd->pszEditComposition = psz;
+    hwnd->cchEditComposition = szComposition.size();
     hwnd->ichComposition = hwnd->cchComposition = 0;
     win32::InvalidateRect(hwnd, nullptr, 1);
 }
 
-static UINT CchEdit(HWND hwnd) { return static_cast<UINT>(std::strlen(hwnd->pszTitle)); }
+static UINT CchEdit(HWND hwnd) { return static_cast<UINT>(hwnd->cchTitle); }
 
 static UINT IchEditBoundary(HWND hwnd, UINT ich) {
     UINT i = 0, next, cch = CchEdit(hwnd);
@@ -78,6 +81,7 @@ static void ChangedEdit(HWND hwnd, BOOL fNotify) {
 static void EmptyEditUndo(HWND hwnd) {
     SDL_free(hwnd->pszEditUndo);
     hwnd->pszEditUndo = nullptr;
+    hwnd->cchEditUndo = 0;
     hwnd->fEditTyping = 0; hwnd->iEditUndoAction = editUndoSeparate;
 }
 
@@ -147,7 +151,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
         else if (hwnd->dwStyle & win32::ES_LOWERCASE) pszNew[i] = static_cast<char>(ChEditCase(static_cast<BYTE>(pszNew[i]), 0));
     }
     if (!fGroup) {
-        EmptyEditUndo(hwnd); hwnd->pszEditUndo = undoOwner.release();
+        EmptyEditUndo(hwnd); hwnd->pszEditUndo = undoOwner.release(); hwnd->cchEditUndo = cchOld;
         hwnd->ichUndoPosition = ichFirst;
         hwnd->cchUndoBefore = ichLast - ichFirst; hwnd->cchUndoAfter = static_cast<UINT>(cch);
     } else {
@@ -158,7 +162,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     hwnd->iEditUndoAction = iUndoAction;
     hwnd->ichTypingEnd = ichFirst + static_cast<UINT>(cch);
     hwnd->fEditManualScroll = 0;
-    SDL_free(hwnd->pszTitle); hwnd->pszTitle = newOwner.release();
+    SDL_free(hwnd->pszTitle); hwnd->pszTitle = newOwner.release(); hwnd->cchTitle = cchBase + cch;
     hwnd->ichAnchor = hwnd->ichCaret = ichFirst + static_cast<UINT>(cch);
     hwnd->fModified = 1;
     if (fLimit) NotifyEdit(hwnd, win32::EN_MAXTEXT);
@@ -179,6 +183,7 @@ static BOOL UndoEdit(HWND hwnd) {
         return 1;
     }
     psz = hwnd->pszTitle; hwnd->pszTitle = hwnd->pszEditUndo; hwnd->pszEditUndo = psz;
+    std::swap(hwnd->cchTitle, hwnd->cchEditUndo);
     ichFirst = hwnd->ichUndoPosition; ichLast = ichFirst + hwnd->cchUndoBefore;
     cchBefore = hwnd->cchUndoBefore; hwnd->cchUndoBefore = hwnd->cchUndoAfter; hwnd->cchUndoAfter = cchBefore;
     hwnd->fModified = 1;
@@ -457,7 +462,7 @@ static void PaintEdit(HWND hwnd) {
         y += cy;
     }
     if (fFocus && hwnd->pszEditComposition && *hwnd->pszEditComposition) {
-        UINT cchComp = static_cast<UINT>(std::strlen(hwnd->pszEditComposition));
+        UINT cchComp = static_cast<UINT>(hwnd->cchEditComposition);
         char *pszComp = SDL_strdup(hwnd->pszEditComposition);
         NATIVEOWNER<char, SDL_free> compositionOwner(pszComp);
         if (pszComp) {
@@ -669,7 +674,7 @@ LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         SyncEditScroll(hwnd); if (win32::IsWindow(hwnd)) win32::InvalidateRect(hwnd, nullptr, 1); return 0;
     case win32::WM_SETFOCUS: case win32::WM_KILLFOCUS:
         lp->fEditCaret = msg == win32::WM_SETFOCUS; lp->fEditTyping = 0; lp->iEditUndoAction = editUndoSeparate;
-        if (msg == win32::WM_KILLFOCUS) { SDL_free(lp->pszEditComposition); lp->pszEditComposition = nullptr; }
+        if (msg == win32::WM_KILLFOCUS) { SDL_free(lp->pszEditComposition); lp->pszEditComposition = nullptr; lp->cchEditComposition = 0; }
         if (lp->idEditCaretTimer) win32::KillTimer(hwnd, lp->idEditCaretTimer);
         lp->idEditCaretTimer = msg == win32::WM_SETFOCUS ? win32::SetTimer(hwnd, std::numeric_limits<std::uintptr_t>::max() - 2, 530, nullptr) : 0;
         win32::InvalidateRect(hwnd, nullptr, 1); NotifyEdit(hwnd, msg == win32::WM_SETFOCUS ? win32::EN_SETFOCUS : win32::EN_KILLFOCUS); return 0;

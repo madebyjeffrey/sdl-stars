@@ -503,14 +503,17 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         win32::DestroyWindow(hwnd);
         return 0;
     case win32::WM_SETTEXT: {
-        if (!lParam || !FUtf8Valid(reinterpret_cast<const char *>(lParam)) ||
-            !(pszNew = SDL_strdup(reinterpret_cast<const char *>(lParam)))) return 0;
+        std::string_view szText;
+        if (!lParam) return 0;
+        szText = reinterpret_cast<const char *>(lParam);
+        if (!FUtf8Valid(szText) || !(pszNew = SDL_strdup(szText.data()))) return 0;
         NATIVEOWNER<char, SDL_free> pszOwner(pszNew);
         if (lpwin->lpWindow.get() && !FCompatNativeTitle(lpwin->lpWindow.get(), pszNew)) {
             return 0;
         }
         SDL_free(lpwin->pszTitle);
         lpwin->pszTitle = pszOwner.release();
+        lpwin->cchTitle = szText.size();
         return 1;
     }
     case win32::WM_GETTEXT:
@@ -521,7 +524,7 @@ LRESULT win32::DefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         std::copy_n(psz, cch, reinterpret_cast<char *>(lParam)); (reinterpret_cast<char *>(lParam))[cch] = 0;
         return static_cast<LRESULT>(cch);
     case win32::WM_GETTEXTLENGTH:
-        return static_cast<LRESULT>(SDL_strlen(lpwin->pszTitle));
+        return static_cast<LRESULT>(lpwin->cchTitle);
     default:
         // WM_DESTROY does not quit: the application's last-window policy owns WM_QUIT.
         return 0;

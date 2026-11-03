@@ -89,6 +89,7 @@ struct win32::HWND__ {
     BOOL fZeroX, fZeroY;
     RECT rcChild;
     char *pszTitle;
+    std::size_t cchTitle;
     NATIVEARRAYOWNER<BYTE, std::free> rgbExtra;
     DWORD dwStyle, dwExStyle;
     UINT iControl, bstCheck;
@@ -104,6 +105,7 @@ struct win32::HWND__ {
     UINT_PTR idEditCaretTimer;
     BOOL fModified, fEditInputRejected;
     char *pszEditUndo, *pszEditComposition;
+    std::size_t cchEditUndo, cchEditComposition;
     int ichComposition, cchComposition;
     UINT ichUndoPosition, cchUndoBefore, cchUndoAfter;
     UINT swState;

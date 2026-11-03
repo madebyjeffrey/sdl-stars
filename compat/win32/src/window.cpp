@@ -351,13 +351,14 @@ static void DestroyCompatWindow(HWND lpwin, BOOL fDestroyMessage, BOOL fNotify) 
     CompatDestroyToolbar(lpwin);
     lpwin->lpcombo.reset();
     SDL_free(lpwin->pszEditComposition); lpwin->pszEditComposition = nullptr;
+    lpwin->cchEditComposition = 0;
     SDL_free(lpwin->pszEditUndo);
-    lpwin->pszEditUndo = nullptr;
+    lpwin->pszEditUndo = nullptr; lpwin->cchEditUndo = 0;
     if (lpwin->lpWindow) SDL_StopTextInput(lpwin->lpWindow.get());
     lpwin->lpWindow.reset();
     lpwin->rgbExtra.reset();
     SDL_free(lpwin->pszTitle);
-    lpwin->pszTitle = nullptr;
+    lpwin->pszTitle = nullptr; lpwin->cchTitle = 0;
     UnlinkCompatZ(lpwin);
     lpwin->fAlive = 0;
     if (fRestore) CompatRestoreOwnerFocus(hwndOwner, hwndSaved);
@@ -387,6 +388,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     BOOL fReuse = 0;
     BOOL fNativePopup = 0;
     const char *pszNative;
+    const std::string_view szTitle{pszTitle ? pszTitle : ""};
     int cxReuse, cyReuse;
     RECT rcOwner;
     SDL_WindowFlags flags = SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
@@ -394,7 +396,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     RECT rcClient, rcWindow;
     LRESULT lr;
 
-    if (pszTitle && !FUtf8Valid(pszTitle)) {
+    if (pszTitle && !FUtf8Valid(szTitle)) {
         SDL_SetError("Window text is invalid UTF-8");
         return nullptr;
     }
@@ -453,6 +455,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         delete lpwin;
         return nullptr;
     }
+    lpwin->cchTitle = szTitle.size();
     if (fChild) {
         if (static_cast<std::int64_t>(x) + dx > std::numeric_limits<std::int32_t>::max() || static_cast<std::int64_t>(y) + dy > std::numeric_limits<std::int32_t>::max()) {
             SDL_free(lpwin->pszTitle);
