@@ -3790,7 +3790,7 @@
     },
     "lifetimes": "Message expansion, report labels, ship orders, fleet rendering and scanner captions consume actual owned values. Named arrays retain text through existing pointer locals; immediate drawing/formatting calls borrow only until return.",
     "effects": "Keep existing work-buffer writes for message \\w expansion, object-name delegation, catalog bytes, coordinate formatting and distance rounding. No allocation or record layout change.",
-    "remaining": "Underlying planet/fleet/thing names now return owned values under object_names; other scratch interfaces and scanner destination-tail bounds remain active.",
+    "remaining": "Underlying planet/fleet/thing names now return owned values under object_names; other scratch interfaces remain active.",
     "verification": {
       "batch": "L05w owned location and distance values",
       "debug_build": "Pass, no warnings. Release SDL regression and host builds pass. Compiler/source policy covers 158 owned sources, 159 variants and 161 standalone headers in both orders; maintained raw-copy spellings pass.",
@@ -3802,9 +3802,9 @@
       "characterization": "Parent/final actual utility checks preserve Deep Space, signed coordinate extremes, a Unicode planet provider, a missing fleet, an actual wormhole record and both distance-caption variants. The message grammar vector \\n|\\w returns the coordinate label twice before and after migration. New owned-value assertions retain two locations and a distance through later lookups.",
       "interfaces": "PszGetLocName and PszGetDistance return independent fixed 360-byte arrays, matching the existing work/display capacity. Seven location and two distance production consumers migrate: message expansion, report destination, ship/order drawing and scanner text. Existing named pointer locals borrow named owners; immediate drawing/copy/formatting calls borrow only until return. The unchanged typed fleet formatter directly accepts the owned array value.",
       "effects": "Keep existing object-name delegation and all work-buffer effects required by current message \\w expansion. Coordinate and distance formulas, binary64 rounding, flags, formatting grammar, UTF-8 bytes, names and field widths remain. No allocation or compatibility overload is added.",
-      "inventory": "Copy inventory remains 255 migrated sites and 53 initial application sites pending (59 lexical spellings including SDK declarations/definitions). The scanner append spelling now reads the owned result; its destination-capacity migration remains explicitly pending.",
+      "inventory": "Copy inventory remains 255 migrated sites and 53 initial application sites pending (59 lexical spellings including SDK declarations/definitions). The scanner append now tracks the distance, catalog labels and location within the remaining destination span.",
       "baseline": "Behavior-neutral: native/frozen-original baseline bytes and unit goldens unchanged. No scenario/checkpoint moved; no regression export required. Game rules, record layouts, RNG, tie order and binary64 boundaries remain.",
-      "remaining": "Underlying planet/fleet/thing scratch-return interfaces, scanner tail capacity, other L05 path/text/const/wrapper formatting, L06 service interfaces/Milestone D and L08 final qualification remain active.",
+      "remaining": "Underlying planet/fleet/thing scratch-return interfaces, other L05 path/text/const/wrapper formatting, L06 service interfaces/Milestone D and L08 final qualification remain active.",
       "receipts": "dist/verification/live-cpp/l05w/"
     }
   },
@@ -3819,7 +3819,7 @@
     "production_calls": 78,
     "providers": "TEXTIO derives the exact owned return type; lifecycle, location and native-file-UI providers return independent 360-byte arrays.",
     "effects": "Existing work-buffer writes remain for message work expansion and explicit workspace consumers. Names, UTF-8 budgets, ownership prefixes, orbit flags, missing-object behavior and all formatter expressions stay unchanged. No allocation, record layout or compatibility overload is added.",
-    "remaining": "Encoded labels and messages now return owned values. Remaining readonly interfaces, scratch-storage review, scanner tail bounds and three mineral-summary appends remain pending.",
+    "remaining": "Encoded labels and messages now return owned values. Remaining readonly interfaces, scratch-storage review and three mineral-summary appends remain pending.",
     "calls": [
       {
         "path": "src/core/msg.cpp",
