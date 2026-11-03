@@ -1427,7 +1427,7 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
         if (lpfl->rgcsh[0] != 0 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 6 && app.state.rgshdef[0].hul.ihuldef == ihuldefScout)
             goto LScrapFleet;
         ChangeMainObjSel(app, grobjFleet, lpfl->id);
-        IdTargetScout(app, lpfl, lpflAttack, lpflEnemy, app.state.game.fAisBand, &lpthWorm);
+        IdTargetScout(app, lpfl, lpflAttack, lpflEnemy, app.state.game.fAisBand);
         continue;
     LTryMinelayers:
         if (lpfl->rgcsh[12] == 0)

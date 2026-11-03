@@ -23,6 +23,11 @@ struct SALVAGETARGETRESULT {
     THING *lpthBest;
     std::int16_t idBest;
 };
+
+struct UNKNOWNPLANETRESULT {
+    std::int16_t idPlanet;
+    THING *lpthWorm;
+};
 #include <cstdint>
 #include <optional>
 
@@ -47,7 +52,7 @@ std::int16_t  FGotoWormholeAiFleet(APPSESSION &app, FLEET *lpfl, THING *lpthWorm
 COLONIZABLEPLANETRESULT IdNearestColonizablePlanet(APPSESSION &app, FLEET *lpflCol, bool fFindWorm);
 THING   *LpthWormFind(APPSESSION &app, POINT16 *ppt, std::int32_t d2);
 std::uint32_t UlFleetPower(APPSESSION &app, FLEET *lpfl);
-std::int16_t  IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl, THING **plpthWorm);
+UNKNOWNPLANETRESULT IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl);
 void     AddMinesToBlockedQueues(APPSESSION &app);
 std::int16_t  FFleetInField(FLEET *lpfl, THING *lpth);
 void     SetAiFleetIdealSpeed(APPSESSION &app, FLEET *lpfl, std::int16_t wtFuelMax, std::int16_t cMinefields, THING **rglpth);
@@ -74,7 +79,7 @@ std::int16_t  IdRandomPlanetNearby(APPSESSION &app, POINT16 pt, std::int16_t cDi
 void     ClearAiCurrentTask(APPSESSION &app, FLEET *lpfl, std::int16_t fChangeSel);
 std::int16_t  FEnumOurStarbase(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest);
 std::int16_t  FFleetMightHaveTeeth(APPSESSION &app, FLEET *lpfl);
-std::int16_t  IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans, THING **plpthWorm);
+std::int16_t  IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans);
 void     MarkPlanetsUnderAttack(APPSESSION &app);
 void     FixPlanetsUnderAttack(APPSESSION &app, PROD *rgprod);
 void     QuickBuildDefenses(APPSESSION &app, PLANET *lppl, PROD *rgprod);

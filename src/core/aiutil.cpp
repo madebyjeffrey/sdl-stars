@@ -438,10 +438,11 @@ std::uint32_t UlFleetPower(APPSESSION &app, FLEET *lpfl) {
     return ul;
 }
 
-std::int16_t IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl, THING **plpthWorm) {
+UNKNOWNPLANETRESULT IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl) {
     POINT16  pt;
     std::int32_t  dy;
     std::int32_t  d2;
+    UNKNOWNPLANETRESULT result;
     std::int16_t  idBest;
     std::int16_t  i;
     std::int32_t  dx;
@@ -474,16 +475,14 @@ std::int16_t IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl, THING **plpthW
         i++;
         lpb += 16;
     }
-    if (plpthWorm) {
-        *plpthWorm = nullptr;
-        if (lpfl->idPlanet != idPlanetDeepSpace && RandomIO().pfnRandom(app, 100) < 5) {
-            *plpthWorm = LpthWormFind(app, &pt, d2);
-        }
-        if (*plpthWorm) {
-            idBest = idplNone;
-        }
+    result = {idBest, nullptr};
+    if (lpfl->idPlanet != idPlanetDeepSpace && RandomIO().pfnRandom(app, 100) < 5) {
+        result.lpthWorm = LpthWormFind(app, &pt, d2);
     }
-    return idBest;
+    if (result.lpthWorm) {
+        result.idPlanet = idplNone;
+    }
+    return result;
 }
 
 void AddMinesToBlockedQueues(APPSESSION &app) {
@@ -1817,10 +1816,11 @@ std::int16_t FFleetMightHaveTeeth(APPSESSION &app, FLEET *lpfl) {
     return 0;
 }
 
-std::int16_t IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans, THING **plpthWorm) {
+std::int16_t IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans) {
     FLEET  *lpflClosest;
     FLEET  *lpflT;
     std::int32_t lDistBest;
+    UNKNOWNPLANETRESULT unknownPlanet;
     PLANET *lpplMac;
     POINT16 pt;
     std::int16_t dy;
@@ -1894,14 +1894,15 @@ std::int16_t IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *
             goto ThwakSumthin;
         }
     } else if (fOnlyHumans) {
-        return IdTargetScout(app, lpfl, lpflAtk, lpflEnemy, 0, plpthWorm);
+        return IdTargetScout(app, lpfl, lpflAtk, lpflEnemy, 0);
     }
 LFindPlanet:
-    idClosest = IdNearestUnknownPlanet(app, lpfl, plpthWorm);
-    if (plpthWorm && *plpthWorm) {
-        ord.pt = (*plpthWorm)->pt();
+    unknownPlanet = IdNearestUnknownPlanet(app, lpfl);
+    idClosest = unknownPlanet.idPlanet;
+    if (unknownPlanet.lpthWorm) {
+        ord.pt = unknownPlanet.lpthWorm->pt();
         ord.grobj = grobjThing;
-        ord.id = (*plpthWorm)->idFull();
+        ord.id = unknownPlanet.lpthWorm->idFull();
     } else {
         if (idClosest == idplNone) {
             if (app.state.rgplr[app.state.idPlayer].idPlanetHome == idplNone) {

@@ -452,7 +452,7 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
         ChangeMainObjSel(app, grobjFleet, lpfl->id);
         if (app.state.rgshdef[0].hul.rghs[0].iItem < iengineRadiatingHydroRamScoop && lpfl->rgwtMin[4] < 2)
             goto LScrapFleet;
-        IdTargetScout(app, lpfl, lpflAttack, lpflEnemy, app.state.game.fAisBand, &lpthWorm);
+        IdTargetScout(app, lpfl, lpflAttack, lpflEnemy, app.state.game.fAisBand);
         continue;
     LTryFighters:;
     }
@@ -840,7 +840,7 @@ void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
         ChangeMainObjSel(app, grobjFleet, lpfl->id);
         if (lpfl->rgcsh[0] != 0 && app.state.rgshdef[0].hul.rghs[0].iItem == iengineQuickJump5 && lpfl->rgwtMin[4] < 2)
             goto LScrapFleet;
-        IdTargetScout(app, lpfl, lpflAttack, lpflEnemy, app.state.game.fAisBand, &lpthWorm);
+        IdTargetScout(app, lpfl, lpflAttack, lpflEnemy, app.state.game.fAisBand);
         continue;
     LTryFighters:;
     }
