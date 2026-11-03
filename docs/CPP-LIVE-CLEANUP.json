@@ -231,7 +231,8 @@
         "bounded-library-tree-removal-path-view",
         "bounded-library-staging-backup-and-conflict-turn-views",
         "bounded-remaining-library-publication-path-interfaces",
-        "borrowed-library-import-and-backup-callback-views"
+        "borrowed-library-import-and-backup-callback-views",
+        "popup-menu-labels-as-optional-bounded-views"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25161,6 +25162,32 @@
       "api_audit": "PopupMenu accepts read-only spans for optional ID and label arrays, checks count against supplied extents, and rejects a positive count with no backing array. Callers pass exact spans for dynamically allocated IDs.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 optional bounded popup label views",
+      "parent": "08805da6",
+      "source_commit": "db624733",
+      "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+      "desktop_unit_tests": "18/18 pass, including bounded history menu label checks.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "The transport-preset witness compiles and links with optional string_view menu labels.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; popup labels are consumed synchronously, and copied menu strings are owned until AppendMenuA returns.",
+      "api_audit": "PopupMenu label spans now hold optional string_view entries, so submenu markers remain distinct from empty labels. Menu labels are copied into owned NUL-terminated strings only at the Win32 menu API boundary; ampersand escaping uses dynamic owned scratch text.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -25181,7 +25208,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L06 popup menu selection arrays use spans",
+    "latest_batch": "L05 optional bounded popup label views",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25213,13 +25240,13 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L06 popup menu selection arrays use spans",
-    "source_commit": "7a20be40",
-    "status": "Locally committed as 7a20be40. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 optional bounded popup label views",
+    "source_commit": "db624733",
+    "status": "Locally committed as db624733. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "PopupMenu accepts read-only spans for item IDs and text pointers; all callsites now provide bounded arrays or empty spans.",
-      "The function validates its item count against available spans and rejects a positive count when both arrays are absent.",
-      "Updated history-row tests and the transport-preset witness callback to use spans."
+      "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
+      "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
+      "Ampersand escaping uses dynamic string scratch storage; updated history-menu checks and transport-preset witness types."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25427,10 +25454,14 @@
       {
         "commit": "7a20be40",
         "message": "Pass popup menu arrays as spans"
+      },
+      {
+        "commit": "db624733",
+        "message": "Pass popup labels as optional text views"
       }
     ],
-    "latest_source_commit": "7a20be40",
-    "latest_batch_status": "Locally committed as 7a20be40. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "db624733",
+    "latest_batch_status": "Locally committed as db624733. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
@@ -25649,13 +25680,13 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L06 popup menu selection arrays use spans",
-    "source_commit": "7a20be40",
-    "status": "Locally committed as 7a20be40. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 optional bounded popup label views",
+    "source_commit": "db624733",
+    "status": "Locally committed as db624733. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "PopupMenu accepts read-only spans for item IDs and text pointers; all callsites now provide bounded arrays or empty spans.",
-      "The function validates its item count against available spans and rejects a positive count when both arrays are absent.",
-      "Updated history-row tests and the transport-preset witness callback to use spans."
+      "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
+      "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
+      "Ampersand escaping uses dynamic string scratch storage; updated history-menu checks and transport-preset witness types."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
@@ -25988,6 +26019,10 @@
       {
         "commit": "7a20be40",
         "message": "Pass popup menu arrays as spans"
+      },
+      {
+        "commit": "db624733",
+        "message": "Pass popup labels as optional text views"
       }
     ],
     "parent": "4867b0c5"
