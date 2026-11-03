@@ -181,7 +181,7 @@ static void PaintControl(HWND hwnd) {
         rcBox = rc; rcBox.top += 7;
         CompatDrawClassicEdge(hdc, &rcBox, 1, 1);
         rcText.left += 8;
-        if (win32::GetTextExtentPoint32A(hdc, lp->pszTitle, static_cast<int>(SDL_strlen(lp->pszTitle)), &size)) {
+        if (win32::GetTextExtentPoint32A(hdc, lp->pszTitle, static_cast<int>(lp->cchTitle), &size)) {
             rcBox = rcText; rcBox.right = rcBox.left + size.cx + 4; rcBox.bottom = rcBox.top + size.cy;
             win32::FillRect(hdc, &rcBox, hbr);
         }
