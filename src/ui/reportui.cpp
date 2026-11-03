@@ -1,5 +1,6 @@
 #include "win.h"
 #include <algorithm>
+#include <optional>
 #include <string_view>
 #include "appstate.h"
 #include "callbackcontext.h"
@@ -13,6 +14,7 @@
 #include "part_query_io.h"
 #include "alert_io.h"
 #include "capacity_io.h"
+#include "vcr.h"
 
 // Wheel deltas short of a notch, for rows and for columns.
 static std::int16_t dWheelRows;
@@ -1175,7 +1177,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
     PLANETNAMERESULT szPlanetName{};
     FLEETNAMERESULT szFleetName{};
     std::array<char, 360> szReportText{};
-    std::uint8_t *lpbd;
+    std::optional<NATIVEBATTLEDATAVIEW> obdv;
     char     szT[100];
     char     chT;
     std::string_view szClass;
@@ -1478,8 +1480,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         }
         break;
     case rptBattles:
-        lpbd = BtlDataGet(app, app.lpui->vlprgidMisc[irow]);
-        if (!lpbd)
+        obdv = BtlDataGet(app, app.lpui->vlprgidMisc[irow]);
+        if (!obdv)
             break;
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         win32::SetTextColor(hdc, 0);
@@ -1488,26 +1490,26 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             break;
         switch (icol) {
         case colBattleLocation:
-            if (BdvFromLp(app, lpbd).idPlanet() != idPlanetNone) {
-                szPlanetName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd).idPlanet());
+            if (obdv->idPlanet() != idPlanetNone) {
+                szPlanetName = TextIO().pfnPlanetName(app, obdv->idPlanet());
                 psz = szPlanetName.data();
                 cch = static_cast<std::int16_t>(szPlanetName.size());
             } else {
                 psz = szT;
-                cch = CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd).pt().x(), BdvFromLp(app, lpbd).pt().y());
+                cch = CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), obdv->pt().x(), obdv->pt().y());
             }
-            if (BdvFromLp(app, lpbd).pt().x() == app.state.sel.scan.pt.x && BdvFromLp(app, lpbd).pt().y() == app.state.sel.scan.pt.y) {
+            if (obdv->pt().x() == app.state.sel.scan.pt.x && obdv->pt().y() == app.state.sel.scan.pt.y) {
                 win32::SetTextColor(hdc, 127);
             }
             win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, cch, nullptr);
             break;
         case colBattleSides:
-            DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, static_cast<std::uint32_t>(BdvFromLp(app, lpbd).cplr()));
+            DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, static_cast<std::uint32_t>(obdv->cplr()));
             break;
         case colBattleStarbase:
-            if (CBattleUnits(app, lpbd, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb)) != 0) {
+            if (CBattleUnits(app, *obdv, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb)) != 0) {
                 chT = 'O';
-            } else if (CBattleUnits(app, lpbd, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) != 0) {
+            } else if (CBattleUnits(app, *obdv, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) != 0) {
                 chT = 'T';
             } else {
                 chT = ' ';
@@ -1538,18 +1540,18 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         case colBattleTheirs:
             i = 254;
         BtlUnitsCom:
-            DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, CBattleUnits(app, lpbd, static_cast<BattleUnitFlags>(i)));
+            DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, CBattleUnits(app, *obdv, static_cast<BattleUnitFlags>(i)));
             break;
         case colBattleOurDead:
         case colBattleTheirDead:
-            l = CBattleKills(app, lpbd, icol == colBattleOurDead);
+            l = CBattleKills(app, *obdv, icol == colBattleOurDead);
             DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, l);
             break;
         case colBattleOursLeft:
             i = 253;
         LUnitsLeft:
-            l = CBattleUnits(app, lpbd, static_cast<BattleUnitFlags>(i));
-            l -= CBattleKills(app, lpbd, icol == colBattleOursLeft);
+            l = CBattleUnits(app, *obdv, static_cast<BattleUnitFlags>(i));
+            l -= CBattleKills(app, *obdv, icol == colBattleOursLeft);
             DrawMineralItem(app, hdc, prc->right - 2, prc->top, -1, l);
             break;
         case colBattleTheirsLeft:
@@ -1782,10 +1784,10 @@ int ICompReport(APPSESSION &app, std::uint16_t *pid1, std::uint16_t *pid2) {
     std::int16_t      iLast;
     FLEET       *lpfl2;
     FLEET       *lpfl1;
-    std::uint8_t     *lpbd1;
+    std::optional<NATIVEBATTLEDATAVIEW> obdv1;
     std::int16_t      ibtl2;
     std::int16_t      ibtl1;
-    std::uint8_t     *lpbd2;
+    std::optional<NATIVEBATTLEDATAVIEW> obdv2;
 
     iRet = 0;
     iSubsort = app.lpui->vprptCur->iSubsort;
@@ -2116,9 +2118,9 @@ TryTier2:
     case rptBattles:
         ibtl1 = *pid1;
         ibtl2 = *pid2;
-        lpbd1 = BtlDataGet(app, ibtl1);
-        lpbd2 = BtlDataGet(app, ibtl2);
-        if (!lpbd1 || !lpbd2) {
+        obdv1 = BtlDataGet(app, ibtl1);
+        obdv2 = BtlDataGet(app, ibtl2);
+        if (!obdv1 || !obdv2) {
             iRet = 0;
             break;
         }
@@ -2126,35 +2128,35 @@ TryTier2:
             break;
         switch (icolSort) {
         case colBattleLocation:
-            if (BdvFromLp(app, lpbd1).idPlanet() != idPlanetNone) {
-                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd1).idPlanet()).rgch;
+            if (obdv1->idPlanet() != idPlanetNone) {
+                szObjectName = TextIO().pfnPlanetName(app, obdv1->idPlanet()).rgch;
                 psz = szObjectName.data();
                 CchCopyUtf8Prefix(std::span{szT}, psz);
             } else {
-                CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd1).pt().x(), BdvFromLp(app, lpbd1).pt().y());
+                CchSprintf(szT, TextIO().pfnCompressed(app, idsSpaceDD).data(), obdv1->pt().x(), obdv1->pt().y());
             }
-            if (BdvFromLp(app, lpbd2).idPlanet() != idPlanetNone) {
-                szObjectName = TextIO().pfnPlanetName(app, BdvFromLp(app, lpbd2).idPlanet()).rgch;
+            if (obdv2->idPlanet() != idPlanetNone) {
+                szObjectName = TextIO().pfnPlanetName(app, obdv2->idPlanet()).rgch;
                 psz = szObjectName.data();
             } else {
-                CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), BdvFromLp(app, lpbd2).pt().x(), BdvFromLp(app, lpbd2).pt().y());
+                CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsSpaceDD).data(), obdv2->pt().x(), obdv2->pt().y());
                 psz = app.state.szWork;
             }
             iRet = std::strcmp(szT, psz);
             break;
         case colBattleStarbase:
-            l1 = CBattleUnits(app, lpbd1, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
+            l1 = CBattleUnits(app, *obdv1, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
             if (l1 == 0) {
-                l1 = static_cast<std::int32_t>((CBattleUnits(app, lpbd1, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2));
+                l1 = static_cast<std::int32_t>((CBattleUnits(app, *obdv1, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2));
             }
-            l2 = CBattleUnits(app, lpbd2, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
+            l2 = CBattleUnits(app, *obdv2, static_cast<BattleUnitFlags>(grBuOurUnits | grBuIncludeSb));
             if (l2 != 0)
                 goto LRetDiff;
-            l2 = static_cast<std::int32_t>((CBattleUnits(app, lpbd2, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2));
+            l2 = static_cast<std::int32_t>((CBattleUnits(app, *obdv2, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuIncludeSb)) * 2));
             goto LRetDiff;
         case colBattleSides:
-            l1 = static_cast<std::uint32_t>(BdvFromLp(app, lpbd1).cplr());
-            l2 = static_cast<std::uint32_t>(BdvFromLp(app, lpbd2).cplr());
+            l1 = static_cast<std::uint32_t>(obdv1->cplr());
+            l2 = static_cast<std::uint32_t>(obdv2->cplr());
             goto LRetDiff;
         case colBattleUnarmed:
             i = 11;
@@ -2180,21 +2182,21 @@ TryTier2:
         case colBattleTheirs:
             i = 254;
         BtlUnitsCom:
-            l1 = CBattleUnits(app, lpbd1, static_cast<BattleUnitFlags>(i));
-            l2 = CBattleUnits(app, lpbd2, static_cast<BattleUnitFlags>(i));
+            l1 = CBattleUnits(app, *obdv1, static_cast<BattleUnitFlags>(i));
+            l2 = CBattleUnits(app, *obdv2, static_cast<BattleUnitFlags>(i));
             goto LRetDiff;
         case colBattleOurDead:
         case colBattleTheirDead:
-            l1 = CBattleKills(app, lpbd1, icolSort == colBattleOurDead);
-            l2 = CBattleKills(app, lpbd2, icolSort == colBattleOurDead);
+            l1 = CBattleKills(app, *obdv1, icolSort == colBattleOurDead);
+            l2 = CBattleKills(app, *obdv2, icolSort == colBattleOurDead);
             goto LRetDiff;
         case colBattleOursLeft:
             i = 253;
         LUnitsLeft:
-            l1 = CBattleUnits(app, lpbd1, static_cast<BattleUnitFlags>(i));
-            l2 = CBattleUnits(app, lpbd2, static_cast<BattleUnitFlags>(i));
-            l1 -= CBattleKills(app, lpbd1, icolSort == colBattleOursLeft);
-            l2 -= CBattleKills(app, lpbd2, icolSort == colBattleOursLeft);
+            l1 = CBattleUnits(app, *obdv1, static_cast<BattleUnitFlags>(i));
+            l2 = CBattleUnits(app, *obdv2, static_cast<BattleUnitFlags>(i));
+            l1 -= CBattleKills(app, *obdv1, icolSort == colBattleOursLeft);
+            l2 -= CBattleKills(app, *obdv2, icolSort == colBattleOursLeft);
             goto LRetDiff;
         case colBattleTheirsLeft:
             i = 254;
@@ -2514,7 +2516,7 @@ void InvalidateReport(APPSESSION &app, ReportType irpt, std::int16_t fReload) {
 
 void ExecuteReportClick(APPSESSION &app, POINT16 pt, ReportType irpt, std::int16_t icol, std::int16_t irow) {
     HDC      hdc;
-    std::uint8_t *lpbd;
+    std::optional<NATIVEBATTLEDATAVIEW> obdv;
     PLANET  *lppl;
     std::int16_t  i;
     FLEET   *lpfl;
@@ -2657,24 +2659,24 @@ void ExecuteReportClick(APPSESSION &app, POINT16 pt, ReportType irpt, std::int16
         }
         break;
     case rptBattles:
-        lpbd = BtlDataGet(app, app.lpui->vlprgidMisc[irow]);
-        if (!lpbd)
+        obdv = BtlDataGet(app, app.lpui->vlprgidMisc[irow]);
+        if (!obdv)
             break;
-        if (BdvFromLp(app, lpbd).pt().x() == app.state.sel.scan.pt.x && BdvFromLp(app, lpbd).pt().y() == app.state.sel.scan.pt.y)
+        if (obdv->pt().x() == app.state.sel.scan.pt.x && obdv->pt().y() == app.state.sel.scan.pt.y)
             goto LDisplayVCRAnyway;
 
-        scan.pt = BdvFromLp(app, lpbd).pt().ReadValue();
+        scan.pt = obdv->pt().ReadValue();
         scan.grobj = static_cast<GrobjClass>(grobjPlanet | grobjFleet | grobjOther | grobjThing | mdExact);
         ChangeScanSel(app, &scan, 0);
         CtrPointScan(app, scan.pt, 1);
         PresentationIO().pfnInvalidateReport(app, rptPlanets, 0);
-        if (BdvFromLp(app, lpbd).pt().x() == app.state.sel.scan.pt.x && BdvFromLp(app, lpbd).pt().y() == app.state.sel.scan.pt.y)
+        if (obdv->pt().x() == app.state.sel.scan.pt.x && obdv->pt().y() == app.state.sel.scan.pt.y)
             break;
 
     LDisplayVCRAnyway:
         if (app.lpui->hwndVCRDlg)
             break;
-        BattleVCR(app, BdvFromLp(app, lpbd).id());
+        BattleVCR(app, obdv->id());
         break;
     case rptEnemyFleets:
         if (app.lpui->vprptCur == &app.state.vrptEFleet && irow >= -2) {

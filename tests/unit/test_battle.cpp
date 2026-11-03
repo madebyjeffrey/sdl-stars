@@ -41,6 +41,7 @@ static void test_battle_replay_bytes(void) {
     int32_t rgdp[2]{};
     int16_t ish, i;
     VCRSTATS vcrStats;
+    std::optional<NATIVEBATTLEDATAVIEW> obdv;
     BTLREC br{};
     KILL kill{};
 
@@ -68,10 +69,11 @@ static void test_battle_replay_bytes(void) {
     br.itok = 1; br.brcDest = 0x56; br.ctok = 0; br.iRound = 1;
     TEST_ASSERT(FEncodeBattleRecord(br, std::as_writable_bytes(std::span(lpb + 86, 6))));
     lpb[92] = lpb[93] = 0xff;
-    TEST_CHECK(BtlDataGet(app, 0) == lpb && BtlDataGet(app, 1) == NULL);
-    TEST_CHECK(CBattleUnits(app, lpb, static_cast<BattleUnitFlags>(grBuOurUnits | grBuClassAll)) == 10);
-    TEST_CHECK(CBattleUnits(app, lpb, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuClassAll)) == 8);
-    TEST_CHECK(CBattleKills(app, lpb, 1) == 2 && CBattleKills(app, lpb, 0) == 0);
+    obdv = BtlDataGet(app, 0);
+    TEST_CHECK(obdv && obdv->id() == 4 && !BtlDataGet(app, 1));
+    TEST_CHECK(CBattleUnits(app, *obdv, static_cast<BattleUnitFlags>(grBuOurUnits | grBuClassAll)) == 10);
+    TEST_CHECK(CBattleUnits(app, *obdv, static_cast<BattleUnitFlags>(grBuTheirUnits | grBuClassAll)) == 8);
+    TEST_CHECK(CBattleKills(app, *obdv, true) == 2 && CBattleKills(app, *obdv, false) == 0);
     app.state.vrgtok = rgtok; app.lpui->vrgdpVCR = rgdp;
     app.lpui->vlpbdVCR = lpb; app.lpui->vlpbdVCRNext = lpb + 92;
     app.lpui->viStepVCRCur = -1; app.lpui->vcStepVCR = 1;

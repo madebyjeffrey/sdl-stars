@@ -66,13 +66,13 @@ LCleanup:
     return;
 }
 
-std::uint8_t *BtlDataGet(APPSESSION &app, std::int16_t i) {
+std::optional<NATIVEBATTLEDATAVIEW> BtlDataGet(APPSESSION &app, std::int16_t i) {
     std::uint8_t *lpbd;
     HB      *lphb;
 
     lphb = app.state.rglphb[11];
     if (!lphb) {
-        return nullptr;
+        return std::nullopt;
     }
     lpbd = reinterpret_cast<std::uint8_t *>(lphb) + (sizeof(HB) + 2);
     while (1) {
@@ -83,38 +83,38 @@ std::uint8_t *BtlDataGet(APPSESSION &app, std::int16_t i) {
             lpbd = reinterpret_cast<std::uint8_t *>(lphb) + (sizeof(HB) + 2);
         } else {
             if (BdvFromLp(app, lpbd).cbData() == 0) {
-                return nullptr;
+                return std::nullopt;
             }
             if (i-- <= 0) {
-                return lpbd;
+                return BdvFromLp(app, lpbd);
             }
             lpbd = static_cast<std::uint8_t *>(lpbd) + BdvFromLp(app, lpbd).cbData();
         }
     }
-    return nullptr;
+    return std::nullopt;
 }
 
-std::int32_t CBattleUnits(APPSESSION &app, std::uint8_t *lpbd, BattleUnitFlags grbitBU) {
-    std::uint8_t     *lptok;
+std::int32_t CBattleUnits(APPSESSION &app, NATIVEBATTLEDATAVIEW bdv, BattleUnitFlags grbitBU) {
+    NATIVEBATTLETOKENVIEW btv;
     std::int16_t      ctok;
     std::int32_t      lUnits;
     std::int16_t      i;
     HullCategory imd;
 
-    ctok = BdvFromLp(app, lpbd).ctok();
+    ctok = bdv.ctok();
     lUnits = 0;
     for (i = 0; i < ctok; i++) {
-        lptok = BdvFromLp(app, lpbd).rgtok(i).Lpb();
-        if (BtvFromLp(app, lptok).iplr() == app.state.idPlayer) {
+        btv = bdv.rgtok(i);
+        if (btv.iplr() == app.state.idPlayer) {
             if (!(grbitBU & grBuOurUnits))
                 continue;
         } else if (!(grbitBU & grBuTheirUnits)) {
             continue;
         }
-        if (!(grbitBU & grBuIncludeSb) && BtvFromLp(app, lptok).ishdef() >= 16)
+        if (!(grbitBU & grBuIncludeSb) && btv.ishdef() >= 16)
             continue;
-        if ((grbitBU & grBuClassAll) != 0xf8 && BtvFromLp(app, lptok).ishdef() < 16) {
-            imd = static_cast<HullCategory>(PartQueryIO().pfnHull(app.state.rglpshdef[BtvFromLp(app, lptok).iplr()][BtvFromLp(app, lptok).ishdef()].hul.ihuldef)->imdCategory);
+        if ((grbitBU & grBuClassAll) != 0xf8 && btv.ishdef() < 16) {
+            imd = static_cast<HullCategory>(PartQueryIO().pfnHull(app.state.rglpshdef[btv.iplr()][btv.ishdef()].hul.ihuldef)->imdCategory);
             if (static_cast<std::int16_t>(imd) <= hullCatFreighter || static_cast<std::int16_t>(imd) >= hullCatMiner) {
                 if (!(grbitBU & grBuClassUnarmed))
                     continue;
@@ -132,26 +132,26 @@ std::int32_t CBattleUnits(APPSESSION &app, std::uint8_t *lpbd, BattleUnitFlags g
                     continue;
             }
         }
-        lUnits += static_cast<std::uint32_t>(BtvFromLp(app, lptok).csh());
+        lUnits += static_cast<std::uint32_t>(btv.csh());
     }
     return lUnits;
 }
 
-std::int32_t CBattleKills(APPSESSION &app, std::uint8_t *lpbd, bool fOurDead) {
+std::int32_t CBattleKills(APPSESSION &app, NATIVEBATTLEDATAVIEW bdv, bool fOurDead) {
     std::int32_t  cKilled;
     std::uint8_t *lpbdNext;
     std::int16_t  i;
     std::uint8_t  *lpbr;
     std::int16_t  cKill;
 
-    lpbr = BdvFromLp(app, lpbd).FirstEvent();
-    lpbdNext = static_cast<std::uint8_t *>(lpbd) + BdvFromLp(app, lpbd).cbData();
+    lpbr = bdv.FirstEvent();
+    lpbdNext = bdv.Next();
     cKilled = 0;
     for (; lpbr < lpbdNext; lpbr = BevFromLp(app, lpbr).Next()) {
         cKill = BevFromLp(app, lpbr).ctok();
         for (i = 0; i < cKill; i++) {
             if (BevFromLp(app, lpbr).rgkill(i).cshKill() > 0) {
-                if (BdvFromLp(app, lpbd).rgtok(BevFromLp(app, lpbr).rgkill(i).itok()).iplr() == app.state.idPlayer) {
+                if (bdv.rgtok(BevFromLp(app, lpbr).rgkill(i).itok()).iplr() == app.state.idPlayer) {
                     if (fOurDead) {
                         cKilled += static_cast<std::uint32_t>(BevFromLp(app, lpbr).rgkill(i).cshKill());
                     }

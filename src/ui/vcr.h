@@ -2,7 +2,9 @@
 #define STARS_DECOMPILED_VCR_H
 
 #include "win.h"
+#include "battleviews.h"
 #include <cstdint>
+#include <optional>
 #include <windows.h>
 
 struct VCRSTATS {
@@ -13,9 +15,9 @@ struct VCRSTATS {
 };
 
 void             BattleVCR(APPSESSION &app, std::int16_t iBattle);
-std::uint8_t         *BtlDataGet(APPSESSION &app, std::int16_t i);
-std::int32_t          CBattleUnits(APPSESSION &app, std::uint8_t *lpbd, BattleUnitFlags grbitBU);
-std::int32_t          CBattleKills(APPSESSION &app, std::uint8_t *lpbd, bool fOurDead);
+std::optional<NATIVEBATTLEDATAVIEW> BtlDataGet(APPSESSION &app, std::int16_t i);
+std::int32_t          CBattleUnits(APPSESSION &app, NATIVEBATTLEDATAVIEW bdv, BattleUnitFlags grbitBU);
+std::int32_t          CBattleKills(APPSESSION &app, NATIVEBATTLEDATAVIEW bdv, bool fOurDead);
 std::int32_t          LdpFromItokDv(APPSESSION &app, std::int16_t itok, DV dv);
 std::int16_t          SetVCRBoard(APPSESSION &app, std::int16_t iStep);
 INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
