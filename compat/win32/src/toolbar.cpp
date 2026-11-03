@@ -7,7 +7,7 @@
 #include <cstring>
 #include <string_view>
 
-struct COMPATTOOLBUTTON { TBBUTTON btn; RECT rc; char *psz; };
+struct COMPATTOOLBUTTON { TBBUTTON btn; RECT rc; char *psz; std::size_t cch; };
 struct COMPATTOOLBITMAP { HBITMAP hbmp; int iFirst, c; };
 struct COMPATTOOLBAR {
     COMPATTOOLBUTTON *rgbtn;
@@ -83,6 +83,7 @@ static BOOL AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rg
     auto lptoolbarKeep = hwnd->lptoolbar;
     COMPATTOOLBAR *lp = lptoolbarKeep.get();
     COMPATTOOLBUTTON *rgNew = nullptr;
+    std::string_view szText;
     std::size_t i;
     NATIVECLEANUPSCOPE buttonsOwner([&]() noexcept {
         if (!rgNew) return;
@@ -97,8 +98,12 @@ static BOOL AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rg
         rgNew[iInsert + i].btn = rgbtn[i];
         // This subset accepts direct UTF-8 text, not string pool/callback indices.
         if (rgbtn[i].iString > 65535) {
-            rgNew[iInsert + i].psz = SDL_strdup(reinterpret_cast<const char *>(rgbtn[i].iString));
+            szText = reinterpret_cast<const char *>(rgbtn[i].iString);
+            rgNew[iInsert + i].psz = static_cast<char *>(SDL_malloc(szText.size() + 1));
             if (!rgNew[iInsert + i].psz) break;
+            std::copy_n(szText.data(), szText.size(), rgNew[iInsert + i].psz);
+            rgNew[iInsert + i].psz[szText.size()] = 0;
+            rgNew[iInsert + i].cch = szText.size();
             rgNew[iInsert + i].btn.iString = reinterpret_cast<INT_PTR>(rgNew[iInsert + i].psz);
         } else if (rgbtn[i].iString > 0) break;
     }
@@ -197,7 +202,7 @@ static void PaintToolbar(HWND hwnd) {
         }
         if (lp->cTextRows && lpbtn->psz) {
             win32::SetBkMode(hdc, win32::TRANSPARENT); win32::SetTextColor(hdc, win32::GetSysColor(fEnabled ? win32::COLOR_BTNTEXT : win32::COLOR_GRAYTEXT));
-            win32::DrawTextA(hdc, lpbtn->psz, -1, &rcAction, win32::DT_CENTER | win32::DT_VCENTER | win32::DT_SINGLELINE);
+            win32::DrawTextA(hdc, lpbtn->psz, static_cast<int>(lpbtn->cch), &rcAction, win32::DT_CENTER | win32::DT_VCENTER | win32::DT_SINGLELINE);
         }
         if (FArrow(lp, &lpbtn->btn)) {
             xArrow = rc.right - 8 + (fSplit ? fArrowDown : fDown);
@@ -289,8 +294,8 @@ static void ShowToolbarTip(HWND hwnd) {
     lpbtn = &lp->rgbtn[lp->iHot]; rc = lpbtn->rc;
     win32::MapWindowPoints(hwnd, nullptr, reinterpret_cast<POINT *>(&rc), 2);
     if (!win32::GetCursorPos(&pt) || !win32::PtInRect(&rc, pt)) { HideTip(hwnd); lp->iHot = -1; return; }
-    if (win32::IsWindowVisible(lp->hwndTip) || !lpbtn->psz || !*lpbtn->psz) return;
-    hdc = win32::GetDC(hwnd); win32::GetTextExtentPoint32A(hdc, lpbtn->psz, static_cast<int>(std::strlen(lpbtn->psz)), &size); win32::ReleaseDC(hwnd, hdc);
+    if (win32::IsWindowVisible(lp->hwndTip) || !lpbtn->psz || lpbtn->cch == 0) return;
+    hdc = win32::GetDC(hwnd); win32::GetTextExtentPoint32A(hdc, lpbtn->psz, static_cast<int>(lpbtn->cch), &size); win32::ReleaseDC(hwnd, hdc);
     hwndRoot = HwndCompatRoot(hwnd); win32::GetWindowRect(hwndRoot, &rcRoot);
     x = (((rcRoot.left) > (StarsMin(rc.left, rcRoot.right - size.cx - 6))) ? (rcRoot.left) : (StarsMin(rc.left, rcRoot.right - size.cx - 6))); y = rc.bottom + 2;
     if (y + size.cy + 6 > rcRoot.bottom) y = StarsMax(rcRoot.top, rc.top - size.cy - 8);
@@ -379,7 +384,7 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         if (msg == win32::TB_GETBITMAP) return lp->rgbtn[i].btn.iBitmap;
         if (msg == win32::TB_GETBUTTONTEXTA) {
             if (!lp->rgbtn[i].psz) return -1;
-            const std::string_view szText{lp->rgbtn[i].psz};
+            const std::string_view szText{lp->rgbtn[i].psz, lp->rgbtn[i].cch};
             if (l) {
                 auto *pszText = reinterpret_cast<char *>(l);
                 std::copy(szText.begin(), szText.end(), pszText);
