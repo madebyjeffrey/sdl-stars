@@ -8,6 +8,7 @@
 #include "scaninspect.h"
 #include <limits>
 #include <new>
+#include <string_view>
 #include <stars_compat.h>
 
 static HWND hwndScanInspector;
@@ -129,12 +130,12 @@ BOOL FSelectScannerObject(APPSESSION &app, const SCANSNAPSHOT *lpsnap, std::uint
     return 1;
 }
 
-static BOOL FWriteScanString(NATIVEFILE *lpfile, const char *psz) {
+static BOOL FWriteScanString(NATIVEFILE *lpfile, std::string_view sz) {
     unsigned ch;
 
-    if (!FUtf8Valid(psz) || ChPutNativeFile('"', lpfile) == EOF) return 0;
-    while (*psz) {
-        ch = static_cast<unsigned char>(*psz++);
+    if (!FUtf8Valid(sz) || ChPutNativeFile('"', lpfile) == EOF) return 0;
+    for (char chText : sz) {
+        ch = static_cast<unsigned char>(chText);
         if (ch == '"' || ch == '\\') { if (ChPutNativeFile('\\', lpfile) == EOF || ChPutNativeFile(static_cast<int>(ch), lpfile) == EOF) return 0; }
         else if (ch < 32) { if (CchNativePrintf(lpfile, "\\u%04x", ch) < 0) return 0; }
         else if (ChPutNativeFile(static_cast<int>(ch), lpfile) == EOF) return 0;
@@ -150,13 +151,15 @@ BOOL FWriteScannerSnapshot(const SCANSNAPSHOT *lpsnap, NATIVEFILE *lpfile) {
         static_cast<long>(lpsnap->lidGame), lpsnap->turn, lpsnap->idPlayer, lpsnap->iZoom,
         static_cast<long>(lpsnap->rcViewport.left),static_cast<long>(lpsnap->rcViewport.top),static_cast<long>(lpsnap->rcViewport.right),static_cast<long>(lpsnap->rcViewport.bottom)) < 0) return 0;
     for (i = 0; i < lpsnap->cObject; i++) {
+        const char *pchNameEnd;
         lp = &lpsnap->rgobj[i];
-        if (!std::memchr(lp->szName, 0, sizeof(lp->szName))) return 0;
+        pchNameEnd = static_cast<const char *>(std::memchr(lp->szName, 0, sizeof(lp->szName)));
+        if (!pchNameEnd) return 0;
         if (CchNativePrintf(lpfile, "%s{\"kind\":%u,\"id\":%u,\"owner\":%d,\"detail\":%d,\"thingType\":%d,\"universe\":[%ld,%ld],\"client\":[%ld,%ld],\"screen\":[%ld,%ld],"
             "\"onScreen\":%s,\"filtered\":%s,\"scanSelected\":%s,\"mainSelected\":%s,\"name\":", i ? ",\n" : "", lp->grType,lp->id,lp->iPlayer,lp->det,lp->ith,
             static_cast<long>(lp->ptUniverse.x),static_cast<long>(lp->ptUniverse.y),static_cast<long>(lp->ptClient.x),static_cast<long>(lp->ptClient.y),static_cast<long>(lp->ptScreen.x),static_cast<long>(lp->ptScreen.y),
             lp->fOnScreen ? "true":"false",lp->fFiltered ? "true":"false",lp->fScanSelected ? "true":"false",lp->fMainSelected ? "true":"false") < 0 ||
-            !FWriteScanString(lpfile,lp->szName) || ChPutNativeFile('}',lpfile) == EOF) return 0;
+            !FWriteScanString(lpfile, std::string_view{lp->szName, static_cast<std::size_t>(pchNameEnd - lp->szName)}) || ChPutNativeFile('}',lpfile) == EOF) return 0;
     }
     return IPutNativeString("\n]}\n",lpfile) != EOF && !FNativeStreamError(lpfile);
 }
