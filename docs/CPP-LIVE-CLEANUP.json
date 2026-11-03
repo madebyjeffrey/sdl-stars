@@ -26482,8 +26482,33 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5\u201331 byte acceptance range.",
+      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5–31 byte acceptance range.",
       "api_audit": "Removed the strlen rescan after ProfileTextIO::ReadString by using its returned byte count.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
+      "diff_check": "Pass."
+    },
+    {
+      "batch": "Carry player-name byte lengths in results",
+      "parent": "25474d6553a6a5ed72496881f6835e94c91fc81a",
+      "source_commit": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
+      "macos_debug_build": "make compile passes with strict warnings and header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; player-name storage remains a 50-byte owned array, and its existing UTF-8 byte composition is now returned alongside the same bytes.",
+      "api_audit": "PszPlayerName returns PLAYERNAMERESULT with its composed byte count. Player-name UI result buffers use that type, seven redundant UI strlen rescans use the returned size, and direct formatting/copying uses bounded views.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
     }
@@ -26907,15 +26932,15 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "Use profile text length in font settings",
-    "status": "Font setting text now uses the profile reader byte count; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
-    "parent": "52529827",
-    "change": "Removed the strlen rescan after ProfileTextIO::ReadString by using its returned byte count.",
+    "batch": "Carry player-name byte lengths in results",
+    "status": "Committed as 05e0cfd7. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "parent": "25474d6553a6a5ed72496881f6835e94c91fc81a",
+    "change": "PszPlayerName now returns its exact UTF-8 byte length with the existing 50-byte owned buffer; seven UI strlen rescans were removed.",
     "verification": {
-      "batch": "L06 heap copy and move hooks accept byte spans",
-      "parent": "52529827",
-      "source_commit": "f07a0378d4fa2c8656075796a2b7a66186758e17",
-      "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+      "batch": "Carry player-name byte lengths in results",
+      "parent": "25474d6553a6a5ed72496881f6835e94c91fc81a",
+      "source_commit": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
+      "macos_debug_build": "make compile passes with strict warnings and header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
@@ -26931,11 +26956,10 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; copy/move operation choice, physical byte counts, and object/wire representations are unchanged.",
-      "api_audit": "HEAPIO copy/move hooks now receive mutable and readonly byte spans with equal extents. All production call sites and four witness adapters pass their former byte lengths as spans.",
-      "platform": "Windows/Linux current-source qualification remains pending.",
-      "diff_check": "Pass.",
-      "heap_copy_move_witnesses": "production-editor 19,415; production-forecast 272,841; planet-editor 17,432,153; host-production 1,362,708 assertions passed."
+      "baseline": "Unchanged; player-name storage remains a 50-byte owned array, and its existing UTF-8 byte composition is now returned alongside the same bytes.",
+      "api_audit": "PszPlayerName returns PLAYERNAMERESULT with its composed byte count. Player-name UI result buffers use that type, seven redundant UI strlen rescans use the returned size, and direct formatting/copying uses bounded views.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
+      "diff_check": "Pass."
     },
     "platform_ci": {
       "run_id": 41422617389,
@@ -26990,7 +27014,8 @@
       "Message header/turn, battle kill/event/data, and record header views now require fixed-extent spans.",
       "All 61 pointer-only call sites now provide spans whose type carries the wire extent.",
       "RawLoad16/32 and RawStore16/32 now take byte spans rather than void pointers.",
-      "All 32 allocator, battle, bitmap, and test callers pass explicit scalar extents."
+      "All 32 allocator, battle, bitmap, and test callers pass explicit scalar extents.",
+      "PszPlayerName now returns a PLAYERNAMERESULT with the composed UTF-8 byte length and unchanged 50-byte storage; seven drawing rescans use the length, and direct formatting/copying uses views."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -27001,7 +27026,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remain outstanding; local macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass through 25474d65.",
+      "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remains outstanding; local macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass through 05e0cfd7.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -27012,7 +27037,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "25474d65",
+      "source_head": "05e0cfd7",
       "raw_copy_call_audit": {
         "source_head": "3670b2be",
         "owned_production_calls": 0,
@@ -27029,7 +27054,11 @@
       "wire_prefix_views": "BfvFromPrefix, PpvFromPrefix, PlvFromPrefix, RlvFromPrefix, and LtvFromPrefix take mutable byte spans.",
       "wire_record_prefix_apis": "Eight variable-length prefix helpers use mutable byte spans; remaining pointer-only helpers use fixed wire extents.",
       "wire_prefix_apis": "All variable-width prefix helpers take spans; fixed-width header/message/battle prefix helpers take fixed-extent spans.",
-      "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
+      "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
+      "strlen_occurrence_inventory": "93 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
+      "ui_text_lengths": "Twenty-two redundant UI rescans have been replaced across the tracked UI text-length batches; seven additional player-name rescans were removed in 05e0cfd7.",
+      "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
+      "c_macro_inventory": "Owned application API macro count remains zero; no macro inventory changes in this batch."
     },
     "next": [
       "L05 bounded text destinations, remaining const-text interfaces, and post-migration scratch/borrowed-return audit.",
@@ -27310,10 +27339,10 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "25474d6553a6a5ed72496881f6835e94c91fc81a",
-    "latest_change": "Removed the remaining strlen rescan in ZipOrderDlg transport preset drawing by passing the formatter result to TextOutA.",
+    "source_commit": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
+    "latest_change": "PszPlayerName now returns its exact UTF-8 byte length with the existing 50-byte owned buffer; seven UI strlen rescans were removed.",
     "c_macro_audit": {
-      "source_head": "25474d65",
+      "source_head": "05e0cfd7",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -27327,17 +27356,17 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local verification passes through 25474d65.",
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through 05e0cfd7.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "25474d6553a6a5ed72496881f6835e94c91fc81a",
-    "latest_batch_status": "Font setting text now uses the profile reader byte count; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
+    "latest_batch_status": "Committed as 05e0cfd7. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "latest_published_head": "ef24142a",
     "latest_batch_verification": {
-      "batch": "Use profile text length in font settings",
-      "parent": "0a6559f2",
-      "source_commit": "25474d6553a6a5ed72496881f6835e94c91fc81a",
-      "macos_debug_build": "make compile passes with strict warnings.",
+      "batch": "Carry player-name byte lengths in results",
+      "parent": "25474d6553a6a5ed72496881f6835e94c91fc81a",
+      "source_commit": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
+      "macos_debug_build": "make compile passes with strict warnings and header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
@@ -27353,8 +27382,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5\u201331 byte acceptance range.",
-      "api_audit": "Removed the strlen rescan after ProfileTextIO::ReadString by using its returned byte count.",
+      "baseline": "Unchanged; player-name storage remains a 50-byte owned array, and its existing UTF-8 byte composition is now returned alongside the same bytes.",
+      "api_audit": "PszPlayerName returns PLAYERNAMERESULT with its composed byte count. Player-name UI result buffers use that type, seven redundant UI strlen rescans use the returned size, and direct formatting/copying uses bounded views.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -27362,7 +27391,7 @@
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
       "application_api_function_like_macros": 0,
-      "c_macro_inventory": "Unchanged by this batch; last source inventory was reviewed at 32deeaff.",
+      "c_macro_inventory": "Unchanged; latest owned application macro audit found zero function-like API macros.",
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
       "memcpy_call_audit": {
         "source_head": "d5d82d87",
@@ -27373,9 +27402,10 @@
         "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
       },
       "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-      "ui_text_lengths": "Fifteen redundant UI rescans replaced across the tracked UI length batches; both PszFromLongK callers use the owned string size.",
-      "source_head": "25474d6553a6a5ed72496881f6835e94c91fc81a",
-      "strlen_occurrence_inventory": "100 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this is an occurrence count, not a replaceable-site count, because many are real C-string or ABI boundaries."
+      "ui_text_lengths": "Twenty-two redundant UI rescans have been replaced across the tracked UI text-length batches; seven additional player-name rescans were removed in 05e0cfd7.",
+      "source_head": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
+      "strlen_occurrence_inventory": "93 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
+      "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged."
     }
   },
   "milestone_d_checkpoint": {
@@ -27862,8 +27892,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "25474d6553a6a5ed72496881f6835e94c91fc81a",
-  "latest_batch_status": "Font setting text now uses the profile reader byte count; strict macOS/host verification passes, Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
+  "latest_batch_status": "Committed as 05e0cfd7. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -27879,8 +27909,9 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Fifteen redundant UI rescans replaced across the tracked UI length batches; both PszFromLongK callers use the owned string size.",
-    "source_head": "25474d6553a6a5ed72496881f6835e94c91fc81a",
-    "strlen_occurrence_inventory": "100 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this is an occurrence count, not a replaceable-site count, because many are real C-string or ABI boundaries."
+    "ui_text_lengths": "Twenty-two redundant UI rescans have been replaced across the tracked UI text-length batches; seven additional player-name rescans were removed in 05e0cfd7.",
+    "source_head": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
+    "strlen_occurrence_inventory": "93 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
+    "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged."
   }
 }
