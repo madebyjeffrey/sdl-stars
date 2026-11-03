@@ -329,7 +329,7 @@ static void TestBofSignedEncryptionFields() {
     GetFileSeeds(app, &lSeed1, &lSeed2);
     TEST_CHECK(app.state.hdrCur.rt == rtBOF && app.state.hdrCur.cb == 16 && app.state.vlpMemStream->data() == reinterpret_cast<const std::byte *>(stream + sizeof(stream)));
     TEST_CHECK(lSeed1 == expected1 && lSeed2 == expected2);
-    TEST_CHECK(BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer() == -16 && BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSaltTime() == -1024);
+    TEST_CHECK(BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer() == -16 && BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).lSaltTime() == -1024);
     app.state.vlpMemStream.reset();
 }
 

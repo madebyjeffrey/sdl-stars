@@ -636,16 +636,16 @@ std::int16_t FWasRaceFile(APPSESSION &app, std::string_view szFile, std::int16_t
         {
             RecordIO().pfnStreamOpen(app, szFileOwned, mdRead);
             RecordIO().pfnReadRt(app);
-            if (app.state.hdrCur.rt != rtBOF || app.state.hdrCur.cb != cbWireBof || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() != 2 ||
-                BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() < 49 || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() > 85) {
+            if (app.state.hdrCur.rt != rtBOF || app.state.hdrCur.cb != cbWireBof || BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() != 2 ||
+                BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() < 49 || BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() > 85) {
                 idsError = idsFileDoesBelongVersionStars;
                 fRet = -1;
                 goto LBadFile;
             } else {
-                app.state.wVersFile = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).wVersion();
-                fLegacy = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() < 85;
-                fPlural = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() >= 55;
-                if (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).dt() == 5) {
+                app.state.wVersFile = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).wVersion();
+                fLegacy = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() < 85;
+                fPlural = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() >= 55;
+                if (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).dt() == 5) {
                     RecordIO().pfnReadRt(app);
                     if (app.state.hdrCur.rt == rtPlr) {
                         idsError = idsGameFileAppearsCorruptUnableLoadFile;

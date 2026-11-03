@@ -389,7 +389,7 @@ int main() {
         CHECK(FDecodePlanetPrefix(golden, rtpl) && rtpl.id == id && rtpl.iPlayer == player && rtpl.det == (flags & 127));
         CHECK(FEncodePlanetPrefix(rtpl, std::span(rgb).subspan(1, 4)) && !std::memcmp(rgb.data() + 1, golden.data(), 4));
         CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
-        auto view = PpvFromPrefix(rgb.data() + 1, 4);
+        auto view = PpvFromPrefix(std::span(rgb).subspan(1, 4));
         CHECK(view.id() == id && view.iPlayer() == player && view.det() == (flags & 127));
         CHECK(view.fHomeworld() == ((flags >> 7) & 1) && view.fInclude() == ((flags >> 8) & 1) && view.fStarbase() == ((flags >> 9) & 1));
         CHECK(view.fIncEVO() == ((flags >> 10) & 1) && view.fIncImp() == ((flags >> 11) & 1) && view.fIsArtifact() == ((flags >> 12) & 1));
@@ -441,9 +441,9 @@ int main() {
         CHECK(FEncodePlanetRouting(routing, std::span(rgb).subspan(1, 6)) && !std::memcmp(rgb.data() + 1, golden.data(), 6));
         CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
         auto lp = rgb.data() + 1;
-        CHECK(RlvFromPrefix(lp, 2).id() == -32768 && RlvFromPrefix(lp, 3).fNoResearch() == (ul & 1));
-        CHECK(RlvFromPrefix(lp, 4).idFling() == ((ul >> 1) & 1023) && RlvFromPrefix(lp, 4).iWarpFling() == ((ul >> 11) & 15));
-        CHECK(RlvFromPrefix(lp, 6).idRoute() == ((ul >> 15) & 1023));
+        CHECK(RlvFromPrefix(std::span{lp, std::size_t{2}}).id() == -32768 && RlvFromPrefix(std::span{lp, std::size_t{3}}).fNoResearch() == (ul & 1));
+        CHECK(RlvFromPrefix(std::span{lp, std::size_t{4}}).idFling() == ((ul >> 1) & 1023) && RlvFromPrefix(std::span{lp, std::size_t{4}}).iWarpFling() == ((ul >> 11) & 15));
+        CHECK(RlvFromPrefix(std::span{lp, std::size_t{6}}).idRoute() == ((ul >> 15) & 1023));
         if (i == 32) for (std::size_t cb = 0; cb < 6; cb++) {
             routing.id = 123; routing.unused = 99;
             CHECK(!FDecodePlanetRouting(std::span(golden).first(cb), routing) && routing.id == 123 && routing.unused == 99);
@@ -460,7 +460,7 @@ int main() {
         CHECK(FDecodeLogThing(golden, thing) && thing.idFull == 0x80ff && thing.fDetonate == (w < 32768 ? std::int32_t(w) : std::int32_t(w) - 65536));
         CHECK(FEncodeLogThing(thing, std::span(rgb).subspan(1, 4)) && !std::memcmp(rgb.data() + 1, golden.data(), 4));
         CHECK(rgb.front() == std::byte{0xa5} && rgb.back() == std::byte{0xa5});
-        CHECK(LtvFromPrefix(rgb.data() + 1, 2).idFull() == 0x80ff && LtvFromPrefix(rgb.data() + 1, 4).fDetonate() == thing.fDetonate);
+        CHECK(LtvFromPrefix(std::span(rgb).subspan(1, 2)).idFull() == 0x80ff && LtvFromPrefix(std::span(rgb).subspan(1, 4)).fDetonate() == thing.fDetonate);
         if (w == 32768) for (std::size_t cb = 0; cb < 4; cb++) {
             thing.idFull = 123; thing.fDetonate = -456;
             CHECK(!FDecodeLogThing(std::span(golden).first(cb), thing) && thing.idFull == 123 && thing.fDetonate == -456);
@@ -571,7 +571,7 @@ int main() {
         CHECK(bof.fGameOverMan == ((flags >> 11) & 1) && bof.fCrippled == ((flags >> 12) & 1));
         CHECK(FEncodeBof(bof, std::span(rgb).subspan(1, 16)) && std::memcmp(rgb.data() + 1, golden.data(), 16) == 0);
         CHECK(rgb[0] == std::byte{0xa5} && rgb[17] == std::byte{0xa5});
-        auto view = BfvFromPrefix(reinterpret_cast<std::uint8_t *>(rgb.data() + 1), 16);
+        auto view = BfvFromPrefix(std::span(rgb).subspan(1, 16));
         CHECK(view.lidGame() == bof.lidGame && view.wVersion() == w && view.turn() == 65534 && view.iPlayer() == player && view.lSaltTime() == salt);
         CHECK(view.verInc() == bof.verInc && view.verMinor() == bof.verMinor && view.verMajor() == bof.verMajor);
         CHECK(view.dt() == bof.dt && view.fDone() == bof.fDone && view.fInUse() == bof.fInUse && view.fMulti() == bof.fMulti);

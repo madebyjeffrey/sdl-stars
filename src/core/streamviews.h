@@ -33,8 +33,8 @@ public:
     std::uint16_t fCrippled() const noexcept { return GetBits<14, 12, 1>(); }
     std::uint16_t wGen() const noexcept { return GetBits<14, 13, 3>(); }
 };
-inline NATIVEBOFVIEW BfvFromPrefix(void *lp, std::size_t cb) noexcept {
-    return {std::span(static_cast<std::byte *>(lp), cb), 0};
+inline NATIVEBOFVIEW BfvFromPrefix(std::span<std::byte> rgb) noexcept {
+    return {rgb, 0};
 }
 
 class NATIVEPLANETRECORDVIEW : public NATIVEBYTEWINDOW {
@@ -65,8 +65,8 @@ public:
     std::uint16_t fFirstYear() const noexcept { return GetBits<2, 15, 1>(); }
     void SetFFirstYear(std::uint16_t value) noexcept { SetBits<2, 15, 1>(value); }
 };
-inline NATIVEPLANETRECORDVIEW PpvFromPrefix(void *lp, std::size_t cb) noexcept {
-    return {std::span(static_cast<std::byte *>(lp), cb), 0};
+inline NATIVEPLANETRECORDVIEW PpvFromPrefix(std::span<std::byte> rgb) noexcept {
+    return {rgb, 0};
 }
 
 class NATIVEPLAYERRECORDVIEW : public NATIVEBYTEWINDOW {
@@ -81,8 +81,8 @@ public:
     void SetIdAi(std::uint16_t value) noexcept { SetBits<6, 13, 3>(value); }
     void SetLSalt(std::int32_t value) noexcept { SetI32(12, value); }
 };
-inline NATIVEPLAYERRECORDVIEW PlvFromPrefix(void *lp, std::size_t cb) noexcept {
-    return {std::span(static_cast<std::byte *>(lp), cb), 0};
+inline NATIVEPLAYERRECORDVIEW PlvFromPrefix(std::span<std::byte> rgb) noexcept {
+    return {rgb, 0};
 }
 
 #endif

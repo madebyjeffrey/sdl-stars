@@ -762,11 +762,11 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
         }
         break;
     case rtThing:
-        lpth = LpthFromId(app, LtvFromPrefix(lpb, 2).idFull());
+        lpth = LpthFromId(app, LtvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).idFull());
         if (!lpth || lpth->ith() != ithMinefield) {
             return 0;
         }
-        { const auto fDetonateForThing = (LtvFromPrefix(lpb, 4).fDetonate()); auto &thForThing = *(lpth); thForThing.thm().SetFDetonate(fDetonateForThing); }
+        { const auto fDetonateForThing = (LtvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).fDetonate()); auto &thForThing = *(lpth); thForThing.thm().SetFDetonate(fDetonateForThing); }
         break;
     case rtLogShDef:
         if (cb < static_cast<std::int16_t>(cbWireChgShDef)) return 0;
@@ -1160,13 +1160,13 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
         if (!FSetOrderTask(app, lpfl->lpplord, iordLog, grTaskLog)) return 0;
         break;
     case rtLogPlanetRouting:
-        lppl = LpplFromId(app, RlvFromPrefix(lpb, 2).id());
+        lppl = LpplFromId(app, RlvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id());
         if (!lppl || lppl->iPlayer != app.state.idPlayer)
             goto BombOut;
-        lppl->fNoResearch = RlvFromPrefix(lpb, 3).fNoResearch();
-        lppl->idFling = RlvFromPrefix(lpb, 4).idFling();
-        lppl->iWarpFling = RlvFromPrefix(lpb, 4).iWarpFling();
-        lppl->idRoute = RlvFromPrefix(lpb, 6).idRoute();
+        lppl->fNoResearch = RlvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{3}})).fNoResearch();
+        lppl->idFling = RlvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).idFling();
+        lppl->iWarpFling = RlvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).iWarpFling();
+        lppl->idRoute = RlvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{6}})).idRoute();
         break;
     case rtChgPassword:
         if (app.state.gd.fGeneratingTurn) {
@@ -1225,11 +1225,11 @@ std::int16_t FLoadLogFile(APPSESSION &app, std::string_view pszLog) {
         }
 
         RecordIO().pfnReadRt(app);
-        if (app.state.hdrCur.rt != rtBOF || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() != 2 || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() != 85) {
+        if (app.state.hdrCur.rt != rtBOF || BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() != 2 || BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() != 85) {
             FileError(app, idsFileDoesBelongVersionStars);
             goto FailSuccess;
         }
-        if (app.state.game.lid != BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lidGame() || app.state.game.turn > BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn()) {
+        if (app.state.game.lid != BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).lidGame() || app.state.game.turn > BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).turn()) {
         FailSuccess:
             if (app.state.vlpMemStream) {
                 app.state.vlpMemStream.reset();
@@ -1238,18 +1238,18 @@ std::int16_t FLoadLogFile(APPSESSION &app, std::string_view pszLog) {
             }
             return 1;
         }
-        if (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn() != app.state.game.turn) {
+        if (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).turn() != app.state.game.turn) {
             FileError(app, idsLogFileRecentGameTryingLoadIgnoring);
             goto FailSuccess;
         }
-        if (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).wGen() != app.state.game.wGen) {
+        if (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).wGen() != app.state.game.wGen) {
             FileError(app, idsFileGame);
             goto FailSuccess;
         }
-        app.state.wVersFile = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).wVersion();
-        app.state.gd.fFileCrippled = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fCrippled();
+        app.state.wVersFile = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).wVersion();
+        app.state.gd.fFileCrippled = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fCrippled();
         if (app.state.gd.fGeneratingTurn) {
-            app.state.rgplr[app.state.idPlayer].fCrippled = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fCrippled();
+            app.state.rgplr[app.state.idPlayer].fCrippled = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fCrippled();
         }
         RecordIO().pfnReadRt(app);
         NATIVEBYTEREADER(std::as_bytes(std::span(app.state.rgbCur)).first(2)).FReadI16Le(cbLog);

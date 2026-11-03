@@ -660,20 +660,20 @@ void WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHis
     std::uint8_t *pb;
 
     std::fill_n(rgb, 80, 0);
-    PpvFromPrefix(rgb, sizeof(rgb)).SetId(lppl->id);
-    PpvFromPrefix(rgb, sizeof(rgb)).SetIPlayer(lppl->iPlayer);
-    PpvFromPrefix(rgb, sizeof(rgb)).SetDet(lppl->det);
+    PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetId(lppl->id);
+    PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetIPlayer(lppl->iPlayer);
+    PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetDet(lppl->det);
     if (rt == rtPlanetB && lppl->det > detSome) {
-        PpvFromPrefix(rgb, sizeof(rgb)).SetDet(!fHistory ? 4 : 3);
+        PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetDet(!fHistory ? 4 : 3);
     }
-    PpvFromPrefix(rgb, sizeof(rgb)).SetFInclude(lppl->fInclude);
-    PpvFromPrefix(rgb, sizeof(rgb)).SetFStarbase(lppl->fStarbase);
-    PpvFromPrefix(rgb, sizeof(rgb)).SetFHomeworld(lppl->fHomeworld);
-    PpvFromPrefix(rgb, sizeof(rgb)).SetFFirstYear(lppl->fFirstYear);
-    PpvFromPrefix(rgb, sizeof(rgb)).SetFRouting(lppl->idRoute != 0);
+    PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFInclude(lppl->fInclude);
+    PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFStarbase(lppl->fStarbase);
+    PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFHomeworld(lppl->fHomeworld);
+    PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFFirstYear(lppl->fFirstYear);
+    PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFRouting(lppl->idRoute != 0);
     pbBase = rgb + cbWirePlanet;
     pb = pbBase;
-    if (PpvFromPrefix(rgb, sizeof(rgb)).det() <= detMinimal)
+    if (PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).det() <= detMinimal)
         goto LFinishBRecord;
 
     pb = pbBase + 1;
@@ -696,10 +696,10 @@ void WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHis
     for (i = 0; i < 3; i++) {
         *pb++ = lppl->rgEnvVar[i];
         if (lppl->rgEnvVar[i] != lppl->rgEnvVarOrig[i]) {
-            PpvFromPrefix(rgb, sizeof(rgb)).SetFIncEVO(1);
+            PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFIncEVO(1);
         }
     }
-    if (PpvFromPrefix(rgb, sizeof(rgb)).fIncEVO() != 0) {
+    if (PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).fIncEVO() != 0) {
         for (i = 0; i < 3; i++) {
             *pb++ = lppl->rgEnvVarOrig[i];
         }
@@ -708,7 +708,7 @@ void WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHis
         NATIVEBYTEWRITER(std::as_writable_bytes(std::span(pb, 2))).FWriteU16Le(lppl->uGuesses());
         pb += 2;
     }
-    if (PpvFromPrefix(rgb, sizeof(rgb)).det() <= detSome)
+    if (PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).det() <= detSome)
         goto LFinishBRecord;
 
     pbBase = pb;
@@ -736,7 +736,7 @@ void WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHis
     if (*pbBase == 0) {
         pb = pbBase;
     } else {
-        PpvFromPrefix(rgb, sizeof(rgb)).SetFIncSurfMin(1);
+        PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFIncSurfMin(1);
     }
     if (rt == rtPlanetB) {
     LFinishBRecord:
@@ -750,10 +750,10 @@ void WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHis
         }
         RecordIO().pfnWriteRt(app, rtPlanetB, std::as_bytes(std::span{rgb}).first(static_cast<std::size_t>(pb - rgb)));
     } else {
-        PpvFromPrefix(rgb, sizeof(rgb)).SetFIsArtifact(lppl->fArtifact);
+        PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFIsArtifact(lppl->fArtifact);
         if ((lppl->iPlayer != iplrNone && (lppl->iDeltaPop != 0 || lppl->fNoResearch)) ||
             (lppl->cMines != 0 || lppl->cFactories != 0 || lppl->cDefenses != 0 || lppl->iScanner != 31)) {
-            PpvFromPrefix(rgb, sizeof(rgb)).SetFIncImp(1);
+            PpvFromPrefix(std::as_writable_bytes(std::span(rgb))).SetFIncImp(1);
             const auto rgbImp = lppl->rgbImp();
             std::memmove(pb, rgbImp.data(), 8);
             pb += 8;
@@ -993,11 +993,11 @@ std::int16_t FMarkFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdM
             FileError(app, idsFileDoesBelongVersionStars);
             goto LBadFile;
         }
-        if (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() < 2 || (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() == 2 && BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() < 85)) {
+        if (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() < 2 || (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() == 2 && BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() < 85)) {
             FileError(app, idsSorryFileCreatedOlderVersionStarsIncompatible);
             goto LBadFile;
         }
-        if (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() > 2 || (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() == 2 && BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() > 85)) {
+        if (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() > 2 || (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() == 2 && BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() > 85)) {
             FileError(app, idsFileCreatedNewerVersionStarsMustUpgrade);
             goto LBadFile;
         }
@@ -1032,17 +1032,17 @@ std::int16_t FMarkFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdM
             do {
                 GetFileSeeds(app, &lSeedSav1, &lSeedSav2);
                 RecordIO().pfnReadRt(app);
-            } while (app.state.hdrCur.rt != rtPlr || PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer() != iPlayer);
-            if (PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fAi() != f) {
-                if (PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fAi() != 0) {
-                    if (PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).idAi() != idAiMaid)
+            } while (app.state.hdrCur.rt != rtPlr || PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer() != iPlayer);
+            if (PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fAi() != f) {
+                if (PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fAi() != 0) {
+                    if (PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).idAi() != idAiMaid)
                         goto LBadFile;
-                    PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetFAi(0);
+                    PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).SetFAi(0);
                 } else {
-                    PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetFAi(1);
-                    PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetIdAi(idAiMaid);
+                    PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).SetFAi(1);
+                    PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).SetIdAi(idAiMaid);
                 }
-                PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).SetLSalt(~PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSalt());
+                PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).SetLSalt(~PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).lSalt());
                 LSeekFile(app.state.hf, static_cast<std::int16_t>(-(app.state.hdrCur.cb + 2)), NATIVESEEKORIGIN::current);
                 SetFileSeeds(app, lSeedSav1, lSeedSav2);
                 RecordIO().pfnWriteRt(app, rtPlr, std::as_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb)));
@@ -1106,8 +1106,8 @@ void WriteRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rg) {
     if (cb != 0)
         std::memmove(app.state.rgbCur, rg.data(), rg.size());
     if (rt == rtBOF) {
-        SetFileXorStream(app, BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lidGame(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSaltTime(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer(),
-                         BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fCrippled());
+        SetFileXorStream(app, BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).lidGame(), BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).lSaltTime(), BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).turn(), BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer(),
+                         BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fCrippled());
     } else if (rt != rtEOF) {
         XorFileBuf(app, std::as_writable_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(cb)));
     }

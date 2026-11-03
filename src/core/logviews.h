@@ -49,8 +49,8 @@ public:
     std::uint16_t iWarpFling() const noexcept { return static_cast<std::uint16_t>(GetBits32<2, 11, 4>()); }
     std::uint16_t idRoute() const noexcept { return static_cast<std::uint16_t>(GetBits32<2, 15, 10>()); }
 };
-inline NATIVEPLANETROUTINGVIEW RlvFromPrefix(void *lp, std::size_t cb) noexcept {
-    return {std::span(static_cast<std::byte *>(lp), cb), 0};
+inline NATIVEPLANETROUTINGVIEW RlvFromPrefix(std::span<std::byte> rgb) noexcept {
+    return {rgb, 0};
 }
 class NATIVELOGTHINGVIEW : public NATIVEBYTEWINDOW {
 public:
@@ -58,8 +58,8 @@ public:
     std::uint16_t idFull() const noexcept { return GetU16(0); }
     std::int16_t fDetonate() const noexcept { return GetI16(2); }
 };
-inline NATIVELOGTHINGVIEW LtvFromPrefix(void *lp, std::size_t cb) noexcept {
-    return {std::span(static_cast<std::byte *>(lp), cb), 0};
+inline NATIVELOGTHINGVIEW LtvFromPrefix(std::span<std::byte> rgb) noexcept {
+    return {rgb, 0};
 }
 
 #endif

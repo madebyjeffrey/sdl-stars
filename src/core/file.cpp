@@ -111,7 +111,7 @@ void ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::span<std::uint8_t> rgbRecord)
     if (cb < cbWirePlayerPartial) goto invalid;
     // A full record stores a relation count where rgmdRelation begins, then
     // that many relations; a partial one stops before idPlanetHome.
-    if (PlvFromPrefix(rgbRecord.data(), cb).det() == detAll) {
+    if (PlvFromPrefix(std::as_writable_bytes(rgbRecord)).det() == detAll) {
         iOff = cbWirePlayerPrefix;
         if (cb <= static_cast<std::size_t>(iOff) || rgbRecord[static_cast<std::size_t>(iOff)] > cb - iOff - 1) goto invalid;
         FDecodePlayer(std::as_bytes(rgbRecord), *pplr, iOff);
@@ -280,7 +280,7 @@ std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::strin
                 RecordIO().pfnReadRt(app);
             }
             while (app.state.hdrCur.rt == rtPlr) {
-                i = PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer();
+                i = PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer();
                 ReadRtPlr(app, &app.state.rgplr[i], std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)));
                 app.state.rgplr[i].cPlanet = 0;
                 app.state.rgplr[i].cFleet = 0;
@@ -422,7 +422,7 @@ std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::strin
         if (!FOpenFile(app, static_cast<DtFileType>(dt | grf), iPlayer, 32))
             goto LError;
         if (iPlayer == iplrNone) {
-            app.state.gd.fGameOverMan = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fGameOverMan();
+            app.state.gd.fGameOverMan = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fGameOverMan();
         }
 LNextTurn:
         cturn++;
@@ -453,7 +453,7 @@ LNextTurn:
             }
         }
         while (app.state.hdrCur.rt == rtPlr) {
-            i = PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer();
+            i = PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer();
             ReadRtPlr(app, &app.state.rgplr[i], std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)));
             app.state.cPlanet += app.state.rgplr[i].cPlanet;
             app.state.rgplr[i].cPlanet = 0;
@@ -488,12 +488,12 @@ LNextTurn:
         for (i = 0; i < app.state.cPlanet; i++) {
             fHaveHistoryData = 0;
             if (cPlanetHist != 0) {
-                while (j < cPlanetHist && PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).id() > lppl->id) {
+                while (j < cPlanetHist && PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).id() > lppl->id) {
                     j++;
                     lppl++;
                 }
                 if (j < cPlanetHist) {
-                    if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).id() == lppl->id) {
+                    if (PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).id() == lppl->id) {
                         fHaveHistoryData = 1;
                         goto LFoundPlanet;
                     }
@@ -746,8 +746,8 @@ LNextTurn:
         if (*cbFile != ibFile) {
             RecordIO().pfnReadRt(app);
             if (app.state.hdrCur.rt == rtBOF) {
-                app.state.game.turn = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn();
-                app.state.game.wGen = BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).wGen();
+                app.state.game.turn = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).turn();
+                app.state.game.wGen = BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).wGen();
                 for (i = 0; i < app.state.game.cPlayer; i++) {
                     app.state.rgplr[i].cShDef = 0;
                     app.state.rgplr[i].cFleet = 0;
@@ -886,7 +886,7 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
         *lppl = {};
     }
     if (fHistory || iPlayer == iplrNone) {
-        lppl->fFirstYear = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fFirstYear();
+        lppl->fFirstYear = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fFirstYear();
     } else if (!fPreInited) {
         fFirstYear = 1;
         lppl->fFirstYear = 1;
@@ -897,15 +897,15 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
             fFirstYear = 1;
         }
     }
-    lppl->id = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).id();
-    lppl->iPlayer = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer();
-    if (lppl->det < PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).det()) {
-        lppl->det = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).det();
+    lppl->id = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).id();
+    lppl->iPlayer = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer();
+    if (lppl->det < PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).det()) {
+        lppl->det = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).det();
     }
-    lppl->fInclude = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fInclude();
-    lppl->fStarbase = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fStarbase();
-    lppl->fHomeworld = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fHomeworld();
-    fRouting = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fRouting();
+    lppl->fInclude = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fInclude();
+    lppl->fStarbase = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fStarbase();
+    lppl->fHomeworld = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fHomeworld();
+    fRouting = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fRouting();
     if (lppl->fStarbase && lppl->iPlayer == iplrNone) {
         lppl->fStarbase = 0;
     }
@@ -913,7 +913,7 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
         lppl->turn = app.state.game.turn;
     }
     pb = reinterpret_cast<std::uint8_t *>(app.state.rgbCur) + cbWirePlanet;
-    if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).det() >= detSome) {
+    if (PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).det() >= detSome) {
         bMask = *pb;
         pb++;
         i = 0;
@@ -941,7 +941,7 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
             }
             lppl->rgEnvVar[i] = lppl->rgEnvVarOrig[i] = *pb++;
         }
-        if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fIncEVO() != 0) {
+        if (PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fIncEVO() != 0) {
             for (i = 0; i < 3; i++) {
                 if (*pb > 100) {
                     return 0;
@@ -949,13 +949,13 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
                 lppl->rgEnvVarOrig[i] = *pb++;
             }
         }
-        if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer() != iplrNone) {
+        if (PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer() != iplrNone) {
             lppl->SetUGuesses(WFromStreamBytes(std::as_bytes(std::span{pb, 2}).first<2>()));
             pb += 2;
         }
         if (lppl->det <= detSome)
             goto LFinishBRecord;
-        if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fIncSurfMin() != 0) {
+        if (PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fIncSurfMin() != 0) {
             bMask = *pb;
             pb++;
             i = 0;
@@ -983,13 +983,13 @@ std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, st
         }
         if (app.state.hdrCur.rt == rtPlanetB)
             goto LFinishBRecord;
-        if (PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fIncImp() != 0) {
+        if (PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fIncImp() != 0) {
             std::array<std::uint8_t, 8> rgbImp;
             std::memmove(rgbImp.data(), pb, 8);
             lppl->SetRgbImp(rgbImp);
             pb += 8;
         } else {
-            lppl->fArtifact = PpvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fIsArtifact();
+            lppl->fArtifact = PpvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fIsArtifact();
             lppl->iScanner = 31;
             lppl->cDefenses = 0;
         }
@@ -1277,11 +1277,11 @@ std::int16_t FOpenFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
             goto LBadFile;
         }
-        if (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() < 2 || (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() == 2 && BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() < 85)) {
+        if (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() < 2 || (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() == 2 && BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() < 85)) {
             FileError(app, idsSorryFileCreatedOlderVersionStarsIncompatible);
             goto LBadFile;
         }
-        if (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() > 2 || (BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMajor() == 2 && BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).verMinor() > 85)) {
+        if (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() > 2 || (BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMajor() == 2 && BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).verMinor() > 85)) {
             FileError(app, idsFileCreatedNewerVersionStarsMustUpgrade);
             goto LBadFile;
         }
@@ -1384,21 +1384,21 @@ std::int16_t FCheckFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, Md
     fOpened = FOpenFile(app, dt, iPlayer, 32);
     switch (md) {
     case mdMarkInUse:
-        if (!fOpened || BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fInUse()) {
+        if (!fOpened || BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fInUse()) {
             fReturn = 1;
             break;
         }
         fReturn = 0;
         break;
     case mdMarkDone:
-        if (fOpened && BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fDone()) {
+        if (fOpened && BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fDone()) {
             fReturn = 1;
             break;
         }
         fReturn = 0;
         break;
     case mdMarkMulti:
-        if (fOpened && BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fMulti()) {
+        if (fOpened && BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fMulti()) {
             fReturn = 1;
             break;
         }
@@ -1410,8 +1410,8 @@ std::int16_t FCheckFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, Md
         } else {
             do {
                 RecordIO().pfnReadRt(app);
-            } while (app.state.hdrCur.rt != rtEOF && (app.state.hdrCur.rt != rtPlr || PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer() != iPlayer));
-            fReturn = app.state.hdrCur.rt == rtPlr && PlvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fAi();
+            } while (app.state.hdrCur.rt != rtEOF && (app.state.hdrCur.rt != rtPlr || PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer() != iPlayer));
+            fReturn = app.state.hdrCur.rt == rtPlr && PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fAi();
         }
     }
     if (fOpened) {
@@ -1485,8 +1485,8 @@ void ReadRt(APPSESSION &app) {
             if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
             return;
         }
-        SetFileXorStream(app, BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lidGame(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).lSaltTime(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).turn(), BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).iPlayer(),
-                         BfvFromPrefix(app.state.rgbCur, sizeof(app.state.rgbCur)).fCrippled());
+        SetFileXorStream(app, BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).lidGame(), BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).lSaltTime(), BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).turn(), BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer(),
+                         BfvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fCrippled());
     } else if (app.state.hdrCur.rt != rtEOF) {
         XorFileBuf(app, std::as_writable_bytes(std::span{app.state.rgbCur}).first(static_cast<std::size_t>(app.state.hdrCur.cb)));
     }
