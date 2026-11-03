@@ -69,8 +69,8 @@ std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, NATIVESEEKORIGIN iOrigin
 // Full size of the open token; present zero is distinct from query failure.
 std::optional<std::int64_t> CbFileSize(std::int16_t hf);
 void    CloseFile(std::int16_t hf);
-std::int16_t FFileExists(std::string_view szFile);
-std::int16_t FFileReadOnly(std::string_view szFile);
+bool FFileExists(std::string_view szFile);
+bool FFileReadOnly(std::string_view szFile);
 void    MakeDir(std::string_view szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
 int     CreateNativeDir(std::string_view pszDir);

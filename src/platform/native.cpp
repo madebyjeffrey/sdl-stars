@@ -205,8 +205,8 @@ std::optional<std::size_t> CbWriteFile(std::int16_t hf, std::span<const std::byt
 std::int32_t LSeekFile(std::int16_t hf, std::int32_t l, NATIVESEEKORIGIN iOrigin) { return LNativeSeekLegacy(hf, l, iOrigin); }
 std::optional<std::int64_t> CbFileSize(std::int16_t hf) { return CbNativeSizeLegacy(hf); }
 void CloseFile(std::int16_t hf) { CloseNativeLegacy(hf); }
-std::int16_t FFileExists(std::string_view szFile) { return IAccessNativePath(szFile, 0) == 0; }
-std::int16_t FFileReadOnly(std::string_view szFile) { return IAccessNativePath(szFile, 2) != 0; }
+bool FFileExists(std::string_view szFile) { return IAccessNativePath(szFile, 0) == 0; }
+bool FFileReadOnly(std::string_view szFile) { return IAccessNativePath(szFile, 2) != 0; }
 void MakeDir(std::string_view szDir) { ICreateNativeDirectory(szDir, 0777); }
 int CreateNativeDir(std::string_view pszDir) { return ICreateNativeDirectory(pszDir, 0777); }
 std::int16_t FEnsureNativeDir(std::string_view pszDir) { return FEnsureNativeDirectory(pszDir); }
