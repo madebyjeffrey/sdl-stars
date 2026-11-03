@@ -1488,7 +1488,7 @@
         "correction": "CchSprintf and owned SDL wsprintfA honor actual destination capacity, preserving the existing 1024-byte ceiling and complete UTF-8 prefixes.",
         "pointer_callers": 26,
         "capacity_sources": "Fixed array extents/tail subspans; production-line and ETA helpers receive caller spans; message scratch uses its actual 0x800-byte arena allocation.",
-        "pending": "strcpy/strcat and borrowed scratch results remain open."
+        "pending": "Borrowed scratch results and const-text interfaces remain open; current raw-copy call audit is clear."
       },
       "catalog_destinations": {
         "status": "complete; verified",
@@ -1499,7 +1499,7 @@
         "helpers": "DxReportColHdr and GetLibraryFileFilter carry spans. Mutable RightTextOut takes spans, with array-only forwarding; the const borrowing overload remains separate. Non-array mutable pointers at existing callers all draw positive-length or strlen text and need no write-back.",
         "providers": "Six linked witness providers migrated to the actual span interface; two old scalar adapters removed.",
         "history": "Guard empty copies and trim one complete final code point, preserving existing ASCII heading behavior.",
-        "remaining": "strcpy/strcat, other shared scratch results and const text interfaces remain pending; typed formatting and player/catalog ownership are complete.",
+        "remaining": "Other shared scratch results and const-text interfaces remain pending; the current owned production strcpy/strcat-family call audit is clear. Typed formatting and player/catalog ownership are complete.",
         "windows_calls": "Explicit spans at all 436 array destinations: GCC 16.2.0 MinGW loses array extent during implicit conversion through a function pointer, reproduced independently. Extents remain deduced from arrays; no guessed capacity or suppression."
       },
       "typed_snprintf": {
@@ -1535,7 +1535,7 @@
         "packing": "Transient format values and their standard-library types use native packing even when the Win32 header is first included in a packed-record scope; independent type-isolation checks verify native argument/span alignment and caller packing restoration. Header consumers inherit the concrete formatter dependency."
       },
       "display_copies": {
-        "status": "169 sites complete; remaining text copies and ownership work active",
+        "status": "Bounded display-copy migration is complete; borrowed scratch and ownership review remains active.",
         "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
         "native_parent_inventory": "54 translation units; zero compiler errors; compiler-located display/fixed-label destinations reviewed before migration.",
         "calls": 169,
@@ -1549,8 +1549,20 @@
         "remaining_lexical_spellings": 58,
         "inventory_scope": "The initial copy inventory and the current lexical policy differ: the latter also includes SDK declaration/definition spellings. Both remain explicitly accounted for.",
         "enforcement": "The manifest checks exact remaining raw-copy spellings and multiplicities. New or removed raw sites require updating the maintained inventory; migrated sites cannot silently be reintroduced.",
-        "current_raw_copy_calls": 4,
-        "current_copy_migration_records": 304
+        "current_raw_copy_calls": 0,
+        "current_copy_migration_records": 306,
+        "current_source_audit": {
+          "source_head": "e14499cd",
+          "scope": "Owned production source and compat/win32 implementation/header trees",
+          "raw_copy_calls": 0,
+          "spellings_checked": [
+            "strcpy",
+            "strcat",
+            "strncpy",
+            "strncat"
+          ],
+          "result": "No owned production call sites found; the maintained lexical manifest enforces the empty inventory."
+        }
       },
       "wire_name_staging": {
         "status": "complete; verified",
@@ -1750,7 +1762,8 @@
         "status": "complete; locally verified; final platform qualification pending",
         "functions": 2,
         "lexical_spellings_removed": 6,
-        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json"
+        "evidence": "docs/CPP-LIVE-TEXT-COPIES.json",
+        "remaining": "The current source audit finds zero owned production raw-copy call spellings. Borrowed scratch, readonly/drawing/service protocols, wrapper formatting, Milestone D and L08 platform qualification remain active."
       },
       "owned_backup_paths": {
         "status": "complete; native Windows/Linux qualified at60215fc6",
@@ -25803,7 +25816,18 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "e14499cd"
+      "source_head": "e14499cd",
+      "raw_copy_call_audit": {
+        "source_head": "e14499cd",
+        "owned_production_calls": 0,
+        "spellings_checked": [
+          "strcpy",
+          "strcat",
+          "strncpy",
+          "strncat"
+        ],
+        "result": "No owned production call sites found in src and compat/win32 source/header trees."
+      }
     },
     "next": [
       "L05: finish bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
