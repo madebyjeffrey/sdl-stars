@@ -4,7 +4,7 @@
 #include "race_query_io.h"
 #include "random_io.h"
 
-void GetMineFieldCounts(APPSESSION &app, std::uint16_t id, std::int16_t *pithm, std::int16_t *pcthm) {
+MINEFIELDCOUNTSRESULT GetMineFieldCounts(APPSESSION &app, std::uint16_t id) {
     std::int16_t cthTotal;
     std::int16_t ithFound;
     THING  *lpth;
@@ -22,9 +22,7 @@ void GetMineFieldCounts(APPSESSION &app, std::uint16_t id, std::int16_t *pithm, 
             }
         }
     }
-    *pithm = ithFound;
-    *pcthm = cthTotal;
-    return;
+    return {ithFound, cthTotal};
 }
 
 std::int16_t FOtherStuffAtScanSel(APPSESSION &app) {

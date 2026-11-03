@@ -146,6 +146,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::array<char, cchCatalogText> szCatalogPszT{};
+    MINEFIELDCOUNTSRESULT mineFieldCounts;
     PLANET     pl;
     HBRUSH     hbrSav;
     std::int32_t    l2;
@@ -500,9 +501,9 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
         yTop += app.state.dyArial8 + 2;
         if (lpth->iplr() != app.state.idPlayer)
             goto FinishUp;
-        GetMineFieldCounts(app, lpth->idFull(), &i, &c2);
+        mineFieldCounts = GetMineFieldCounts(app, lpth->idFull());
         TextIO().pfnCchGetString(app, idsFieldDD, std::span{szT});
-        c = CchSprintf(app.state.szWork, szT, i, c2);
+        c = CchSprintf(app.state.szWork, szT, mineFieldCounts.ithFound, mineFieldCounts.cthTotal);
         win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
         yTop += app.state.dyArial8 + 2;
         goto FinishUp;
