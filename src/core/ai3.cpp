@@ -177,7 +177,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
         SplitOutShdefs(app, rgSplitShdef);
     }
     EnsureMacintiShdefs(app);
-    EnsureMacintiStarbaseDesigns(app, rgRecycleSBShdef);
+    EnsureMacintiStarbaseDesigns(app, std::span{rgRecycleSBShdef}.first<4>());
     app.state.vAiMacRecycleSB = rgRecycleSBShdef;
     colonizerBuild = FShouldWeBuildColonizers(app);
     fShouldColonize = colonizerBuild.fShouldBuild;

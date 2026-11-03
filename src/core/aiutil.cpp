@@ -2207,7 +2207,7 @@ void EnsureAiStarbaseDesigns(APPSESSION &app) {
     return;
 }
 
-void EnsureMacintiStarbaseDesigns(APPSESSION &app, std::uint8_t *rgSB) {
+void EnsureMacintiStarbaseDesigns(APPSESSION &app, std::span<std::uint8_t, 4> rgSB) {
     std::int16_t k;
     std::int16_t iOld;
     std::int16_t cAge;
@@ -2215,7 +2215,7 @@ void EnsureMacintiStarbaseDesigns(APPSESSION &app, std::uint8_t *rgSB) {
     std::int16_t j;
     std::int16_t iNew;
 
-    *rgSB = 0;
+    rgSB[0] = 0;
     for (i = 1; i <= 3; i++) {
         if (app.state.rglpshdefSB[app.state.idPlayer][i].fFree || app.state.rglpshdefSB[app.state.idPlayer][i].cExist == 0) {
             if (FCreateAiStarbase(app, i, i >= 3 ? 2 : 1, static_cast<AiStarbaseRecipe>(vrgSBMacAisb[i - 1]), static_cast<isbhull>(i))) {

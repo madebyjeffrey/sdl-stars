@@ -87,7 +87,7 @@ std::int16_t  IdplFindClosestStarbase(APPSESSION &app, FLEET *lpfl, std::int16_t
 std::int16_t  FMoveToNearestStarbase(APPSESSION &app, FLEET *lpfl, std::int16_t fBigOnes);
 void     MoveToNearestPlanetOrEnemy(APPSESSION &app, FLEET *lpfl, std::int16_t dEnemyRange);
 void     EnsureAiStarbaseDesigns(APPSESSION &app);
-void     EnsureMacintiStarbaseDesigns(APPSESSION &app, std::uint8_t *rgSB);
+void     EnsureMacintiStarbaseDesigns(APPSESSION &app, std::span<std::uint8_t, 4> rgSB);
 std::int16_t  FCreateAiStarbase(APPSESSION &app, std::int16_t ishdef, std::int16_t iLevel, AiStarbaseRecipe aisb, isbhull isb);
 std::int16_t  FAIFling(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail);
 std::int16_t  IshdefAiSBLatestOF(APPSESSION &app);
