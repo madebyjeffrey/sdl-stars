@@ -2,6 +2,7 @@
 #define STARS_UISTATE_H
 #include "win.h"
 #include "appstate.h"
+#include <array>
 #include <cstddef>
 
 static_assert(alignof(TILE) >= alignof(TILEDRAWPROC) && offsetof(TILE, pfn) % alignof(TILEDRAWPROC) == 0,
@@ -12,6 +13,7 @@ struct APPUISTATE {
     alignas(std::max_align_t) std::uint8_t       *vlpbdVCR = nullptr;
     alignas(std::max_align_t) std::uint8_t       *vlpbdVCRNext = nullptr;
     alignas(std::max_align_t) BTLPLAN        btlplan = {};
+    alignas(std::max_align_t) std::array<char, 256> szRaceFileSuggest = {};
     alignas(std::max_align_t) std::uint8_t        *vlpbrVCR = nullptr;
     alignas(std::max_align_t) BTN           *rgbtnXfer = nullptr;
     alignas(std::max_align_t) COLORREF       crButtonFace = 0;
@@ -228,6 +230,7 @@ struct APPUISTATE {
     alignas(std::max_align_t) const char          *vrgszComputerLevel[5] = {"Easy", "Standard", "Tough", "Expert", "Random"};
     alignas(std::max_align_t) const char          *vrgszComputerPlayers[7] = {"Robotoids", "Turindrones", "Automitrons", "Rototills", "Cybertrons", "Macinti", "Random"};
     alignas(std::max_align_t) char          *vrgszFileNew = nullptr;
+    alignas(std::max_align_t) std::array<std::array<char, 256>, 16> rgszLibraryRaceNew = {};
     alignas(std::max_align_t) char          *vrgszMRU = nullptr;
     alignas(std::max_align_t) const char          *vrgszRCWWidth[2] = {"<<     >>", ">>     <<"};
     alignas(std::max_align_t) char           rgszArial[4][32] = {};
@@ -377,7 +380,7 @@ void CancelAppUiClose(APPSESSION &app) noexcept;
 void EndAppUiClose(APPSESSION &app) noexcept;
 void ResetScannerInspectorSession() noexcept;
 void CloseLibraryUiSession() noexcept;
-void ResetRaceUiSession() noexcept;
+void ResetRaceUiSession(APPSESSION &app) noexcept;
 void ResetScannerInputSession() noexcept;
 void ResetMessageInputSession() noexcept;
 void ResetReportInputSession() noexcept;

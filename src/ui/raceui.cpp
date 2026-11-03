@@ -1394,11 +1394,9 @@ void DrawRaceAdvantagePoints(APPSESSION &app, HDC hdc, RECT *prc, PLAYER *pplr) 
     return;
 }
 
-static char szRaceFileSuggest[256];
-
 void SetSzRaceFile(APPSESSION &app, std::string_view szFile) {
     /* Full native paths belong to UI storage; the original cache keeps its size. */
-    CchCopyUtf8Prefix(std::span{szRaceFileSuggest}, szFile);
+    CchCopyUtf8Prefix(std::span{app.lpui->szRaceFileSuggest}, szFile);
     CchCopyUtf8Prefix(std::span{app.state.szRaceFile}, szFile);
 }
 
@@ -1419,8 +1417,9 @@ std::int16_t FSaveRace(APPSESSION &app, std::string_view szFileSuggest, PLAYER *
     std::array<char, cchCatalogText> rgchFilterText;
     std::size_t ichFileName;
 
-    if (szFileSuggest.data() == app.state.szRaceFile && app.state.szRaceFile[0] && szRaceFileSuggest[0] &&
-        std::string_view{szRaceFileSuggest}.starts_with(std::string_view{app.state.szRaceFile})) szFileSuggest = szRaceFileSuggest;
+    if (szFileSuggest.data() == app.state.szRaceFile && app.state.szRaceFile[0] && app.lpui->szRaceFileSuggest[0] &&
+        std::string_view{app.lpui->szRaceFileSuggest.data()}.starts_with(std::string_view{app.state.szRaceFile}))
+        szFileSuggest = app.lpui->szRaceFileSuggest.data();
     if (!szFileSuggest.empty()) {
         CchCopyUtf8(std::span{szFile}, szFileSuggest);
     } else {
@@ -1465,4 +1464,4 @@ void SetRCWTitle(APPSESSION &app, HWND hwnd, std::int16_t iStep) {
     return;
 }
 
-void ResetRaceUiSession() noexcept { szRaceFileSuggest[0] = 0; }
+void ResetRaceUiSession(APPSESSION &app) noexcept { app.lpui->szRaceFileSuggest[0] = 0; }

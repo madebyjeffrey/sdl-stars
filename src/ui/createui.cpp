@@ -9,9 +9,6 @@
 #include "alert_io.h"
 #include "random_io.h"
 
-/* UI-only names retain full UTF-8 library filenames beside the Win16 cache. */
-static char rgszLibraryRaceNew[16][256];
-
 struct NEWGAMERACEMENU {
     HMENU hmenu;
     int cRace;
@@ -62,7 +59,7 @@ void NewGameWizard(APPSESSION &app, HWND hwnd, std::int16_t fReadOnly) {
     app.lpui->vrgplrNew = rgplrLocal;
     app.lpui->vrgszFileNew = szFileLocal;
     app.lpui->vcplrNew = 0;
-    for (auto &sz : rgszLibraryRaceNew) std::ranges::fill(sz, char{});
+    for (auto &sz : app.lpui->rgszLibraryRaceNew) std::ranges::fill(sz, char{});
     std::ranges::fill(app.state.vrgplrTypeNew, 0);
     if (!fReadOnly) {
         gameT = app.state.game;
@@ -529,7 +526,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rghmenuSubPopup[1] = win32::CreatePopupMenu();
         nrm.hmenu = rghmenuSubPopup[1];
         nrm.cRace = 0;
-        nrm.pszSelected = (iCurVal & 3) == 2 ? rgszLibraryRaceNew[iCurVal >> 2] : nullptr;
+        nrm.pszSelected = (iCurVal & 3) == 2 ? app.lpui->rgszLibraryRaceNew[iCurVal >> 2].data() : nullptr;
         FEnumerateLibraryRaces(app, [&nrm](APPSESSION &appEntry, std::string_view pszName) {
             return AddNewGameLibraryRace(appEntry, &nrm, pszName);
         });
@@ -605,7 +602,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (iNewVal < 0) goto FinishClick;
                     app.lpui->vrgplrNew[iNewVal] = app.state.vplr;
                     CchCopyUtf8(std::span{app.lpui->vrgszFileNew + iNewVal * 13, std::size_t{13}}, app.state.szRaceFile);
-                    CchCopyUtf8(std::span{rgszLibraryRaceNew[iNewVal]}, szLibraryRace);
+                    CchCopyUtf8(std::span{app.lpui->rgszLibraryRaceNew[iNewVal]}, szLibraryRace);
                     iNewVal = iNewVal << 2 | 2;
                 }
             } else if (app.lpui->iPopMenuSel == 2) {
@@ -627,15 +624,15 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     app.state.szRacePass[0] = 0;
                 }
                 CchSnprintf(std::span{szLibraryRace, sizeof(szLibraryRace)}, "%s",
-                              (iCurVal & 3) == 2 ? rgszLibraryRaceNew[iCurVal >> 2] : "");
+                              (iCurVal & 3) == 2 ? app.lpui->rgszLibraryRaceNew[iCurVal >> 2].data() : "");
                 prcSav = app.lpui->vrgrcRCW;
                 if (FCustomizeLibraryRace(app, hwnd, szLibraryRace)) {
                     app.lpui->vrgrcRCW = prcSav;
-                    if ((iCurVal & 3) == 1 || std::strcmp(szLibraryRace, rgszLibraryRaceNew[iCurVal >> 2]) != 0)
+                    if ((iCurVal & 3) == 1 || std::strcmp(szLibraryRace, app.lpui->rgszLibraryRaceNew[iCurVal >> 2].data()) != 0)
                         goto PlaceNew;
                     app.lpui->vrgplrNew[iCurVal >> 2] = app.state.vplr;
                     CchCopyUtf8(std::span{app.lpui->vrgszFileNew + (iCurVal >> 2) * 13, std::size_t{13}}, app.state.szRaceFile);
-                    CchCopyUtf8(std::span{rgszLibraryRaceNew[iCurVal >> 2]}, szLibraryRace);
+                    CchCopyUtf8(std::span{app.lpui->rgszLibraryRaceNew[iCurVal >> 2]}, szLibraryRace);
                     iNewVal = iCurVal;
                     iCurVal = -1;
                 }
@@ -747,7 +744,8 @@ void DrawNewGame2(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
             cch = CchSprintf(app.state.szWork, szT, TextIO().pfnCompressed(app, static_cast<StringId>(idsHumanoid + iPlr)).data());
             break;
         case 2:
-            pszFile = rgszLibraryRaceNew[iPlr][0] ? rgszLibraryRaceNew[iPlr] : app.lpui->vrgszFileNew + iPlr * 13;
+            pszFile = app.lpui->rgszLibraryRaceNew[iPlr][0] ? app.lpui->rgszLibraryRaceNew[iPlr].data()
+                                                              : app.lpui->vrgszFileNew + iPlr * 13;
             if (!app.state.fRCWReadOnly && app.state.gd.fNoHostNames && pszFile[0] != 0) {
                 cch = CchSprintf(app.state.szWork, " %s", pszFile);
                 break;

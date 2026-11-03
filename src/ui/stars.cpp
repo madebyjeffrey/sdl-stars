@@ -161,7 +161,7 @@ void FreeStuff(APPSESSION &app) noexcept {
         StarsCompatProcessExit();
         ResetScannerInspectorSession();
         CloseLibraryUiSession();
-        ResetRaceUiSession();
+        ResetRaceUiSession(app);
         ResetScannerInputSession();
         ResetMessageInputSession();
         ResetReportInputSession();
