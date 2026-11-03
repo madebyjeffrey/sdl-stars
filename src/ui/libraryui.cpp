@@ -343,7 +343,10 @@ static void GetGameLibraryName(APPSESSION &app, std::string_view pszName, std::s
     for (i = 0; i < cch; i++)
         if (static_cast<unsigned char>(pszNameOut[i]) < 32 || pszNameOut[i] == 127 || FInvalidPortableFilenameByte(static_cast<unsigned char>(pszNameOut[i]))) pszNameOut[i] = '_';
     while (cch != 0 && (pszNameOut[cch - 1] == ' ' || pszNameOut[cch - 1] == '.')) pszNameOut[--cch] = 0;
-    while (cch != 0 && (pszNameOut[0] == ' ' || pszNameOut[0] == '.')) std::memmove(pszNameOut.data(), pszNameOut.data() + 1, cch--);
+    while (cch != 0 && (pszNameOut[0] == ' ' || pszNameOut[0] == '.')) {
+        std::move(pszNameOut.begin() + 1, pszNameOut.begin() + cch + 1, pszNameOut.begin());
+        cch--;
+    }
     // The game loader treats the last period as a file extension.
     for (i = 0; i < cch; i++) if (pszNameOut[i] == '.') pszNameOut[i] = '_';
     if (cch == 0) {
@@ -354,7 +357,7 @@ static void GetGameLibraryName(APPSESSION &app, std::string_view pszName, std::s
         // Reserved device names need a prefix; leave the stored game title intact.
         cch = CchUtf8Prefix(std::string_view(pszNameOut.data(), cch), static_cast<std::size_t>(StarsMax(0, cchMax - 1)));
         pszNameOut[cch] = 0;
-        std::memmove(pszNameOut.data() + 1, pszNameOut.data(), cch + 1);
+        std::move_backward(pszNameOut.begin(), pszNameOut.begin() + cch + 1, pszNameOut.begin() + cch + 2);
         pszNameOut[0] = '_';
     }
 }
@@ -754,7 +757,10 @@ static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, std::span<c
     for (i = 0; i < cch; i++)
         if (static_cast<unsigned char>(pszStem[i]) < 32 || pszStem[i] == 127 || FInvalidPortableFilenameByte(static_cast<unsigned char>(pszStem[i]))) pszStem[i] = '_';
     while (cch != 0 && (pszStem[cch - 1] == ' ' || pszStem[cch - 1] == '.')) pszStem[--cch] = 0;
-    while (cch != 0 && (pszStem[0] == ' ' || pszStem[0] == '.')) std::memmove(pszStem.data(), pszStem.data() + 1, cch--);
+    while (cch != 0 && (pszStem[0] == ' ' || pszStem[0] == '.')) {
+        std::move(pszStem.begin() + 1, pszStem.begin() + cch + 1, pszStem.begin());
+        cch--;
+    }
     if (cch == 0) {
         CchSnprintf(pszStem, "%s", TextIO().pfnCompressed(app, idsLibraryDefaultRaceName).data());
         cch = std::string_view(pszStem.data()).size();
@@ -762,7 +768,7 @@ static void GetRaceLibraryStem(APPSESSION &app, const char *pszName, std::span<c
     CchSnprintf(std::span{szTest, sizeof(szTest)}, "%s.r1", pszStem.data());
     if (!FPortableRaceFilename(app, szTest)) {
         // Prefix reserved device names without altering the in-game race name.
-        std::memmove(pszStem.data() + 1, pszStem.data(), cch + 1);
+        std::move_backward(pszStem.begin(), pszStem.begin() + cch + 1, pszStem.begin() + cch + 2);
         pszStem[0] = '_';
     }
 }
