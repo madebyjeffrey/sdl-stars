@@ -567,8 +567,8 @@ void DrawProductionDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int1
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
                 c = CchSprintf(szT, TextIO().pfnCompressed(app, idsDDoneCompletion).data(), prod.pct);
                 szDisplayLabel = PszProductionETA(app, &app.state.sel.pl, app.state.lpplProdGlob, static_cast<ProdItemType>(LOWORD(lSel))).sz;
-                CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), szDisplayLabel.data());
-                win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, std::strlen(szT));
+                c += CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), szDisplayLabel.data());
+                win32::TextOutA(hdc, rc.left - 20, rc.bottom, szT, c);
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
             }
         }

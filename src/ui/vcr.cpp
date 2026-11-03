@@ -1149,8 +1149,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
     fAttack = brc == app.state.vrgtok[BevFromLp(app, app.lpui->vlpbrVCR).itokAttack()].brc;
     for (i = 0; i < BdvFromLp(app, app.lpui->vlpbdVCR).ctok(); i++) {
         if (app.state.vrgtok[i].brc == brc && app.state.vrgtok[i].csh > 0) {
-            CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr).data());
-            cch = std::strlen(app.state.szWork);
+            cch = CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnPlayerName(app, app.state.vrgtok[i].iplr, 0, 0, 0, 0, nullptr).data());
             if (app.state.vrgtok[i].grobj == grobjPlanet) {
                 lpshdef = app.state.rglpshdefSB[app.state.vrgtok[i].iplr] + (app.state.vrgtok[i].ishdef - 16);
             } else {

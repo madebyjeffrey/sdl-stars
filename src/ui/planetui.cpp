@@ -1626,11 +1626,11 @@ void DrawProductionItem(APPSESSION &app, HDC hdc, RECT *prc, std::string_view sz
                 ich = TextIO().pfnCchGetString(app, idsNeeded, std::span{szT});
                 goto LRightOut;
             }
-            TextIO().pfnCchGetString(app, idsUpTo, std::span{szT});
+            ich = TextIO().pfnCchGetString(app, idsUpTo, std::span{szT});
         } else {
             szT[0] = 0;
+            ich = 0;
         }
-        ich = std::strlen(szT);
         for (ichT = 2 - fFleet; ichT < 6 && ChItem(static_cast<std::size_t>(ichT + fFleet)) == ' '; ichT++) {
         }
         iCopy = static_cast<std::size_t>(ichT + fFleet);

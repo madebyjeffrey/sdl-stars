@@ -122,8 +122,7 @@ void DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc) {
         if (app.lpui->GlobalPD.rgi[2] >= 0) {
             c = CchSprintf(app.state.szWork, "%ldkT", app.lpui->GlobalPD.rgi[2]);
         } else {
-            CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsUnknown2).data());
-            c = std::strlen(app.state.szWork);
+            c = CchCopyUtf8Prefix(std::span{app.state.szWork}, TextIO().pfnCompressed(app, idsUnknown2).data());
         }
         win32::TextOutA(hdc, dx, app.state.dyArial8 + 4, app.state.szWork, c);
         RightTextOut(app, hdc, dx, app.state.dyArial8 * 2 + 4, TextIO().pfnCompressed(app, idsMineralConcentration).data(), 0, 0);

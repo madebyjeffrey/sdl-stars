@@ -570,10 +570,12 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             }
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             if (pl.iPlayer != iplrNone) {
-                CchCopyUtf8Prefix(std::span{szT}, TextIO().pfnCompressed(app, static_cast<StringId>(idsPop + (fShortLabels == 0))).data());
+                c = CchCopyUtf8Prefix(std::span{szT}, TextIO().pfnCompressed(app, static_cast<StringId>(idsPop + (fShortLabels == 0))).data());
             }
             if (pl.det == detAll) {
-                c = std::strlen(szT);
+                if (pl.iPlayer == iplrNone) {
+                    c = std::strlen(szT);
+                }
                 c += CchCopyUtf8Prefix(std::span{szT}.subspan(static_cast<std::size_t>(c)), CommaFormatLong(app, static_cast<std::uint32_t>((pl.rgwtMin[3] * 100))).data());
                 RightTextOut(app, hdc, xR, yCur, szT, c, 0);
             } else if (pl.iPlayer == iplrNone) {
@@ -582,8 +584,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             } else {
                 if (pl.det >= detSome) {
                     l = static_cast<std::int32_t>((pl.uPopGuess * 4));
-                    CchCopyUtf8Prefix(std::span{app.state.szWork}, szT);
-                    c = std::strlen(szT);
+                    c = CchCopyUtf8Prefix(std::span{app.state.szWork}, szT);
                     if (l > 0) {
                         c += CchSprintf(std::span{app.state.szWork}.subspan(static_cast<std::size_t>(c)), TextIO().pfnCompressed(app, idsCLd00).data(), 177, l);
                     } else {
