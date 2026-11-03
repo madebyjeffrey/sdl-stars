@@ -28337,8 +28337,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "2353f66a",
-  "latest_batch_status": "Source committed as 2353f66a. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "3e4d3252",
+  "latest_batch_status": "Source committed as 3e4d3252. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28354,9 +28354,9 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Eighty-four redundant UI length rescans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library-root, recent-file, planet-search and library-export path sizing.",
-    "source_head": "2353f66a",
-    "strlen_occurrence_inventory": "32 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "ui_text_lengths": "Eighty-five UI/compatibility text and path rescans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library paths, planet search and list incremental search.",
+    "source_head": "3e4d3252",
+    "strlen_occurrence_inventory": "31 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28383,12 +28383,13 @@
     "borrowed_return_audit": "Reviewed production functions returning string_view/span: returned views reference caller input, fixed/static storage, owner-backed profile/library data, or result-owned arrays; report label helpers copy before returning. No dangling return was found in this pass. The broader scratch-owner audit remains open.",
     "recent_file_label_length": "AddMRUFile uses the count returned by CchGetString for idsFile1 to replace the final digit without rescanning the fixed label.",
     "planet_search_length": "FSelectSz uses the incoming bounded string_view length, stopping at any embedded NUL to preserve the prior terminated-buffer comparison behavior.",
-    "library_export_path_length": "FExportLibraryOrders builds one bounded view of the selected path and reuses its size and separator/extension indices; path truncation at the first NUL and suffix replacement semantics are unchanged."
+    "library_export_path_length": "FExportLibraryOrders builds one bounded view of the selected path and reuses its size and separator/extension indices; path truncation at the first NUL and suffix replacement semantics are unchanged.",
+    "compat_list_search_length": "COMPATLIST owns cchSearch alongside szSearch; ResetList clears both and WM_CHAR updates the count on every append/restart, removing the repeated buffer scan."
   },
-  "latest_change": "FExportLibraryOrders reuses one bounded selected-path view for separator, extension and output-length calculations.",
+  "latest_change": "COMPATLIST now tracks the incremental search buffer length across reset and WM_CHAR updates.",
   "latest_batch_verification": {
-    "batch": "L05 library export reuses selected path view and length",
-    "source_commit": "2353f66a",
+    "batch": "L05 compatibility list tracks incremental search length",
+    "source_commit": "3e4d3252",
     "macos_debug_build": "make compile passes with strict warnings and header checks.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -28405,7 +28406,7 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; extension removal and player-specific suffix construction retain their previous path rules.",
+    "baseline": "Unchanged; list search restart, timeout, input limit and matching semantics are unchanged.",
     "platform": "Windows/Linux current-source qualification remains pending.",
     "diff_check": "Pass."
   }
