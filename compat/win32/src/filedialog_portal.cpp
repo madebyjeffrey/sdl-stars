@@ -122,64 +122,72 @@ static int IHex(char ch) {
     if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
     return -1;
 }
-static bool FUriPath(LPCSTR pszUri, char *pszPath, std::size_t cbPath) {
+static bool FUriPath(std::string_view szUri, std::span<char> szPath) {
     std::size_t c = 0;
     int hi, lo;
     unsigned char ch;
-    if (std::strncmp(pszUri, "file://", 7) != 0) return 0;
-    pszUri += 7;
-    if (std::strncmp(pszUri, "localhost/", 10) == 0) pszUri += 9;
-    if (*pszUri != '/') return 0;
-    while (*pszUri) {
-        if (*pszUri == '?' || *pszUri == '#') return 0;
-        ch = static_cast<unsigned char>(*pszUri++);
+    if (!szUri.starts_with("file://")) return false;
+    szUri.remove_prefix(7);
+    if (szUri.starts_with("localhost/")) szUri.remove_prefix(9);
+    if (szUri.empty() || szUri.front() != '/') return false;
+    while (!szUri.empty()) {
+        if (szUri.front() == '?' || szUri.front() == '#') return false;
+        ch = static_cast<unsigned char>(szUri.front());
+        szUri.remove_prefix(1);
         if (ch == '%') {
-            if (!pszUri[0] || !pszUri[1] || (hi = IHex(pszUri[0])) < 0 || (lo = IHex(pszUri[1])) < 0) return 0;
-            ch = static_cast<unsigned char>((hi << 4) | lo); pszUri += 2;
-            if (ch == 0) return 0;
+            if (szUri.size() < 2 || (hi = IHex(szUri[0])) < 0 || (lo = IHex(szUri[1])) < 0) return false;
+            ch = static_cast<unsigned char>((hi << 4) | lo); szUri.remove_prefix(2);
+            if (ch == 0) return false;
         }
-        if (c + 1 >= cbPath) return 0;
-        pszPath[c++] = static_cast<char>(ch);
+        if (c + 1 >= szPath.size()) return false;
+        szPath[c++] = static_cast<char>(ch);
     }
-    pszPath[c] = 0; return 1;
+    if (szPath.empty()) return false;
+    szPath[c] = 0;
+    return true;
 }
-static int IResponse(DBusMessage *lpMessage, const std::vector<FILESELECTIONFILTER> &filters,
-                     std::size_t *lpiFilter, char *pszPath, std::size_t cbPath) {
+enum class PORTALRESPONSEKIND { failed, cancelled, selected };
+struct PORTALRESPONSERESULT {
+    PORTALRESPONSEKIND kind;
+    std::size_t iFilter;
+};
+static PORTALRESPONSERESULT IResponse(DBusMessage *lpMessage, const std::vector<FILESELECTIONFILTER> &filters,
+                                      std::size_t iFilter, std::span<char> szPath) {
     DBusMessageIter args, results, entry, value, uris, filter;
     dbus_uint32_t response;
     const char *pszKey, *pszUri, *pszName, *pszLabel;
     std::size_t i;
-    BOOL fUri = 0;
-    if (!dbus_message_has_signature(lpMessage, "ua{sv}")) return -1;
+    bool fUri = false;
+    if (!dbus_message_has_signature(lpMessage, "ua{sv}")) return {PORTALRESPONSEKIND::failed, iFilter};
     dbus_message_iter_init(lpMessage, &args); dbus_message_iter_get_basic(&args, &response);
-    if (response == 1) return 0;
-    if (response != 0) return -1;
+    if (response == 1) return {PORTALRESPONSEKIND::cancelled, iFilter};
+    if (response != 0) return {PORTALRESPONSEKIND::failed, iFilter};
     dbus_message_iter_next(&args); dbus_message_iter_recurse(&args, &results);
     while (dbus_message_iter_get_arg_type(&results) == DBUS_TYPE_DICT_ENTRY) {
         dbus_message_iter_recurse(&results, &entry); dbus_message_iter_get_basic(&entry, &pszKey);
         dbus_message_iter_next(&entry); dbus_message_iter_recurse(&entry, &value);
         if (std::strcmp(pszKey, "uris") == 0) {
             if (fUri || dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_ARRAY ||
-                dbus_message_iter_get_element_type(&value) != DBUS_TYPE_STRING) return -1;
+                dbus_message_iter_get_element_type(&value) != DBUS_TYPE_STRING) return {PORTALRESPONSEKIND::failed, iFilter};
             dbus_message_iter_recurse(&value, &uris);
-            if (dbus_message_iter_get_arg_type(&uris) != DBUS_TYPE_STRING) return -1;
+            if (dbus_message_iter_get_arg_type(&uris) != DBUS_TYPE_STRING) return {PORTALRESPONSEKIND::failed, iFilter};
             dbus_message_iter_get_basic(&uris, &pszUri);
-            if (!FUriPath(pszUri, pszPath, cbPath) || dbus_message_iter_next(&uris)) return -1;
-            fUri = 1;
+            if (!FUriPath(pszUri, szPath) || dbus_message_iter_next(&uris)) return {PORTALRESPONSEKIND::failed, iFilter};
+            fUri = true;
         } else if (std::strcmp(pszKey, "current_filter") == 0) {
-            if (dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_STRUCT) return -1;
+            if (dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_STRUCT) return {PORTALRESPONSEKIND::failed, iFilter};
             dbus_message_iter_recurse(&value, &filter);
-            if (dbus_message_iter_get_arg_type(&filter) != DBUS_TYPE_STRING) return -1;
+            if (dbus_message_iter_get_arg_type(&filter) != DBUS_TYPE_STRING) return {PORTALRESPONSEKIND::failed, iFilter};
             dbus_message_iter_get_basic(&filter, &pszName);
             for (i = 0; i < filters.size(); i++) {
                 pszLabel = filters[i].szName.c_str();
-                if (!FUtf8Valid(pszLabel)) return -1;
-                if (std::strcmp(pszName, pszLabel) == 0) { *lpiFilter = i; break; }
+                if (!FUtf8Valid(pszLabel)) return {PORTALRESPONSEKIND::failed, iFilter};
+                if (std::strcmp(pszName, pszLabel) == 0) { iFilter = i; break; }
             }
         }
         dbus_message_iter_next(&results);
     }
-    return fUri ? 1 : -1;
+    return {fUri ? PORTALRESPONSEKIND::selected : PORTALRESPONSEKIND::failed, iFilter};
 }
 static bool FPumpChooser(HWND hwndOwner) {
     win32::MSG msg;
@@ -214,6 +222,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     PORTALRESPONSES responses = {};
     int i;
     BOOL fFilter = 0;
+    PORTALRESPONSERESULT response;
     Uint64 msOwnerCheck = 0;
     SDL_PropertiesID props;
     Sint64 xid;
@@ -326,7 +335,11 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
         for (i = 0; i < responses.cMessage; i++) {
             lpMessage = responses.rgMessage[i];
             if (dbus_message_has_path(lpMessage, szRequestPath.c_str()) && dbus_message_has_sender(lpMessage, szSenderName.c_str())) {
-                iResult = IResponse(lpMessage, request.rgFilters, &iFilter, szPath.data(), szPath.size()); goto done;
+                response = IResponse(lpMessage, request.rgFilters, iFilter, szPath);
+                iResult = response.kind == PORTALRESPONSEKIND::selected ? 1 :
+                    response.kind == PORTALRESPONSEKIND::cancelled ? 0 : -1;
+                iFilter = response.iFilter;
+                goto done;
             }
             dbus_message_unref(lpMessage); responses.rgMessage[i] = nullptr;
         }
