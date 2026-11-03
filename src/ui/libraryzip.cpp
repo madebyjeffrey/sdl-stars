@@ -222,7 +222,7 @@ done:
 static std::int16_t FZipMakeParents(std::string_view pszRoot, std::string_view pszName, std::span<char> szFile) {
     char szPath[512], ch;
     int cch;
-    std::size_t i, cchBase = pszRoot.size() + std::strlen(szDirSep);
+    std::size_t i, cchBase = pszRoot.size() + std::string_view{szDirSep}.size();
     cch = CchSnprintf(szFile, "%s%s%s", pszRoot, szDirSep, pszName);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= szFile.size() || static_cast<std::size_t>(cch) >= sizeof(szPath)) return 0;
     CchCopyUtf8(std::span{szPath}, std::string_view{szFile.data(), static_cast<std::size_t>(cch)});

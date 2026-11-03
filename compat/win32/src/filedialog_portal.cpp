@@ -43,10 +43,11 @@ static BOOL FOption(DBusMessageIter *lpOptions, LPCSTR pszKey, LPCSTR pszType,
            dbus_message_iter_close_container(&entry, &value) &&
            dbus_message_iter_close_container(lpOptions, &entry);
 }
-static BOOL FFolderOption(DBusMessageIter *lpOptions, LPCSTR pszFolder) {
+static BOOL FFolderOption(DBusMessageIter *lpOptions, std::string_view szFolder) {
     DBusMessageIter entry, value, bytes;
     const char *pszKey = "current_folder";
-    int cb = static_cast<int>(std::strlen(pszFolder)) + 1;
+    const char *pszFolder = szFolder.data();
+    int cb = static_cast<int>(szFolder.size()) + 1;
     return dbus_message_iter_open_container(lpOptions, DBUS_TYPE_DICT_ENTRY, nullptr, &entry) &&
            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &pszKey) &&
            dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "ay", &value) &&
@@ -301,7 +302,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
         if (!FOption(&options, "handle_token", "s", DBUS_TYPE_STRING, &pszToken) ||
             !FOption(&options, "modal", "b", DBUS_TYPE_BOOLEAN, &fTrue) ||
             (request.mode == FILESELECTIONMODE::open && !FOption(&options, "multiple", "b", DBUS_TYPE_BOOLEAN, &fFalse)) ||
-            !FFolderOption(&options, request.szInitialDirectory.c_str()) ||
+            !FFolderOption(&options, request.szInitialDirectory) ||
             !FFilterOptions(&options, request.rgFilters, iFilter) ||
             (request.mode == FILESELECTIONMODE::save && !FOption(&options, "current_name", "s", DBUS_TYPE_STRING, &pszCurrentName)) ||
             !dbus_message_iter_close_container(&args, &options)) goto done;
