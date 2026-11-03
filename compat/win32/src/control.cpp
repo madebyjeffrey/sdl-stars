@@ -1,6 +1,7 @@
 /* Classic control behavior for the source-level SDL UI. Fonts remain caller-owned. */
 #include "internal.h"
 #include <cstdlib>
+#include <iterator>
 #include <limits>
 
 DWORD win32::GetSysColor(int i) {
@@ -14,7 +15,7 @@ DWORD win32::GetSysColor(int i) {
         win32::RGB(255,255,225), win32::RGB(0,0,0), win32::RGB(0,0,255), win32::RGB(16,132,208),
         win32::RGB(181,181,181), win32::RGB(0,0,128), win32::RGB(192,192,192)
     };
-    return i >= 0 && i < static_cast<int>((sizeof(rgcr) / sizeof(rgcr[0]))) ? rgcr[i] : 0;
+    return i >= 0 && i < static_cast<int>(std::size(rgcr)) ? rgcr[i] : 0;
 }
 
 LRESULT win32::SendDlgItemMessageA(HWND hwnd, int id, UINT msg, WPARAM w, LPARAM l) {

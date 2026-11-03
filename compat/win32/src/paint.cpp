@@ -5,6 +5,7 @@
 #include "internal.h"
 #include "encoding.h"
 #include <algorithm>
+#include <iterator>
 #include "display_io.h"
 #include "input_io.h"
 #include "render_io.h"
@@ -133,7 +134,7 @@ HGDIOBJ win32::GetStockObject(int i) {
                 rgStock[j].fAlive = 1;
             } else if (j == win32::DEFAULT_PALETTE) {
                 rgStock[j].iKind = objPalette;
-                rgStock[j].cEntries = sizeof(rgpeDefault) / sizeof(rgpeDefault[0]);
+                rgStock[j].cEntries = static_cast<int>(std::size(rgpeDefault));
                 rgStock[j].fAlive = 1;
             } else if (j == win32::SYSTEM_FONT || j == win32::SYSTEM_FIXED_FONT ||
                        j == win32::ANSI_FIXED_FONT || j == win32::OEM_FIXED_FONT || j == win32::ANSI_VAR_FONT ||

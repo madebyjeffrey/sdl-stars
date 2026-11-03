@@ -6,6 +6,7 @@
 #include <SDL3/SDL.h>
 #include <cerrno>
 #include <cstdio>
+#include <iterator>
 #include <limits>
 #include <new>
 #include <optional>
@@ -28,7 +29,7 @@ static bool FHelpAssets(std::string_view pszDirectory) {
     NATIVEFILE *lpFile;
     bool fStamp;
 
-    for (i = 0; i < sizeof(rgHelpFile) / sizeof(rgHelpFile[0]); i++) {
+    for (i = 0; i < std::size(rgHelpFile); i++) {
         cch = CchSnprintf(std::span{szFile}, "%s/%s", pszDirectory, rgHelpFile[i]);
         if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) {
             win32::SetLastError(win32::ERROR_FILENAME_EXCED_RANGE);
@@ -149,7 +150,7 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     if (uCommand == win32::HELP_INDEX) {
         szPage = STARS_HELP_CONTENTS;
     } else if (dwData <= std::numeric_limits<std::uint32_t>::max()) {
-        for (i = 0; i < sizeof(rgHelpContext) / sizeof(rgHelpContext[0]); i++) {
+        for (i = 0; i < std::size(rgHelpContext); i++) {
             if (rgHelpContext[i].idh == static_cast<std::uint32_t>(dwData)) {
                 szPage = rgHelpContext[i].pszPage;
                 break;

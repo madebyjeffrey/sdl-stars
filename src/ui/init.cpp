@@ -6,6 +6,7 @@
 #include "alert_io.h"
 #include "ownership.h"
 #include "uistate.h"
+#include <iterator>
 #include <limits>
 #include <string>
 #include <string_view>
@@ -270,11 +271,11 @@ static std::int16_t FInitMacShortcuts(APPSESSION &app, HWND hwnd) {
     std::size_t ikey;
 
     c = win32::CopyAcceleratorTableA(app.lpui->hAccel, nullptr, 0);
-    if (c <= 0 || static_cast<std::size_t>(c) + sizeof(rgkey) / sizeof(rgkey[0]) > sizeof(rgaccel) / sizeof(rgaccel[0]) ||
+    if (c <= 0 || static_cast<std::size_t>(c) + std::size(rgkey) > std::size(rgaccel) ||
         win32::CopyAcceleratorTableA(app.lpui->hAccel, rgaccel, c) != c) return 0;
     hmenu = win32::GetMenu(hwnd);
     if (!hmenu || win32::GetMenuItemCount(hmenu) <= 0) return 0;
-    for (ikey = 0; ikey < sizeof(rgkey) / sizeof(rgkey[0]); ikey++) {
+    for (ikey = 0; ikey < std::size(rgkey); ikey++) {
         for (i = 0; i < c && rgaccel[i].cmd != rgkey[ikey].accel.cmd; i++) {}
         rgaccel[i] = rgkey[ikey].accel;
         if (i == c) c++;
@@ -286,7 +287,7 @@ static std::int16_t FInitMacShortcuts(APPSESSION &app, HWND hwnd) {
     }
     hmain = win32::CreateAcceleratorTableA(rgaccel, c);
     if (!hmain) return 0;
-    htitle = win32::CreateAcceleratorTableA(rgtitle, sizeof(rgtitle) / sizeof(rgtitle[0]));
+    htitle = win32::CreateAcceleratorTableA(rgtitle, static_cast<int>(std::size(rgtitle)));
     if (!htitle) { win32::DestroyAcceleratorTable(hmain); return 0; }
     app.lpui->hAccel = hmain;
     app.lpui->hAccelTitle = htitle;

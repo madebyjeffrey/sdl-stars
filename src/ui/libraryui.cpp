@@ -1,6 +1,7 @@
 #include "win.h"
 #include <algorithm>
 #include <array>
+#include <iterator>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -1931,7 +1932,7 @@ static bool FindLibraryTurnMatch(APPSESSION &app, LIBRARYTURNMATCH *plm, std::st
     ICloseNativeFile(pf);
     CchSnprintf(std::span{szUniverse, sizeof(szUniverse)}, "%s%s%s%s%s.xy", app.lpui->szLibraryRoot.data(), szDirSep, pszName, szDirSep, pszName);
     if (!FInspectImportFile(szUniverse, dtXY, iplrNone, lidGame, &turn, nullptr, fMulti) || lidGame != plm->lidGame) return true;
-    if (plm->cMatches < static_cast<int>((sizeof(plm->rgszName) / sizeof(plm->rgszName[0]))))
+    if (plm->cMatches < static_cast<int>(std::size(plm->rgszName)))
         CchSnprintf(std::span{plm->rgszName[plm->cMatches], sizeof(plm->rgszName[0])}, "%s", pszName);
     plm->cMatches++;
     return true;
@@ -2045,7 +2046,7 @@ static std::int16_t FImportSubsequentTurn(APPSESSION &app, HWND hwnd, std::strin
     if (!FNativeEnumerateDirectory(app, app.lpui->szLibraryRoot.data(), FindLibraryTurnMatch, &lm)) return 0;
     if (lm.cMatches == 0) return -1;
     if (lm.cMatches > 1) {
-        if (lm.cMatches > static_cast<int>((sizeof(lm.rgszName) / sizeof(lm.rgszName[0]))) ||
+        if (lm.cMatches > static_cast<int>(std::size(lm.rgszName)) ||
             ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_LIBRARY_TURN_TARGET), hwnd,
                            LibraryTurnTargetDlg, reinterpret_cast<LPARAM>(&lm)) != 1) return 0;
     } else CchSnprintf(std::span{lm.szSelected, sizeof(lm.szSelected)}, "%s", lm.rgszName[0]);
