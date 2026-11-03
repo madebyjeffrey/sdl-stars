@@ -63,7 +63,7 @@ static std::optional<std::string> PszHelpDocument(std::string_view pszDirectory,
     std::string_view szBodyView;
     std::size_t cbPrefix, cbRead, cchBody;
     int cch;
-    BOOL fOk;
+    bool fOk;
     NATIVEOWNER<char, SDL_free> baseOwner;
     NATIVEOWNER<NATIVEFILE, ICloseNativeFile> sourceOwner, targetOwner;
 
@@ -104,8 +104,8 @@ static std::optional<std::string> PszHelpDocument(std::string_view pszDirectory,
     fOk = CWriteNative(std::span{szBody.data(), static_cast<std::size_t>(STARS_HELP_BUNDLE_SIZE)}.first(cbPrefix), lpTarget) == cbPrefix &&
           IPutNativeString(pszPage, lpTarget) >= 0 &&
           CWriteNative(std::span{szBody.data(), cbRead}.subspan(cbPrefix + sizeof(szMarker) - 1), lpTarget) == cbRead - cbPrefix - sizeof(szMarker) + 1;
-    if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = 0;
-    if (ICloseNativeFile(targetOwner.release())) fOk = 0;
+    if (IFlushNativeFile(lpTarget) || ISyncNativeFile(lpTarget)) fOk = false;
+    if (ICloseNativeFile(targetOwner.release())) fOk = false;
     lpTarget = nullptr;
     if (!fOk || IRenameNativePath(nft.szPath.c_str(), szTarget, true, true)) { IUnlinkNativePath(nft.szPath.c_str()); goto fail; }
     try { szResult.emplace(szTarget); }
@@ -124,7 +124,7 @@ BOOL win32::WinHelpA(HWND hWndMain, LPCSTR pszHelp, UINT uCommand, ULONG_PTR dwD
     std::string_view szPage;
     std::size_t i, ichSlash;
     int cch;
-    BOOL fLaunched;
+    bool fLaunched;
 
     static_cast<void>(hWndMain);
     if (uCommand != win32::HELP_INDEX && uCommand != win32::HELP_CONTEXT) {
