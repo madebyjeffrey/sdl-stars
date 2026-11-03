@@ -27325,7 +27325,7 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5\u201331 byte acceptance range.",
+      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5–31 byte acceptance range.",
       "api_audit": "Removed the strlen rescan after ProfileTextIO::ReadString by using its returned byte count.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
@@ -28294,7 +28294,7 @@
       "PszGetTaskName carries REPORTTEXTRESULT with an exact byte count; fleet task drawing and dump serialization use that count or its bounded view.",
       "Replaced two std::strlen scans of the fixed \"-- \" placeholder in report drawing with its compile-time byte length; rendered bytes are unchanged.",
       "APPGAMESTATE now has compile-time string_view sources for its mineral and planet attribute labels. Existing C-string pointer arrays retain their layout and point to those literals; UI sizing, drawing, and text-out calls now use the exact byte lengths.",
-      "Fleet order labels copied into fixed buffers now use CchGetString\u2019s returned byte count for drawing; the composed mine-laying message uses CchSprintf\u2019s returned count. Six std::strlen rescans were removed without changing displayed text.",
+      "Fleet order labels copied into fixed buffers now use CchGetString’s returned byte count for drawing; the composed mine-laying message uses CchSprintf’s returned count. Six std::strlen rescans were removed without changing displayed text.",
       "The C++ text service now returns PLANETNAMERESULT for planet names, carrying owned fixed storage and the exact UTF-8 byte count. The legacy array-returning PszGetPlanetName wrapper remains for the archived C observer. Report drawing uses result or formatter counts in seven former std::strlen sites."
     ],
     "current_source_audits": {
@@ -29257,14 +29257,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "3fc49708a4ce71c34ec079060f450ee925d90727",
-  "latest_batch_status": "Source commit 3fc49708 verified locally: macOS Debug build, desktop units, Cocoa chooser test, native regression, tutorial smoke, and strict MinGW syntax checks pass. Windows/Linux runtime qualification remains open.",
+  "latest_source_commit": "fe9a8738",
+  "latest_batch_status": "Source commit fe9a8738 verified locally: macOS SDL Debug build with strict warnings, desktop units 18/18, host tests 29/29, native and host regressions 519/519 each with zero differences/errors, and SDL tutorial smoke pass. Four broad code-audit substeps and current-source Windows/Linux qualification remain open; no total replacement count is known until those audits finish.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "3fc49708a4ce71c34ec079060f450ee925d90727",
+      "source_commit": "fe9a8738",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -29277,7 +29277,8 @@
         "L06 remaining-native-file-path-results"
       ],
       "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser coverage.",
-      "interpretation": "The four code substeps are audits, not a known count of edits. They remain open until reviewed site by site; no candidate replacement total is claimed."
+      "interpretation": "The four code substeps are audits, not a known count of edits. They remain open until reviewed site by site; no candidate replacement total is claimed.",
+      "production_cost_output_api": "GetProductionCosts now takes a fixed std::span<std::int32_t, 4>; callers no longer reinterpret signed int32 arrays as uint32_t output pointers. The fixed extent and legacy 32-bit wrap behavior are preserved."
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -29322,10 +29323,10 @@
     "library_export_path_length": "FExportLibraryOrders builds one bounded view of the selected path and reuses its size and separator/extension indices; path truncation at the first NUL and suffix replacement semantics are unchanged.",
     "compat_list_search_length": "COMPATLIST owns cchSearch alongside szSearch; ResetList clears both and WM_CHAR updates the count on every append/restart, removing the repeated buffer scan.",
     "library_recent_key_length": "FDeleteLibraryGameRecentPaths uses the byte count returned by CchGetString for idsFile1 when replacing the numeric suffix.",
-    "game_file_path_length": "FOpenGame carries CchCopyUtf8\u2019s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
-    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8\u2019s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
+    "game_file_path_length": "FOpenGame carries CchCopyUtf8’s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
+    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8’s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
     "strlen_inventory_method": "Individual call counts use rg -o and wc -l; rg -c counts matching lines and undercounts when a line has multiple calls.",
-    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8\u2019s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
+    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8’s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
     "compat_menu_label_lengths": "COMPATMENUITEM records the byte count when it owns its label; GetMenuStringA and popup sizing reuse that count.",
     "compat_list_item_lengths": "COMPATLISTITEM records the UTF-8 byte length at AddList ownership transfer; LB_GETTEXTLEN and LB_GETTEXT reuse it, removing the owned-item strlen scan and an implicit string_view length scan. Input search text remains a C-string ABI boundary.",
     "strlen_occurrence_inventory_method": "rg -o confirms 3 std::strlen calls in production C++ source/header files and 10 additional test/witness occurrences; no Objective-C++ std::strlen or SDL_strlen calls remain.",
@@ -29399,48 +29400,58 @@
       "verification": "macOS Debug build; desktop units 18/18; focused publication/safety/delete/file-workflow checks 4/4; native regression 519 matches with zero differences; tutorial smoke 1/1."
     }
   },
-  "latest_change": "L06 native chooser bridges use owned requests and results",
+  "latest_change": "L06 production cost output uses a fixed-extent span",
   "latest_batch_verification": {
-    "batch": "L06 native chooser bridges use owned requests and results",
-    "source_commit": "3fc49708a4ce71c34ec079060f450ee925d90727",
-    "macos_sdl_debug_build": "Pass; strict warnings enabled.",
+    "batch": "L06 production cost output uses a fixed-extent span",
+    "source_commit": "fe9a8738",
+    "macos_sdl_debug_build": "make compile passes with strict warnings; Objective-C++ Cocoa adapter compiled.",
     "desktop_unit_tests": "18/18 pass.",
-    "chooser_test": "Cocoa chooser adapter test 1/1 passes.",
+    "host_unit_tests": "29/29 pass, including C++ manifest and routing-policy checks.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
+    "host_regression": {
+      "matches": 519,
+      "warnings": 25,
+      "differences_errors": 0,
+      "skipped": 0
+    },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged; the native regression matches all 519 checkpoints with zero differences or errors.",
-    "api_audit": "Windows and Cocoa chooser bridges now accept the owned FILESELECTIONREQUEST, use the typed FILESELECTIONPUMP, and return FILESELECTIONRESULT. Removed C-style filter pointer/count, output path pointer/capacity, integer status, and callback context pairs. PATH_MAX admission, selected-filter behavior, cancellation, and failure mapping are retained.",
-    "platform": "Current-source Windows runtime and Linux chooser qualification remain outstanding.",
-    "diff_check": "Pass.",
-    "windows_syntax_compile": "Strict MinGW C++20 syntax compilation passes for filedialog_windows.cpp, filedialog_windows_sdk.cpp, and win32_filedialog_windows_flow.cpp."
+    "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
+    "api_audit": "GetProductionCosts and its injected test callbacks now use std::span<std::int32_t, 4>. All reinterpret_cast<std::uint32_t *> cost-output call sites were removed. Fixed four-element extent, in/out behavior, storage widths, and legacy 32-bit wrapping are preserved.",
+    "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
+    "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "L06 native chooser bridges use owned requests and results",
-    "source_commit": "3fc49708a4ce71c34ec079060f450ee925d90727",
-    "macos_sdl_debug_build": "make compile passes with strict warnings.",
+    "batch": "L06 production cost output uses a fixed-extent span",
+    "source_commit": "fe9a8738",
+    "macos_sdl_debug_build": "make compile passes with strict warnings; Objective-C++ Cocoa adapter compiled.",
     "desktop_unit_tests": "18/18 pass.",
-    "chooser_test": "Cocoa chooser adapter test 1/1 passes.",
+    "host_unit_tests": "29/29 pass, including C++ manifest and routing-policy checks.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
+    "host_regression": {
+      "matches": 519,
+      "warnings": 25,
+      "differences_errors": 0,
+      "skipped": 0
+    },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "windows_cross_compile": "Strict MinGW C++20 syntax compilation passes for filedialog_windows.cpp, filedialog_windows_sdk.cpp, and win32_filedialog_windows_flow.cpp.",
-    "baseline": "Unchanged; the native regression matches all 519 checkpoints with zero differences or errors.",
-    "api_audit": "Windows and Cocoa chooser bridges now accept the owned FILESELECTIONREQUEST, use the typed FILESELECTIONPUMP, and return FILESELECTIONRESULT. Removed C-style filter pointer/count, output path pointer/capacity, integer status, and callback context pairs. PATH_MAX admission, selected-filter behavior, cancellation, and failure mapping are retained.",
-    "platform": "Current-source Windows runtime and Linux chooser qualification remain outstanding.",
+    "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
+    "api_audit": "GetProductionCosts and its injected test callbacks now use std::span<std::int32_t, 4>. All reinterpret_cast<std::uint32_t *> cost-output call sites were removed. Fixed four-element extent, in/out behavior, storage widths, and legacy 32-bit wrapping are preserved.",
+    "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
     "diff_check": "Pass.",
-    "status": "Source commit 3fc49708 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit fe9a8738 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
-      "L05 bounded text destinations, const-text interfaces, scratch storage and borrowed-return audit.",
-      "L06 remaining buffer/length and native file/path results; complete Windows/Linux chooser qualification.",
+      "L05 bounded-text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+      "L06 remaining buffer/length service interfaces and native file/path results; complete chooser Windows/Linux qualification.",
       "L08 current-source Windows/Linux qualification and final macro/C inventory."
     ],
     "next": "Continue the L05 text/scratch audits and L06 remaining native service interface audits, then complete current-source Windows/Linux qualification."
