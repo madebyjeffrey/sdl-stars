@@ -15,8 +15,8 @@ public:
     std::uint8_t iTechNow() const noexcept { return static_cast<std::uint8_t>(GetBits<0, 8, 4>()); }
     std::uint8_t iTechNext() const noexcept { return static_cast<std::uint8_t>(GetBits<0, 12, 4>()); }
 };
-inline NATIVERESEARCHVIEW RsvFromPrefix(std::uint8_t *lp, std::size_t cb) noexcept {
-    return {std::as_writable_bytes(std::span(lp, cb)), 0};
+inline NATIVERESEARCHVIEW RsvFromPrefix(std::span<std::byte> rgb) noexcept {
+    return {rgb, 0};
 }
 
 // Each caller supplies only the physical prefix needed for that field. Lookup
@@ -36,8 +36,8 @@ public:
     void SetCQuan16(std::int16_t i, std::int16_t value) noexcept { SetI16(6 + std::ptrdiff_t(i) * 2, value); }
     void SetCQuan32(std::int16_t i, std::int32_t value) noexcept { SetI32(6 + std::ptrdiff_t(i) * 4, value); }
 };
-inline NATIVECARGOXFERVIEW CxvFromPrefix(std::uint8_t *lp, std::size_t cb) noexcept {
-    return {std::as_writable_bytes(std::span(lp, cb)), 0};
+inline NATIVECARGOXFERVIEW CxvFromPrefix(std::span<std::byte> rgb) noexcept {
+    return {rgb, 0};
 }
 
 class NATIVEPLANETROUTINGVIEW : public NATIVEBYTEWINDOW {

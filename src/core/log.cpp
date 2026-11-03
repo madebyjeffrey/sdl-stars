@@ -424,14 +424,14 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
     default:
         prt = nullptr;
     }
-    if (prt && CxvFromPrefix(prt, 5).grobj1() == (plx1->grobj & 0xff) && CxvFromPrefix(prt, 5).grobj2() == (plx2->grobj & 0xff) && CxvFromPrefix(prt, 2).id1() == plx1->id && CxvFromPrefix(prt, 4).id2() == plx2->id) {
-        grbit = CxvFromPrefix(prt, 6).grbitItems();
+    if (prt && CxvFromPrefix(std::as_writable_bytes(std::span{prt, std::size_t{5}})).grobj1() == (plx1->grobj & 0xff) && CxvFromPrefix(std::as_writable_bytes(std::span{prt, std::size_t{5}})).grobj2() == (plx2->grobj & 0xff) && CxvFromPrefix(std::as_writable_bytes(std::span{prt, std::size_t{2}})).id1() == plx1->id && CxvFromPrefix(std::as_writable_bytes(std::span{prt, std::size_t{4}})).id2() == plx2->id) {
+        grbit = CxvFromPrefix(std::as_writable_bytes(std::span{prt, std::size_t{6}})).grbitItems();
         iOff = 0;
         switch (app.state.hdrPrev.rt) {
         case rtLogCargoXfer8:
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
-                    rgQuan[i] = static_cast<std::int16_t>(CxvFromPrefix(prt, 6 + (iOff + 1) * 1).cQuan8(iOff));
+                    rgQuan[i] = static_cast<std::int16_t>(CxvFromPrefix(std::as_writable_bytes(std::span{prt, static_cast<std::size_t>(6 + (iOff + 1) * 1)})).cQuan8(iOff));
                     iOff++;
                 }
             }
@@ -440,7 +440,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
             prtx = static_cast<std::uint8_t *>(prt);
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
-                    rgQuan[i] = CxvFromPrefix(prtx, 6 + (iOff + 1) * 2).cQuan16(iOff);
+                    rgQuan[i] = CxvFromPrefix(std::as_writable_bytes(std::span{prtx, static_cast<std::size_t>(6 + (iOff + 1) * 2)})).cQuan16(iOff);
                     iOff++;
                 }
             }
@@ -449,7 +449,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
             prtl = static_cast<std::uint8_t *>(prt);
             for (i = 0; i < 5; i++) {
                 if (1 << i & grbit) {
-                    rgQuan[i] = CxvFromPrefix(prtl, 6 + (iOff + 1) * 4).cQuan32(iOff);
+                    rgQuan[i] = CxvFromPrefix(std::as_writable_bytes(std::span{prtl, static_cast<std::size_t>(6 + (iOff + 1) * 4)})).cQuan32(iOff);
                     iOff++;
                 }
             }
@@ -483,7 +483,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
             rt = 1;
             for (i = 0; i < 5; i++) {
                 if (rgQuan[i] != 0) {
-                    CxvFromPrefix(prt, 6 + (iOff + 1) * 1).SetCQuan8(iOff++, rgQuan[i]);
+                    CxvFromPrefix(std::as_writable_bytes(std::span{prt, static_cast<std::size_t>(6 + (iOff + 1) * 1)})).SetCQuan8(iOff++, rgQuan[i]);
                     cb++;
                 }
             }
@@ -492,7 +492,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
             prtx = reinterpret_cast<std::uint8_t *>(rgbuf);
             for (i = 0; i < 5; i++) {
                 if (rgQuan[i] != 0) {
-                    CxvFromPrefix(prtx, 6 + (iOff + 1) * 2).SetCQuan16(iOff++, LOWORD(rgQuan[i]));
+                    CxvFromPrefix(std::as_writable_bytes(std::span{prtx, static_cast<std::size_t>(6 + (iOff + 1) * 2)})).SetCQuan16(iOff++, LOWORD(rgQuan[i]));
                     cb += 2;
                 }
             }
@@ -501,7 +501,7 @@ void LogMakeValidXfer(APPSESSION &app, LOGXFER *plx1, LOGXFER *plx2) {
             prtl = reinterpret_cast<std::uint8_t *>(rgbuf);
             for (i = 0; i < 5; i++) {
                 if (rgQuan[i] != 0) {
-                    CxvFromPrefix(prtl, 6 + (iOff + 1) * 4).SetCQuan32(iOff++, rgQuan[i]);
+                    CxvFromPrefix(std::as_writable_bytes(std::span{prtl, static_cast<std::size_t>(6 + (iOff + 1) * 4)})).SetCQuan32(iOff++, rgQuan[i]);
                     cb += 4;
                 }
             }
@@ -837,24 +837,24 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     case rtLogCargoXfer8:
     case rtLogCargoXfer16:
     case rtLogCargoXfer32:
-        if (!FLookupObject(app, static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), rgxf[0].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())))) {
+        if (!FLookupObject(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), rgxf[0].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())))) {
             return 0;
         }
         rgxf[1].SetIdObj(idflNone);
-        if (CxvFromPrefix(lpb, 5).grobj2() != grobjOther && !FLookupObject(app, static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2()), CxvFromPrefix(lpb, 4).id2(), rgxf[1].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2())))) {
-            if (CxvFromPrefix(lpb, 5).grobj2() == grobjFleet && (CxvFromPrefix(lpb, 4).id2() >> 9 & 0xf) != app.state.idPlayer)
+        if (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() != grobjOther && !FLookupObject(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2(), rgxf[1].LpvLookup(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2())))) {
+            if (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() == grobjFleet && (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2() >> 9 & 0xf) != app.state.idPlayer)
                 break;
             return 0;
         }
-        grbit = CxvFromPrefix(lpb, 6).grbitItems();
+        grbit = CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{6}})).grbitItems();
         for (i = 0, iLook = 0; i < 5; i++, grbit >>= 1) {
             if (grbit & 1) {
                 if (rt == rtLogCargoXfer8) {
-                    rgcXfer[i] = static_cast<std::int16_t>(CxvFromPrefix(lpb, 6 + (iLook + 1) * 1).cQuan8(iLook));
+                    rgcXfer[i] = static_cast<std::int16_t>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, static_cast<std::size_t>(6 + (iLook + 1) * 1)})).cQuan8(iLook));
                 } else if (rt == rtLogCargoXfer16) {
-                    rgcXfer[i] = CxvFromPrefix(lpb, 6 + (iLook + 1) * 2).cQuan16(iLook);
+                    rgcXfer[i] = CxvFromPrefix(std::as_writable_bytes(std::span{lpb, static_cast<std::size_t>(6 + (iLook + 1) * 2)})).cQuan16(iLook);
                 } else {
-                    rgcXfer[i] = CxvFromPrefix(lpb, 6 + (iLook + 1) * 4).cQuan32(iLook);
+                    rgcXfer[i] = CxvFromPrefix(std::as_writable_bytes(std::span{lpb, static_cast<std::size_t>(6 + (iLook + 1) * 4)})).cQuan32(iLook);
                 }
                 iLook++;
             } else {
@@ -866,16 +866,16 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                 if (rgcXfer[i] != 0) {
                     cXfer = rgcXfer[i];
                     if ((iPass == 0 && cXfer < 0) || (iPass == 1 && cXfer >= 0)) {
-                        l = ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), static_cast<MineralType>(i), cXfer, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())));
+                        l = ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), static_cast<MineralType>(i), cXfer, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())));
                         if (l != cXfer) {
-                            id = CxvFromPrefix(lpb, 5).grobj1() == grobjFleet ? -32768 : 0;
+                            id = CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1() == grobjFleet ? -32768 : 0;
                             id |= rgxf[0].idObj();
                             TurnIO().pfnMessage(app, rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, LOWORD(cXfer) - LOWORD(l), i, LOWORD(cXfer), 0, 0, 0);
                             rgcXfer[i] = l;
                         }
                     }
-                    if (((iPass == 0 && cXfer >= 0) || (iPass == 1 && cXfer < 0)) && CxvFromPrefix(lpb, 5).grobj2() != grobjOther) {
-                        if (i == 3 && cXfer != 0 && app.state.gd.fGeneratingTurn && CxvFromPrefix(lpb, 5).grobj2() == grobjPlanet && CxvFromPrefix(lpb, 5).grobj1() == grobjFleet &&
+                    if (((iPass == 0 && cXfer >= 0) || (iPass == 1 && cXfer < 0)) && CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() != grobjOther) {
+                        if (i == 3 && cXfer != 0 && app.state.gd.fGeneratingTurn && CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() == grobjPlanet && CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1() == grobjFleet &&
                             rgxf[0].iPlayerObj() != rgxf[1].iPlayerObj()) {
                             lpcdT = app.state.lpcd;
                             iColDrop = 0;
@@ -903,12 +903,12 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                                 lpcdT->cColonist -= cXfer;
                             }
                         } else {
-                            if (cXfer != 0 && app.state.gd.fGeneratingTurn && rgxf[1].iPlayerObj() != rgxf[0].iPlayerObj() && CxvFromPrefix(lpb, 5).grobj2() != grobjThing) {
+                            if (cXfer != 0 && app.state.gd.fGeneratingTurn && rgxf[1].iPlayerObj() != rgxf[0].iPlayerObj() && CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() != grobjThing) {
                                 lpxfMax = app.state.lpxf + app.state.cXferFull;
                                 if (cXfer > 0) {
                                     for (lpxfCur = app.state.lpxf; lpxfCur < lpxfMax && cXfer > 0; lpxfCur++) {
-                                        if (lpxfCur->grobj2 == CxvFromPrefix(lpb, 5).grobj2() && lpxfCur->id2 == CxvFromPrefix(lpb, 4).id2() && lpxfCur->grobj1 == 2 &&
-                                            (lpxfCur->id1 & 0xfe00) == (CxvFromPrefix(lpb, 2).id1() & 0xfe00)) {
+                                        if (lpxfCur->grobj2 == CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() && lpxfCur->id2 == CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2() && lpxfCur->grobj1 == 2 &&
+                                            (lpxfCur->id1 & 0xfe00) == (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1() & 0xfe00)) {
                                             l = cXfer < lpxfCur->rgcQuan[i] ? cXfer : lpxfCur->rgcQuan[i];
                                             cXfer -= l;
                                             lpxfCur->rgcQuan[i] -= l;
@@ -927,15 +927,15 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                                     if (lpxfCur == lpxfMax) {
                                         app.state.cXferFull++;
                                         *lpxfCur = {};
-                                        lpxfCur->id1 = CxvFromPrefix(lpb, 2).id1();
-                                        lpxfCur->id2 = CxvFromPrefix(lpb, 4).id2();
+                                        lpxfCur->id1 = CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1();
+                                        lpxfCur->id2 = CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2();
                                     }
                                 }
                                 lpxfCur->rgcQuan[i] -= cXfer;
                                 goto DoNext;
                             }
                         StealCargo:
-                            l = ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2()), CxvFromPrefix(lpb, 4).id2(), static_cast<MineralType>(i), -cXfer, rgxf[1].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj2())));
+                            l = ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).id2(), static_cast<MineralType>(i), -cXfer, rgxf[1].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2())));
                             if (l != -cXfer) {
                                 rgcXfer[i] = -l;
                                 /* Cargo the destination can't hold goes back to
@@ -944,16 +944,16 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
                                    another player's fleet beyond its free hold
                                    space were lost. */
                                 if (cXfer < 0) {
-                                    ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1()), CxvFromPrefix(lpb, 2).id1(), static_cast<MineralType>(i), -cXfer - l, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(lpb, 5).grobj1())));
+                                    ChgCargo(app, static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1()), CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).id1(), static_cast<MineralType>(i), -cXfer - l, rgxf[0].LpvCargo(static_cast<GrobjClass>(CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1())));
                                 }
-                                if (CxvFromPrefix(lpb, 5).grobj2() == grobjThing) {
+                                if (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2() == grobjThing) {
                                     idm = idmDidntGetAttemptedTransferMineralPacketAnother;
                                     if (l == 0) {
                                         idm = static_cast<MessageId>(idm + 1);
                                     }
                                     TurnIO().pfnMessage(app, rgxf[0].iPlayerObj(), idm, static_cast<MsgGoto>(rgxf[0].idObj() | 0x8000), rgxf[0].idObj(), i, -LOWORD(l), i, 0, 0, 0);
                                 } else {
-                                    id = CxvFromPrefix(lpb, 5).grobj1() == grobjFleet ? -32768 : 0;
+                                    id = CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1() == grobjFleet ? -32768 : 0;
                                     id |= rgxf[0].idObj();
                                     TurnIO().pfnMessage(app, rgxf[0].iPlayerObj(), idmUnableTransferKtKtRequest, static_cast<MsgGoto>(id), id, -LOWORD(l) - LOWORD(cXfer), i, -LOWORD(cXfer), 0, 0,
                                                 0);
@@ -965,12 +965,12 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
             DoNext:;
             }
         }
-        if (CxvFromPrefix(lpb, 5).grobj1() == grobjFleet) {
+        if (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj1() == grobjFleet) {
             FleetQueryIO().pfnLookup(app, idWriteBack, &rgxf[0].fl());
         } else {
             PlanetQueryIO().pfnLookup(app, idWriteBack, &rgxf[0].pl());
         }
-        switch (CxvFromPrefix(lpb, 5).grobj2()) {
+        switch (CxvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{5}})).grobj2()) {
         case grobjFleet:
             FleetQueryIO().pfnLookup(app, idWriteBack, &rgxf[1].fl());
             break;
@@ -1116,18 +1116,18 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     case rtBtlPlan:
         if (cb < 2) return 0;
         // Deletions stop after the owner/plan word, before target/name bytes.
-        i = BpvFromPrefix(lpb, 2).iplan();
-        if (BpvFromPrefix(lpb, 2).iplr() != app.state.idPlayer || i < 0 || i > app.state.rgcbtlplan[app.state.idPlayer]) {
-            if (BpvFromPrefix(lpb, 2).fDelete() != 0)
+        i = BpvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).iplan();
+        if (BpvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).iplr() != app.state.idPlayer || i < 0 || i > app.state.rgcbtlplan[app.state.idPlayer]) {
+            if (BpvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).fDelete() != 0)
                 break;
             goto BombOut;
         }
-        if (BpvFromPrefix(lpb, 2).fDelete() != 0) {
+        if (BpvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).fDelete() != 0) {
             FDeleteBattlePlan(app, i, 0);
             break;
         }
         if (cb < 4) return 0;
-        if (BpvFromPrefix(lpb, 4).mdTactic() > 6 || BpvFromPrefix(lpb, 4).mdTarget1() > 8 || BpvFromPrefix(lpb, 4).mdTarget2() > 8)
+        if (BpvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).mdTactic() > 6 || BpvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).mdTarget1() > 8 || BpvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{4}})).mdTarget2() > 8)
             goto BombOut;
         if (i == app.state.rgcbtlplan[app.state.idPlayer]) {
             if (i >= 16)
@@ -1175,13 +1175,13 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
         }
         break;
     case rtLogResearch:
-        ch = RsvFromPrefix(lpb, 1).pctResearch();
+        ch = RsvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{1}})).pctResearch();
         if (ch < 0 || ch > 100)
             goto BombOut;
         app.state.rgplr[app.state.idPlayer].pctResearch = ch;
-        if (RsvFromPrefix(lpb, 2).iTechNow() >= 6 || RsvFromPrefix(lpb, 2).iTechNext() > 7)
+        if (RsvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).iTechNow() >= 6 || RsvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).iTechNext() > 7)
             goto BombOut;
-        app.state.rgplr[app.state.idPlayer].iTechCur = RsvFromPrefix(lpb, 2).iTechCur();
+        app.state.rgplr[app.state.idPlayer].iTechCur = RsvFromPrefix(std::as_writable_bytes(std::span{lpb, std::size_t{2}})).iTechCur();
         break;
     }
     return 1;

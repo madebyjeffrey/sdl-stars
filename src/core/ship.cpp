@@ -185,28 +185,28 @@ std::int16_t FEnumCalcJettison(APPSESSION &app, std::span<std::uint8_t> rgbRecor
     std::int16_t  j;
 
     if (rt == rtLogCargoXfer8 || rt == rtLogCargoXfer16) {
-        if (CxvFromPrefix(rgbRecord.data(), 5).grobj1() != grobjFleet || CxvFromPrefix(rgbRecord.data(), 5).grobj2() != grobjOther) {
+        if (CxvFromPrefix(std::as_writable_bytes(rgbRecord.first(std::size_t{5}))).grobj1() != grobjFleet || CxvFromPrefix(std::as_writable_bytes(rgbRecord.first(std::size_t{5}))).grobj2() != grobjOther) {
             return 1;
         }
         if (!FleetQueryIO().pfnLookup(app, iFleet, &fl)) {
             return 1;
         }
         pt = fl.pt;
-        if (!FleetQueryIO().pfnLookup(app, CxvFromPrefix(rgbRecord.data(), 2).id1(), &fl)) {
+        if (!FleetQueryIO().pfnLookup(app, CxvFromPrefix(std::as_writable_bytes(rgbRecord.first(std::size_t{2}))).id1(), &fl)) {
             return 1;
         }
         if (fl.pt.x != pt.x || fl.pt.y != pt.y) {
             return 1;
         }
-        grbit = CxvFromPrefix(rgbRecord.data(), 6).grbitItems();
+        grbit = CxvFromPrefix(std::as_writable_bytes(rgbRecord.first(std::size_t{6}))).grbitItems();
         j = 0;
         i = 0;
         while (i < 5) {
             if (grbit & 1) {
                 if (rt == rtLogCargoXfer8) {
-                    pl.rgwtMin[i] -= static_cast<std::int16_t>(CxvFromPrefix(rgbRecord.data(), 6 + (j + 1)).cQuan8(j));
+                    pl.rgwtMin[i] -= static_cast<std::int16_t>(CxvFromPrefix(std::as_writable_bytes(rgbRecord.first(static_cast<std::size_t>(6 + (j + 1))))).cQuan8(j));
                 } else {
-                    pl.rgwtMin[i] -= CxvFromPrefix(rgbRecord.data(), 6 + (j + 1) * 2).cQuan16(j);
+                    pl.rgwtMin[i] -= CxvFromPrefix(std::as_writable_bytes(rgbRecord.first(static_cast<std::size_t>(6 + (j + 1) * 2)))).cQuan16(j);
                 }
                 j++;
             }

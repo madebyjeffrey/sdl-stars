@@ -182,8 +182,8 @@ public:
     std::uint16_t iplrAttack() const noexcept { return GetBits<2, 8, 5>(); }
     std::uint16_t unused2() const noexcept { return GetBits<2, 13, 3>(); }
 };
-inline NATIVEBATTLEPLANVIEW BpvFromPrefix(std::uint8_t *lp, std::size_t cb) noexcept {
-    return {std::as_writable_bytes(std::span(lp, cb)), 0};
+inline NATIVEBATTLEPLANVIEW BpvFromPrefix(std::span<std::byte> rgb) noexcept {
+    return {rgb, 0};
 }
 
 #endif
