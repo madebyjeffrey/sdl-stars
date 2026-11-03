@@ -15,6 +15,7 @@ struct APPUISTATE {
     alignas(std::max_align_t) BTLPLAN        btlplan = {};
     alignas(std::max_align_t) std::array<char, 256> szRaceFileSuggest = {};
     alignas(std::max_align_t) std::array<char, 512> szRaceLibraryPath = {};
+    alignas(std::max_align_t) std::array<char, 256> szRaceLibraryName = {};
     alignas(std::max_align_t) std::uint8_t        *vlpbrVCR = nullptr;
     alignas(std::max_align_t) BTN           *rgbtnXfer = nullptr;
     alignas(std::max_align_t) COLORREF       crButtonFace = 0;
