@@ -33,7 +33,7 @@ struct STARSCOMPATWINDOW {
     LONG_PTR idControl;
     DWORD dwStyle, dwExStyle;
     UINT iControl;
-    BOOL fDialog, fVisible, fEnabled, fFocused, fCaptured;
+    bool fDialog, fVisible, fEnabled, fFocused, fCaptured;
     RECT rcWindow, rcClient;
     std::string szClass, szText;
 };

@@ -47,7 +47,7 @@ static void SyncCombo(HWND hwnd) {
     std::optional<std::string> szItem;
     int i = static_cast<int>(CompatListProc(hwnd, win32::LB_GETCURSEL, 0, 0));
     if (lp->hwndEdit && !lp->fSync) {
-        StarsRestore<BOOL> restoreSync(lp->fSync);
+        StarsRestore<bool> restoreSync(lp->fSync);
         szItem = SzComboItem(hwnd, i); lp->fSync = 1;
         win32::SetWindowTextA(lp->hwndEdit, szItem ? szItem->c_str() : "");
         if (!FCombo(hwnd, lp)) return;
@@ -65,7 +65,7 @@ static void CloseCombo(HWND hwnd, BOOL fAccept, BOOL fNotify) {
     // CBN_SELCHANGE can move focus to the frame. Its WM_KILLFOCUS must not
     // reenter cancellation and restore the old row while accepting this one.
     {
-        StarsRestore<BOOL> restoreClosing(lp->fClosing);
+        StarsRestore<bool> restoreClosing(lp->fClosing);
         lp->fClosing = 1;
         if (fAccept && lp->iHot >= 0) {
             SelectCombo(hwnd, lp->iHot, 1);
@@ -108,7 +108,7 @@ static void OpenCombo(HWND hwnd) {
     HWND hwndPopup;
     if (FStarsErrorPending() || !lp || lp->fDropped || lp->fOpening || lp->fClosing || hwnd->fDestroying || !win32::IsWindowEnabled(hwnd)) return;
     {
-        StarsRestore<BOOL> restoreOpening(lp->fOpening);
+        StarsRestore<bool> restoreOpening(lp->fOpening);
         lp->fOpening = 1; NotifyCombo(hwnd, win32::CBN_DROPDOWN);
         if (!FCombo(hwnd, lp) || FStarsErrorPending()) return;
     }
@@ -155,7 +155,7 @@ static void LayoutCombo(HWND hwnd, BOOL fRequested) {
     pt = POINT{rc.left, rc.top};
     if (hwnd->hwndParent) win32::ScreenToClient(hwnd->hwndParent, &pt);
     {
-        StarsRestore<BOOL> restoreSizing(lp->fSizing);
+        StarsRestore<bool> restoreSizing(lp->fSizing);
         lp->fSizing = 1;
         if (rc.bottom - rc.top != cy) win32::MoveWindow(hwnd, pt.x, pt.y, rc.right - rc.left, cy, 1);
         if (!FCombo(hwnd, lp)) return;
@@ -369,7 +369,7 @@ LRESULT  CompatComboProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     }
     case win32::WM_SETTEXT: {
         if (!lp->hwndEdit) return 0;
-        StarsRestore<BOOL> restoreSync(lp->fSync);
+        StarsRestore<bool> restoreSync(lp->fSync);
         lp->fSync = 1; result = win32::SetWindowTextA(lp->hwndEdit, reinterpret_cast<LPCSTR>(l));
         return result;
     }

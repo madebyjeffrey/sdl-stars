@@ -23,14 +23,14 @@ COMPATIMAGE *LpCompatImage(HICON hicon) {
         if (reinterpret_cast<HICON>(lp) == hicon) return lp->fAlive ? lp : nullptr;
     return nullptr;
 }
-static COMPATIMAGE *LpNewImage(SDL_Surface *lpXor, BYTE *rgbAnd, BOOL fCursor) {
+static COMPATIMAGE *LpNewImage(SDL_Surface *lpXor, BYTE *rgbAnd, bool fCursor) {
     COMPATIMAGE *lp = new (std::nothrow) COMPATIMAGE{};
     if (!lp) return nullptr;
     lp->lpXor.reset(lpXor); lp->rgbAnd.reset(rgbAnd); lp->fCursor = fCursor; lp->fAlive = 1;
     lp->lpNext = lpImages; lpImages = lp;
     return lp;
 }
-HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, BOOL fCursor) {
+HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, bool fCursor) {
     BITMAPINFOHEADER bi;
     COMPATDIB dib;
     COMPATIMAGE *lp;
@@ -41,7 +41,7 @@ HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, BOOL fCursor) {
     int x, y;
     UINT xHot = 0, yHot = 0;
     BYTE *lpPixel;
-    BOOL fInvert = 0;
+    bool fInvert = false;
     NATIVEOWNER<BYTE, std::free> rgbAndOwner;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
 
@@ -80,7 +80,7 @@ HICON HiconCompatResource(const BYTE *rgb, std::size_t cb, BOOL fCursor) {
     lp->xHot = xHot; lp->yHot = yHot; lp->fMono = bi.biBitCount == 1; lp->fInvert = fInvert;
     return reinterpret_cast<HICON>(lp);
 }
-static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, BOOL fCursor) {
+static HICON HimageLoad(HINSTANCE hInstance, LPCSTR psz, bool fCursor) {
     HRSRC hgroup, hrsrc;
     const BYTE *rgb;
     DWORD cb;

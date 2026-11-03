@@ -318,7 +318,7 @@ static void SyncEditScroll(HWND hwnd) {
     UINT ich, next, end, cch;
     int cy, cxMax = 0;
     if (!(hwnd->dwStyle & win32::ES_MULTILINE) || hwnd->fEditScrollSync || hwnd->fDestroying) return;
-    StarsRestore<BOOL> restoreSync(hwnd->fEditScrollSync);
+    StarsRestore<bool> restoreSync(hwnd->fEditScrollSync);
     hwnd->fEditScrollSync = 1;
     EditFormat(hwnd, &rc); cy = CyEdit(hwnd); cch = CchEdit(hwnd);
     if (hwnd->fEditV) {

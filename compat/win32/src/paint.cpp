@@ -555,7 +555,7 @@ static HDC HdcNew(HWND hwnd, BOOL fPaint) {
     return lpdc->hdcToken;
 }
 
-static COMPATOBJECT *LpNewBitmap(int cx, int cy, BOOL fMono) {
+static COMPATOBJECT *LpNewBitmap(int cx, int cy, bool fMono) {
     COMPATOBJECT *lpobj;
     SDL_Surface *lpsurface;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
@@ -1117,7 +1117,7 @@ int win32::FillRect(HDC hdc, const RECT *lprc, HBRUSH hbr) {
     return FFillDevice(lpdc, RcDevice(lpdc, *lprc), lpbrush, 0);
 }
 
-void CompatDrawClassicEdge(HDC hdc, const RECT *lprc, BOOL fSunken, BOOL fRight) {
+void CompatDrawClassicEdge(HDC hdc, const RECT *lprc, bool fSunken, bool fRight) {
     RECT rc = *lprc, edge;
     HBRUSH hbr;
     int i;
@@ -1950,7 +1950,7 @@ int win32::GetDIBits(HDC hdc, HBITMAP hbm, UINT iStart, UINT cLines, LPVOID lpBi
     int x, y;
     COLORREF cr;
     BYTE *rgb;
-    BOOL fTopDown, fQuery;
+    bool fTopDown, fQuery;
 
     if (!lpdc || !lpobj || lpobj->iKind != objBitmap || lpobj->cSelected != 0 ||
         !lpbmi || usage != win32::DIB_RGB_COLORS || lpbmi->bmiHeader.biSize != sizeof(bi))
@@ -2113,7 +2113,7 @@ SDL_Surface *LpCompatBitmapSurface(HBITMAP hbmp) {
     return lpobj && lpobj->iKind == objBitmap ? lpobj->lpSurface.get() : nullptr;
 }
 
-HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, BOOL fMono) {
+HBITMAP HbmpCompatSurface(SDL_Surface *lpSurface, bool fMono) {
     COMPATOBJECT *lpobj;
     NATIVEOWNER<SDL_Surface, FreeCompatSurface> lpsurfaceOwner;
     if (!lpSurface) return nullptr;

@@ -832,7 +832,7 @@ static int CAccelPath(HMENU hmenu, UINT cmd, HMENU *rgh, int *rgi, int depth, BO
     }
     return 0;
 }
-int ICompatAccelMenu(HWND hwnd, UINT cmd, BOOL fNotify) {
+int ICompatAccelMenu(HWND hwnd, UINT cmd, bool fNotify) {
     HMENU rgh[64], hmenu, hsub;
     int rgi[64], c, i;
     BOOL fEnabled;

@@ -42,7 +42,7 @@ static void DecodeStyles(std::span<char> rgch, std::size_t &cch, DWORD *lpdw, co
     *lpdw &= ~dwFields;
 }
 
-static std::size_t FormatStyles(const STARSCOMPATWINDOW *lp, BOOL fExtended, std::span<char> rgch) {
+static std::size_t FormatStyles(const STARSCOMPATWINDOW *lp, bool fExtended, std::span<char> rgch) {
     DWORD dw = fExtended ? lp->dwExStyle : lp->dwStyle;
     char szUnknown[32];
     std::size_t cch = 0;
