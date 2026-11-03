@@ -242,7 +242,7 @@ int CyCompatMenuBar(HWND hwnd) {
     hwnd->fMenuLayoutDirty = 0; hwnd->fMenuDirty = 1;
     return hwnd->cyMenu;
 }
-BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
+bool FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface) {
     HMENU lp = LpMenu(hwnd->hmenu);
     HDC hdc, hdcScreen;
     HGDIOBJ hfont, hOld;
@@ -738,7 +738,7 @@ static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND 
 BOOL win32::TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc) {
     return TrackMenu(hmenu, flags, x, y, reserved, hwnd, lprc, nullptr, -1, 0);
 }
-BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+bool FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     HWND lpwin = LpCompatWindow(hwnd);
     HMENU lp;
     POINT pt;
@@ -792,7 +792,7 @@ BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return 1;
 }
 
-BOOL FCompatMenuFocus(HWND hwnd, BOOL fGain) {
+bool FCompatMenuFocus(HWND hwnd, bool fGain) {
     COMPATTRACK *lpt;
     SDL_Window *lpFocus = SDL_GetKeyboardFocus();
     int i;

@@ -342,7 +342,7 @@ static LRESULT  StaticProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return ControlCommon(hwnd, msg, w, l);
 }
 
-BOOL FCompatControlClass(LPCSTR psz, HINSTANCE hInstance) {
+bool FCompatControlClass(LPCSTR psz, HINSTANCE hInstance) {
     WNDCLASSA wc = {};
     if (reinterpret_cast<UINT_PTR>(psz) <= std::numeric_limits<std::uint16_t>::max()) return 0;
     if (SDL_strcasecmp(psz, "Button") == 0) { wc.lpszClassName = "Button"; wc.lpfnWndProc = ButtonProc; wc.style = win32::CS_DBLCLKS; }

@@ -311,7 +311,7 @@ static void InvalidateCompatCanvasTree(HWND hwnd) {
         if (lp->fVisible) InvalidateCompatCanvasTree(lp);
 }
 
-BOOL FCompatSetDCScale(HDC hdc, int iScale) {
+bool FCompatSetDCScale(HDC hdc, int iScale) {
     HDC lpdc = LpDC(hdc);
     if (!lpdc || !lpdc->fMemory || iScale < 1 || iScale > 4) return 0;
     lpdc->iScale = iScale;
@@ -384,7 +384,7 @@ static bool FCanvas(HWND hwnd) {
     return 1;
 }
 
-BOOL FCompatCanvas(HWND hwnd) { return FCanvas(hwnd); }
+bool FCompatCanvas(HWND hwnd) { return FCanvas(hwnd); }
 
 static bool FComposeChildren(HWND hwnd, SDL_Surface *lpSurface, std::int64_t x, std::int64_t y, const RECT *lprcClip, int iScale) {
     HWND lp;
@@ -445,7 +445,7 @@ static bool FPendingPaintTree(HWND hwnd) {
     return 0;
 }
 
-BOOL FCompatPaintTree(HWND hwnd) {
+bool FCompatPaintTree(HWND hwnd) {
     HWND lp, lpNext;
 
     if (FStarsErrorPending() || !win32::UpdateWindow(hwnd) || !win32::IsWindow(hwnd) || FStarsErrorPending()) return 0;
@@ -457,17 +457,17 @@ BOOL FCompatPaintTree(HWND hwnd) {
     return 1;
 }
 
-BOOL FCompatRefreshPresent(HWND hwnd) {
+bool FCompatRefreshPresent(HWND hwnd) {
     HWND lpwin = HwndCompatRoot(hwnd);
-    static BOOL fPresenting;
-    BOOL fOk;
+    static bool fPresenting;
+    bool fOk;
 
     if (!lpwin || lpwin->fDestroying || !lpwin->lpRenderer.get() || !lpwin->lpTexture.get() ||
         !lpwin->lpComposite.get() || fPresenting) return 0;
     // Cocoa can clear its view during exposure after the initial show. Reuse
     // the last completed texture even if a new paint is pending; never reenter
     // application drawing from a native exposure callback.
-    StarsRestore<BOOL> restorePresenting(fPresenting);
+    StarsRestore<bool> restorePresenting(fPresenting);
     fPresenting = 1;
     fOk = SDL_SetRenderDrawColor(lpwin->lpRenderer.get(), 0, 0, 0,
                                 SDL_GetWindowFlags(lpwin->lpWindow.get()) & SDL_WINDOW_TRANSPARENT ? 0 : 255) &&
@@ -477,13 +477,13 @@ BOOL FCompatRefreshPresent(HWND hwnd) {
     return fOk;
 }
 
-BOOL FCompatPresent(HWND hwnd) {
+bool FCompatPresent(HWND hwnd) {
     HWND lpwin = HwndCompatRoot(hwnd);
     RECT rc;
     SDL_Surface *lpnew;
     SDL_Rect dst;
     int cyMenu, iScale;
-    BOOL fOk;
+    bool fOk;
 
     if (!lpwin || lpwin->fDestroying) return 0;
     lpwin->fPresentPending = 1;

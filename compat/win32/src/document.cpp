@@ -40,8 +40,8 @@ std::optional<std::string> SzCompatFileUri(const char *pszPath) {
     return std::nullopt;
 }
 
-BOOL FCompatOpenDocument(const char *pszPath) {
-    BOOL fOpened, fEventsOwned;
+bool FCompatOpenDocument(const char *pszPath) {
+    bool fOpened, fEventsOwned;
     const auto szUri = SzCompatFileUri(pszPath);
 
     if (!szUri) return 0;

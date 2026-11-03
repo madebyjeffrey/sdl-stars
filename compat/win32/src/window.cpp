@@ -50,7 +50,7 @@ static void DestroySequenceWindow(void) {
     iSequenceScale = 0;
 }
 
-BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
+bool FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle) {
     if (!FUtf8Valid(pszTitle)) return 0;
     if (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) return 1;
     return CompatWindowIO().pfnSetWindowTitle(lpWindow, pszTitle);
@@ -113,7 +113,7 @@ BOOL StarsCompatBeginDialogSequence(HWND hwndOwner) {
     return 1;
 }
 
-BOOL FCompatPendingDialogSequence(HWND hwndOwner) {
+bool FCompatPendingDialogSequence(HWND hwndOwner) {
     return fDialogSequence && lpSequenceWindow.get() && hwndOwner == hwndSequenceOwner;
 }
 
@@ -176,7 +176,7 @@ static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) noexcept {
     return true;
 }
 
-BOOL FCompatVideo(void) {
+bool FCompatVideo(void) {
     if (!SDL_IsMainThread() || fShutdown) return 0;
     if (!(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) {
         if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) return 0;
@@ -212,7 +212,7 @@ HWND LpCompatWindowFromId(SDL_WindowID id) {
     return nullptr;
 }
 
-BOOL CompatPeekPaint(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
+bool CompatPeekPaint(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
     HWND lpwin;
 
     if (reinterpret_cast<INT_PTR>(hwnd) == -1 || ((msgMin != 0 || msgMax != 0) &&
@@ -934,7 +934,7 @@ BOOL win32::IsWindowVisible(HWND hwnd) {
     return 1;
 }
 
-BOOL CompatGetSurfaceRect(HWND hwnd, RECT *lprc) {
+bool CompatGetSurfaceRect(HWND hwnd, RECT *lprc) {
     HWND lpwin = LpCompatWindow(hwnd);
     int dx, dy;
 

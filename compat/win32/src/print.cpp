@@ -31,7 +31,7 @@ static void AbortPrint(COMPATPRINT *lp) {
 }
 COMPATPRINT::~COMPATPRINT() noexcept { AbortPrint(this); }
 void CompatDeletePrinter(COMPATPRINT *lp) noexcept { delete lp; }
-BOOL FCompatPrinterBusy(COMPATPRINT *lp) { return lp->fEscaping; }
+bool FCompatPrinterBusy(COMPATPRINT *lp) { return lp->fEscaping; }
 int ICompatPrinterCaps(COMPATPRINT *lp, int index) {
     switch (index) {
     case win32::TECHNOLOGY: return win32::DT_RASPRINTER;

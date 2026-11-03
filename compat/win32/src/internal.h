@@ -26,7 +26,7 @@ COMPATPRINT *LpCompatPrinter(HDC hdc);
 SDL_Surface *LpCompatPrinterSurface(HDC hdc);
 int ICompatPrinterCaps(COMPATPRINT *lpprint, int index);
 void CompatDeletePrinter(COMPATPRINT *lpprint) noexcept;
-BOOL FCompatPrinterBusy(COMPATPRINT *lpprint);
+bool FCompatPrinterBusy(COMPATPRINT *lpprint);
 void CompatSetDialogError(DWORD dw);
 
 struct COMPATFONT;
@@ -51,7 +51,7 @@ COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
 void FreeCompatFont(COMPATFONT *lpfont) noexcept;
 std::optional<TEXTMETRICA> FCompatFontMetrics(COMPATFONT *lpfont);
 std::optional<SIZE> FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz);
-BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
+bool FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
                           void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);
 void CompatShutdownFonts(void);
 
@@ -201,7 +201,7 @@ struct COMPATDLGTEMPLATE {
     std::optional<std::string> szMenu, szClass, szTitle, szFont;
     std::vector<COMPATDLGITEM> rgItems;
 };
-BOOL FCompatDialogTemplate(std::span<const BYTE> rgb, COMPATDLGTEMPLATE &dlg);
+bool FCompatDialogTemplate(std::span<const BYTE> rgb, COMPATDLGTEMPLATE &dlg);
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg);
 LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatDestroyDialog(HWND hwnd);
@@ -227,9 +227,9 @@ bool FCompatNativeDib(const BITMAPINFOHEADER &bi, const BYTE *rgbInfo, const BYT
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib);
 HBITMAP HbmpCompatResource(const BYTE *rgb, std::size_t cb);
 
-BOOL FCompatControlClass(LPCSTR pszClass, HINSTANCE hInstance);
-BOOL FCompatVideo(void);
-BOOL FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle);
+bool FCompatControlClass(LPCSTR pszClass, HINSTANCE hInstance);
+bool FCompatVideo(void);
+bool FCompatNativeTitle(SDL_Window *lpWindow, LPCSTR pszTitle);
 void CompatRememberNormal(HWND hwnd);
 void CompatWindowState(HWND hwnd, UINT sw, BOOL fNotify);
 LRESULT  CompatEditProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
@@ -243,22 +243,22 @@ HWND LpCompatWindowFromId(SDL_WindowID id);
 void CompatFocusWindow(HWND hwnd);
 HWND HwndCompatRoot(HWND hwnd);
 HWND HwndCompatMouse(HWND hwnd, int *lpx, int *lpy);
-BOOL FCompatPresent(HWND hwnd);
-BOOL FCompatRefreshPresent(HWND hwnd);
-BOOL FCompatCanvas(HWND hwnd);
+bool FCompatPresent(HWND hwnd);
+bool FCompatRefreshPresent(HWND hwnd);
+bool FCompatCanvas(HWND hwnd);
 int ICompatCanvasScale(HWND hwnd);
-BOOL FCompatSetDCScale(HDC hdc, int iScale);
-BOOL FCompatPaintTree(HWND hwnd);
+bool FCompatSetDCScale(HDC hdc, int iScale);
+bool FCompatPaintTree(HWND hwnd);
 void CompatFlushPresent(void);
-BOOL FCompatPendingDialogSequence(HWND hwndOwner);
+bool FCompatPendingDialogSequence(HWND hwndOwner);
 void CompatRestoreOwnerFocus(HWND hwndOwner, HWND hwndSaved);
 SDL_Surface *LpCompatBitmapSurface(HBITMAP hbmp);
 int CyCompatMenuBar(HWND hwnd);
-BOOL FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface);
+bool FCompatDrawMenuBar(HWND hwnd, SDL_Surface *lpSurface);
 void CompatFreeMenuBar(HWND hwnd);
-BOOL FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+bool FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatRouteEvent(const SDL_Event *lpevent);
-BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
+bool CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatCopyInput(BYTE *rgb, LPPOINT lppt);
 void CompatReadInput(const BYTE *rgb);
 void CompatResetInput(void);
@@ -267,9 +267,9 @@ void CompatTextInput(HWND hwnd, const char *psz);
 void CompatPurgeMessages(HWND hwnd);
 void CompatClearMessages(void);
 int CCompatDispatch(void);
-BOOL CompatPeekPaint(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax);
+bool CompatPeekPaint(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax);
 void CompatDestroyPaint(HWND hwnd);
-BOOL CompatGetSurfaceRect(HWND hwnd, RECT *lprc);
+bool CompatGetSurfaceRect(HWND hwnd, RECT *lprc);
 void CompatLayoutScrollbars(HWND hwnd);
 void CompatDrawClassicEdge(HDC hdc, const RECT *lprc, BOOL fSunken, BOOL fRight);
 void CompatShutdownGdi(void);
@@ -279,8 +279,8 @@ void CompatShutdownMenus(void);
 void CompatShutdownAccelerators(void);
 int ICompatAccelMenu(HWND hwnd, UINT cmd, BOOL fNotify);
 void CompatDestroyWindowMenu(HWND hwnd);
-BOOL FCompatMenuFocus(HWND hwnd, BOOL fGain);
-BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn, void *lpvCallbackContext);
+bool FCompatMenuFocus(HWND hwnd, bool fGain);
+bool CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn, void *lpvCallbackContext);
 void CompatGenerateTimer(HWND hwnd, UINT msgMin, UINT msgMax);
 void CompatTimerDequeued(HWND hwnd, UINT_PTR id);
 int CMillisCompatTimerWait(HWND hwnd, UINT msgMin, UINT msgMax);
@@ -289,7 +289,7 @@ void CompatClearTimers(void);
 void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch);
 
 std::optional<std::string> SzCompatFileUri(const char *pszPath);
-BOOL FCompatOpenDocument(const char *pszPath);
+bool FCompatOpenDocument(const char *pszPath);
 
 // C++ callback thunks return errors through pending state, never through C.
 void CompatInvokeCleanup(void (*lpfn)(void *), void *lpv, HWND hwnd) noexcept;

@@ -296,7 +296,7 @@ std::optional<SIZE> FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz)
     return SIZE{static_cast<LONG>(dx), lpfont->tm.tmHeight};
 }
 
-BOOL FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
+bool FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
                           void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
     LOGFONTA lf;
     COMPATGLYPH *lp, *lpRaster;

@@ -59,7 +59,7 @@ void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg) {
     if (!lpdlg) return;
     *lpdlg = {};
 }
-BOOL FCompatDialogTemplate(std::span<const BYTE> rgb, COMPATDLGTEMPLATE &dlgResult) {
+bool FCompatDialogTemplate(std::span<const BYTE> rgb, COMPATDLGTEMPLATE &dlgResult) {
     try {
     COMPATDLGTEMPLATE dlg = {};
     COMPATDLGITEM *lpitem;

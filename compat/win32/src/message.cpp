@@ -230,7 +230,7 @@ void CompatConsumeAsyncMessage(const SDL_Event *event) {
     else win32::PostMessageA(lp->hwnd, lp->msg, lp->wParam, lp->lParam);
 }
 
-BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
+bool CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     /* Keep the newest consecutive motion, without merging across button/key
        changes or application-posted messages. Old pointer positions otherwise
        accumulate behind expensive map redraws during captured thumb dragging. */
@@ -247,7 +247,7 @@ BOOL CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     return 1;
 }
 
-BOOL CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn, void *lpvCallbackContext) {
+bool CompatQueueTimer(HWND hwnd, UINT_PTR id, TIMERPROC lpfn, void *lpvCallbackContext) {
     if (!win32::PostMessageA(hwnd, win32::WM_TIMER, id, reinterpret_cast<LPARAM>(lpfn))) return 0;
     lpLast->fTimer = 1;
     lpLast->lpvCallbackContext = lpvCallbackContext;
