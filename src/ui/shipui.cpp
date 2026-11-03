@@ -1,4 +1,6 @@
 #include "win.h"
+#include <algorithm>
+#include <iterator>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -2587,10 +2589,10 @@ void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
             rgszZip[cMax++] = szCatalogMenuText.data();
             i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, {}, rgszZip, -1, 1);
             if (i == cMax - 1) {
-                std::memcpy(rgzo, app.state.vrgZip, 96);
+                std::copy_n(app.state.vrgZip, std::size(rgzo), rgzo);
                 fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), app.lpui->hwndFrame, ZipOrderDlg, 0);
                 if (!fRet) {
-                    std::memcpy(app.state.vrgZip, rgzo, 96);
+                    std::copy_n(rgzo, std::size(rgzo), app.state.vrgZip);
                 }
             } else if (i > 4) {
                 i -= 4;

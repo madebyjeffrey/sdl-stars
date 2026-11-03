@@ -1,5 +1,6 @@
 /* Semantic inspection belongs to the scanner UI, not the generic HWND runtime. */
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -54,7 +55,7 @@ BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap) {
     ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &lpsnap->rcViewport);
     lpsnap->rcViewport.bottom = StarsMax(0, lpsnap->rcViewport.bottom - app.lpui->dySBar);
     /* Name helpers use the game's scratch buffer; a read-only capture preserves it. */
-    std::memcpy(szWorkSav, app.state.szWork, sizeof(app.state.szWork));
+    std::copy_n(app.state.szWork, sizeof(szWorkSav), szWorkSav);
     for (i = 0; i < static_cast<std::size_t>(app.state.game.cPlanMax); i++) {
         lpobj = &lpsnap->rgobj[lpsnap->cObject++];
         lpobj->grType = grobjPlanet; lpobj->id = static_cast<std::uint16_t>(i); lpobj->ith = ithNone;
@@ -95,7 +96,7 @@ BOOL FCaptureScanner(APPSESSION &app, SCANSNAPSHOT *lpsnap) {
             lpobj->fFiltered = !(app.lpui->grbitScan & grbitScanMineFields) || (!lpobj->fScanSelected && !(app.lpui->grbitScanMines & grRelation));
         }
     }
-    std::memcpy(app.state.szWork, szWorkSav, sizeof(app.state.szWork));
+    std::copy_n(szWorkSav, sizeof(szWorkSav), app.state.szWork);
     return 1;
 }
 

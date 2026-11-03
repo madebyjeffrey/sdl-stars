@@ -529,12 +529,12 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t 
         bt &= 3;
         if (fNoShaft) {
             cpt = 3;
-            std::memcpy(rgptDraw, app.lpui->rgptTriangle, cpt * 4);
+            std::copy_n(app.lpui->rgptTriangle, cpt, rgptDraw);
             dx = 8;
             dy = 4;
         } else {
             cpt = 5;
-            std::memcpy(rgptDraw, app.lpui->rgptArrow, cpt * 4);
+            std::copy_n(app.lpui->rgptArrow, cpt, rgptDraw);
             dx = 6;
             dy = 6;
         }

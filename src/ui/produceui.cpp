@@ -1,5 +1,6 @@
 #include "win.h"
 #include <algorithm>
+#include <iterator>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -842,10 +843,10 @@ std::int16_t IProductionPresetSlot(APPSESSION &app, std::int16_t i) {
 void CustomizeProductionPresets(APPSESSION &app, HWND hwnd) {
     ZIPPRODQ rgzp[4];
     std::int16_t fRet;
-            std::memcpy(rgzp, app.state.vrgZipProd, 160);
+            std::copy_n(app.state.vrgZipProd, std::size(rgzp), rgzp);
             fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), hwnd, ZipProdDlg, 0);
             if (fRet)
                 return;
-            std::memcpy(app.state.vrgZipProd, rgzp, 160);
+            std::copy_n(rgzp, std::size(rgzp), app.state.vrgZipProd);
             return;
 }

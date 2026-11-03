@@ -340,9 +340,9 @@ LAppend:
                 if (iPlayer != iplrNone && i != iPlayer && !app.state.rgplr[i].fDead && RaceQueryIO().pfnStat(&app.state.rgplr[iPlayer], rsMajorAdv) == raTerra) {
                     plrT = app.state.rgplr[i];
                     std::memset(&plrT.idPlanetHome, 0, reinterpret_cast<std::uint8_t *>(&plrT.szName) - reinterpret_cast<std::uint8_t *>(&plrT.idPlanetHome));
-                    std::memcpy(plrT.rgEnvVar, app.state.rgplr[i].rgEnvVar, sizeof(plrT.rgEnvVar));
-                    std::memcpy(plrT.rgEnvVarMin, app.state.rgplr[i].rgEnvVarMin, sizeof(plrT.rgEnvVarMin));
-                    std::memcpy(plrT.rgEnvVarMax, app.state.rgplr[i].rgEnvVarMax, sizeof(plrT.rgEnvVarMax));
+                    std::copy_n(app.state.rgplr[i].rgEnvVar, sizeof(plrT.rgEnvVar), plrT.rgEnvVar);
+                    std::copy_n(app.state.rgplr[i].rgEnvVarMin, sizeof(plrT.rgEnvVarMin), plrT.rgEnvVarMin);
+                    std::copy_n(app.state.rgplr[i].rgEnvVarMax, sizeof(plrT.rgEnvVarMax), plrT.rgEnvVarMax);
                     plrT.det = detAll;
                     WriteRtPlr(app, &plrT);
                 } else {

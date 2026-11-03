@@ -1,4 +1,5 @@
 #include "win.h"
+#include <algorithm>
 #include "appstate.h"
 #include "callbackcontext.h"
 #include "uistate.h"
@@ -147,7 +148,7 @@ void CreateChildWindows(APPSESSION &app) {
 #endif
         psz = psz ? psz + 1 : app.state.szBase;
         cch = CchUtf8Prefix(psz, 8);
-        std::memcpy(szGame, psz, cch); szGame[cch] = 0;
+        std::copy_n(psz, cch, szGame); szGame[cch] = 0;
         for (psz = szGame; *psz; psz++) if (*psz >= 'A' && *psz <= 'Z') *psz += 'a' - 'A';
         CchSprintf(std::span{szGame}.subspan(static_cast<std::size_t>(std::strlen(szGame))), ".m%d", app.state.idPlayer + 1);
         CchCopyUtf8(std::span{szNameUtf8}, app.state.game.szName);

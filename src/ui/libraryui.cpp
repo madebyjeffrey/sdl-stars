@@ -2201,7 +2201,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
         if (pchSlash) {
             cchDir = static_cast<int>((pchSlash - szSource));
             if (cchDir == 0) cchDir = 1;
-            std::memcpy(szDir, szSource, cchDir);
+            std::copy_n(szSource, cchDir, szDir);
             szDir[cchDir] = 0;
             pchName = pchSlash + 1;
         } else {
@@ -2210,7 +2210,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
         }
         pch = std::strrchr(pchName, '.');
         if (!pch || pch == pchName || static_cast<std::size_t>((pch - pchName)) >= sizeof(szStem)) goto LInvalidSource;
-        std::memcpy(szStem, pchName, pch - pchName);
+        std::copy_n(pchName, pch - pchName, szStem);
         szStem[pch - pchName] = 0;
     }
     if (!FInitLibrary()) return 0;
@@ -2814,7 +2814,7 @@ static std::int16_t FAddLibraryGameListItem(HWND hwndList, const char *pszName, 
     CchSnprintf(std::span{rgLibraryGameList[cLibraryGameList].szName, sizeof(rgLibraryGameList[cLibraryGameList].szName)}, "%s", pszName);
     rgLibraryGameList[cLibraryGameList].iplr = iplr;
     rgLibraryGameList[cLibraryGameList].grfPlayers = grfPlayers;
-    std::memcpy(rgLibraryGameList[cLibraryGameList].rgturn, rgturn, sizeof(rgLibraryGameList[cLibraryGameList].rgturn));
+    std::copy_n(rgturn, sizeof(rgLibraryGameList[cLibraryGameList].rgturn) / sizeof(*rgturn), rgLibraryGameList[cLibraryGameList].rgturn);
     ControlIO().pfnSendMessage(hwndList, win32::LB_SETITEMDATA, i, cLibraryGameList++);
     return 1;
 }
