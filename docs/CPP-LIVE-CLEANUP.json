@@ -2706,11 +2706,11 @@
         "private-compatibility-helper-results-and-state-bools",
         "private-ui-flags-use-bool",
         "linux-portal-chooser-span-and-named-response",
-        "private-list-state-bools"
+        "private-list-state-bools",
+        "remaining-native-file-path-results"
       ],
       "pending_substeps": [
-        "remaining-buffer-and-length-interfaces",
-        "remaining-native-file-path-results"
+        "remaining-buffer-and-length-interfaces"
       ],
       "user_string_codecs": {
         "status": "complete; verified",
@@ -28372,6 +28372,23 @@
       "c_cleanup": "Removed the last owned strnlen call from DrawTextA in f5480a4e; its 1 MiB + 1 bound and oversized-input rejection remain.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Complete native file/path result interface audit",
+      "source_head": "d39aa295b9c86c0e9c1c5ad4a85c6f8e520fbeed",
+      "audit": {
+        "source_head": "d39aa295b9c86c0e9c1c5ad4a85c6f8e520fbeed",
+        "path_inputs": "Application-owned native file/path services accept std::string_view.",
+        "caller_buffers": "Canonical-path and current-directory outputs accept std::span<char> and return optional exact byte counts.",
+        "owned_values": "Canonical paths, cwd, directory entries, file metadata, identity and open metadata return std::optional owned/value results.",
+        "platform_boundary": "Raw Win32/POSIX path calls remain only inside the platform service and Win32 chooser adapters; no application-owned output-pointer path interface remains."
+      },
+      "status": "No additional owned native file/path output-pointer interfaces found; L06 substep closed.",
+      "remaining_work": [
+        "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+        "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
+        "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
+      ]
     }
   ],
   "generators": [
@@ -28856,8 +28873,8 @@
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
-      "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
+      "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
+      "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
     "untracked_user_assets": [
       "title-modernized.png and prompt",
@@ -28937,7 +28954,7 @@
       "fleet_destination_results": "PszGetDestName returns REPORTTEXTRESULT with the existing owned 360-byte label and exact UTF-8 byte count; drawing and serialization use bounded views.",
       "fleet_task_results": "PszGetTaskName carries REPORTTEXTRESULT and its UTF-8 byte count; report drawing and dump serialization use the bounded result."
     },
-    "next": "Continue L05 bounded text destinations, const-text interfaces and the full scratch/borrowed-return audit; continue L06 service interfaces and L08 platform qualification.",
+    "next": "Finish the general buffer/length and bounded-text/scratch audits, then qualify current develop on Windows and Linux.",
     "post_checkpoint_commits": [
       {
         "commit": "75767e02",
@@ -29359,8 +29376,8 @@
   },
   "remaining_work": [
     "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-    "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
-    "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
+    "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
+    "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
   ],
   "working_tree_checkpoint": {
     "date": "2026-11-03",
@@ -30085,7 +30102,14 @@
       ]
     },
     "strnlen_occurrences": 0,
-    "private_BOOL_drawing_state": "Ten private drawing-state fields, five private helper parameters and local predicate flags now use bool; Win32-compatible entry points remain BOOL."
+    "private_BOOL_drawing_state": "Ten private drawing-state fields, five private helper parameters and local predicate flags now use bool; Win32-compatible entry points remain BOOL.",
+    "native_file_path_results_interfaces": {
+      "source_head": "d39aa295b9c86c0e9c1c5ad4a85c6f8e520fbeed",
+      "path_inputs": "Application-owned native file/path services accept std::string_view.",
+      "caller_buffers": "Canonical-path and current-directory outputs accept std::span<char> and return optional exact byte counts.",
+      "owned_values": "Canonical paths, cwd, directory entries, file metadata, identity and open metadata return std::optional owned/value results.",
+      "platform_boundary": "Raw Win32/POSIX path calls remain only inside the platform service and Win32 chooser adapters; no application-owned output-pointer path interface remains."
+    }
   },
   "latest_change": "Use bool for private drawing state",
   "latest_batch_verification": {
@@ -30142,9 +30166,9 @@
     "status": "Source commit d39aa295 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
-      "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
-      "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final inventory outcome."
+      "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
+      "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
-    "next": "Continue the L05 bounded-text and scratch/borrowed-return audits and L06 buffer/path audits; then qualify current develop on Windows and Linux."
+    "next": "Finish the general buffer/length and bounded-text/scratch audits, then qualify current develop on Windows and Linux."
   }
 }
