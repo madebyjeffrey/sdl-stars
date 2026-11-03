@@ -1604,11 +1604,11 @@ std::int16_t CopyImportEntry(APPSESSION &, void *lpData, std::string_view pszNam
 }
 
 struct LIBRARYBACKUP {
-    const char *pszSource;
-    const char *pszTarget;
-    const char *pszStem;
-    const char *pszName;
-    const char *pszBackup;
+    std::string_view pszSource;
+    std::string_view pszTarget;
+    std::string_view pszStem;
+    std::string_view pszName;
+    std::string_view pszBackup;
     std::int16_t fBad;
 };
 
@@ -1632,7 +1632,6 @@ std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, std::string_view
     LIBRARYIMPORT *pli = static_cast<LIBRARYIMPORT *>(lpData);
     LIBRARYBACKUP lb;
     char szSource[512], szTarget[512];
-    const std::string szBackup{pszName};
     if (!FBackupDirectoryName(pszName)) return 1;
     CchSnprintf(std::span{szSource, sizeof(szSource)}, "%s%s%s", pli->pszSource, szDirSep, pszName);
     if (!FNativeDirectoryExists(szSource)) return 1;
@@ -1642,7 +1641,7 @@ std::int16_t CopyBackupDirectory(APPSESSION &app, void *lpData, std::string_view
     lb.pszTarget = pli->pszTarget;
     lb.pszStem = pli->pszStem;
     lb.pszName = pli->pszName;
-    lb.pszBackup = szBackup.c_str();
+    lb.pszBackup = pszName;
     lb.fBad = 0;
     if (!FNativeEnumerateDirectory(app, szSource, CopyBackupEntry, &lb) || lb.fBad) { pli->fBad = 1; return 0; }
     return 1;

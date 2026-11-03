@@ -3,10 +3,10 @@
 #include "win.h"
 #include <string_view>
 struct LIBRARYIMPORT {
-    const char *pszStem;
-    const char *pszSource;
-    const char *pszTarget;
-    const char *pszName;
+    std::string_view pszStem;
+    std::string_view pszSource;
+    std::string_view pszTarget;
+    std::string_view pszName;
     std::int32_t     lidGame;
     std::uint32_t    grfPlayers;
     std::int16_t     rgturn[16];
