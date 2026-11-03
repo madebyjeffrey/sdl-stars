@@ -225,7 +225,8 @@
         "bounded-ini-window-and-recent-file-input-views",
         "typed-save-file-path-inputs",
         "bounded-library-publication-path-length-callback",
-        "bounded-right-text-output-view-interface"
+        "bounded-right-text-output-view-interface",
+        "native-bounded-format-interface-uses-only-string-view"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -24972,6 +24973,32 @@
       "api_audit": "RightTextOut readonly text input now takes string_view. Length zero uses the view length; explicit lengths are clamped to the view. The mutable span overload preserves NUL-length and catalog-output behavior.",
       "platform": "Windows/Linux qualification remains pending for current develop.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 remove redundant const char CchSnprintf overload",
+      "parent": "bbfdc106",
+      "source_commit": "b8c99d37",
+      "macos_debug_build": "make compile passes, including a full rebuild of all dependents; strict warnings and standalone header checks pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "focused_tests": "Native formatter and compilation manifest checks pass in the host suite.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1; full 80-page tutorial remains unfinished.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; the remaining string_view overload formats with the same formatter and arguments.",
+      "api_audit": "Removed the duplicate C-string format overload; CchSnprintf now has one bounded string_view format interface.",
+      "platform": "Windows/Linux qualification remains pending for current develop.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -24992,7 +25019,7 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional bounded library-import path batch.",
     "branch": "develop",
-    "latest_batch": "L05 bounded RightTextOut string-view interface",
+    "latest_batch": "L05 native bounded format API uses string_view only",
     "latest_published_head": "7fe016a7",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25213,10 +25240,14 @@
       {
         "commit": "a8768de0",
         "message": "Draw right-aligned text from views"
+      },
+      {
+        "commit": "b8c99d37",
+        "message": "Format native text from string views"
       }
     ],
-    "latest_source_commit": "a8768de0",
-    "latest_batch_status": "Locally committed as a8768de0. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
+    "latest_source_commit": "b8c99d37",
+    "latest_batch_status": "Locally committed as b8c99d37. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding."
   },
   "current_checkpoint": {
     "batch": "L05 production rows render from bounded text views",
@@ -25435,11 +25466,11 @@
   "working_tree_checkpoint": {
     "date": "2026-11-02",
     "branch": "develop",
-    "batch": "L05 bounded RightTextOut string-view interface",
-    "source_commit": "a8768de0",
-    "status": "Locally committed as a8768de0. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "batch": "L05 native bounded format API uses string_view only",
+    "source_commit": "b8c99d37",
+    "status": "Locally committed as b8c99d37. macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
     "changes": [
-      "RightTextOut takes string_view for readonly text and clamps explicit lengths to that view; the writable span overload retains the legacy cLen conventions."
+      "Removed the redundant CchSnprintf overload taking const char*; the remaining overload accepts string_view."
     ],
     "verification": {
       "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
