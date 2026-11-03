@@ -27102,7 +27102,7 @@
     "reason": "Resume the live C++ cleanup after publishing the toolbar ownership batch and accumulated cleanup commits to develop.",
     "branch": "develop",
     "latest_batch": "L05 bounded report hull names and carried game-name length for map printing",
-    "latest_published_head": "0ef5060e",
+    "latest_published_head": "8eb069fc",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -27135,7 +27135,7 @@
     ],
     "batch": "L05 profile text boundaries use views",
     "source_commit": "0f693393",
-    "status": "Committed locally as 39e0aa42 and 0f693393. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
+    "status": "Published to origin/develop at 8eb069fc. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
     "changes": [
       "Profile helper inputs, delimiter searches, lengths and path checks now use string_view across the Win32 C-string boundary."
     ],
@@ -27503,7 +27503,7 @@
   },
   "current_checkpoint": {
     "batch": "L05 bounded report hull names and carried game-name length for map printing",
-    "status": "Committed locally as 39e0aa42 and 0f693393. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
+    "status": "Published to origin/develop at 8eb069fc. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
     "parent": "5a62be5e",
     "change": "Removed three unbounded std::strlen calls for fixed hull-name fields. Map printing reuses one bounded game-name length across all page draws.",
     "verification": {
@@ -27937,7 +27937,7 @@
     },
     "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
     "latest_batch_status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
-    "latest_published_head": "0ef5060e",
+    "latest_published_head": "8eb069fc",
     "latest_batch_verification": {
       "batch": "L05 retire lstrlenA and bound UI text measurement",
       "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
@@ -28012,7 +28012,7 @@
     "branch": "develop",
     "batch": "L05 bounded report hull names and carried game-name length for map printing",
     "source_commit": "0f693393",
-    "status": "Committed locally as 39e0aa42 and 0f693393. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
+    "status": "Published to origin/develop at 8eb069fc. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -28477,7 +28477,7 @@
     }
   },
   "latest_source_commit": "39e0aa42+0f693393",
-  "latest_batch_status": "Committed locally as 39e0aa42 and 0f693393. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
+  "latest_batch_status": "Published to origin/develop at 8eb069fc. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
