@@ -2806,28 +2806,44 @@ INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
+static bool FScanTextEqualNoCase(std::string_view szLeft, std::string_view szRight) {
+    std::size_t i;
+
+    if (szLeft.size() != szRight.size()) return false;
+    for (i = 0; i < szLeft.size(); i++) {
+        if (std::tolower(static_cast<unsigned char>(szLeft[i])) != std::tolower(static_cast<unsigned char>(szRight[i]))) return false;
+    }
+    return true;
+}
+
 std::int16_t FSelectSz(APPSESSION &app, std::string_view szName) {
-    const char *pch;
-    const char *pszName;
     std::int16_t ifl;
     FLEET  *lpfl;
     std::int16_t ipl;
     std::int16_t cch;
     std::size_t cchName;
+    std::string_view szNameText;
     char    szT[20];
-    std::array<char, 40> szNameTerminated{};
+    std::array<char, 19> szPlanetName{};
+    std::size_t cchPlanetName;
+    std::string_view szPlanetNameView;
+    std::string_view szFleetSuffix;
+    FLEETNAMERESULT szFleetName;
     std::int16_t iplPartial;
     SCAN    scan;
 
-    if (szName.size() >= szNameTerminated.size()) return 0;
+    if (szName.size() >= 40) return 0;
     cchName = szName.find('\0');
     if (cchName == std::string_view::npos) cchName = szName.size();
-    std::copy(szName.begin(), szName.end(), szNameTerminated.begin());
-    pszName = szNameTerminated.data();
+    szNameText = szName.substr(0, cchName);
     iplPartial = -1;
     scan.iwp = iwpNone;
-    for (ipl = 0; ipl < app.state.game.cPlanMax && strcmpi(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), pszName) != 0; ipl++) {
-        if (iplPartial == -1 && strnicmp(PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]).data(), pszName, cchName) == 0) {
+    for (ipl = 0; ipl < app.state.game.cPlanMax; ipl++) {
+        szPlanetName = PszGetCompressedPlanet(app, app.state.rgidPlan[ipl]);
+        cchPlanetName = static_cast<std::size_t>(std::find(std::begin(szPlanetName), std::end(szPlanetName), '\0') - std::begin(szPlanetName));
+        szPlanetNameView = {szPlanetName.data(), cchPlanetName};
+        if (FScanTextEqualNoCase(szPlanetNameView, szNameText)) break;
+        if (iplPartial == -1 && FScanTextEqualNoCase(szPlanetNameView.substr(0, cchName), szNameText.substr(0, cchName))) {
             iplPartial = ipl;
         }
     }
@@ -2842,24 +2858,20 @@ GoWithPartial:
     }
 
     cch = TextIO().pfnCchGetString(app, idsFleet, std::span{szT});
-    if (strnicmp(pszName, szT, cch) == 0) {
-        pch = pszName + 6;
+    if (FScanTextEqualNoCase(szNameText.substr(0, static_cast<std::size_t>(cch)), std::string_view{szT, static_cast<std::size_t>(cch)})) {
+        szFleetSuffix = szName.substr(6);
     } else {
-        pch = pszName;
+        szFleetSuffix = szName;
     }
-    for (; *pch == ' '; pch++) {
-    }
-    if (*pch == '#') {
-        pch++;
-    }
-    for (; *pch == ' '; pch++) {
-    }
-    if (*pch >= '1' && *pch <= '9') {
-        ifl = *pch - '0';
-        pch++;
-        while (std::isdigit(*pch) != 0) {
-            ifl = 10 * ifl + *pch - '0';
-            pch++;
+    while (!szFleetSuffix.empty() && szFleetSuffix.front() == ' ') szFleetSuffix.remove_prefix(1);
+    if (!szFleetSuffix.empty() && szFleetSuffix.front() == '#') szFleetSuffix.remove_prefix(1);
+    while (!szFleetSuffix.empty() && szFleetSuffix.front() == ' ') szFleetSuffix.remove_prefix(1);
+    if (!szFleetSuffix.empty() && szFleetSuffix.front() >= '1' && szFleetSuffix.front() <= '9') {
+        ifl = szFleetSuffix.front() - '0';
+        szFleetSuffix.remove_prefix(1);
+        while (!szFleetSuffix.empty() && szFleetSuffix.front() >= '0' && szFleetSuffix.front() <= '9') {
+            ifl = 10 * ifl + szFleetSuffix.front() - '0';
+            szFleetSuffix.remove_prefix(1);
             if (ifl > 512)
                 goto LNotAFleetId;
         }
@@ -2882,7 +2894,8 @@ LNotAFleetId:
         lpfl = app.state.rglpfl[ifl];
         if (!app.state.rglpfl[ifl])
             break;
-        if (strcmpi(PszGetFleetName(app, lpfl->id).data(), pszName) == 0)
+        szFleetName = PszGetFleetNameResult(app, lpfl->id);
+        if (FScanTextEqualNoCase(szFleetName.view(), szNameText))
             goto LFoundFleetId;
     }
     if (iplPartial == -1) {
