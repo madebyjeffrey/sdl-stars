@@ -5833,5 +5833,13 @@
     "callers": "Win32 GetFileSize reads both DWORD halves from the present value; CbNativeSizeLegacy forwards the optional result; owned host/unit/compatibility callers are updated.",
     "verification": "make compile, desktop 18/18, host 29/29, native/host regressions 519 matches with zero differences, tutorial smoke 1/1.",
     "remaining": "Current-source Windows/Linux qualification and other remaining native file/path result interfaces remain open."
+  },
+  "native_file_position_result": {
+    "status": "complete; locally verified",
+    "interface": "LNativePosition returns optional<int64_t>; null file sets EBADF and returns nullopt. Successful positions retain their full-width byte offset.",
+    "callers": "Host INI sizing, Win32 zero-byte _lwrite, legacy token zero-byte writes, ZIP offsets/reader bounds and library record framing explicitly consume the optional result.",
+    "compatibility": "Seek origins, seek return contract, successful offset values, archive fields and file bytes are unchanged. The old -1 getter sentinel is removed.",
+    "verification": "e14499cd: strict macOS Debug build, desktop units 18/18, host units 29/29 including invalid-handle errno, native and host regressions each 519 matches with 25 existing warnings and zero differences/errors/skips, tutorial smoke 1/1.",
+    "platforms": "Current-source Windows/Linux qualification remains pending."
   }
 }

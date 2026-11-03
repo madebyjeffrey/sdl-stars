@@ -1954,7 +1954,8 @@
         "popup-menu-selection-arrays-as-spans",
         "host-ini-reader-uses-shared-native-file-owner",
         "native-file-size-optional-result",
-        "temporary_native_stream_api_returns_unique_owner"
+        "temporary_native_stream_api_returns_unique_owner",
+        "native_file_position_optional_result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -25407,16 +25408,16 @@
   ],
   "restart_checkpoint": {
     "date": "2026-11-02",
-    "reason": "Resume the live C++ cleanup on develop after the verified temporary native file owner API batch.",
+    "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L06 temporary native files return owners",
-    "latest_published_head": "23aa5a11",
+    "latest_batch": "L06 native file positions use optional results",
+    "latest_published_head": "e14499cd",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
     ],
     "pending_stage": "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome.",
-    "audit_summary": "44 tracked .c files remain only in independent compatibility/reference/scaffold targets; production C++20/Objective-C++20 has 0 .c translation units and 0 owned function-like API macros. L05 text/scratch audit, L06 buffer/service and chooser work, and L08 current Windows/Linux qualification remain open.",
+    "audit_summary": "44 tracked .c files remain only in independent compatibility/reference/scaffold targets; production C++20/Objective-C++20 has 0 .c translation units and 0 owned function-like API macros. L05 text/scratch audit, L06 remaining buffer/service and chooser work, and L08 current Windows/Linux qualification remain open.",
     "current_source_ci": {
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
@@ -25724,18 +25725,18 @@
     }
   },
   "current_checkpoint": {
-    "batch": "L06 temporary native files return owners",
-    "status": "Locally committed as 23aa5a11. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
-    "parent": "10368088",
-    "change": "PfNativeTemporary was replaced with NfoNativeTemporary returning NATIVEFILEOWNER. Temporary streams remain owned across all migrated test and witness paths and close on early return.",
+    "batch": "L06 native file positions use optional results",
+    "status": "Locally committed as e14499cd. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass. Windows/Linux qualification remains outstanding.",
+    "parent": "23aa5a11",
+    "change": "LNativePosition now returns optional<int64_t>; host, Win32, ZIP and library-import callers unwrap the position explicitly and reject absent results. Successful offsets and their prior integer-width behavior remain unchanged.",
     "verification": {
       "macos_sdl_debug": "make compile passes with strict warnings and standalone header checks.",
       "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
+      "host_unit_tests": "29/29 pass, including the null native-position errno contract.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
-      "baseline": "Unchanged; no game behavior, file bytes, or ownership policy changed. Temporary stream close/delete behavior is preserved.",
+      "baseline": "Unchanged; successful seek/position values, serialized bytes and game results are preserved.",
       "diff_check": "git diff --check passes.",
       "windows_linux": "Current-source Windows/Linux qualification remains pending."
     },
@@ -25757,7 +25758,8 @@
       "current_source_after_6a8f9bbe": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_e9c023c2": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_08db1856": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
-      "current_source_after_23aa5a11": "Windows/Linux qualification remains pending; local macOS/host verification passes through this source commit."
+      "current_source_after_23aa5a11": "Windows/Linux qualification remains pending; local macOS/host verification passes through this source commit.",
+      "current_source_after_e14499cd": "Windows/Linux qualification remains pending; local macOS/host builds, units and regressions pass through this source commit."
     },
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
@@ -25790,7 +25792,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through 23aa5a11.",
+      "platform_qualification": "Current-source Windows SDL desktop and Linux desktop qualification remain outstanding; local macOS Debug/Release, host units and regressions pass through e14499cd.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -25801,7 +25803,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "23aa5a11"
+      "source_head": "e14499cd"
     },
     "next": [
       "L05: finish bounded text destinations and const-text interfaces; complete the post-migration scratch/borrowed-return audit.",
@@ -25980,12 +25982,16 @@
       {
         "commit": "23aa5a11",
         "message": "Return temporary native files as owners"
+      },
+      {
+        "commit": "e14499cd",
+        "message": "Return native file positions as optional values"
       }
     ],
-    "source_commit": "23aa5a11",
-    "latest_change": "PfNativeTemporary was replaced with NfoNativeTemporary returning NATIVEFILEOWNER. Temporary streams remain owned across all migrated test and witness paths and close on early return.",
+    "source_commit": "e14499cd",
+    "latest_change": "LNativePosition now returns optional<int64_t>; host, Win32, ZIP and library-import callers unwrap the position explicitly and reject absent results. Successful offsets and their prior integer-width behavior remain unchanged.",
     "c_macro_audit": {
-      "source_head": "23aa5a11",
+      "source_head": "e14499cd",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25999,7 +26005,7 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop are not current-source qualified; local macOS and host verification passes through 23aa5a11."
+      "platform_qualification": "Windows SDL and Linux desktop are not current-source qualified; local macOS and host verification passes through e14499cd."
     }
   },
   "milestone_d_checkpoint": {
