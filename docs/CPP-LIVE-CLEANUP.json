@@ -273,7 +273,9 @@
         "bounded-cocoa-chooser-result-path-length",
         "carry-owned-toolbar-label-lengths",
         "owned-toolbar-collections-with-vectors",
-        "retire-lstrlenA-compatibility-shim"
+        "retire-lstrlenA-compatibility-shim",
+        "bounded-fixed-hull-labels-in-report-drawing",
+        "carry-bounded-game-name-length-for-map-printing"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -27099,14 +27101,14 @@
     "date": "2026-11-03",
     "reason": "Resume the live C++ cleanup after publishing the toolbar ownership batch and accumulated cleanup commits to develop.",
     "branch": "develop",
-    "latest_batch": "L05 retire lstrlenA and bound UI text measurement",
+    "latest_batch": "L05 bounded report hull names and carried game-name length for map printing",
     "latest_published_head": "0ef5060e",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
     ],
     "pending_stage": "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome.",
-    "audit_summary": "44 tracked .c files remain only in independent compatibility/reference/scaffold targets; production C++20/Objective-C++20 has 0 .c translation units and 0 owned function-like API macros. L05 text/scratch audit, L06 remaining buffer/service and chooser work, and L08 current-source Windows/Linux qualification remain open.",
+    "audit_summary": "44 tracked .c files remain only in independent compatibility/reference/scaffold targets; production C++20/Objective-C++20 has 0 .c translation units and 0 owned function-like API macros. Six production std::strlen calls remain (three input/API boundaries, three fixed or owned strings); L05 text/scratch audit, L06 remaining buffer/service and chooser work, and L08 current-source Windows/Linux qualification remain open.",
     "current_source_ci": {
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
@@ -27132,8 +27134,8 @@
       "title-modernized-v3.png and prompt"
     ],
     "batch": "L05 profile text boundaries use views",
-    "source_commit": "595a6f90",
-    "status": "Committed as 595a6f90. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "source_commit": "0f693393",
+    "status": "Committed locally as 39e0aa42 and 0f693393. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
     "changes": [
       "Profile helper inputs, delimiter searches, lengths and path checks now use string_view across the Win32 C-string boundary."
     ],
@@ -27500,25 +27502,28 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "L05 retire lstrlenA and bound UI text measurement",
-    "status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
-    "parent": "0719d5f6",
-    "change": "Retired win32::lstrlenA. RightTextOut measures NUL termination only inside its mutable span; DrawScannerSBar uses the count returned by its UTF-8 copy.",
+    "batch": "L05 bounded report hull names and carried game-name length for map printing",
+    "status": "Committed locally as 39e0aa42 and 0f693393. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
+    "parent": "5a62be5e",
+    "change": "Removed three unbounded std::strlen calls for fixed hull-name fields. Map printing reuses one bounded game-name length across all page draws.",
     "verification": {
-      "batch": "L05 retire lstrlenA and bound UI text measurement",
-      "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
+      "batch": "L05 bounded report hull names and carried game-name length for map printing",
+      "source_commits": [
+        "39e0aa42",
+        "0f693393"
+      ],
       "macos_sdl_debug_build": "make compile passes with strict warnings.",
-      "focused_compatibility_test": "win32_services passes (1/1); obsolete lstrlenA assertion removed with the retired shim.",
       "desktop_unit_tests": "18/18 pass.",
-      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged for valid terminated UI strings; scanner output consumes the exact copied byte count. Unterminated RightTextOut spans now stop at the span boundary.",
-      "api_audit": "Removed win32::lstrlenA declaration/implementation. RightTextOut finds a terminator only inside its supplied span; DrawScannerSBar reuses the UTF-8 copy count.",
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "baseline": "Unchanged; report rendering uses the same valid hull-name bytes, and print-map draws the same valid game-name bytes.",
+      "api_audit": "Removed three unbounded std::strlen calls for fixed hull-name fields. Map printing reuses one bounded game-name length across all page draws.",
+      "remaining_strlen": "Six production std::strlen calls: three C-string boundary/input calls and three owned/fixed-storage calls under review.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
       "diff_check": "Pass."
     },
@@ -28005,9 +28010,9 @@
   "working_tree_checkpoint": {
     "date": "2026-11-03",
     "branch": "develop",
-    "batch": "L05 retire lstrlenA and bound UI text measurement",
-    "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
+    "batch": "L05 bounded report hull names and carried game-name length for map printing",
+    "source_commit": "0f693393",
+    "status": "Committed locally as 39e0aa42 and 0f693393. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -28035,15 +28040,16 @@
       "Fifteen typed array and bounded character-range memcpy calls now use std::copy_n; each extent is translated to the same element count.",
       "Seven same-type array copies in log and compatibility adapters now use std::copy_n with equivalent element counts.",
       "Fifteen bounded text copies in Win32 compatibility buffers now use std::copy_n with the same byte counts and terminator handling.",
-      "Four same-type input, message-box and edit-line copies now use std::copy_n with unchanged element counts."
+      "Four same-type input, message-box and edit-line copies now use std::copy_n with unchanged element counts.",
+      "Three report renderers now use bounded views for fixed hull-name fields; map printing measures the bounded game-name field once and reuses its length across page draws."
     ],
     "verification": {
-      "macos_debug_build": "make compile passes with strict warnings and standalone header checks.",
+      "macos_debug_build": "make compile passes with strict warnings.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "native_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
       "host_regression": "519 matches; 25 existing warnings; 0 differences/errors/skips.",
-      "tutorial": "1/1 available SDL tutorial smoke passes.",
+      "tutorial": "1/1 SDL tutorial smoke passes.",
       "baseline": "Unchanged.",
       "windows_linux": "Current-source Windows/Linux qualification remains pending.",
       "diff_check": "Pass.",
@@ -28410,9 +28416,18 @@
         "commit": "08db1856",
         "message": "Parse profile fields as bounded views"
       },
-      {"commit":"b022c4d4","message":"Own toolbar collections with vectors"},
-      {"commit":"2e4b61de","message":"Record toolbar ownership cleanup"},
-      {"commit":"bdba7844","message":"Correct toolbar ownership site count"}
+      {
+        "commit": "b022c4d4",
+        "message": "Own toolbar collections with vectors"
+      },
+      {
+        "commit": "2e4b61de",
+        "message": "Record toolbar ownership cleanup"
+      },
+      {
+        "commit": "bdba7844",
+        "message": "Correct toolbar ownership site count"
+      }
     ],
     "parent": "0719d5f6",
     "c_macro_audit": {
@@ -28461,8 +28476,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-  "latest_batch_status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
+  "latest_source_commit": "39e0aa42+0f693393",
+  "latest_batch_status": "Committed locally as 39e0aa42 and 0f693393. macOS SDL Debug build passes; desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Current-source Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28479,8 +28494,8 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "5a62be5e",
-    "strlen_occurrence_inventory": "Eleven std::strlen calls remain in C++ source/header files; no Objective-C++ std::strlen or SDL_strlen calls remain. This raw count is not a replacement count: four measure C-string API/input boundaries and seven measure text already held in owned or fixed storage; those seven are candidates for carried lengths, subject to confirming that extra state is worthwhile.",
+    "source_head": "0f693393",
+    "strlen_occurrence_inventory": "Six std::strlen calls remain in owned production C++ source/header files: three measure C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input), and three measure owned/fixed text (the inspector class/text fields and battle-plan name). Three report hull-name calls now use bounded fixed-array views; map printing carries the bounded game-name length across page draws. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28554,24 +28569,29 @@
     "font_metrics_service": "FCompatFontMetrics returns std::optional<TEXTMETRICA>; only GetTextMetricsA copies the value into the Win32 output pointer.",
     "scanner_snapshot_result": "RgCaptureScanner returns std::optional<SCANSNAPSHOT>; FWriteScannerSnapshot and FSelectScannerObject take required const references. FreeScannerSnapshot and nullable snapshot handoffs are removed.",
     "toolbar_owned_collections": "COMPATTOOLBAR button/bitmap arrays use std::vector and labels use NATIVEOWNER<char, SDL_free>; count fields derive from collection sizes.",
-    "win32_length_helper": "win32::lstrlenA is retired; UI spans are measured within their bounds, and scanner labels reuse copied UTF-8 byte counts."
+    "win32_length_helper": "win32::lstrlenA is retired; UI spans are measured within their bounds, and scanner labels reuse copied UTF-8 byte counts.",
+    "report_hull_names": "Planet starbase, fleet composition, and enemy-fleet composition report cells use SzvPartName bounded views for fixed 32-byte hull-name fields; no record layout changes.",
+    "map_print_game_name": "CommandHandler measures the fixed game-name field once within its array extent and reuses the byte count across printed map pages."
   },
-  "latest_change": "L05 retire lstrlenA and bound UI text measurement",
+  "latest_change": "L05 bounded report hull names and carried game-name length for map printing",
   "latest_batch_verification": {
-    "batch": "L05 retire lstrlenA and bound UI text measurement",
-    "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
+    "batch": "L05 bounded report hull names and carried game-name length for map printing",
+    "source_commits": [
+      "39e0aa42",
+      "0f693393"
+    ],
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
-    "focused_compatibility_test": "win32_services passes (1/1); obsolete lstrlenA assertion removed with the retired shim.",
     "desktop_unit_tests": "18/18 pass.",
-    "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
       "matches": 519,
       "warnings": 25,
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged for valid terminated UI strings; scanner output consumes the exact copied byte count. Unterminated RightTextOut spans now stop at the span boundary.",
-    "api_audit": "Removed win32::lstrlenA declaration/implementation. RightTextOut finds a terminator only inside its supplied span; DrawScannerSBar reuses the UTF-8 copy count.",
+    "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+    "baseline": "Unchanged; report rendering uses the same valid hull-name bytes, and print-map draws the same valid game-name bytes.",
+    "api_audit": "Removed three unbounded std::strlen calls for fixed hull-name fields. Map printing reuses one bounded game-name length across all page draws.",
+    "remaining_strlen": "Six production std::strlen calls: three C-string boundary/input calls and three owned/fixed-storage calls under review.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass."
   }
