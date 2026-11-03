@@ -166,8 +166,13 @@ void RcCtrTextOut(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szText, 
 }
 
 void RightTextOut(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, std::span<char> psz, std::int16_t cLen, std::int16_t dxErase) {
+    std::span<char>::iterator itEnd;
     if (cLen == -1) cLen = TextIO().pfnCchGetString(app, idsNone2, psz);
-    else if (cLen == 0) cLen = win32::lstrlenA(psz.data());
+    else if (cLen == 0) {
+        itEnd = std::find(psz.begin(), psz.end(), '\0');
+        if (itEnd == psz.end() && !psz.empty()) return;
+        cLen = static_cast<std::int16_t>(itEnd - psz.begin());
+    }
     RightTextOut(app, hdc, x, y, psz.empty() ? std::string_view{} : std::string_view{psz.data(), psz.size()}, cLen, dxErase);
 }
 

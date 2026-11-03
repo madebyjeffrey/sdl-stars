@@ -207,7 +207,6 @@ LONG _llseek (HFILE hFile, LONG lOffset, int iOrigin);
 UINT _lread (HFILE hFile, LPVOID lpBuffer, UINT uBytes);
 UINT _lwrite (HFILE hFile, LPCCH lpBuffer, UINT uBytes);
 int lstrcmpiA (LPCSTR lpString1, LPCSTR lpString2);
-int lstrlenA (LPCSTR lpString);
 
 BOOL SetKeyboardState(BYTE *rgb);
 HACCEL CreateAcceleratorTableA(LPACCEL rgaccel, int c);

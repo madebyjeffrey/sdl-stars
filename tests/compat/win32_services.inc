@@ -40,7 +40,6 @@ int main(void) {
     CHECK(MulDiv(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::max()) == std::numeric_limits<std::int32_t>::max());
     CHECK(MulDiv(std::numeric_limits<std::int32_t>::min(), 1, 1) == -1);
     CHECK(MulDiv(std::numeric_limits<std::int32_t>::min(), -1, 1) == -1);
-    CHECK(lstrlenA(NULL) == 0 && lstrlenA("fleet") == 5);
     CHECK(!strcmp(sz, "Fleet #10") && lstrcmpiA(sz, "FLEET #10") == 0);
     CHECK(lstrcmpiA("a", "b") < 0 && lstrcmpiA("z", "a") > 0);
 #ifndef STARS_UI_SDL

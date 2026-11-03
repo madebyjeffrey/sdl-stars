@@ -1855,7 +1855,7 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
     HBRUSH     hbrSav;
     std::int16_t    fDoName;
     std::int32_t    l;
-    std::size_t cchBuf, ichSpace;
+    std::size_t cchBuf, cchName, ichSpace;
     GrobjClass grobj;
     RECT       rcT;
     RECT       rc;
@@ -1959,23 +1959,23 @@ void DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int1
         ExpandRc(&rcClip, -2, -2);
         grReal = grobj == grobjOther ? app.state.sel.scan.grobjFull : grobj;
         if (psbar && psbar->psz) {
-            CchCopyUtf8Prefix(std::span{app.state.szWork}, psbar->psz);
+            cchName = CchCopyUtf8Prefix(std::span{app.state.szWork}, psbar->psz);
         } else if (grReal & 1) {
             szObjectName = TextIO().pfnPlanetName(app, !psbar ? app.state.sel.scan.idpl : psbar->id).rgch;
-            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
+            cchName = CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         } else if (grReal & 2) {
             szObjectName = PszGetFleetName(app, !psbar ? app.state.rglpfl[app.state.sel.scan.ifl]->id : psbar->id);
-            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
+            cchName = CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         } else if (grReal & 8) {
             szObjectName = PszGetThingName(app, !psbar ? app.state.lpThings[app.state.sel.scan.ith].idFull() : psbar->id);
-            CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
+            cchName = CchCopyUtf8Prefix(std::span{app.state.szWork}, szObjectName.data());
         } else if (grReal == 0 && grobj == grobjOther) {
-            TextIO().pfnCchGetString(app, idsDeepSpaceWaypoint, std::span{app.state.szWork});
+            cchName = static_cast<std::size_t>(TextIO().pfnCchGetString(app, idsDeepSpaceWaypoint, std::span{app.state.szWork}));
         } else {
             fDoName = 0;
         }
         if (fDoName) {
-            win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, app.state.szWork, win32::lstrlenA(app.state.szWork), nullptr);
+            win32::ExtTextOutA(hdc, rcT.left + 3, rcT.top + 2, win32::ETO_CLIPPED, &rcClip, app.state.szWork, static_cast<int>(cchName), nullptr);
         }
         OffsetRc(&rc, 0, app.lpui->dySBar >> 1);
         rcT = rc;

@@ -1,7 +1,7 @@
 # UI string, arithmetic and CRT services
 
-The local runtime supplies narrow string measurement/comparison, typed
-formatting, `MulDiv` and `GetCurrentThreadId` for SDL callers. It also supplies
+The local runtime supplies narrow string comparison, typed formatting,
+`MulDiv` and `GetCurrentThreadId` for SDL callers. It also supplies
 the Microsoft CRT adapters used on non-Windows platforms.
 
 ## Contracts and limits
@@ -15,7 +15,8 @@ the Microsoft CRT adapters used on non-Windows platforms.
   Wide strings, pointer/64-bit modifiers, floating point and other format
   extensions are rejected. This is the application's subset, not a complete
   printf or Unicode implementation.
-- `lstrlenA` and `lstrcmpiA` provide narrow byte-string measurement/comparison.
+- `lstrcmpiA` provides the narrow case-insensitive comparison required by the UI
+  compatibility layer.
   Comparisons follow the current C locale; Windows locale-specific collation
   is not emulated. No UTF-16 conversion is added to these ANSI calls.
   The unused `lstrcpyA` and `lstrcatA` copy entry points have been retired;

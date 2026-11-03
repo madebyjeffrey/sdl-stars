@@ -9,7 +9,6 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <strings.h>
 #include <sys/stat.h>
 #ifdef __APPLE__
@@ -47,7 +46,6 @@ DWORD win32::GetCurrentThreadId(void) {
 #endif
 }
 
-int win32::lstrlenA(LPCSTR psz) { return psz ? static_cast<int>(std::strlen(psz)) : 0; }
 int win32::lstrcmpiA(LPCSTR psz1, LPCSTR psz2) { return strcasecmp(psz1, psz2); }
 
 #ifndef _WIN32

@@ -1143,8 +1143,8 @@
       "macro": "lstrlen",
       "parent_definition": "#define lstrlen lstrlenA",
       "status": "removed-C07",
-      "replacement": "win32::lstrlenA",
-      "purpose": "Call the real operation directly; no spelling-only forwarding function."
+      "replacement": "retired with bounded UI text handling; measured UI spans use std::find and scanner labels carry their copied byte count",
+      "purpose": "The local lstrlenA compatibility helper had no remaining need once callers used bounded spans and carried text lengths."
     },
     {
       "parent_path": "compat/win32/include/wincompat_api.h",
