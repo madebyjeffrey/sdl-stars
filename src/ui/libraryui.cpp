@@ -2884,7 +2884,10 @@ static std::int16_t ListLibraryHostGame(APPSESSION &app, void *lpList, std::stri
 static std::int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, std::string_view pszName) {
     LIBRARYCONTINUE *plc = static_cast<LIBRARYCONTINUE *>(lpData);
     char szFile[512], szMetadataName[256];
+    std::string_view szMetadataNameView;
     NATIVEFILE *pf;
+    std::optional<std::size_t> cchMetadataName;
+    std::size_t cchMetadataText, ichLineEnd;
     int iVersion, iPlayer;
     long long lPlayed;
     std::int32_t lidGame;
@@ -2900,13 +2903,18 @@ static std::int16_t FindContinueLibraryGame(APPSESSION &app, void *lpData, std::
     iVersion = 0;
     iPlayer = -1;
     lPlayed = 0;
-    if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !CchGetNativeLine(std::span{szMetadataName}, pf) ||
+    if (CNativeScan(pf, "%d\n", &iVersion) != 1 || !(cchMetadataName = CchGetNativeLine(std::span{szMetadataName}, pf)) ||
         CNativeScan(pf, "%d\n%lld", &iPlayer, &lPlayed) != 2) {
         ICloseNativeFile(pf);
         return 1;
     }
     ICloseNativeFile(pf);
-    szMetadataName[std::strcspn(szMetadataName, "\r\n")] = 0;
+    szMetadataNameView = std::string_view{szMetadataName, *cchMetadataName};
+    cchMetadataText = szMetadataNameView.find('\0');
+    if (cchMetadataText == std::string_view::npos) cchMetadataText = szMetadataNameView.size();
+    ichLineEnd = szMetadataNameView.substr(0, cchMetadataText).find_first_of("\r\n");
+    if (ichLineEnd != std::string_view::npos) cchMetadataText = ichLineEnd;
+    szMetadataName[cchMetadataText] = 0;
     const std::string szName{pszName};
     if ((iVersion != 1 && iVersion != 2) || _stricmp(szMetadataName, szName.c_str()) ||
         iPlayer < 0 || iPlayer >= 16 || (plc->fFound && lPlayed <= plc->lPlayed)) return 1;
