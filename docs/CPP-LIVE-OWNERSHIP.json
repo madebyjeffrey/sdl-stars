@@ -2673,6 +2673,6 @@
       "compiler_context": true,
       "disposition": "L05 packaged guide body migrated to std::string in ea947f5c"
     },
-    {"batch": "L05 toolbar collection ownership", "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd", "retired_heap_sites": 9, "change": "Toolbar button/bitmap collection allocations and label frees are replaced by vectors and SDL-aware unique owners.", "verification": "make compile; desktop units 18/18; native regression 519 matches, 25 warnings, zero differences/errors; tutorial smoke 1/1; toolbar resource test 1/1. Leak instrumentation could not obtain a macOS task port.", "baseline": "Unchanged."}
+    {"batch": "L05 toolbar collection ownership", "source_commit": "b022c4d45c15d71a6f6b802f80c0f1aa5530edfd", "retired_heap_sites": 10, "change": "Toolbar button/bitmap collection allocations and label frees are replaced by vectors and SDL-aware unique owners.", "verification": "make compile; desktop units 18/18; native regression 519 matches, 25 warnings, zero differences/errors; tutorial smoke 1/1; toolbar resource test 1/1. Leak instrumentation could not obtain a macOS task port.", "baseline": "Unchanged."}
   ]
 }
