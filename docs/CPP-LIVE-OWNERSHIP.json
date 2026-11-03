@@ -552,7 +552,7 @@
       "path": "compat/win32/src/toolbar.cpp",
       "scope": "AddButtons",
       "owner": "buttonsOwner -> shared toolbar collection",
-      "reason": "The temporary calloc array owns only newly copied labels until all inputs validate; old labels transfer with the unchanged byte copies, then publication clears the temporary slot owner before callbacks."
+      "reason": "The temporary calloc array owns new button records and their SDL-allocated UTF-8 labels. Each label copy retains its exact byte count; failure releases staged labels, while old records and labels transfer with the byte copies before atomic publication."
     },
     {
       "id": "79",
@@ -2030,7 +2030,7 @@
     },
     {
       "path": "compat/win32/src/toolbar.cpp",
-      "line": 87,
+      "line": 90,
       "scope": "AddButtons",
       "operation": "SDL_free",
       "code": "SDL_free(rgNew[iInsert + i].psz)",
@@ -2040,7 +2040,7 @@
     },
     {
       "path": "compat/win32/src/toolbar.cpp",
-      "line": 88,
+      "line": 91,
       "scope": "AddButtons",
       "operation": "free",
       "code": "std::free(rgNew)",
@@ -2050,7 +2050,7 @@
     },
     {
       "path": "compat/win32/src/toolbar.cpp",
-      "line": 92,
+      "line": 95,
       "scope": "AddButtons",
       "operation": "calloc",
       "code": "std::calloc(c + static_cast<std::size_t>(lp->c) + 1, sizeof(*rgNew))",
@@ -2060,17 +2060,17 @@
     },
     {
       "path": "compat/win32/src/toolbar.cpp",
-      "line": 98,
+      "line": 102,
       "scope": "AddButtons",
-      "operation": "SDL_strdup",
-      "code": "SDL_strdup(reinterpret_cast<const char *>(rgbtn[i].iString))",
-      "normalized_call": "SDL_strdup(reinterpret_cast<constchar*>(rgbtn[i].iString))",
+      "operation": "SDL_malloc",
+      "code": "SDL_malloc(szText.size() + 1)",
+      "normalized_call": "SDL_malloc(szText.size()+1)",
       "compiler_context": true,
       "contract": "78"
     },
     {
       "path": "compat/win32/src/toolbar.cpp",
-      "line": 106,
+      "line": 113,
       "scope": "AddButtons",
       "operation": "free",
       "code": "std::free(lp->rgbtn)",
