@@ -26887,6 +26887,31 @@
       "api_audit": "List search measures its query once before scanning items. The Linux portal chooser reuses the unique bus-name count for its bounds check and sender copy. The Linux-only portal translation unit still needs current-source Linux qualification.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Use bounded folder and separator lengths",
+      "parent": "cc1f3f20",
+      "source_commit": "de6d3f1be24b7290be129b789e88d5232db9659d",
+      "macos_debug_build": "make compile passes with strict warnings and header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; chooser folder option bytes, ZIP path sizing and game results remain unchanged.",
+      "api_audit": "The portal folder helper now accepts std::string_view and uses its known length when encoding the DBus byte array. ZIP parent path sizing uses the compile-time separator view length. Two std::strlen calls were removed.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending; the portal backend is Linux-only.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -28287,8 +28312,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "ebbe144a86b85e033d23ec2a3864d6da13219a1a",
-  "latest_batch_status": "Source committed as ebbe144a. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "de6d3f1be24b7290be129b789e88d5232db9659d",
+  "latest_batch_status": "Source committed as de6d3f1b. Strict macOS SDL Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -28305,8 +28330,8 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "Seventy-three redundant UI length rescans have been removed across tracked batches, including popup, report, message and VCR result/count paths.",
-    "source_head": "ebbe144a86b85e033d23ec2a3864d6da13219a1a",
-    "strlen_occurrence_inventory": "46 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
+    "source_head": "de6d3f1be24b7290be129b789e88d5232db9659d",
+    "strlen_occurrence_inventory": "44 std::strlen calls and 2 SDL_strlen calls remain in src and compat/win32/src C++ headers/sources. This raw count is not an actionable replacement count; each call needs contextual classification as a C-string, ABI boundary, or avoidable rescan.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
     "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views.",
@@ -28322,6 +28347,7 @@
     "popup_catalog_text_lengths": "DrawPopup and Popup use CchGetString byte counts for catalog labels and PLANETNAMERESULT for planet labels in sizing and drawing. Ten redundant std::strlen calls were removed.",
     "report_column_title_results": "DxReportColHdr returns pixel width and title byte count; report drawing uses the count, and score sizing uses catalog text result counts. Three redundant std::strlen calls were removed.",
     "message_vcr_text_lengths": "Message DrawTextA reuses a single measured byte count; VCR damage labels use CchGetString counts. Two redundant std::strlen calls were removed.",
-    "chooser_list_search_lengths": "The Linux portal sender name length is measured once and reused for admission and copy; the compatibility list search query is measured once before the item loop. Linux portal compilation remains pending current-source Linux qualification."
+    "chooser_list_search_lengths": "The Linux portal sender name length is measured once and reused for admission and copy; the compatibility list search query is measured once before the item loop. Linux portal compilation remains pending current-source Linux qualification.",
+    "portal_folder_zip_separator_lengths": "The Linux portal folder helper consumes std::string_view and its carried byte length; ZIP path sizing uses the constexpr separator length. Two std::strlen calls were removed; current Linux backend qualification remains pending."
   }
 }
