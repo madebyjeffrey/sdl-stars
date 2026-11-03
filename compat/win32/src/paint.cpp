@@ -13,6 +13,7 @@
 #include <cmath>
 #include <limits>
 #include <new>
+#include <stdexcept>
 #include <cstdlib>
 #include <cstring>
 
@@ -1782,12 +1783,9 @@ struct COMPATTEXTLINE { int i, cch, dx; };
 
 int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     HDC lpdc = LpDC(hdc);
-    char *sz = nullptr;
-    BYTE *rgUnderline = nullptr;
-    COMPATTEXTLINE *rgline = nullptr;
-    NATIVEARRAYOWNER<char, std::free> szOwner;
-    NATIVEARRAYOWNER<BYTE, std::free> rgUnderlineOwner;
-    NATIVEARRAYOWNER<COMPATTEXTLINE, std::free> rglineOwner;
+    std::string sz;
+    std::vector<BYTE> rgUnderline;
+    std::vector<COMPATTEXTLINE> rgline;
     TEXTMETRICA tm;
     SIZE size;
     RECT rcOld;
@@ -1802,10 +1800,16 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     if (cch == -1) { cch = static_cast<int>(strnlen(psz, 1024 * 1024 + 1)); }
     if (cch > 1024 * 1024) return 0;
     if (cch == 0) { if (flags & win32::DT_CALCRECT) lprc->bottom = lprc->top; return 0; }
-    sz = static_cast<char *>((std::malloc(static_cast<std::size_t>(cch) * 8 + 1))); rgUnderline = static_cast<BYTE *>((std::calloc(static_cast<std::size_t>(cch) * 8 + 1, 1)));
-    rgline = static_cast<COMPATTEXTLINE *>((std::malloc((static_cast<std::size_t>(cch) * 8 + 1) * sizeof(*rgline))));
-    szOwner.reset(sz); rgUnderlineOwner.reset(rgUnderline); rglineOwner.reset(rgline);
-    if (!sz || !rgUnderline || !rgline) goto LReturn;
+    try {
+        const std::size_t cbScratch = static_cast<std::size_t>(cch) * 8 + 1;
+        sz.resize(cbScratch);
+        rgUnderline.resize(cbScratch);
+        rgline.resize(cbScratch);
+    } catch (const std::bad_alloc &) {
+        return 0;
+    } catch (const std::length_error &) {
+        return 0;
+    }
     for (i = 0; i < cch; i++) {
         if (!(flags & win32::DT_NOPREFIX) && psz[i] == '&') {
             if (i + 1 < cch && psz[i + 1] == '&') i++;
@@ -1829,10 +1833,10 @@ int win32::DrawTextA(HDC hdc, LPCSTR psz, int cch, LPRECT lprc, UINT flags) {
     while (i < c) {
         iStart = i; iBreak = -1; dxBreak = 0; dx = 0;
         while (i < c && sz[i] != '\r' && sz[i] != '\n') {
-            uch = DecodeUtf8Char(std::string_view{sz + i, static_cast<std::size_t>(c - i)});
+            uch = DecodeUtf8Char(std::string_view{sz.data() + i, static_cast<std::size_t>(c - i)});
             if (!uch) goto LReturn;
             cStep = static_cast<int>(uch->cch);
-            if (!win32::GetTextExtentPoint32A(hdc, sz + i, cStep, &size)) goto LReturn;
+            if (!win32::GetTextExtentPoint32A(hdc, sz.data() + i, cStep, &size)) goto LReturn;
             if (sz[i] == ' ' || sz[i] == '\t') { iBreak = i; dxBreak = static_cast<int>(dx); }
             dx += size.cx;
             if (dx > std::numeric_limits<int>::max()) goto LReturn;
@@ -1873,15 +1877,15 @@ LNextLine:
         if (flags & win32::DT_CENTER) x += (static_cast<std::int64_t>(lprc->right) - lprc->left - rgline[i].dx) / 2;
         else if (flags & win32::DT_RIGHT) x = static_cast<std::int64_t>(lprc->right) - rgline[i].dx;
         if (x < std::numeric_limits<int>::min() || x > std::numeric_limits<int>::max() || y < std::numeric_limits<int>::min() || y > std::numeric_limits<int>::max() ||
-            !win32::TextOutA(hdc, static_cast<int>(x), static_cast<int>(y), sz + rgline[i].i, rgline[i].cch)) { nReturn = 0; break; }
+            !win32::TextOutA(hdc, static_cast<int>(x), static_cast<int>(y), sz.data() + rgline[i].i, rgline[i].cch)) { nReturn = 0; break; }
         for (j = 0; j < rgline[i].cch; j++) {
             if (!rgUnderline[rgline[i].i + j]) continue;
-            win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i, j, &size);
+            win32::GetTextExtentPoint32A(hdc, sz.data() + rgline[i].i, j, &size);
             dx = x + size.cx;
-            uch = DecodeUtf8Char(std::string_view{sz + rgline[i].i + j, static_cast<std::size_t>(rgline[i].cch - j)});
+            uch = DecodeUtf8Char(std::string_view{sz.data() + rgline[i].i + j, static_cast<std::size_t>(rgline[i].cch - j)});
             if (!uch) continue;
             cStep = static_cast<int>(uch->cch);
-            win32::GetTextExtentPoint32A(hdc, sz + rgline[i].i + j, cStep, &size);
+            win32::GetTextExtentPoint32A(hdc, sz.data() + rgline[i].i + j, cStep, &size);
             // Leave a pixel below the baseline, matching ordinary font
             // underlines, so mnemonic marks do not merge into the glyph.
             if (dx >= std::numeric_limits<int>::min() && dx + size.cx <= std::numeric_limits<int>::max() && y + tm.tmAscent + 2 <= std::numeric_limits<int>::max()) {
