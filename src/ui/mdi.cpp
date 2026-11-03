@@ -155,7 +155,7 @@ void CreateChildWindows(APPSESSION &app) {
         szPlayerName = TextIO().pfnPlayerName(app, app.state.idPlayer, 0, 1, 0, 0, nullptr);
         psz = szPlayerName.data();
         CchCopyUtf8(std::span{szPlayerUtf8}, psz);
-        CchSnprintf(std::span{szData}, "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
+        CchSprintf(std::span{szData}, "Stars! -- %s -- %s -- %s", szNameUtf8, szPlayerUtf8, szGame);
     } else {
         TextIO().pfnCchGetString(app, idsStarsSHostMode, std::span{app.state.szWork});
         CchSprintf(szData, app.state.szWork, app.state.game.szName);

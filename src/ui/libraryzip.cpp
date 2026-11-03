@@ -100,7 +100,8 @@ static bool FCollectZipFiles(APPSESSION &app, ZIPFILES *pz, std::string_view psz
 
     ZIPFILES zfChild{};
     if (pszName == "." || pszName == "..") return true;
-    if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pz->pszRoot, szDirSep, pszName) <= 0 ||
+    const int cchPath = CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pz->pszRoot, szDirSep, pszName);
+    if (cchPath <= 0 || static_cast<std::size_t>(cchPath) >= sizeof(szPath) ||
         !(npiPath = FNativePathInfo(szPath)) || npiPath->fLink) { pz->fBad = 1; return false; }
     if (npiPath->fDirectory) {
         /* Game export stages contain only regular files and backup directories. */
@@ -130,10 +131,12 @@ static std::int16_t FWriteZipEntry(NATIVEFILE *pfZip, std::string_view pszRoot, 
     std::vector<std::uint8_t> rgbData;
     NATIVEFILE *pf = nullptr;
     std::size_t cbName = pze->pszName.size();
+    int cchPath;
     NATIVECLEANUPSCOPE entry([&]() noexcept {
         if (pf) ICloseNativeFile(pf);
     });
-    if (CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pszRoot, szDirSep, pze->pszName) <= 0 ||
+    cchPath = CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", pszRoot, szDirSep, pze->pszName);
+    if (cchPath <= 0 || static_cast<std::size_t>(cchPath) >= sizeof(szPath) ||
         !(cb = FNativeFileSize(szPath)) || (*cb) < 0 || (*cb) > std::numeric_limits<std::uint32_t>::max() || cbName > std::numeric_limits<std::uint16_t>::max() ||
         !(ibZip = LNativePosition(pfZip)) || static_cast<std::uint64_t>(*ibZip) > std::numeric_limits<std::uint32_t>::max()) return 0;
     pf = PfOpenNativeFile(szPath, NATIVEFILEMODE::read);
@@ -248,6 +251,7 @@ std::int16_t FUnzipLibraryArchive(std::string_view pszArchive, std::string_view 
     std::size_t cbRead;
     long lSearch;
     char szName[512], szOutput[512], szDirectoryEntry[512];
+    int cchDirectoryEntry;
     ZIPCENTRAL zc;
     z_stream zs;
 
@@ -306,7 +310,8 @@ std::int16_t FUnzipLibraryArchive(std::string_view pszArchive, std::string_view 
         if (!ib || static_cast<std::uint64_t>(*ib) + zc.cbCompressed > static_cast<std::uint64_t>(centralOffset)) goto done;
         if (szEntry.back() == '/') {
             szEntry.remove_suffix(1);
-            if (!FZipSafeName(szEntry) || CchSnprintf(std::span{szDirectoryEntry, sizeof(szDirectoryEntry)}, "%s/.zip-dir-entry", szEntry) <= 0 ||
+            cchDirectoryEntry = CchSnprintf(std::span{szDirectoryEntry, sizeof(szDirectoryEntry)}, "%s/.zip-dir-entry", szEntry);
+            if (!FZipSafeName(szEntry) || cchDirectoryEntry <= 0 || static_cast<std::size_t>(cchDirectoryEntry) >= sizeof(szDirectoryEntry) ||
                 !FZipMakeParents(pszDirectory, szDirectoryEntry, std::span{szOutput}) ||
                 LSeekNativeFile(pf, lNext, NATIVESEEKORIGIN::begin) < 0) goto done;
             continue;

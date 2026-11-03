@@ -273,6 +273,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     COMPATPROFILE **lplp;
     BOOL fRet = 0;
     std::size_t cb;
+    int cch;
     std::unique_lock lockProfile(fProfileLock, std::defer_lock);
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept { FreeProfile(lpAll); });
 
@@ -308,7 +309,8 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
             try { szLine.resize(cb); }
             catch (const std::bad_alloc &) { goto LMemory; }
             catch (const std::length_error &) { goto LMemory; }
-            CchSnprintf(std::span{szLine}, "[%s]\n", szSection);
+            cch = CchSnprintf(std::span{szLine}, "[%s]\n", szSection);
+            if (cch < 0 || static_cast<std::size_t>(cch) >= szLine.size()) goto LMemory;
             lpSection = LpProfileLine(szLine.c_str());
             if (!lpSection) goto LMemory;
             for (lplp = &lpAll; *lplp; lplp = &(*lplp)->lpNext) {}
@@ -318,7 +320,8 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
         try { szLine.resize(cb); }
         catch (const std::bad_alloc &) { goto LMemory; }
         catch (const std::length_error &) { goto LMemory; }
-        CchSnprintf(std::span{szLine}, "%s=%s\n", szKey, szValue);
+        cch = CchSnprintf(std::span{szLine}, "%s=%s\n", szKey, szValue);
+        if (cch < 0 || static_cast<std::size_t>(cch) >= szLine.size()) goto LMemory;
         lpNew = LpProfileLine(szLine.c_str());
         if (!lpNew) goto LMemory;
         for (lplp = &lpSection->lpNext; *lplp && !(*lplp)->pszSection && *lplp != lpKey; lplp = &(*lplp)->lpNext) {}

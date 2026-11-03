@@ -76,7 +76,7 @@ static std::size_t FormatStyles(const STARSCOMPATWINDOW *lp, bool fExtended, std
         }
     }
     if (dw) {
-        cchUnknown = CchSnprintf(std::span{szUnknown}, "0x%08x", static_cast<unsigned>(dw));
+        cchUnknown = CchSprintf(std::span{szUnknown}, "0x%08x", static_cast<unsigned>(dw));
         AppendStyle(rgch, cch, std::string_view{szUnknown, static_cast<std::size_t>(cchUnknown)});
     }
     if (cch == 0) cch = CchCopyUtf8Prefix(rgch, "0");
@@ -208,6 +208,7 @@ bool StarsCompatWriteHierarchy(const STARSCOMPATSNAPSHOT &rgWindow, NATIVEFILE *
 static void InspectDetails(HWND hwnd) {
     HWND hwndList = win32::GetDlgItem(hwnd, 1);
     int i = static_cast<int>(win32::SendMessageA(hwndList, win32::LB_GETCURSEL, 0, 0));
+    int cch;
     LRESULT iItem;
     const STARSCOMPATWINDOW *lp;
     std::string szDetails;
@@ -228,7 +229,7 @@ static void InspectDetails(HWND hwnd) {
     } catch (const std::length_error &) {
         return;
     }
-    CchSnprintf(std::span{szDetails},
+    cch = CchSnprintf(std::span{szDetails},
         "ID: %" PRIu64 "\r\nParent: %" PRIu64 "\r\nOwner: %" PRIu64 "\r\nControl ID: %" PRIdPTR
         "\r\nClass: %s\r\nControl kind: %u (%s)\r\nDialog: %d\r\nVisible: %d\r\nEnabled: %d\r\nFocus: %d"
         "\r\nCapture: %d\r\nStyle: 0x%08x\r\n%s\r\nExStyle: 0x%08x\r\n%s"
@@ -239,6 +240,7 @@ static void InspectDetails(HWND hwnd) {
         static_cast<unsigned>(lp->dwStyle), szStyle, static_cast<unsigned>(lp->dwExStyle), szExStyle,
         lp->rcWindow.left, lp->rcWindow.top, lp->rcWindow.right, lp->rcWindow.bottom,
         lp->rcClient.left, lp->rcClient.top, lp->rcClient.right, lp->rcClient.bottom, lp->szText.c_str());
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= szDetails.size()) return;
     win32::SetWindowTextA(win32::GetDlgItem(hwnd, 2), szDetails.c_str());
 }
 

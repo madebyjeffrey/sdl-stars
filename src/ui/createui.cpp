@@ -623,8 +623,8 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 } else {
                     app.state.szRacePass[0] = 0;
                 }
-                CchSnprintf(std::span{szLibraryRace, sizeof(szLibraryRace)}, "%s",
-                              (iCurVal & 3) == 2 ? app.lpui->rgszLibraryRaceNew[iCurVal >> 2].data() : "");
+                CchCopyUtf8(std::span{szLibraryRace},
+                            (iCurVal & 3) == 2 ? app.lpui->rgszLibraryRaceNew[iCurVal >> 2].data() : "");
                 prcSav = app.lpui->vrgrcRCW;
                 if (FCustomizeLibraryRace(app, hwnd, szLibraryRace)) {
                     app.lpui->vrgrcRCW = prcSav;

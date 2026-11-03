@@ -12,6 +12,7 @@ void ReadIniPresets(APPSESSION &app, std::string_view szIniFile) {
     std::int16_t i, iPass, cch, cpq;
     std::size_t ich, cchPrefix;
     char    szSection[16], szEntry[16];
+    int cchFormat;
     std::string_view szPreset;
     std::string szIniFileOwned;
 
@@ -19,7 +20,8 @@ void ReadIniPresets(APPSESSION &app, std::string_view szIniFile) {
     TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
     std::fill_n(app.state.vrgZip, 4, ZIPORDER{});
     for (i = 0; i < 4; i++) {
-        CchSnprintf(std::span{szEntry}, "%s%d", szSection, i + 1);
+        cchFormat = CchSnprintf(std::span{szEntry}, "%s%d", szSection, i + 1);
+        if (cchFormat < 0 || static_cast<std::size_t>(cchFormat) >= sizeof(szEntry)) return;
         cch = ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFileOwned.c_str());
         szPreset = std::string_view{app.state.szWork, static_cast<std::size_t>(cch)};
         if (szPreset.size() >= 20 && szPreset.size() <= 32) {
@@ -40,7 +42,8 @@ void ReadIniPresets(APPSESSION &app, std::string_view szIniFile) {
     }
     std::fill_n(app.state.vrgZipProd, 5, ZIPPRODQ{});
     for (i = 0; i < 5; i++) {
-        CchSnprintf(std::span{szEntry}, "%sP%d", szSection, i + 1);
+        cchFormat = CchSnprintf(std::span{szEntry}, "%sP%d", szSection, i + 1);
+        if (cchFormat < 0 || static_cast<std::size_t>(cchFormat) >= sizeof(szEntry)) return;
         cch = ProfileTextIO().pfnReadString(szSection, szEntry, "", app.state.szWork, 80, szIniFileOwned.c_str());
         szPreset = std::string_view{app.state.szWork, static_cast<std::size_t>(cch)};
         if (szPreset.size() >= 3 && szPreset.size() <= 64) {
@@ -80,12 +83,14 @@ void WriteIniPresets(APPSESSION &app, std::string_view szIniFile) {
     std::size_t ich;
     char    szSection[16], szEntry[16];
     std::string szIniFileOwned;
+    int cchFormat;
 
     szIniFileOwned = szIniFile;
     if (app.state.gd.fChgZipOrd) {
         TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
         for (i = 0; i < 4; i++) {
-            CchSnprintf(std::span{szEntry}, "%s%d", szSection, i + 1);
+            cchFormat = CchSnprintf(std::span{szEntry}, "%s%d", szSection, i + 1);
+            if (cchFormat < 0 || static_cast<std::size_t>(cchFormat) >= sizeof(szEntry)) return;
             if (app.state.vrgZip[i].fValid) {
                 ich = 0;
                 for (iPass = 0; iPass < 5; iPass++) {
@@ -104,7 +109,8 @@ void WriteIniPresets(APPSESSION &app, std::string_view szIniFile) {
     if (app.state.gd.fChgZipProd) {
         for (i = 0; i < 5; i++) {
             TextIO().pfnCchGetString(app, idsZiporders, std::span{szSection});
-            CchSnprintf(std::span{szEntry}, "%sP%d", szSection, i + 1);
+            cchFormat = CchSnprintf(std::span{szEntry}, "%sP%d", szSection, i + 1);
+            if (cchFormat < 0 || static_cast<std::size_t>(cchFormat) >= sizeof(szEntry)) return;
             if (app.state.vrgZipProd[i].fValid) {
                 ich = 0;
                 app.state.szWork[ich++] = app.state.vrgZipProd[i].fNoResearch + 'a';

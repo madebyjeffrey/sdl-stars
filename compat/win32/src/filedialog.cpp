@@ -193,6 +193,7 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     std::optional<NATIVEFILEINFO> st, stParent;
     std::optional<std::size_t> cchPath;
     std::size_t cch;
+    int cchExtension;
     BOOL fExists;
     NATIVEFILE *lpfile;
     if (!*pszName) return 0;
@@ -204,7 +205,8 @@ static int IAcceptFilePath(HWND hwnd, COMPATFILEDIALOG *lp, LPCSTR pszName) {
     pszExt = std::strrchr(pszBase, '.');
     if (!pszExt && pszDef && *pszDef) {
         if (!FUtf8Valid(pszDef)) { FileError(hwnd, "The extension is invalid UTF-8."); return 0; }
-        if (CchSnprintf(std::span{szPath}.subspan(cch), ".%.*s", static_cast<int>(CchUtf8Prefix(pszDef, 3)), pszDef) >= static_cast<int>((sizeof(szPath) - cch))) {
+        cchExtension = CchSnprintf(std::span{szPath}.subspan(cch), ".%.*s", static_cast<int>(CchUtf8Prefix(pszDef, 3)), pszDef);
+        if (cchExtension < 0 || static_cast<std::size_t>(cchExtension) >= sizeof(szPath) - cch) {
             FileError(hwnd, "The filename is too long."); return 0;
         }
     }

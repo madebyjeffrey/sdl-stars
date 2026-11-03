@@ -136,6 +136,7 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     OPENFILENAMEA ofn = {};
     char szFile[PATH_MAX] = "Stars map.pdf";
     NATIVEFILETEMPRESULT nft;
+    int cch;
     if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
     if (cb != 0 && !FUtf8Valid(std::string_view{pszTitle, static_cast<std::size_t>(cb)})) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
     if (cb) std::copy_n(pszTitle, cb, lp->szTitle);
@@ -150,8 +151,11 @@ static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
     }
     lp->fKeep = 0;
     if (lp->fSpool) CchCopyUtf8(std::span{lp->szTemp}, "/tmp/stars-print-XXXXXX");
-    else if (CchSnprintf(std::span{lp->szTemp}, "%s.tmp-XXXXXX", lp->szTarget) >= static_cast<int>(sizeof(lp->szTemp))) {
-        lp->szTemp[0] = 0; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR;
+    else {
+        cch = CchSnprintf(std::span{lp->szTemp}, "%s.tmp-XXXXXX", lp->szTarget);
+        if (cch < 0 || static_cast<std::size_t>(cch) >= sizeof(lp->szTemp)) {
+            lp->szTemp[0] = 0; win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR;
+        }
     }
     nft = NftNativeCreateTemp(lp->szTemp);
     lp->lpfile.reset(nft.lpfile.release());
@@ -207,8 +211,9 @@ static bool FSubmitPrint(COMPATPRINT *lp) {
     char szCopies[16];
     SDL_Process *lpProcess;
     Uint64 ticks;
-    int cArgs = 0, code = -1;
-    CchSnprintf(std::span{szCopies}, "%d", lp->cCopies);
+    int cArgs = 0, code = -1, cch;
+    cch = CchSnprintf(std::span{szCopies}, "%d", lp->cCopies);
+    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szCopies)) return 0;
     rgArgs[cArgs++] = "lp";
     if (std::strcmp(lp->szPrinter, "default") != 0) { rgArgs[cArgs++] = "-d"; rgArgs[cArgs++] = lp->szPrinter; }
     rgArgs[cArgs++] = "-n"; rgArgs[cArgs++] = szCopies;
@@ -278,7 +283,7 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
             char szMessage[PATH_MAX + 160];
             HWND hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : nullptr;
             const auto szAbsolute = SzCanonicalNativePath(lp->szTarget);
-            CchSnprintf(std::span{szMessage}, "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", szAbsolute ? szAbsolute->c_str() : lp->szTarget);
+            CchSprintf(std::span{szMessage}, "The PDF was saved, but its viewer could not be opened.\n\nOpen this file in a PDF viewer to print it:\n%s", szAbsolute ? szAbsolute->c_str() : lp->szTarget);
             SDL_Log("%s", szMessage);
             CompatExternalIO().pfnShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "PDF saved", szMessage,
                                      hwndOwner ? hwndOwner->lpWindow.get() : nullptr);
