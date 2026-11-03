@@ -85,6 +85,7 @@ Cleanup:
 }
 
 void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
+    AISHDEFSTATUSRESULT shdefStatus;
     std::int32_t  rgResCost[4];
     FLEET   *lpflEnemy;
     std::int32_t  rgResAvail[4];
@@ -169,16 +170,22 @@ void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
     } else {
         cRecyclePeriod = app.state.game.turn >= 200 ? 100 : 70;
     }
-    CheckAiShdefStatus(app, 14, 15, cRecyclePeriod, &iLatestDestroyer, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 14, 15, cRecyclePeriod, rgRecycleShdef);
+    iLatestDestroyer = shdefStatus.ishdefLatest;
     for (i = 14; i <= 15; i++) {
         if (rgRecycleShdef[i] != 0 && !app.state.rgshdef[i].fFree && app.state.rgshdef[i].hul.ihuldef == ihuldefNubian) {
             rgRecycleShdef[i] = 0;
         }
     }
-    cExistCargo = CheckAiShdefStatus(app, 11, 13, cRecyclePeriod, &iLatestCargo, rgRecycleShdef);
-    CheckAiShdefStatus(app, 9, 10, cRecyclePeriod, &iLatestBomber, rgRecycleShdef);
-    CheckAiShdefStatus(app, 2, 5, cRecyclePeriod, &iLatestMeta, rgRecycleShdef);
-    CheckAiShdefStatus(app, 6, 7, static_cast<std::uint32_t>((3 * cRecyclePeriod)) / 2, &iLatestBattle, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 11, 13, cRecyclePeriod, rgRecycleShdef);
+    cExistCargo = shdefStatus.cExist;
+    iLatestCargo = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 9, 10, cRecyclePeriod, rgRecycleShdef);
+    iLatestBomber = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 2, 5, cRecyclePeriod, rgRecycleShdef);
+    iLatestMeta = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 6, 7, static_cast<std::uint32_t>((3 * cRecyclePeriod)) / 2, rgRecycleShdef);
+    iLatestBattle = shdefStatus.ishdefLatest;
     if (app.state.game.turn > 80) {
         SplitOutShdefs(app, rgRecycleShdef);
         std::ranges::fill(rgRecycleSBShdef, 0);
@@ -842,6 +849,7 @@ std::int16_t FEnumCalcArmadaHumanDest(APPSESSION &app, PLANET *lpplSrc, PLANET *
 }
 
 void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
+    AISHDEFSTATUSRESULT shdefStatus;
     std::int32_t  rgResCost[4];
     std::int16_t  iLatestCruiser;
     std::int32_t  rgResAvail[4];
@@ -934,18 +942,27 @@ void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
     } else {
         cRecyclePeriod = app.state.game.turn >= 200 ? 100 : 70;
     }
-    CheckAiShdefStatus(app, 6, 7, cRecyclePeriod, &iLatestCruiser, rgRecycleShdef);
-    cExistCargo = CheckAiShdefStatus(app, 8, 9, cRecyclePeriod, &iLatestCargo, rgRecycleShdef);
-    CheckAiShdefStatus(app, 13, 14, cRecyclePeriod, &iLatestBomber, rgRecycleShdef);
-    CheckAiShdefStatus(app, 4, 5, cRecyclePeriod, &iLatestBattle, rgRecycleShdef);
-    CheckAiShdefStatus(app, 12, 12, cRecyclePeriod, &iLatestLayer, rgRecycleShdef);
-    CheckAiShdefStatus(app, 15, 15, cRecyclePeriod, &iLatestTroop, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 6, 7, cRecyclePeriod, rgRecycleShdef);
+    iLatestCruiser = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 8, 9, cRecyclePeriod, rgRecycleShdef);
+    cExistCargo = shdefStatus.cExist;
+    iLatestCargo = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 13, 14, cRecyclePeriod, rgRecycleShdef);
+    iLatestBomber = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 4, 5, cRecyclePeriod, rgRecycleShdef);
+    iLatestBattle = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 12, 12, cRecyclePeriod, rgRecycleShdef);
+    iLatestLayer = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 15, 15, cRecyclePeriod, rgRecycleShdef);
+    iLatestTroop = shdefStatus.ishdefLatest;
     if (app.state.rgplr[app.state.idPlayer].rgTech[3] >= 7) {
-        CheckAiShdefStatus(app, 2, 3, cRecyclePeriod, &iLatestMiner, rgRecycleShdef);
+        shdefStatus = CheckAiShdefStatus(app, 2, 3, cRecyclePeriod, rgRecycleShdef);
+        iLatestMiner = shdefStatus.ishdefLatest;
     } else {
         iLatestMiner = ishdefNone;
     }
-    CheckAiShdefStatus(app, 10, 11, cRecyclePeriod, &iLatestDestroyer, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 10, 11, cRecyclePeriod, rgRecycleShdef);
+    iLatestDestroyer = shdefStatus.ishdefLatest;
     if (app.state.game.turn > 60) {
         SplitOutShdefs(app, rgRecycleShdef);
     }

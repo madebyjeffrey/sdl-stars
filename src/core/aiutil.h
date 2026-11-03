@@ -12,6 +12,11 @@ struct COLONIZABLEPLANETRESULT {
     std::int16_t idPlanet;
     THING *lpthWorm;
 };
+
+struct AISHDEFSTATUSRESULT {
+    std::int16_t cExist;
+    std::int16_t ishdefLatest;
+};
 #include <cstdint>
 #include <optional>
 
@@ -83,7 +88,7 @@ std::int16_t  FQueueAiScanner(APPSESSION &app, PLANET *lppl, std::span<std::int3
 std::int16_t  FQueueAiDefenses(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
 void     HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, PROD *rgprod, std::int16_t ishdefSBLatest, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
 void     SplitOutShdefs(APPSESSION &app, std::uint8_t *rgbIsh);
-std::int16_t  CheckAiShdefStatus(APPSESSION &app, std::int16_t ishBeg, std::int16_t ishEnd, std::uint16_t cRecyclePeriod, std::int16_t *piLatest, std::uint8_t *rgbOld);
+AISHDEFSTATUSRESULT CheckAiShdefStatus(APPSESSION &app, std::int16_t ishBeg, std::int16_t ishEnd, std::uint16_t cRecyclePeriod, std::span<std::uint8_t, 16> rgbOld);
 void     IncreaseAIMinefieldSizes(APPSESSION &app);
 std::int16_t  FFindBuddyAndJoinUp(APPSESSION &app, FLEET *lpfl, std::int16_t ishLo, std::int16_t ishHi, std::int32_t lMaxDist1, std::int32_t lMaxDist2);
 std::int16_t  FShouldPlanetBuildColonizer(APPSESSION &app, PLANET *lpplSrc);

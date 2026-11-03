@@ -9,6 +9,7 @@
 #include "random_io.h"
 
 void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
+    AISHDEFSTATUSRESULT shdefStatus;
     std::int32_t        rgResCost[4];
     std::int16_t        cSBDefenderFleets;
     std::int32_t        rgResAvail[4];
@@ -111,15 +112,19 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
     } else {
         cRecyclePeriod = app.state.game.turn < 200 ? 70 : app.state.game.turn < 400 ? 100 : 300;
     }
-    CheckAiShdefStatus(app, 4, 5, cRecyclePeriod, &iLatestDestroyer, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 4, 5, cRecyclePeriod, rgRecycleShdef);
+    iLatestDestroyer = shdefStatus.ishdefLatest;
     if (iLatestDestroyer != ishdefNone) {
         rgRecycleShdef[iLatestDestroyer] = 0;
     }
-    CheckAiShdefStatus(app, 14, 15, cRecyclePeriod, &iLatestSBDefender, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 14, 15, cRecyclePeriod, rgRecycleShdef);
+    iLatestSBDefender = shdefStatus.ishdefLatest;
     if (iLatestSBDefender != ishdefNone) {
         rgRecycleShdef[iLatestSBDefender] = 0;
     }
-    cExistCargo = CheckAiShdefStatus(app, 2, 3, cRecyclePeriod, &iLatestCargo, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 2, 3, cRecyclePeriod, rgRecycleShdef);
+    cExistCargo = shdefStatus.cExist;
+    iLatestCargo = shdefStatus.ishdefLatest;
     if (iLatestCargo != ishdefNone) {
         rgRecycleShdef[iLatestCargo] = 0;
     }

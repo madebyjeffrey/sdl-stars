@@ -2799,18 +2799,19 @@ LTopOfLoop:
     }
 }
 
-std::int16_t CheckAiShdefStatus(APPSESSION &app, std::int16_t ishBeg, std::int16_t ishEnd, std::uint16_t cRecyclePeriod, std::int16_t *piLatest, std::uint8_t *rgbOld) {
+AISHDEFSTATUSRESULT CheckAiShdefStatus(APPSESSION &app, std::int16_t ishBeg, std::int16_t ishEnd, std::uint16_t cRecyclePeriod, std::span<std::uint8_t, 16> rgbOld) {
     std::uint32_t cExist;
     std::int16_t  i;
     SHDEF    shdef;
+    AISHDEFSTATUSRESULT result;
 
-    *piLatest = ishdefNone;
+    result.ishdefLatest = ishdefNone;
     cExist = 0;
     for (i = ishBeg; i <= ishEnd; i++) {
         if (!app.state.rgshdef[i].fFree) {
             cExist += app.state.rgshdef[i].cExist;
-            if (*piLatest == ishdefNone || app.state.rgshdef[*piLatest].turn < app.state.rgshdef[i].turn) {
-                *piLatest = i;
+            if (result.ishdefLatest == ishdefNone || app.state.rgshdef[result.ishdefLatest].turn < app.state.rgshdef[i].turn) {
+                result.ishdefLatest = i;
             }
             if (static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[i].turn)) > cRecyclePeriod) {
                 if (app.state.rgshdef[i].cExist == 0) {
@@ -2826,7 +2827,8 @@ std::int16_t CheckAiShdefStatus(APPSESSION &app, std::int16_t ishBeg, std::int16
     if (cExist > 32000) {
         cExist = 32000;
     }
-    return LOWORD(cExist);
+    result.cExist = static_cast<std::int16_t>(cExist);
+    return result;
 }
 
 void IncreaseAIMinefieldSizes(APPSESSION &app) {

@@ -41,6 +41,7 @@ std::int16_t FPotentISWarFleet(APPSESSION &app, FLEET *lpfl, std::int16_t iPoten
 }
 
 void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
+    AISHDEFSTATUSRESULT shdefStatus;
     std::int16_t  cExistCargo;
     std::uint16_t rgCosts[4];
     std::int32_t  rgResCost[4];
@@ -119,10 +120,15 @@ void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
     } else {
         cRecyclePeriod = app.state.game.turn >= 200 ? 100 : 70;
     }
-    CheckAiShdefStatus(app, 11, 12, cRecyclePeriod, &iLatestCruiser, rgRecycleShdef);
-    cExistCargo = CheckAiShdefStatus(app, 4, 5, cRecyclePeriod, &iLatestCargo, rgRecycleShdef);
-    CheckAiShdefStatus(app, 2, 3, cRecyclePeriod, &iLatestBomber, rgRecycleShdef);
-    CheckAiShdefStatus(app, 9, 10, cRecyclePeriod, &iLatestBattle, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 11, 12, cRecyclePeriod, rgRecycleShdef);
+    iLatestCruiser = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 4, 5, cRecyclePeriod, rgRecycleShdef);
+    cExistCargo = shdefStatus.cExist;
+    iLatestCargo = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 2, 3, cRecyclePeriod, rgRecycleShdef);
+    iLatestBomber = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 9, 10, cRecyclePeriod, rgRecycleShdef);
+    iLatestBattle = shdefStatus.ishdefLatest;
     if (app.state.game.turn > 60) {
         SplitOutShdefs(app, rgRecycleShdef);
     }
@@ -507,6 +513,7 @@ void EnsureISShdefs(APPSESSION &app, std::int16_t iroCur) {
 }
 
 void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
+    AISHDEFSTATUSRESULT shdefStatus;
     std::int32_t  rgResCost[4];
     std::int32_t  rgResAvail[4];
     FLEET   *lpflEnemy;

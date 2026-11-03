@@ -10,6 +10,7 @@
 #include "random_io.h"
 
 void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
+    AISHDEFSTATUSRESULT shdefStatus;
     std::int16_t  iLatestCargo;
     std::int16_t  cColFleet;
     COLONIZERBUILDRESULT colonizerBuild;
@@ -122,13 +123,16 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
     } else {
         cRecyclePeriod = app.state.game.turn >= 200 ? 100 : 70;
     }
-    cshDestroyer = CheckAiShdefStatus(app, 12, 13, cRecyclePeriod, &iLatestDestroyer, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 12, 13, cRecyclePeriod, rgRecycleShdef);
+    cshDestroyer = shdefStatus.cExist;
+    iLatestDestroyer = shdefStatus.ishdefLatest;
     for (i = 12; i <= 13; i++) {
         if (rgRecycleShdef[i] != 0 && !app.state.rgshdef[i].fFree && app.state.rgshdef[i].hul.ihuldef == ihuldefNubian) {
             rgRecycleShdef[i] = 0;
         }
     }
-    CheckAiShdefStatus(app, 14, 15, 5000, &iLatestMiner, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 14, 15, 5000, rgRecycleShdef);
+    iLatestMiner = shdefStatus.ishdefLatest;
     if (!app.state.rgshdef[15].fFree && FLookupPartX(app, &part, hstMining, iminingAlienMiner) == mdPartAvailAvailable) {
         i = iLatestMiner == 14 ? 15 : 14;
         if (app.state.rgshdef[14].hul.rghs[2].iItem != iminingAlienMiner) {
@@ -147,10 +151,14 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
             goto LUpgradeMiner;
         }
     }
-    CheckAiShdefStatus(app, 10, 11, cRecyclePeriod, &iLatestCargo, rgRecycleShdef);
-    CheckAiShdefStatus(app, 8, 9, cRecyclePeriod, &iLatestBomber, rgRecycleShdef);
-    CheckAiShdefStatus(app, 2, 4, cRecyclePeriod, &iLatestCruiser, rgRecycleShdef);
-    CheckAiShdefStatus(app, 5, ishLastBattle, cRecyclePeriod, &iLatestBattle, rgRecycleShdef);
+    shdefStatus = CheckAiShdefStatus(app, 10, 11, cRecyclePeriod, rgRecycleShdef);
+    iLatestCargo = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 8, 9, cRecyclePeriod, rgRecycleShdef);
+    iLatestBomber = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 2, 4, cRecyclePeriod, rgRecycleShdef);
+    iLatestCruiser = shdefStatus.ishdefLatest;
+    shdefStatus = CheckAiShdefStatus(app, 5, ishLastBattle, cRecyclePeriod, rgRecycleShdef);
+    iLatestBattle = shdefStatus.ishdefLatest;
     if (app.state.game.turn > 80) {
         SplitOutShdefs(app, rgRecycleShdef);
         std::ranges::fill(rgSplitShdef, 0);
