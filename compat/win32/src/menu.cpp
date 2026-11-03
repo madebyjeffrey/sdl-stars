@@ -3,6 +3,7 @@
 #include "ownership.h"
 #include <limits>
 #include <new>
+#include <string_view>
 #include <utility>
 #include <cstdlib>
 #include <cstring>
@@ -358,7 +359,8 @@ static void PopupPaint(COMPATPOPUP *lppop) {
     HPEN hpen, hpenOld;
     HMENU lp;
     RECT rc, text;
-    char *psz, *pszTab;
+    std::string_view szText, szShortcut;
+    std::size_t ichTab;
     int i, y;
     BOOL fDisabled, fSelected;
     HGDIOBJ hfont;
@@ -397,14 +399,14 @@ static void PopupPaint(COMPATPOPUP *lppop) {
             win32::MoveToEx(hdc, rc.right - 12, y - 4, nullptr); win32::LineTo(hdc, rc.right - 8, y); win32::LineTo(hdc, rc.right - 12, y + 4);
         }
         win32::SelectObject(hdc, hpenOld); win32::DeleteObject(hpen);
-        NATIVEOWNER<char, SDL_free> pszOwner(SDL_strdup(lp->rgitem[i].psz ? lp->rgitem[i].psz.get() : ""));
-        psz = pszOwner.get();
-        if (!psz) continue;
-        pszTab = std::strchr(psz, '\t');
-        if (pszTab) *pszTab++ = 0;
+        szText = lp->rgitem[i].psz ? lp->rgitem[i].psz.get() : "";
+        ichTab = szText.find('\t');
+        szShortcut = ichTab != std::string_view::npos ? szText.substr(ichTab + 1) : std::string_view{};
+        if (ichTab != std::string_view::npos) szText = szText.substr(0, ichTab);
         text = rc; text.left += 24; text.right -= 24;
-        win32::DrawTextA(hdc, psz, -1, &text, win32::DT_SINGLELINE | win32::DT_VCENTER);
-        if (pszTab) win32::DrawTextA(hdc, pszTab, -1, &text, win32::DT_SINGLELINE | win32::DT_VCENTER | win32::DT_RIGHT | win32::DT_NOPREFIX);
+        win32::DrawTextA(hdc, szText.data(), static_cast<int>(szText.size()), &text, win32::DT_SINGLELINE | win32::DT_VCENTER);
+        if (ichTab != std::string_view::npos)
+            win32::DrawTextA(hdc, szShortcut.data(), static_cast<int>(szShortcut.size()), &text, win32::DT_SINGLELINE | win32::DT_VCENTER | win32::DT_RIGHT | win32::DT_NOPREFIX);
     }
     win32::SelectObject(hdc, hfont);
     win32::EndPaint(lppop->hwnd, &ps);

@@ -8,6 +8,7 @@
 #include "uistate.h"
 #include <limits>
 #include <string>
+#include <string_view>
 #include <stars_compat.h>
 
 std::uint8_t rgPalGray[20] = {10, 20, 30, 40, 61, 71, 81, 92, 112, 122, 133, 143, 161, 171, 182, 193, 215, 225, 235, 245};
@@ -223,7 +224,7 @@ std::int16_t FCreateFonts(APPSESSION &app, HDC hdc) {
 #ifdef __APPLE__
 static std::int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpaccel) {
     char szItem[128], szLabel[160];
-    char *pszTab;
+    std::size_t ichTab;
     int i, cch;
     UINT mf;
 
@@ -231,8 +232,8 @@ static std::int16_t FSetMacMenuShortcut(HMENU hmenu, UINT id, const ACCEL *lpacc
         if (win32::GetMenuItemID(hmenu, i) != id) continue;
         if (win32::GetMenuStringA(hmenu, i, nullptr, 0, win32::MF_BYPOSITION) >= static_cast<int>(sizeof(szItem))) return 0;
         if (win32::GetMenuStringA(hmenu, i, szItem, sizeof(szItem), win32::MF_BYPOSITION) == 0) return 0;
-        pszTab = std::strchr(szItem, '\t');
-        if (pszTab) *pszTab = 0;
+        ichTab = std::string_view{szItem}.find('\t');
+        if (ichTab != std::string_view::npos) szItem[ichTab] = 0;
         cch = CchSnprintf(std::span{szLabel, sizeof(szLabel)}, "%s\tCmd+%s%c", szItem,
                          lpaccel->fVirt & win32::FSHIFT ? "Shift+" : "", lpaccel->key);
         if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szLabel)) return 0;
