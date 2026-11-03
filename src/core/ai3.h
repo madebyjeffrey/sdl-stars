@@ -5,7 +5,7 @@
 #include <cstdint>
 
 extern MacintiRecipe vrgMacIshAip[];
-extern std::uint8_t       vrgMacAip[];
+extern std::uint8_t       vrgMacAip[cvrgMacAip];
 extern std::uint8_t       vrgAiMacintiResOrder[];
 
 void    DoMacintiAiTurn(APPSESSION &app, PROD *rgprod);

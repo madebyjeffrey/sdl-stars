@@ -5,7 +5,7 @@
 #include <cstdint>
 
 extern CybertronRecipe vrgCyberIshAip[];
-extern std::uint8_t         vrgCyberAip[];
+extern std::uint8_t         vrgCyberAip[cvrgCyberAip];
 extern std::uint8_t         vrgAiCybertronResOrder[];
 
 void    DoCyberAiTurn(APPSESSION &app, PROD *rgprod);

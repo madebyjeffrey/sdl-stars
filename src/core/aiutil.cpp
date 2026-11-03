@@ -16,7 +16,7 @@ std::int32_t vrgAiPacketDist[2] = {aiPacketDistanceSquaredSingleMassDriver, aiPa
 std::uint8_t vrgSBMacAisb[6] = {aiSbRecipeMacSpaceDock, aiSbRecipeMacSpaceStation,     aiSbRecipeMacUltraStationEarly,
                            aiSbRecipeSpaceStation, aiSbRecipeMacUltraStationLate, aiSbRecipeMacDeathStar};
 
-std::int16_t FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, std::uint8_t *rgaip) {
+std::int16_t FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, std::span<const std::uint8_t> rgaip) {
     StringId ids;
     std::int32_t  grbitHull;
     std::int16_t  cItem;
@@ -30,6 +30,9 @@ std::int16_t FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, s
         return 0;
     }
     lphul = part.phul();
+    if (rgaip.size() < static_cast<std::size_t>(lphul->chs)) {
+        return 0;
+    }
     shdef.hul = *lphul;
     shdef.hul.ihuldef = lphul->ihuldef;
     for (ihs = 0; ihs < lphul->chs; ihs++) {
@@ -2305,7 +2308,7 @@ std::int16_t FCreateAiStarbase(APPSESSION &app, std::int16_t ishdef, std::int16_
             isb = isbhullSpaceStation;
         }
     }
-    if (!FCreateAiShdef(app, ishdefNone, static_cast<HulDef>(isb), &vrgSBAip[aisb])) {
+    if (!FCreateAiShdef(app, ishdefNone, static_cast<HulDef>(isb), std::span{vrgSBAip}.subspan(aisb))) {
         return 0;
     }
     shdef = app.state.shdefBuild;

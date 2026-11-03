@@ -356,6 +356,7 @@ def Generate(outdir):
         "// The part, hull, starting design and AI enums, included by enums.h.",
         "#ifndef STARS_DATAIDS_H",
         "#define STARS_DATAIDS_H",
+        '#include <cstddef>',
         '#include <cstdint>',
         "",
     ]
@@ -448,7 +449,10 @@ def Generate(outdir):
             header.append("enum {}Index {{".format(table["enum"]))
             header += ["    i{} = {},".format(name, i) for i, (name, _) in enumerate(recipes)]
             header += ["};", ""]
-        body.append("std::uint8_t {}[{}] = {{\n{}\n}};\n".format(table["array"], max(ib, table["size"]), "\n".join(lines)))
+        cRecipeBytes = max(ib, table["size"])
+        header.append("inline constexpr std::size_t c{} = {};".format(table["array"], cRecipeBytes))
+        header.append("")
+        body.append("std::uint8_t {}[c{}] = {{\n{}\n}};\n".format(table["array"], table["array"], "\n".join(lines)))
         if table.get("ish"):
             if table["ishType"] == "uint8_t" and rgib[-1] > 255:
                 raise DataError("data/{}: offsets pass 255, beyond {}'s uint8_t".format(table["file"], table["ish"]))

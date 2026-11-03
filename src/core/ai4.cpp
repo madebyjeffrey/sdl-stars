@@ -1266,44 +1266,44 @@ void EnsureCyberAiShdefs(APPSESSION &app, std::int16_t iroCur) {
         FChangeAiShdef(app, &shdef, 0);
     }
     if (app.state.rgshdef[0].fFree) {
-        FCreateAiShdef(app, 0, ihuldefFrigate, &vrgCyberAip[cyberRecipeFrigateScoutMineLayer]);
+        FCreateAiShdef(app, 0, ihuldefFrigate, std::span{vrgCyberAip}.subspan(cyberRecipeFrigateScoutMineLayer));
     }
     if (app.state.rgshdef[4].fFree && app.state.game.turn > 30 &&
-        (app.state.game.turn > 75 || !FCreateAiShdef(app, 4, ihuldefDestroyer, &vrgCyberAip[cyberRecipeDestroyerBeamThrust]))) {
-        for (i = 5; i > 0 && FCreateAiShdef(app, 4, ihuldefDestroyer, &vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerBeamThrust + RandomIO().pfnRandom(app, i)]]) == 0;
+        (app.state.game.turn > 75 || !FCreateAiShdef(app, 4, ihuldefDestroyer, std::span{vrgCyberAip}.subspan(cyberRecipeDestroyerBeamThrust)))) {
+        for (i = 5; i > 0 && FCreateAiShdef(app, 4, ihuldefDestroyer, std::span{vrgCyberAip}.subspan(vrgCyberIshAip[icyberRecipeDestroyerBeamThrust + RandomIO().pfnRandom(app, i)])) == 0;
              i--) {
         }
     }
     if (app.state.rgshdef[5].fFree && !app.state.rgshdef[4].fFree && app.state.game.turn > static_cast<std::uint16_t>((app.state.rgshdef[4].turn + 20)) &&
-        (app.state.game.turn > 75 || !FCreateAiShdef(app, 5, ihuldefDestroyer, &vrgCyberAip[cyberRecipeDestroyerTorpedoThrust]))) {
-        for (i = 5; i > 0 && FCreateAiShdef(app, 5, ihuldefDestroyer, &vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerTorpedoThrust + RandomIO().pfnRandom(app, i)]]) == 0;
+        (app.state.game.turn > 75 || !FCreateAiShdef(app, 5, ihuldefDestroyer, std::span{vrgCyberAip}.subspan(cyberRecipeDestroyerTorpedoThrust)))) {
+        for (i = 5; i > 0 && FCreateAiShdef(app, 5, ihuldefDestroyer, std::span{vrgCyberAip}.subspan(vrgCyberIshAip[icyberRecipeDestroyerTorpedoThrust + RandomIO().pfnRandom(app, i)])) == 0;
              i--) {
         }
     }
     if (app.state.rgshdef[2].fFree && app.state.game.turn > 20) {
-        FCreateAiShdef(app, 2, ihuldefPrivateer, &vrgCyberAip[cyberRecipePrivateerBeam]);
+        FCreateAiShdef(app, 2, ihuldefPrivateer, std::span{vrgCyberAip}.subspan(cyberRecipePrivateerBeam));
     }
     if (app.state.rgshdef[3].fFree && !app.state.rgshdef[2].fFree && app.state.game.turn > static_cast<std::uint16_t>((app.state.rgshdef[2].turn + 20))) {
-        FCreateAiShdef(app, 3, ihuldefPrivateer, &vrgCyberAip[cyberRecipePrivateerTorpedo]);
+        FCreateAiShdef(app, 3, ihuldefPrivateer, std::span{vrgCyberAip}.subspan(cyberRecipePrivateerTorpedo));
     }
     for (ish = 6; ish <= 10; ish += 4) {
         if (app.state.rgshdef[ish].fFree && ((ish == 6 && app.state.game.turn > 40) || (!app.state.rgshdef[6].fFree && app.state.game.turn > static_cast<std::uint16_t>((app.state.rgshdef[6].turn + 30))))) {
             ishCur = ish + 2;
             for (i = 3; i > 0; i--) {
-                if (FCreateAiShdef(app, ishCur, ihuldefNubian, &vrgCyberAip[vrgCyberIshAip[icyberRecipeNubianMissileBeam + RandomIO().pfnRandom(app, i)]])) {
+                if (FCreateAiShdef(app, ishCur, ihuldefNubian, std::span{vrgCyberAip}.subspan(vrgCyberIshAip[icyberRecipeNubianMissileBeam + RandomIO().pfnRandom(app, i)]))) {
                     ishCur--;
                     break;
                 }
             }
             for (i = 4; i > 0; i--) {
                 if (FCreateAiShdef(app, ishCur, ihuldefBattleship,
-                                   &vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMissileTorpedoThrust + RandomIO().pfnRandom(app, i)]])) {
+                                   std::span{vrgCyberAip}.subspan(vrgCyberIshAip[icyberRecipeBattleshipMissileTorpedoThrust + RandomIO().pfnRandom(app, i)]))) {
                     ishCur--;
                     break;
                 }
             }
             for (i = 3; i > 0; i--) {
-                if (FCreateAiShdef(app, ishCur, ihuldefBattleship, &vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMixedBeamsThrust + RandomIO().pfnRandom(app, i)]])) {
+                if (FCreateAiShdef(app, ishCur, ihuldefBattleship, std::span{vrgCyberAip}.subspan(vrgCyberIshAip[icyberRecipeBattleshipMixedBeamsThrust + RandomIO().pfnRandom(app, i)]))) {
                     ishCur--;
                     break;
                 }
@@ -1314,7 +1314,7 @@ void EnsureCyberAiShdefs(APPSESSION &app, std::int16_t iroCur) {
             low = icyberRecipeBattleshipMixedBeamsThrust - high;
         LCruiser:
             for (i = high; i > 0; i--) {
-                if (FCreateAiShdef(app, ishCur, ihuldefCruiser, &vrgCyberAip[vrgCyberIshAip[RandomIO().pfnRandom(app, i) + low]]))
+                if (FCreateAiShdef(app, ishCur, ihuldefCruiser, std::span{vrgCyberAip}.subspan(vrgCyberIshAip[RandomIO().pfnRandom(app, i) + low])))
                     break;
             }
             ishCur--;
@@ -1324,28 +1324,28 @@ void EnsureCyberAiShdefs(APPSESSION &app, std::int16_t iroCur) {
             low = ishCur == ish ? icyberRecipeCruiserStreamingBeams : icyberRecipeCruiserTorpedo;
             goto LCruiser;
         LBomber:
-            if (!FCreateAiShdef(app, ish + 3, ihuldefNubian, &vrgCyberAip[cyberRecipeNubianMcm]) &&
-                !FCreateAiShdef(app, ish + 3, ihuldefBattleship, &vrgCyberAip[cyberRecipeBattleshipMcm]) &&
-                !FCreateAiShdef(app, ish + 3, ihuldefB52Bomber, &vrgCyberAip[cyberRecipeB52RetroThenSmart])) {
-                FCreateAiShdef(app, ish + 3, ihuldefB52Bomber, &vrgCyberAip[cyberRecipeB52SmartThenNormal]);
+            if (!FCreateAiShdef(app, ish + 3, ihuldefNubian, std::span{vrgCyberAip}.subspan(cyberRecipeNubianMcm)) &&
+                !FCreateAiShdef(app, ish + 3, ihuldefBattleship, std::span{vrgCyberAip}.subspan(cyberRecipeBattleshipMcm)) &&
+                !FCreateAiShdef(app, ish + 3, ihuldefB52Bomber, std::span{vrgCyberAip}.subspan(cyberRecipeB52RetroThenSmart))) {
+                FCreateAiShdef(app, ish + 3, ihuldefB52Bomber, std::span{vrgCyberAip}.subspan(cyberRecipeB52SmartThenNormal));
             }
         }
     }
     for (ish = 14; ish <= 15; ish++) {
         if (app.state.rgshdef[ish].fFree && ((ish == 14 && app.state.game.turn > 30) || (!app.state.rgshdef[14].fFree && app.state.game.turn > static_cast<std::uint16_t>((app.state.rgshdef[14].turn + 20))))) {
             for (i = 7; i > 0 && FCreateAiShdef(app, ish, ihuldefBattleship,
-                                                &vrgCyberAip[vrgCyberIshAip[icyberRecipeBattleshipMixedBeamsThrust + RandomIO().pfnRandom(app, i)]]) == 0;
+                                                std::span{vrgCyberAip}.subspan(vrgCyberIshAip[icyberRecipeBattleshipMixedBeamsThrust + RandomIO().pfnRandom(app, i)])) == 0;
                  i--) {
             }
             if (i == 0) {
                 for (i = 9;
-                     i > 0 && FCreateAiShdef(app, ish, ihuldefCruiser, &vrgCyberAip[vrgCyberIshAip[icyberRecipeCruiserStreamingBeams + RandomIO().pfnRandom(app, i)]]) == 0;
+                     i > 0 && FCreateAiShdef(app, ish, ihuldefCruiser, std::span{vrgCyberAip}.subspan(vrgCyberIshAip[icyberRecipeCruiserStreamingBeams + RandomIO().pfnRandom(app, i)])) == 0;
                      i--) {
                 }
             }
             if (i == 0) {
                 for (i = 10;
-                     i > 0 && FCreateAiShdef(app, ish, ihuldefDestroyer, &vrgCyberAip[vrgCyberIshAip[icyberRecipeDestroyerBeamThrust + RandomIO().pfnRandom(app, i)]]) == 0;
+                     i > 0 && FCreateAiShdef(app, ish, ihuldefDestroyer, std::span{vrgCyberAip}.subspan(vrgCyberIshAip[icyberRecipeDestroyerBeamThrust + RandomIO().pfnRandom(app, i)])) == 0;
                      i--) {
                 }
             }

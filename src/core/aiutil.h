@@ -5,11 +5,11 @@
 #include <cstdint>
 
 extern std::int32_t vrgAiPacketDist[2];
-extern std::uint8_t vrgSBAip[];
+extern std::uint8_t vrgSBAip[cvrgSBAip];
 extern std::uint8_t vrgSBMacAisb[6];
 extern AIPART  vrgAiParts[];
 
-std::int16_t  FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, std::uint8_t *rgaip);
+std::int16_t  FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, std::span<const std::uint8_t> rgaip);
 std::int16_t  FGetAIPart(APPSESSION &app, AiPartPreference aip, PART *ppart);
 void     PickANameAndBmp(APPSESSION &app, SHDEF *pshdef, StringId ids, std::int16_t cids, std::int16_t ibmpStart);
 std::int16_t  FChangeAiShdef(APPSESSION &app, SHDEF *pshdef, std::int16_t ishdef);

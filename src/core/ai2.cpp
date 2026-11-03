@@ -457,14 +457,14 @@ void EnsureISShdefs(APPSESSION &app, std::int16_t iroCur) {
     std::int16_t i;
 
     if (app.state.rgshdef[4].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5) {
-        FCreateAiShdef(app, 4, ihuldefMediumFreighter, &vrgISAip[isRecipeMediumFreighter]);
+        FCreateAiShdef(app, 4, ihuldefMediumFreighter, std::span{vrgISAip}.subspan(isRecipeMediumFreighter));
     }
     if (app.state.rgshdef[5].fFree && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        FCreateAiShdef(app, 5, ihuldefSuperFreighter, &vrgISAip[isRecipeSuperFreighter]);
+        FCreateAiShdef(app, 5, ihuldefSuperFreighter, std::span{vrgISAip}.subspan(isRecipeSuperFreighter));
     }
     if (app.state.rgshdef[14].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 4 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5) {
-        for (i = 0; i < 4 && FCreateAiShdef(app, 14, ihuldefDestroyer, &vrgISAip[vrgISIshAip[iisRecipeDestroyerTorpedo + RandomIO().pfnRandom(app, 1)]]) == 0; i++) {
+        for (i = 0; i < 4 && FCreateAiShdef(app, 14, ihuldefDestroyer, std::span{vrgISAip}.subspan(vrgISIshAip[iisRecipeDestroyerTorpedo + RandomIO().pfnRandom(app, 1)])) == 0; i++) {
         }
     }
     if (app.state.rgshdef[1].fFree || app.state.rgshdef[1].cExist == 0) {
@@ -473,7 +473,7 @@ void EnsureISShdefs(APPSESSION &app, std::int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 1);
         }
-        FCreateAiShdef(app, 1, ihuldefMediumFreighter, &vrgISAip[isRecipeColonizingMediumFreighter]);
+        FCreateAiShdef(app, 1, ihuldefMediumFreighter, std::span{vrgISAip}.subspan(isRecipeColonizingMediumFreighter));
     }
     if (app.state.rgshdef[0].fFree || app.state.rgshdef[0].cExist == 0) {
         if (!app.state.rgshdef[0].fFree) {
@@ -481,22 +481,22 @@ void EnsureISShdefs(APPSESSION &app, std::int16_t iroCur) {
             shdef.fFree = 1;
             FChangeAiShdef(app, &shdef, 0);
         }
-        FCreateAiShdef(app, 0, ihuldefScout, &vrgISAip[isRecipeScoutStreamingBeam]);
+        FCreateAiShdef(app, 0, ihuldefScout, std::span{vrgISAip}.subspan(isRecipeScoutStreamingBeam));
     }
     if (app.state.rgshdef[6].fFree && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 4 && app.state.rgplr[app.state.idPlayer].rgTech[2] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[5] >= 6) {
-        FCreateAiShdef(app, 6, ihuldefPrivateer, &vrgISAip[isRecipePrivateerMineLayer]);
+        FCreateAiShdef(app, 6, ihuldefPrivateer, std::span{vrgISAip}.subspan(isRecipePrivateerMineLayer));
     }
     if (app.state.rgshdef[2].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 8 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 7 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 6 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        FCreateAiShdef(app, 2, ihuldefB17Bomber, &vrgISAip[isRecipeB17Bomber]);
+        FCreateAiShdef(app, 2, ihuldefB17Bomber, std::span{vrgISAip}.subspan(isRecipeB17Bomber));
     }
     if (app.state.rgshdef[3].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 11 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 12 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 15 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 9) {
-        FCreateAiShdef(app, 3, ihuldefB52Bomber, &vrgISAip[isRecipeB52Bomber]);
+        FCreateAiShdef(app, 3, ihuldefB52Bomber, std::span{vrgISAip}.subspan(isRecipeB52Bomber));
     }
     if (app.state.rgshdef[9].fFree && app.state.rgplr[app.state.idPlayer].rgTech[1] >= 5 && app.state.rgplr[app.state.idPlayer].rgTech[4] >= 6 && app.state.rgplr[app.state.idPlayer].rgTech[3] >= 13 &&
         app.state.rgplr[app.state.idPlayer].rgTech[2] >= 7) {
-        for (i = 0; i < 5 && FCreateAiShdef(app, 9, ihuldefBattleship, &vrgISAip[vrgISIshAip[iisRecipeBattleshipBeamA + RandomIO().pfnRandom(app, 4)]]) == 0; i++) {
+        for (i = 0; i < 5 && FCreateAiShdef(app, 9, ihuldefBattleship, std::span{vrgISAip}.subspan(vrgISIshAip[iisRecipeBattleshipBeamA + RandomIO().pfnRandom(app, 4)])) == 0; i++) {
         }
     }
     return;

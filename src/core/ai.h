@@ -5,8 +5,8 @@
 #include <cstdint>
 
 extern std::uint8_t        vrgAiRobotoidResOrder[];
-extern std::uint8_t        vrgTDAip[];
-extern std::uint8_t        vrgRobAip[];
+extern std::uint8_t        vrgTDAip[cvrgTDAip];
+extern std::uint8_t        vrgRobAip[cvrgRobAip];
 extern std::uint8_t        vrgTDIshAip[];
 extern std::uint8_t        vrgAiTurinDroneResOrder[];
 extern RobotoidRecipe vrgRobIshAip[];

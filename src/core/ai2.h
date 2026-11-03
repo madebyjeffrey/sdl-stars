@@ -5,7 +5,7 @@
 #include <cstdint>
 
 extern std::uint8_t vrgISIshAip[];
-extern std::uint8_t vrgISAip[];
+extern std::uint8_t vrgISAip[cvrgISAip];
 extern std::uint8_t vrgAiISResOrder[];
 
 void    DoMaidAiTurn(APPSESSION &app, PROD *rgprod);
