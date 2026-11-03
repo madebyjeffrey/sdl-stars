@@ -2707,7 +2707,8 @@
         "private-ui-flags-use-bool",
         "linux-portal-chooser-span-and-named-response",
         "private-list-state-bools",
-        "remaining-native-file-path-results"
+        "remaining-native-file-path-results",
+        "message-packing-output-and-parameter-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces"
@@ -3755,6 +3756,31 @@
           "baseline": "Unchanged; the native regression matches all 519 checkpoints with zero differences or errors.",
           "api_audit": "Windows and Cocoa chooser bridges now accept the owned FILESELECTIONREQUEST, use the typed FILESELECTIONPUMP, and return FILESELECTIONRESULT. Removed C-style filter pointer/count, output path pointer/capacity, integer status, and callback context pairs. PATH_MAX admission, selected-filter behavior, cancellation, and failure mapping are retained.",
           "platform": "Current-source Windows runtime and Linux chooser qualification remain outstanding.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "Use spans for message packing",
+          "parent": "28417798",
+          "source_commit": "9ff13511",
+          "macos_sdl_debug_build": "make compile passes; make test-unit rebuilt the changed core and test translation units.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "baseline": "Unchanged; both native and host regressions match all 519 checkpoints with zero differences or errors.",
+          "api_audit": "PackageUpMsg accepts a writable byte span and checks capacity before writing. SetMsgParam requires a fixed two-byte span. Callers pass their full local buffer extents; the short-span unit case returns -1 without modifying the buffer. Message wire bytes and record layouts are unchanged.",
+          "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
           "diff_check": "Pass."
         }
       ],
@@ -28459,14 +28485,14 @@
     "date": "2026-11-03",
     "reason": "Resume the live C++ cleanup after publishing the toolbar ownership batch and accumulated cleanup commits to develop.",
     "branch": "develop",
-    "latest_batch": "L05 bounded report hull names and carried game-name length for map printing",
+    "latest_batch": "Use spans for message packing",
     "latest_published_head": "8eb069fc",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
     ],
     "pending_stage": "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome.",
-    "audit_summary": "44 tracked .c files remain only in independent compatibility/reference/scaffold targets; production C++20/Objective-C++20 has 0 .c translation units and 0 owned function-like API macros. Six production std::strlen calls remain (three input/API boundaries, three fixed or owned strings); L05 text/scratch audit, L06 remaining buffer/service and chooser work, and L08 current-source Windows/Linux qualification remain open.",
+    "audit_summary": "44 tracked .c files remain only in independent compatibility/reference/scaffold targets; production C++20/Objective-C++20 has zero C translation units. Owned function-like API macros and confirmed replaceable C string/memory calls are at zero; three std::strlen calls remain at incoming C-string/API boundaries, and no strnlen calls remain. Three code audit substeps and current-source Windows/Linux qualification remain open.",
     "current_source_ci": {
       "run_id": 41422617389,
       "head": "028c1dac10a7060a7508718c1da34bf575629d82",
@@ -29918,14 +29944,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "28417798790ce313827ae35bbb426fffa4314b00",
-  "latest_batch_status": "Source commit 28417798 verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "9ff13511",
+  "latest_batch_status": "Source commit 9ff13511 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "f091c67e",
+      "source_commit": "9ff13511",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -29934,11 +29960,10 @@
       "remaining_code_audit_substeps": [
         "L05 bounded-text-destinations",
         "L05 post-migration-scratch-storage-and-borrowed-return-audit",
-        "L06 remaining-buffer-and-length-interfaces",
-        "L06 remaining-native-file-path-results"
+        "L06 remaining-buffer-and-length-interfaces"
       ],
       "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser coverage.",
-      "interpretation": "Four broad code audit substeps remain open; they are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private BOOL helper results and private UI/list BOOL flags. Portal chooser output pointer/capacity and status/filter output-pointer interfaces are typed, but Linux compilation and chooser tests remain pending. Remaining L05 text/ownership and L06 service/path audits still need line-by-line closure; current-source Windows/Linux qualification and chooser coverage are also pending.",
+      "interpretation": "Three broad code audit substeps remain open; they are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private BOOL helper results and private UI/list BOOL flags. Remaining L05 text/ownership and L06 buffer/length audits still need line-by-line closure. Current-source Windows/Linux qualification and chooser coverage are also pending.",
       "production_cost_output_api": "GetProductionCosts uses std::span<std::int32_t, 4>; callers no longer reinterpret signed int32 arrays as uint32_t output pointers. Fixed extent, storage widths, and legacy 32-bit wrap behavior are preserved.",
       "posix_getcwd_and_mkdir_compatibility_shims": 0,
       "redundant_ai_recipe_byte_pointer_casts": 0,
@@ -30161,12 +30186,12 @@
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
   },
-  "latest_change": "Use a span for legacy race player input",
+  "latest_change": "Use spans for message packing",
   "latest_batch_verification": {
-    "batch": "Use a span for legacy race player input",
-    "parent": "f72b2119",
-    "source_commit": "28417798",
-    "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
+    "batch": "Use spans for message packing",
+    "parent": "28417798",
+    "source_commit": "9ff13511",
+    "macos_sdl_debug_build": "make compile passes; make test-unit rebuilt the changed core and test translation units.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30182,16 +30207,16 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "FReadLegacyRacePlayer now receives a bounded byte span and derives its bounds from the span. The saved player and legacy wire layouts are unchanged.",
-    "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
+    "baseline": "Unchanged; both native and host regressions match all 519 checkpoints with zero differences or errors.",
+    "api_audit": "PackageUpMsg accepts a writable byte span and checks capacity before writing. SetMsgParam requires a fixed two-byte span. Callers pass their full local buffer extents; the short-span unit case returns -1 without modifying the buffer. Message wire bytes and record layouts are unchanged.",
+    "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Use a span for legacy race player input",
-    "parent": "f72b2119",
-    "source_commit": "28417798",
-    "macos_sdl_debug_build": "make compile passes with strict warnings and C++ header checks.",
+    "batch": "Use spans for message packing",
+    "parent": "28417798",
+    "source_commit": "9ff13511",
+    "macos_sdl_debug_build": "make compile passes; make test-unit rebuilt the changed core and test translation units.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30207,16 +30232,16 @@
       "differences_errors": 0,
       "skipped": 0
     },
-    "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences/errors.",
-    "api_audit": "FReadLegacyRacePlayer now receives a bounded byte span and derives its bounds from the span. The saved player and legacy wire layouts are unchanged.",
-    "platform": "Current-source Windows SDL and Linux desktop qualification remains open.",
+    "baseline": "Unchanged; both native and host regressions match all 519 checkpoints with zero differences or errors.",
+    "api_audit": "PackageUpMsg accepts a writable byte span and checks capacity before writing. SetMsgParam requires a fixed two-byte span. Callers pass their full local buffer extents; the short-span unit case returns -1 without modifying the buffer. Message wire bytes and record layouts are unchanged.",
+    "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit 28417798 verified locally; ledger checkpoint recorded.",
+    "status": "Source commit 9ff13511 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
-    "next": "Continue the general buffer/length API and L05 text/scratch audits, then qualify current develop on Windows and Linux."
+    "next": "Continue the L05 text/scratch audits and L06 remaining buffer/length audit, then qualify current develop on Windows and Linux."
   }
 }
