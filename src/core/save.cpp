@@ -41,16 +41,14 @@ void WriteOrders(APPSESSION &app, FLEET *lpfl) {
 
 // Every saved name has a 31-byte UTF-8 budget. The marker and raw NUL
 // are part of the wire image, and the compression budget stays exactly 31.
-static bool FAppendWireName(APPSESSION &app, std::span<std::byte> &rgbOut, std::span<const char> szName) {
-    const auto pchEnd = std::find(szName.begin(), szName.end(), 0);
+static bool FAppendWireName(APPSESSION &app, std::span<std::byte> &rgbOut, std::string_view szName) {
     std::size_t cch, cb;
     std::int16_t cOut = 31;
     std::byte rgb[33];
 
-    if (pchEnd == szName.end()) return false;
-    cch = static_cast<std::size_t>(pchEnd - szName.begin());
-    if (cch > 31 || !FUtf8Valid(std::string_view(szName.data(), cch))) return false;
-    const auto cbPacked1 = cch != 0 ? FCompressUserString(app, std::string_view(szName.data(), cch), std::span{rgb}.subspan(1, static_cast<std::size_t>(cOut))) : std::nullopt;
+    cch = szName.size();
+    if (cch > 31 || !FUtf8Valid(szName)) return false;
+    const auto cbPacked1 = cch != 0 ? FCompressUserString(app, szName, std::span{rgb}.subspan(1, static_cast<std::size_t>(cOut))) : std::nullopt;
     if (cbPacked1) cOut = static_cast<std::int16_t>(*cbPacked1);
     if (cch != 0 && cbPacked1) {
         rgb[0] = static_cast<std::byte>(cOut);
@@ -58,12 +56,19 @@ static bool FAppendWireName(APPSESSION &app, std::span<std::byte> &rgbOut, std::
     } else {
         NATIVEBYTEWRITER writer(rgb);
         writer.FWriteU8(0);
-        writer.FWriteBytes(std::as_bytes(szName.first(cch + 1)));
+        writer.FWriteBytes(std::as_bytes(std::span{szName.data(), cch}));
+        writer.FWriteU8(0);
         cb = writer.CbWritten();
     }
     if (!NATIVEBYTEWRITER(rgbOut).FWriteBytes(std::span(rgb).first(cb))) return false;
     rgbOut = rgbOut.subspan(cb);
     return true;
+}
+
+static bool FAppendWireName(APPSESSION &app, std::span<std::byte> &rgbOut, std::span<const char> szName) {
+    const auto pchEnd = std::find(szName.begin(), szName.end(), 0);
+    if (pchEnd == szName.end()) return false;
+    return FAppendWireName(app, rgbOut, std::string_view(szName.data(), static_cast<std::size_t>(pchEnd - szName.begin())));
 }
 
 void WriteRtPlr(APPSESSION &app, PLAYER *pplr) {
@@ -795,14 +800,12 @@ void WriteFleet(APPSESSION &app, FLEET *lpfl) {
     }
 }
 
-void WriteRtString(APPSESSION &app, const char *lpsz) {
+void WriteRtString(APPSESSION &app, std::string_view szName) {
     std::byte rgb[33];
-    std::size_t cch;
     std::span<std::byte> pb = rgb;
 
-    if (lpsz && *lpsz != 0) {
-        cch = std::strlen(lpsz);
-        if (!FAppendWireName(app, pb, std::span(lpsz, cch + 1))) {
+    if (!szName.empty()) {
+        if (!FAppendWireName(app, pb, szName)) {
             FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
             if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
             return;

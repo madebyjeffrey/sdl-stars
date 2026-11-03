@@ -16,7 +16,7 @@ std::int16_t FAppendFile(APPSESSION &app, std::int16_t iPlayer);
 void    WriteBattles(APPSESSION &app, std::int16_t iPlayer);
 void    WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHistory);
 void    WriteFleet(APPSESSION &app, FLEET *lpfl);
-void    WriteRtString(APPSESSION &app, const char *lpsz);
+void    WriteRtString(APPSESSION &app, std::string_view szName);
 void    MarkFleet(APPSESSION &app, FLEET *lpfl, DetType det);
 void    WriteBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, std::int16_t fLog);
 void    MarkPlanet(APPSESSION &app, PLANET *lppl, std::int16_t iPlr, DetType det);
