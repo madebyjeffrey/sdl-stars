@@ -153,17 +153,5 @@ std::optional<std::size_t> CbNativeWriteLegacy(std::int16_t hf, std::span<const 
 std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, NATIVESEEKORIGIN iOrigin);
 std::optional<std::int64_t> CbNativeSizeLegacy(std::int16_t hf);
 void CloseNativeLegacy(std::int16_t hf);
-
-
-
-class StarsNativeFileGuard {
-    NATIVEFILE *pf;
-public:
-    explicit StarsNativeFileGuard(NATIVEFILE *pf) noexcept : pf(pf) {}
-    ~StarsNativeFileGuard() noexcept { if (pf) ICloseNativeFile(pf); }
-    NATIVEFILE *Release() noexcept { NATIVEFILE *pfOut = pf; pf = nullptr; return pfOut; }
-    StarsNativeFileGuard(const StarsNativeFileGuard &) = delete;
-    StarsNativeFileGuard &operator=(const StarsNativeFileGuard &) = delete;
-};
 #pragma pack(pop)
 #endif

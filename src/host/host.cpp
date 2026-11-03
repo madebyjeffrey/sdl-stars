@@ -55,10 +55,10 @@ static std::int16_t FReadHostIni(APPSESSION &app, std::string_view szFile) {
     if (!pf) {
         return 0;
     }
-    StarsNativeFileGuard file(pf);
-    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::end);
-    cb = LNativePosition(pf);
-    ISeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin);
+    NATIVEFILEOWNER file(pf, ICloseNativeFile);
+    ISeekNativeFile(file.get(), 0, NATIVESEEKORIGIN::end);
+    cb = LNativePosition(file.get());
+    ISeekNativeFile(file.get(), 0, NATIVESEEKORIGIN::begin);
     if (cb < 0 || static_cast<std::size_t>(cb) > szText.max_size()) {
         return 0;
     }
@@ -67,8 +67,8 @@ static std::int16_t FReadHostIni(APPSESSION &app, std::string_view szFile) {
     } catch (const std::bad_alloc &) {
         return 0;
     }
-    if (CReadNative(std::span{szText.data(), szText.size()}, pf) != szText.size()) return 0;
-    ICloseNativeFile(file.Release());
+    if (CReadNative(std::span{szText.data(), szText.size()}, file.get()) != szText.size()) return 0;
+    file.reset();
     szIni = szText;
     if (!FUtf8Valid(szIni)) return 0;
     if (szIni.starts_with("\xef\xbb\xbf")) szIni.remove_prefix(3);
