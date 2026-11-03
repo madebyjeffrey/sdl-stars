@@ -248,8 +248,8 @@ static size_t TestNativeStrlen(std::string_view szPath) {
 // Family enumeration is a declared stage-only provider; cleanup aggregates the
 // source enumeration plus final TestRemoveNativePath, including possible remnants.
 
-static int16_t TestFNativeEnumerateDirectory(APPSESSION &, LIBRARYPUBLICATIONENUMERATION action, std::string_view path,
-                                             const FNativeDirectoryEntryProc &) {
+static bool TestFNativeEnumerateDirectory(APPSESSION &, LIBRARYPUBLICATIONENUMERATION action, std::string_view path,
+                                          const FNativeDirectoryEntryProc &) {
     (void)path;
     if (action == LIBRARYPUBLICATIONENUMERATION::importFiles || action == LIBRARYPUBLICATIONENUMERATION::backupFiles) {
         int ok = build(action == LIBRARYPUBLICATIONENUMERATION::importFiles ? 5 : 6);

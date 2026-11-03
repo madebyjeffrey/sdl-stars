@@ -23,9 +23,9 @@ struct LIBRARYPUBLICATIONIO {
     decltype(&FLibraryNameAvailable)         pfnFLibraryNameAvailable = FLibraryNameAvailable;
     decltype(&FWriteLibraryMetadata)         pfnFWriteLibraryMetadata = FWriteLibraryMetadata;
     decltype(&RemoveLibraryGameTree)         pfnRemoveLibraryGameTree = RemoveLibraryGameTree;
-    std::int16_t (*pfnEnumerateDirectory)(APPSESSION &, LIBRARYPUBLICATIONENUMERATION, std::string_view,
-                                          const FNativeDirectoryEntryProc &) = [](APPSESSION &app, LIBRARYPUBLICATIONENUMERATION,
-                                                                                 std::string_view path, const FNativeDirectoryEntryProc &callback) {
+    bool (*pfnEnumerateDirectory)(APPSESSION &, LIBRARYPUBLICATIONENUMERATION, std::string_view,
+                                  const FNativeDirectoryEntryProc &) = [](APPSESSION &app, LIBRARYPUBLICATIONENUMERATION,
+                                                                         std::string_view path, const FNativeDirectoryEntryProc &callback) {
         return FNativeEnumerateDirectory(app, path, callback);
     };
     decltype(&CreateNativeDir)               pfnCreateNativeDir = CreateNativeDir;

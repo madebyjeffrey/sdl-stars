@@ -3005,13 +3005,13 @@ void InitLibraryGames(APPSESSION &app, HWND hwnd, const RECT *lprc) {
                 static_cast<unsigned long long>((CompatTimeIO().pfnGetTicks() - msStart)));
 }
 
-std::int16_t FEnumerateLibraryRaces(APPSESSION &app, const FNativeDirectoryEntryProc &pfnEntry) {
+bool FEnumerateLibraryRaces(APPSESSION &app, const FNativeDirectoryEntryProc &pfnEntry) {
     return FInitRaceLibrary() && FNativeEnumerateDirectory(app, szRaceLibraryRoot, [&pfnEntry](APPSESSION &appEntry, std::string_view pszName) {
         char szPath[512];
         std::optional<std::int64_t> cbFile;
-        if (!FPortableRaceFilename(appEntry, pszName)) return std::int16_t{1};
+        if (!FPortableRaceFilename(appEntry, pszName)) return true;
         CchSnprintf(std::span{szPath, sizeof(szPath)}, "%s%s%s", szRaceLibraryRoot, szDirSep, pszName);
-        if (!(cbFile = FNativeFileSize(szPath)) || (*cbFile) <= 0) return std::int16_t{1};
+        if (!(cbFile = FNativeFileSize(szPath)) || (*cbFile) <= 0) return true;
         return pfnEntry(appEntry, pszName);
     });
 }

@@ -2184,7 +2184,8 @@
         "native-file-existence-and-read-only-query-results-use-bool",
         "typed-order-array-shift",
         "native-directory-predicates-return-bool",
-        "ensure-native-directory-return-bool"
+        "ensure-native-directory-return-bool",
+        "native-directory-enumeration-result-and-type-erased-callback-use-bool"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -28587,9 +28588,9 @@
     "native_file_query_results": "FFileExists and FFileReadOnly return bool to match their predicate semantics; caller-visible values remain 0 or 1 and the int16_t game field assignment stays unchanged.",
     "typed_help_context_calls": "Transfer, custom transport order, and ship designer branches pass named HelpContextId values. The remaining numeric values 1089, 1090, and 13002 are absent from the original help map; compatibility coverage explicitly asserts 13002 is unmapped, so their previous behavior is retained."
   },
-  "latest_change": "L06 native directory predicates return bool",
+  "latest_change": "L06 native directory enumeration uses bool results and callbacks",
   "latest_batch_verification": {
-    "batch": "L06 native directory predicates return bool",
+    "batch": "L06 native directory enumeration uses bool results and callbacks",
     "macos_sdl_debug_build": "make compile passes with strict warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
@@ -28606,8 +28607,8 @@
       "skipped": 0
     },
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
-    "baseline": "Unchanged. FNativeDirectoryExists, FEnsureNativeDir and FEnsureNativeDirectory preserve their existing true/false values; filesystem operations with error-code results are unchanged.",
-    "api_audit": "The three directory predicate APIs now return bool. All production and test callers use their values as predicates.",
+    "baseline": "Unchanged. Enumeration completion/failure and callback stop behavior retain the same truth values; no saved layouts or game outputs changed.",
+    "api_audit": "FNativeEnumerateDirectory overloads, type-erased FNativeDirectoryEntryProc and FEnumerateLibraryRaces now use bool. Context callback adapters preserve their existing 0/1 callback contract.",
     "platform": "Current-source Windows SDL and Linux desktop qualification remains outstanding.",
     "diff_check": "Pass."
   }

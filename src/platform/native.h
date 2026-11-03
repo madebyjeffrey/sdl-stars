@@ -74,11 +74,11 @@ bool FFileReadOnly(std::string_view szFile);
 void    MakeDir(std::string_view szDir);
 // Unlike MakeDir, reservation fails if the directory already exists.
 int     CreateNativeDir(std::string_view pszDir);
-using FNativeDirectoryEntryProc = std::function<std::int16_t(APPSESSION &, std::string_view)>;
-std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, const FNativeDirectoryEntryProc &pfnEntry);
+using FNativeDirectoryEntryProc = std::function<bool(APPSESSION &, std::string_view)>;
+bool FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir, const FNativeDirectoryEntryProc &pfnEntry);
 template<class TContext>
-std::int16_t FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir,
-                                      std::int16_t (*pfnEntry)(APPSESSION &, TContext, std::string_view), std::type_identity_t<TContext> context) {
+bool FNativeEnumerateDirectory(APPSESSION &app, std::string_view pszDir,
+                               std::int16_t (*pfnEntry)(APPSESSION &, TContext, std::string_view), std::type_identity_t<TContext> context) {
     FNativeDirectoryEntryProc pfnBound = [pfnEntry, context](APPSESSION &appEntry, std::string_view pszEntry) {
         return pfnEntry(appEntry, context, pszEntry);
     };
