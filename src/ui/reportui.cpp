@@ -54,7 +54,7 @@ LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         hdc = win32::GetDC(hwnd);
         win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);
         for (i = 0; i < app.lpui->vprptCur->cFields; i++) {
-            dx = DxReportColHdr(app, app.lpui->vprptCur->irpt, i, app.state.szWork, hdc);
+            dx = DxReportColHdr(app, app.lpui->vprptCur->irpt, i, app.state.szWork, hdc).dx;
             app.lpui->vprptCur->rgbdx[i] = dx / 2;
         }
         win32::ReleaseDC(hwnd, hdc);
@@ -377,14 +377,15 @@ void DrawReport(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc) {
     i = 0;
     while (i < app.lpui->vprptCur->cFields) {
         if ((ibit & app.lpui->vprptCur->grbitVisible) && (i == 0 || i >= app.lpui->vprptCur->cFieldFirst)) {
-            dx = DxReportColHdr(app, app.lpui->vprptCur->irpt, i, szTit, hdc);
+            const auto szTitle = DxReportColHdr(app, app.lpui->vprptCur->irpt, i, szTit, hdc);
+            dx = szTitle.dx;
             app.lpui->vprptCur->rgbdx[i] = dx / 2;
             win32::SetRect(&rc, xCol, yRow, xCol + dx - 1, app.state.dyArial8 + 4 + yRow);
             if (app.state.gd.fRptSafeDraw) {
                 win32::FillRect(hdc, &rc, app.lpui->hbrButtonFace);
             }
             if (i == 0) {
-                win32::TextOutA(hdc, rc.left + 3, rc.top + 2, szTit, std::strlen(szTit));
+                win32::TextOutA(hdc, rc.left + 3, rc.top + 2, szTit, szTitle.cch);
             } else {
                 CtrTextOut(hdc, static_cast<std::int16_t>((rc.right - rc.left)) / 2 + rc.left, rc.top + 2, std::string_view{szTit});
             }
@@ -544,8 +545,8 @@ void InitScoreDlg(APPSESSION &app, HWND hwnd, std::int16_t fVictory) {
     std::int16_t dyFrame;
     std::int16_t dxFrame;
     RECT    rcWindow;
-    char   *psz;
     std::int16_t dx;
+    std::int16_t cch;
     RECT    rc;
 
     hdc = win32::GetDC(hwnd);
@@ -555,15 +556,13 @@ void InitScoreDlg(APPSESSION &app, HWND hwnd, std::int16_t fVictory) {
         dx = 600;
         dy = 400;
     } else if (fVictory) {
-        szCatalogPsz = TextIO().pfnCompressed(app, idsExceedsSecondPlaceScore);
-        psz = szCatalogPsz.data();
-        app.lpui->vdxScoreX = static_cast<std::uint32_t>((LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) * 3)) / 2 + 6 * dxDig;
+        cch = TextIO().pfnCchGetString(app, idsExceedsSecondPlaceScore, std::span{szCatalogPsz});
+        app.lpui->vdxScoreX = static_cast<std::uint32_t>((LOWORD(GetTextExtent(hdc, szCatalogPsz.data(), cch)) * 3)) / 2 + 6 * dxDig;
         dx = static_cast<std::int16_t>(((4 <= app.state.game.cPlayer ? app.state.game.cPlayer : 4) * app.state.dyArial8 * 3)) / 2 + app.lpui->vdxScoreX + 8;
         dy = static_cast<std::int16_t>((11 * app.state.dyArial8 * 3)) / 2 + 88;
     } else {
-        szCatalogPsz = TextIO().pfnCompressed(app, idsUnarmedShips2);
-        psz = szCatalogPsz.data();
-        app.lpui->vdxScoreX = LOWORD(GetTextExtent(hdc, psz, std::strlen(psz))) + 8;
+        cch = TextIO().pfnCchGetString(app, idsUnarmedShips2, std::span{szCatalogPsz});
+        app.lpui->vdxScoreX = LOWORD(GetTextExtent(hdc, szCatalogPsz.data(), cch)) + 8;
         dx = (4 <= app.state.game.cPlayer ? app.state.game.cPlayer : 4) * dxDig * 5 + app.lpui->vdxScoreX + 8;
         dy = static_cast<std::int16_t>((11 * app.state.dyArial8 * 3)) / 2 + 88;
     }
@@ -1045,7 +1044,7 @@ std::int32_t LFetchScoreXVal(SCOREX *lpsx, std::int16_t iVal) {
     }
 }
 
-std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol, std::span<char> psz, HDC hdc) {
+REPORTCOLUMNHEADERRESULT DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol, std::span<char> psz, HDC hdc) {
     char     szT[40];
     StringId ids;
     std::int16_t  dxDigit;
@@ -1053,13 +1052,13 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
     std::int16_t  cch;
     std::int16_t  dx2;
 
-    if (psz.empty()) return 0;
+    if (psz.empty()) return {};
     szT[0] = '8';
     dxDigit = LOWORD(GetTextExtent(hdc, szT, 1));
     switch (irpt) {
     default:
         psz[0] = 0;
-        return 0;
+        return {};
     case rptPlanets:
         cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanetName + iCol), psz);
         dx = LOWORD(GetTextExtent(hdc, psz.data(), cch));
@@ -1166,7 +1165,7 @@ std::int16_t DxReportColHdr(APPSESSION &app, ReportType irpt, std::int16_t iCol,
         }
     }
     dx += 5;
-    return static_cast<std::int16_t>((dx + 1)) / 2 * 2;
+    return {static_cast<std::int16_t>(static_cast<std::int16_t>((dx + 1)) / 2 * 2), cch};
 }
 
 void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::int16_t irow, std::int16_t icol) {
