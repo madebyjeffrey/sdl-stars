@@ -248,7 +248,8 @@
         "inspector-rows-borrow-snapshot-and-copy-prefix",
         "menu-resource-label-string-lifetime",
         "profile-update-lines-local-string",
-        "owned-packaged-help-document-body"
+        "owned-packaged-help-document-body",
+        "bounded-help-marker-search"
       ],
       "pending_substeps": [
         "bounded-text-destinations",
@@ -25463,6 +25464,32 @@
       "api_audit": "PszHelpDocument owns the fixed-size guide body in std::string and removes malloc/free scratch ownership. No C function-like API macros or production C translation units changed; current inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
+    },
+    {
+      "batch": "L05 packaged help marker bounded-view parsing",
+      "parent": "ea947f5c",
+      "source_commit": "da8c27bc",
+      "macos_debug_build": "make compile passes with strict warnings; help.cpp rebuilt.",
+      "focused_help_test": "win32_utf8_help passes 1/1.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; marker search stops at the first NUL as strstr did, and the same input bytes are written around the marker.",
+      "api_audit": "PszHelpDocument uses bounded string_view searches and no longer adds a terminator byte or calls strstr. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "platform": "Windows/Linux current-source qualification remains pending.",
+      "diff_check": "git diff --check passes."
     }
   ],
   "generators": [
@@ -25483,8 +25510,8 @@
     "date": "2026-11-02",
     "reason": "Resume the live C++ cleanup on develop after the verified optional native file position result batch.",
     "branch": "develop",
-    "latest_batch": "L05 packaged help document scratch ownership",
-    "latest_published_head": "ea947f5c",
+    "latest_batch": "L05 packaged help marker bounded-view parsing",
+    "latest_published_head": "da8c27bc",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -25515,17 +25542,18 @@
       "title-modernized-v2.png and prompt",
       "title-modernized-v3.png and prompt"
     ],
-    "batch": "L05 packaged help document scratch ownership",
-    "source_commit": "ea947f5c",
-    "status": "Locally committed as ea947f5c. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "batch": "L05 packaged help marker bounded-view parsing",
+    "source_commit": "da8c27bc",
+    "status": "Locally committed as da8c27bc. Strict macOS Debug build, focused help test, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
     "changes": [
-      "Replaced the packaged help body malloc/free buffer with an operation-local std::string."
+      "PszHelpDocument now searches the packaged guide through a bounded string_view, preserving the old first-NUL marker semantics without adding a terminator byte."
     ],
     "verification": {
-      "batch": "L05 packaged help document scratch ownership",
-      "parent": "5909fbe6",
-      "source_commit": "ea947f5c",
-      "macos_debug_build": "make compile passes with strict warnings; help.cpp rebuilt after the cleanup.",
+      "batch": "L05 packaged help marker bounded-view parsing",
+      "parent": "ea947f5c",
+      "source_commit": "da8c27bc",
+      "macos_debug_build": "make compile passes with strict warnings; help.cpp rebuilt.",
+      "focused_help_test": "win32_utf8_help passes 1/1.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
@@ -25541,8 +25569,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; packaged guide bytes, CRC, marker validation, and generated output order are preserved.",
-      "api_audit": "PszHelpDocument owns the fixed-size guide body in std::string and removes malloc/free scratch ownership. No C function-like API macros or production C translation units changed; current inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "baseline": "Unchanged; marker search stops at the first NUL as strstr did, and the same input bytes are written around the marker.",
+      "api_audit": "PszHelpDocument uses bounded string_view searches and no longer adds a terminator byte or calls strstr. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25822,10 +25850,14 @@
       {
         "commit": "ea947f5c",
         "message": "Own packaged help document with string"
+      },
+      {
+        "commit": "da8c27bc",
+        "message": "Parse packaged help marker from view"
       }
     ],
-    "latest_source_commit": "ea947f5c",
-    "latest_batch_status": "Locally committed as ea947f5c. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "latest_source_commit": "da8c27bc",
+    "latest_batch_status": "Locally committed as da8c27bc. Strict macOS Debug build, focused help test, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -25843,7 +25875,7 @@
       "current_source_after_c5378ae9": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "c_macro_audit": {
-      "source_head": "ea947f5c",
+      "source_head": "da8c27bc",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -25857,20 +25889,21 @@
       "owned_definitions": "Header guards and NOMINMAX only in the scanned source trees; FSHIFT remains undefined to avoid SDK collision. No owned function-like API macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through ea947f5c."
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through da8c27bc."
     },
-    "borrowed_return_audit": "Packaged help guide body now has local std::string ownership; broader L05 scratch and borrowed-return audit remains active."
+    "borrowed_return_audit": "Packaged help guide body uses local std::string ownership and a bounded marker view; broader L05 scratch and borrowed-return audit remains active."
   },
   "current_checkpoint": {
-    "batch": "L05 packaged help document scratch ownership",
-    "status": "Locally committed as ea947f5c. Strict macOS Debug build, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
-    "parent": "5909fbe6",
-    "change": "PszHelpDocument now owns the packaged guide bytes in std::string instead of a manually allocated body buffer; fixed byte counts, CRC, marker handling and output write order are unchanged.",
+    "batch": "L05 packaged help marker bounded-view parsing",
+    "status": "Locally committed as da8c27bc. Strict macOS Debug build, focused help test, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "parent": "ea947f5c",
+    "change": "PszHelpDocument uses bounded string_view searches instead of strstr; first-NUL marker semantics and output bytes are preserved, without adding a terminator byte.",
     "verification": {
-      "batch": "L05 packaged help document scratch ownership",
-      "parent": "5909fbe6",
-      "source_commit": "ea947f5c",
-      "macos_debug_build": "make compile passes with strict warnings; help.cpp rebuilt after the cleanup.",
+      "batch": "L05 packaged help marker bounded-view parsing",
+      "parent": "ea947f5c",
+      "source_commit": "da8c27bc",
+      "macos_debug_build": "make compile passes with strict warnings; help.cpp rebuilt.",
+      "focused_help_test": "win32_utf8_help passes 1/1.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
       "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
@@ -25886,8 +25919,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; packaged guide bytes, CRC, marker validation, and generated output order are preserved.",
-      "api_audit": "PszHelpDocument owns the fixed-size guide body in std::string and removes malloc/free scratch ownership. No C function-like API macros or production C translation units changed; current inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
+      "baseline": "Unchanged; marker search stops at the first NUL as strstr did, and the same input bytes are written around the marker.",
+      "api_audit": "PszHelpDocument uses bounded string_view searches and no longer adds a terminator byte or calls strstr. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
       "platform": "Windows/Linux current-source qualification remains pending.",
       "diff_check": "git diff --check passes."
     },
@@ -25934,7 +25967,7 @@
     "date": "2026-11-02",
     "branch": "develop",
     "changes": [
-      "Replaced the packaged help body malloc/free buffer with an operation-local std::string."
+      "PszHelpDocument now searches the packaged guide through a bounded string_view, preserving the old first-NUL marker semantics without adding a terminator byte."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -26191,12 +26224,16 @@
       {
         "commit": "ea947f5c",
         "message": "Own packaged help document with string"
+      },
+      {
+        "commit": "da8c27bc",
+        "message": "Parse packaged help marker from view"
       }
     ],
-    "source_commit": "ea947f5c",
-    "latest_change": "PszHelpDocument now owns the packaged guide bytes in std::string instead of a manually allocated body buffer; fixed byte counts, CRC, marker handling and output write order are unchanged.",
+    "source_commit": "da8c27bc",
+    "latest_change": "PszHelpDocument uses bounded string_view searches and no longer adds a terminator byte or calls strstr. Current C inventory remains 44 tracked .c files, 0 production .c files, and 0 owned function-like API macros.",
     "c_macro_audit": {
-      "source_head": "ea947f5c",
+      "source_head": "da8c27bc",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -26210,9 +26247,12 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through ea947f5c.",
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through da8c27bc.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
-    }
+    },
+    "latest_source_commit": "da8c27bc",
+    "latest_batch_status": "Locally committed as da8c27bc. Strict macOS Debug build, focused help test, desktop/host units, full native/host regressions and tutorial smoke pass; Windows/Linux current-source qualification remains outstanding.",
+    "latest_published_head": "da8c27bc"
   },
   "milestone_d_checkpoint": {
     "stage": "D05 caller migrations implemented; D06 platform qualification pending",
