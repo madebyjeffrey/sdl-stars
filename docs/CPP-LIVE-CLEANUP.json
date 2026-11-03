@@ -2725,7 +2725,8 @@
         "typed-object-lookup-target-variant",
         "bounded-dib-palette-header-spans",
         "fixed-four-entry-ai-starbase-status-span",
-        "fixed-sixteen-entry-ai-design-split-span"
+        "fixed-sixteen-entry-ai-design-split-span",
+        "log-replay-byte-payload-span"
       ],
       "pending_substeps": [],
       "user_string_codecs": {
@@ -30345,14 +30346,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "1d56282e",
-  "latest_batch_status": "Source commit 1d56282e verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "dc444ad2",
+  "latest_batch_status": "Source commit dc444ad2 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "1d56282e",
+      "source_commit": "dc444ad2",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -30412,7 +30413,7 @@
         ],
         "result": "Fresh lexical scan of src and compat/win32/include/src; comments/literals not parsed separately by this quick check. Maintained cleanup manifests remain authoritative for full audits."
       },
-      "last_verified_batch": "SetAiFleetIdealSpeed optional-span minefield selection; 18 desktop units, 29 host units, both 519-checkpoint regressions and tutorial smoke pass.",
+      "last_verified_batch": "FRunLogRecord physical payload is span-based; 18 desktop tests, 29 host tests, both 519-checkpoint regressions and tutorial smoke pass.",
       "typed_battle_damage_result": "DAMAGERESULT replaces the mutable beam-damage output and optional mutable torpedo kill-limit pointer.",
       "typed_ai_result": "MACWARFLEETPOTENCYRESULT replaces the nullable cEquiv output pointer.",
       "typed_ai_results": "MACWARFLEETPOTENCYRESULT, COLONIZERBUILDRESULT, COLONIZABLEPLANETRESULT, AISHDEFSTATUSRESULT, SALVAGETARGETRESULT and UNKNOWNPLANETRESULT replace AI output-pointer interfaces; fixed-size AI buffers use spans.",
@@ -30428,7 +30429,9 @@
       "dib_palette_void_pointer_interfaces_remaining": 0,
       "dib_palette_interfaces": "DibNumColors and PaletteSize use bounded byte spans with header-size checks.",
       "fixed_four_element_ai_starbase_status_pointer_interfaces": 0,
-      "fixed_sixteen_entry_ai_design_status_pointer_interfaces": 0
+      "fixed_sixteen_entry_ai_design_status_pointer_interfaces": 0,
+      "log_replay_record_byte_pointer_interfaces": 0,
+      "log_replay_payload_interface": "FRunLogRecord receives its physical payload extent as a span; the signed record length remains separate because replay preserves legacy declared-length and adjacent-buffer semantics."
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -30442,7 +30445,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "1d56282e",
+    "source_head": "dc444ad2",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -30604,12 +30607,12 @@
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
   },
-  "latest_change": "Bound AI starbase and ship-design status array interfaces with fixed-extent spans; array extents are now explicit at the function boundary.",
+  "latest_change": "FRunLogRecord now receives the physical log payload as std::span<std::uint8_t>. The signed declared record length remains separate to preserve replay behavior.",
   "latest_batch_verification": {
-    "batch": "Bound AI design status inputs with spans",
-    "parent": "4ef1a4ea",
-    "source_commit": "1d56282e",
-    "macos_sdl_debug_build": "make test-unit rebuilt strict SDL Debug targets and passed all 18 desktop unit tests; make tutorial rebuilt successfully.",
+    "batch": "Pass log replay payloads as spans",
+    "parent": "ea280bdd",
+    "source_commit": "dc444ad2",
+    "macos_sdl_debug_build": "make test-unit rebuilt strict SDL Debug targets and passed all 18 desktop unit tests.",
     "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
@@ -30625,15 +30628,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
-    "api_audit": "EnsureMacintiStarbaseDesigns takes a fixed four-entry byte span and SplitOutShdefs takes a fixed sixteen-entry byte span. Callers satisfy those extents; stored arrays and behavior are unchanged.",
+    "api_audit": "FRunLogRecord takes a byte span for physical payload capacity. Its signed cb wire field remains independent, preserving existing truncated/adjacent-record replay semantics. The production caller spans the same 32,000-byte allocation; array tests provide their full physical extents.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Bound AI design status inputs with spans",
-    "parent": "4ef1a4ea",
-    "source_commit": "1d56282e",
-    "macos_sdl_debug_build": "make test-unit rebuilt strict SDL Debug targets and passed all 18 desktop unit tests; make tutorial rebuilt successfully.",
+    "batch": "Pass log replay payloads as spans",
+    "parent": "ea280bdd",
+    "source_commit": "dc444ad2",
+    "macos_sdl_debug_build": "make test-unit rebuilt strict SDL Debug targets and passed all 18 desktop unit tests.",
     "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
@@ -30649,15 +30652,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
-    "api_audit": "EnsureMacintiStarbaseDesigns takes a fixed four-entry byte span and SplitOutShdefs takes a fixed sixteen-entry byte span. Callers satisfy those extents; stored arrays and behavior are unchanged.",
+    "api_audit": "FRunLogRecord takes a byte span for physical payload capacity. Its signed cb wire field remains independent, preserving existing truncated/adjacent-record replay semantics. The production caller spans the same 32,000-byte allocation; array tests provide their full physical extents.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit 1d56282e verified locally; ledger checkpoint recorded.",
+    "status": "Source commit dc444ad2 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
-    "next": "Continue the remaining text, ownership, and buffer/length audits; then complete current-source Windows/Linux qualification and chooser coverage."
+    "next": "Continue L05 bounded-text and scratch/borrowed-return audits and the L06 general buffer/length audit; then qualify current source on Windows/Linux and close chooser coverage."
   }
 }
