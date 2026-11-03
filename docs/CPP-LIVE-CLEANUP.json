@@ -2098,7 +2098,8 @@
         "heap-storage-lifetime-helpers-accept-byte-spans",
         "qsort16-accepts-bounded-byte-span",
         "heap-copy-and-move-hooks-accept-byte-spans",
-        "native-directory-enumeration-callbacks-use-typed-context"
+        "native-directory-enumeration-callbacks-use-typed-context",
+        "typed-app-session-callback-context-access"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces",
@@ -2113,6 +2114,17 @@
         "pre_migration_reference_test_sites": 11
       },
       "verification": [
+        {
+          "batch": "L06 app callbacks consume a typed APPSESSION context",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "callback_context_compatibility": "1/1; generic nested owner/timer context behavior retained",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "baseline": "Removed 92 immediate void-pointer round trips in 46 files. Generic context storage remains for Win32 callback routing and its arbitrary-owner contract test; runtime behavior and baselines are unchanged."
+        },
         {
           "batch": "L06 directory enumeration uses typed callback context",
           "macos_debug_build": "Pass; no new warnings.",
@@ -3428,14 +3440,15 @@
         "qualified_by": "https://github.com/madebyjeffrey/sdl-stars/actions/runs/41357206253"
       },
       "current_source_checkpoint": {
-        "source_head": "16de2d5f",
+        "source_head": "c4ef34df",
         "tracked_c_translation_units": 44,
         "production_c_translation_units": 0,
         "application_api_function_like_macros": 0,
         "retained_preprocessor": "Header guards, NOMINMAX, generated STARS_VERSION_* resource tokens, platform/compiler/test conditionals, and #undef FSHIFT to avoid an SDK collision.",
         "typed_replacements": "Packed-word, resource, color and parameter-extraction APIs are C++ functions/templates.",
         "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
-        "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory."
+        "scan_scope": "Tracked src and compat/win32/include/src plus dist/macos-sdl-debug/generated/version_resource.h; compat/win32/generated is not a present directory.",
+        "typed_app_context_roundtrips_removed": 92
       },
       "current_qualification_attempt": {
         "run_id": 41417481193,
@@ -3468,7 +3481,7 @@
         "c_language_boundary": "CMake declares C++ as the project language; C is enabled only when independent tests or Windows SDK reference tests are built."
       },
       "latest_local_verification": {
-        "source_head": "16de2d5f",
+        "source_head": "c4ef34df",
         "macos_sdl_debug_build": "pass",
         "desktop_units": "18/18",
         "host_units": "29/29",
@@ -3476,7 +3489,8 @@
         "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
         "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
         "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
-        "remaining_platform_qualification": "Current-source Windows and Linux qualification remains open."
+        "remaining_platform_qualification": "Current-source Windows and Linux qualification remains open.",
+        "callback_context_compatibility": "1/1"
       }
     }
   ],
