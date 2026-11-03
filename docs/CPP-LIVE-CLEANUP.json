@@ -2714,7 +2714,8 @@
         "movement-range-output-pointer-replaced-with-result",
         "hull-initiative-output-pointer-replaced-with-result",
         "battle-damage-helper-inputs-and-result",
-        "macinti-fleet-potency-typed-result"
+        "macinti-fleet-potency-typed-result",
+        "colonizer-build-decision-and-count-result"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces"
@@ -3936,6 +3937,31 @@
           },
           "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
           "api_audit": "FPotentMacWarFleet returns MACWARFLEETPOTENCYRESULT with the existing potency predicate and cEquiv count instead of a nullable cEquiv output pointer. Its two callers consume the needed field. The computed count and AI decisions are unchanged.",
+          "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
+          "diff_check": "Pass."
+        },
+        {
+          "batch": "Return colonizer build decision values",
+          "parent": "77e5cbd8",
+          "source_commit": "44b0ed49",
+          "macos_sdl_debug_build": "make test-unit and make test-host rebuild strict owned source and standalone header checks without new warnings.",
+          "desktop_unit_tests": "18/18 pass.",
+          "host_unit_tests": "29/29 pass.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
+          "api_audit": "FShouldWeBuildColonizers returns COLONIZERBUILDRESULT with the existing decision and fleet count instead of a nullable output pointer. Both callers consume both values. Early returns preserve the old zero-initialized count; later returns preserve the scanned count and random-call ordering.",
           "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
           "diff_check": "Pass."
         }
@@ -30100,14 +30126,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "f356bb5b",
-  "latest_batch_status": "Source commit f356bb5b verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "44b0ed49",
+  "latest_batch_status": "Source commit 44b0ed49 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "f356bb5b",
+      "source_commit": "44b0ed49",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -30167,9 +30193,10 @@
         ],
         "result": "Fresh lexical scan of src and compat/win32/include/src; comments/literals not parsed separately by this quick check. Maintained cleanup manifests remain authoritative for full audits."
       },
-      "last_verified_batch": "FPotentMacWarFleet typed result; strict SDL build, 18 desktop units, 29 host units, both 519-checkpoint regressions and tutorial smoke pass.",
+      "last_verified_batch": "FShouldWeBuildColonizers typed decision/count result; 18 desktop units, 29 host units, both 519-checkpoint regressions and tutorial smoke pass.",
       "typed_battle_damage_result": "DAMAGERESULT replaces the mutable beam-damage output and optional mutable torpedo kill-limit pointer.",
-      "typed_ai_result": "MACWARFLEETPOTENCYRESULT replaces the nullable cEquiv output pointer."
+      "typed_ai_result": "MACWARFLEETPOTENCYRESULT replaces the nullable cEquiv output pointer.",
+      "typed_ai_results": "MACWARFLEETPOTENCYRESULT and COLONIZERBUILDRESULT replace nullable output pointers in two AI helpers."
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -30345,12 +30372,12 @@
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
   },
-  "latest_change": "Return Macinti fleet potency values",
+  "latest_change": "Return colonizer build decision values",
   "latest_batch_verification": {
-    "batch": "Return Macinti fleet potency values",
-    "parent": "938bef58",
-    "source_commit": "f356bb5b",
-    "macos_sdl_debug_build": "make compile passes with strict warnings; ai3.h passes both standalone include orders.",
+    "batch": "Return colonizer build decision values",
+    "parent": "77e5cbd8",
+    "source_commit": "44b0ed49",
+    "macos_sdl_debug_build": "make test-unit and make test-host rebuild strict owned source and standalone header checks without new warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30367,15 +30394,15 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
-    "api_audit": "FPotentMacWarFleet returns MACWARFLEETPOTENCYRESULT with the existing potency predicate and cEquiv count instead of a nullable cEquiv output pointer. Its two callers consume the needed field. The computed count and AI decisions are unchanged.",
+    "api_audit": "FShouldWeBuildColonizers returns COLONIZERBUILDRESULT with the existing decision and fleet count instead of a nullable output pointer. Both callers consume both values. Early returns preserve the old zero-initialized count; later returns preserve the scanned count and random-call ordering.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Return Macinti fleet potency values",
-    "parent": "938bef58",
-    "source_commit": "f356bb5b",
-    "macos_sdl_debug_build": "make compile passes with strict warnings; ai3.h passes both standalone include orders.",
+    "batch": "Return colonizer build decision values",
+    "parent": "77e5cbd8",
+    "source_commit": "44b0ed49",
+    "macos_sdl_debug_build": "make test-unit and make test-host rebuild strict owned source and standalone header checks without new warnings.",
     "desktop_unit_tests": "18/18 pass.",
     "host_unit_tests": "29/29 pass.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30392,10 +30419,10 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
-    "api_audit": "FPotentMacWarFleet returns MACWARFLEETPOTENCYRESULT with the existing potency predicate and cEquiv count instead of a nullable cEquiv output pointer. Its two callers consume the needed field. The computed count and AI decisions are unchanged.",
+    "api_audit": "FShouldWeBuildColonizers returns COLONIZERBUILDRESULT with the existing decision and fleet count instead of a nullable output pointer. Both callers consume both values. Early returns preserve the old zero-initialized count; later returns preserve the scanned count and random-call ordering.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit f356bb5b verified locally; ledger checkpoint recorded.",
+    "status": "Source commit 44b0ed49 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
