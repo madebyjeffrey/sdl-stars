@@ -10,6 +10,7 @@
 #include <new>
 #include <cstdlib>
 #include <cstring>
+#include <string_view>
 #include <unistd.h>
 
 struct COMPATPRINT {
@@ -48,18 +49,21 @@ int ICompatPrinterCaps(COMPATPRINT *lp, int index) {
     }
 }
 static HGLOBAL HglobPrintNames(COMPATPRINT *lp) {
-    const char *pszDriver = "Stars SDL3/Cairo", *pszDevice = lp->fSpool ? lp->szPrinter : "Stars PDF", *pszPort = lp->fSpool ? "CUPS:" : "FILE:";
-    std::size_t cb = sizeof(DEVNAMES) + std::strlen(pszDriver) + std::strlen(pszDevice) + std::strlen(pszPort) + 3;
+    const std::string_view szDriver = "Stars SDL3/Cairo";
+    const std::string_view szDevice = lp->fSpool ? lp->szPrinter : "Stars PDF";
+    const std::string_view szPort = lp->fSpool ? "CUPS:" : "FILE:";
+    std::size_t cb = sizeof(DEVNAMES) + szDriver.size() + szDevice.size() + szPort.size() + 3;
     HGLOBAL h = win32::GlobalAlloc(win32::GMEM_MOVEABLE | win32::GMEM_ZEROINIT, cb);
     DEVNAMES *lpn;
     char *psz;
+    int cch;
     if (!h) return nullptr;
     lpn = static_cast<DEVNAMES *>((win32::GlobalLock(h))); if (!lpn) { win32::GlobalFree(h); return nullptr; }
     psz = reinterpret_cast<char *>(lpn) + sizeof(*lpn);
     const auto rgchNames = std::span{reinterpret_cast<char *>(lpn), cb};
-    lpn->wDriverOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); CchCopyUtf8(rgchNames.subspan(lpn->wDriverOffset), pszDriver); psz += std::strlen(psz) + 1;
-    lpn->wDeviceOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); CchCopyUtf8(rgchNames.subspan(lpn->wDeviceOffset), pszDevice); psz += std::strlen(psz) + 1;
-    lpn->wOutputOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); CchCopyUtf8(rgchNames.subspan(lpn->wOutputOffset), pszPort); lpn->wDefault = 1;
+    lpn->wDriverOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); cch = CchCopyUtf8(rgchNames.subspan(lpn->wDriverOffset), szDriver); psz += (cch >= 0 ? static_cast<std::size_t>(cch) : 0) + 1;
+    lpn->wDeviceOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); cch = CchCopyUtf8(rgchNames.subspan(lpn->wDeviceOffset), szDevice); psz += (cch >= 0 ? static_cast<std::size_t>(cch) : 0) + 1;
+    lpn->wOutputOffset = static_cast<WORD>((psz - reinterpret_cast<char *>(lpn))); CchCopyUtf8(rgchNames.subspan(lpn->wOutputOffset), szPort); lpn->wDefault = 1;
     win32::GlobalUnlock(h); return h;
 }
 BOOL win32::PrintDlgA(LPPRINTDLGA lppd) {
