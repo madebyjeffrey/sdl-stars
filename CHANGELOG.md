@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `CchSprintfFields` now links from the shared formatter library. Standalone
+  SDL compatibility tests previously failed to link because its definition
+  was only in the core object target. The formatter implementation and game
+  output are unchanged; native and host regressions each match all 519
+  checkpoints.
+
 - `NewGameWizard` now uses the bounded filename copy length to remove the
   `.xy` extension. If the copy does not contain that suffix, it cancels safely
   instead of indexing before the basename. Valid filenames and saved records

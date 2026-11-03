@@ -29872,7 +29872,6 @@
     "next": "D06 qualify native Windows/Linux adapters and complete remaining platform/full-suite checks; then assess expansion beyond current eight UI callers."
   },
   "remaining_work": [
-    "L05: finish the remaining const-text interfaces and post-migration scratch-storage and borrowed-return audit.",
     "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
     "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
   ],
@@ -30368,7 +30367,7 @@
     "latest_published_head": "4155e4b0"
   },
   "latest_source_commit": "d9ce84ab",
-  "latest_batch_status": "The production scratch and borrowed-view audit is closed by static source review at d9ce84ab. No dangling view or modal/session teardown defect was found; report-label helpers copy into result-owned arrays. Lifetime contracts were documented. git diff --check passes; runtime suites were not run for this comment/documentation batch.",
+  "latest_batch_status": "L05 is complete and locally verified after the CchSprintfFields formatter-library link repair. macOS SDL Debug builds; desktop units 18/18, host units 29/29, native and host regressions 519 matches each with zero differences/errors/skips, tutorial smoke 1/1, and focused compatibility callback test pass. Baseline unchanged; Windows/Linux current-source qualification remains in L08.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -30697,7 +30696,21 @@
     "ignored_snprintf_style_returns": 0,
     "report": "docs/CPP-LIVE-L05-DESTINATION-SCAN.md",
     "callsite_inventory": "docs/CPP-LIVE-L05-FORMATTER-DESTINATIONS.csv",
-    "status": "Destination classification and snprintf-style caller-return review are complete. All 148 remaining production snprintf-style returns are checked against strict capacity or a source-level fit bound; 38 earlier candidates now use UTF-8-prefix formatting or UTF-8-aware copies. Display destinations use complete-prefix formatting. The post-migration scratch/borrowed-return audit remains open.",
+    "status": "Destination classification and snprintf-style caller-return review are complete. All 148 remaining production snprintf-style returns are checked against strict capacity or a source-level fit bound; 38 earlier candidates now use UTF-8-prefix formatting or UTF-8-aware copies. Display destinations use complete-prefix formatting. The post-migration scratch/borrowed-return audit subsequently closed at d9ce84ab; full local verification is recorded in l05_closure_verification.",
     "formatter_inventory_rows_including_span_wrapper_declarations": 605
+  },
+  "l05_closure_verification": {
+    "date": "2026-11-03",
+    "source": "develop working tree after moving the unchanged CchSprintfFields implementation into stars_format",
+    "macos_sdl_debug_build": "pass; standalone compatibility targets link",
+    "desktop_unit_tests": "18/18 pass",
+    "host_unit_tests": "29/29 pass",
+    "native_regression": "519 matches; 25 existing warnings; zero differences/errors/skips",
+    "host_regression": "519 matches; 25 existing warnings; zero differences/errors/skips",
+    "tutorial": "1/1 SDL tutorial smoke passes",
+    "focused_compatibility_test": "win32_exception_callbacks passes",
+    "baseline": "unchanged",
+    "diff_check": "pass",
+    "remaining_platform_qualification": "L08: Windows SDL and Linux desktop current-source qualification"
   }
 }

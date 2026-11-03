@@ -97,6 +97,7 @@ add_library(stars_encoding STATIC src/platform/encoding.cpp)
 target_compile_options(stars_encoding INTERFACE "$<$<COMPILE_LANGUAGE:C,CXX>:SHELL:-iquote ${CMAKE_CURRENT_SOURCE_DIR}/src/platform>")
 target_link_libraries(stars_encoding PRIVATE stars_sanitizers)
 target_compile_options(stars_encoding PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(stars_format PRIVATE stars_encoding)
 
 add_library(stars_filesystem STATIC src/platform/filesystem.cpp src/platform/fileio.cpp src/platform/native_publish.cpp)
 if(WIN32)

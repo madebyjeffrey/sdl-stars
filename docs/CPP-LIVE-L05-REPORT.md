@@ -1,12 +1,12 @@
 # L05: Text and scratch ownership cleanup
 
-**Snapshot:** `develop` at `d9ce84ab` (2026-11-03).
+**Source audit:** `develop` at `d9ce84ab` (2026-11-03). **Closure verification:** current `develop` working tree after the formatter link repair (2026-11-03).
 
 The destination classification and this pass's caller audit are recorded in [L05 destination scan](</Users/jdrake/Projects/sdl-stars/docs/CPP-LIVE-L05-DESTINATION-SCAN.md>) and its [refreshed formatter inventory](</Users/jdrake/Projects/sdl-stars/docs/CPP-LIVE-L05-FORMATTER-DESTINATIONS.csv>).
 
 ## Status
 
-L05 has 217 recorded completed substeps. The post-migration scratch and borrowed-return audit is closed.
+L05 has 217 recorded completed substeps and no pending substeps. The post-migration scratch and borrowed-return audit is closed, and the local verification gate passes.
 
 ## Current evidence
 
@@ -18,6 +18,7 @@ L05 has 217 recorded completed substeps. The post-migration scratch and borrowed
 - Report label producers copy catalog, game-field, local-buffer, and `APPSESSION` scratch inputs into `REPORTTEXTRESULT` before returning. Result `.view()` borrows its own result array only.
 - `InitBtnTrack` retains a `const char *` because `BTNT` stores the borrowed pointer across events and its record layout is fixed. C-string format arguments at native CRT `%s`/`%p` boundaries are also retained.
 - `PszFormatString`, `PszFormatIds`, and the `TEXTIO` formatter callback now return `MESSAGETEXTRESULT`, carrying the already-computed UTF-8 byte count. This batch passed 18 desktop tests, 29 host tests, both 519-checkpoint regressions with zero differences/errors, and the tutorial smoke test.
+- The standalone compatibility test link failure came from `CchSprintfFields` living in the core object target while compatibility tests linked the formatter library without core. Its unchanged implementation now lives in `stars_format`, which links its UTF-8 decoding dependency. The focused `win32_exception_callbacks` test links and passes.
 
 ## Actions to close L05
 
@@ -35,6 +36,6 @@ L05 has 217 recorded completed substeps. The post-migration scratch and borrowed
 - `make tutorial`
 - `git diff --check`
 
-The formatter caller-return audit is closed by static source review at `8da637d3`. The scratch and borrowed-view audit is closed by static review at `d9ce84ab`; `git diff --check` passes. Builds, unit tests, tutorial checks, and regressions have not been run for this audit batch.
+The formatter caller-return audit was closed by static source review at `8da637d3`; the scratch and borrowed-view audit was closed by static review at `d9ce84ab`. The 2026-11-03 closure run passed `make test-unit` (18/18), `make test-host` (29/29), `make regression` and `make regression-host` (519 matches each, 25 existing warnings, zero differences/errors/skips), and `make tutorial` (1/1). `git diff --check` passes. The regression baseline is unchanged. Windows and Linux current-source qualification belongs to L08 and remains open.
 
 Do not widen saved-field or record storage to solve a destination issue. Preserve UTF-8 byte limits and the existing whole-string versus display-prefix contracts.

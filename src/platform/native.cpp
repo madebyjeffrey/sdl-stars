@@ -96,53 +96,6 @@ void qsort16(APPSESSION &app, std::span<std::uint16_t> rgid, int (*compare)(APPS
     Qsort16Typed(app, rgid, compare);
 }
 
-// CchSprintf drops the l from each %ld, %li, %lu, %lx or %lX in szFormat
-// before formatting, since its arguments are 32-bit. Like wsprintf, it
-// writes at most the destination size or 1024 bytes, the terminator included,
-// and returns the characters it wrote.
-int CchSprintfFields(std::span<char> sz, std::string_view szFormat, std::span<const NATIVEFORMATARG> args) {
-    std::string szFmt;
-    const std::size_t iEnd = szFormat.find('\0') == std::string_view::npos ? szFormat.size() : szFormat.find('\0');
-    std::size_t i;
-    int         cch;
-    const std::size_t cb = std::min(sz.size(), std::size_t{1024});
-
-    if (sz.empty()) return 0;
-
-    try {
-        szFmt.reserve(iEnd);
-    } catch (const std::bad_alloc &) {
-        sz[0] = 0;
-        return 0;
-    }
-    i = 0;
-    while (i < iEnd) {
-        szFmt.push_back(szFormat[i]);
-        if (szFormat[i++] != '%') {
-            continue;
-        }
-        while (i < iEnd && std::string_view{"-+ #0123456789."}.find(szFormat[i]) != std::string_view::npos) {
-            szFmt.push_back(szFormat[i++]);
-        }
-        if (i + 1 < iEnd && szFormat[i] == 'l' && std::string_view{"diuxX"}.find(szFormat[i + 1]) != std::string_view::npos) {
-            i++;
-        }
-        if (i < iEnd) {
-            szFmt.push_back(szFormat[i++]);
-        }
-    }
-    cch = CchFormatNative(sz.first(cb), szFmt, args);
-    if (cch < 0) {
-        sz[0] = 0;
-        return 0;
-    }
-    if (static_cast<std::size_t>(cch) >= cb) {
-        cch = static_cast<int>(CchUtf8Prefix(std::string_view(sz.data(), cb - 1), cb - 1));
-        sz[cch] = 0;
-    }
-    return cch;
-}
-
 // LMulDiv returns lNumber * lNumerator / lDenominator rounded half away from
 // zero, or -1 for a zero denominator or a result out of range.
 std::int32_t LMulDiv(std::int32_t lNumber, std::int32_t lNumerator, std::int32_t lDenominator) {
