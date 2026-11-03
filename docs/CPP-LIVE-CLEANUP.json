@@ -2722,7 +2722,8 @@
         "unknown-planet-and-scout-search-result",
         "ai-minefield-selection-optional-span",
         "typed-cargo-target-variant",
-        "typed-object-lookup-target-variant"
+        "typed-object-lookup-target-variant",
+        "bounded-dib-palette-header-spans"
       ],
       "pending_substeps": [
         "remaining-buffer-and-length-interfaces"
@@ -4676,6 +4677,34 @@
           },
           "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
           "api_audit": "FLookupObject accepts XFER::OBJECTTARGET, a variant of PLANET*, THING*, or FLEET*. XFER::LookupTarget supplies the matching alternative. The game-object enum still chooses the same lookup function and fallback; XFER storage and record layouts are unchanged.",
+          "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
+          "diff_check": "Pass."
+        }
+      },
+      "dib_palette_header_spans": {
+        "status": "complete; locally verified",
+        "interfaces": "DibNumColors and PaletteSize receive std::span<const std::byte>. Callers supply DIB resource/global-block extents or a fixed BITMAPINFOHEADER span.",
+        "verification": {
+          "batch": "Bound DIB palette header reads with spans",
+          "parent": "56b11688",
+          "source_commit": "e31e4bf7",
+          "macos_sdl_debug_build": "make test-unit rebuilt the strict SDL Debug targets and passed all 18 desktop unit tests.",
+          "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+          "native_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "host_regression": {
+            "matches": 519,
+            "warnings": 25,
+            "differences_errors": 0,
+            "skipped": 0
+          },
+          "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
+          "api_audit": "DibNumColors and PaletteSize consume byte spans rather than void* headers. Both reject inputs too short for the size prefix or selected header; HpalFromDib checks the palette bytes against the resource size. DIB formats and generated palette sizes are unchanged for valid inputs.",
           "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
           "diff_check": "Pass."
         }
@@ -30316,14 +30345,14 @@
     ],
     "latest_published_head": "4155e4b0"
   },
-  "latest_source_commit": "ab79325d",
-  "latest_batch_status": "Source commit ab79325d verified locally; ledger checkpoint recorded.",
+  "latest_source_commit": "e31e4bf7",
+  "latest_batch_status": "Source commit e31e4bf7 verified locally; ledger checkpoint recorded.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "ab79325d",
+      "source_commit": "e31e4bf7",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
@@ -30393,9 +30422,11 @@
       "ai_minefield_selection_interface": "SetAiFleetIdealSpeed receives an optional span of selected minefields; nullopt preserves the all-minefield overflow fallback, and an empty span means no search.",
       "cargo_target_void_pointer_interfaces_remaining": 0,
       "cargo_target_interface": "ChgCargo uses a typed variant; remaining broad L05/L06 reviews are still open and do not yet have a count of candidate edits.",
-      "source_head": "ab79325d",
+      "source_head": "e31e4bf7",
       "object_lookup_void_pointer_interfaces_remaining": 0,
-      "object_lookup_interface": "FLookupObject uses XFER::OBJECTTARGET; no void* target or static_cast object recovery remains in this lookup path."
+      "object_lookup_interface": "FLookupObject uses XFER::OBJECTTARGET; no void* target or static_cast object recovery remains in this lookup path.",
+      "dib_palette_void_pointer_interfaces_remaining": 0,
+      "dib_palette_interfaces": "DibNumColors and PaletteSize use bounded byte spans with header-size checks."
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -30409,7 +30440,7 @@
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
     "ui_text_lengths": "One hundred sixteen redundant UI/compatibility text and path scans have been removed across tracked batches, including popup, report, message, VCR, mine, research, title, build-list, library, planet-search, incremental-list, game-path, print-name, menu-label, compatibility-list item, file-dialog, legacy file-path, compatibility window/edit text, file-filter parsing, race-file prefix comparison, group-control title sizing, SDL argument parsing, message formatting, inspector style scratch sizing, Cocoa chooser path handling, and owned toolbar labels.",
-    "source_head": "ab79325d",
+    "source_head": "e31e4bf7",
     "strlen_occurrence_inventory": "Three std::strlen calls remain in owned production C++ source/header files, all C-string API/input boundaries (compatibility list search, edit replacement input, and D-Bus unique-name input). No owned/fixed text-length reads remain: inspector rows own class/text strings, report hull labels use bounded views, map printing carries the game-name length, and battle-plan name scanning is bounded. Ten additional std::strlen occurrences remain in tests and witnesses. No Objective-C++ std::strlen or SDL_strlen calls remain.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
     "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
@@ -30571,11 +30602,11 @@
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds."
   },
-  "latest_change": "Replace FLookupObject void pointer with typed object target",
+  "latest_change": "Bound DIB palette header reads with spans",
   "latest_batch_verification": {
-    "batch": "Replace FLookupObject void pointer with typed object target",
-    "parent": "38a5dfa4",
-    "source_commit": "ab79325d",
+    "batch": "Bound DIB palette header reads with spans",
+    "parent": "56b11688",
+    "source_commit": "e31e4bf7",
     "macos_sdl_debug_build": "make test-unit rebuilt the strict SDL Debug targets and passed all 18 desktop unit tests.",
     "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30592,14 +30623,14 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
-    "api_audit": "FLookupObject accepts XFER::OBJECTTARGET, a variant of PLANET*, THING*, or FLEET*. XFER::LookupTarget supplies the matching alternative. The game-object enum still chooses the same lookup function and fallback; XFER storage and record layouts are unchanged.",
+    "api_audit": "DibNumColors and PaletteSize consume byte spans rather than void* headers. Both reject inputs too short for the size prefix or selected header; HpalFromDib checks the palette bytes against the resource size. DIB formats and generated palette sizes are unchanged for valid inputs.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
-    "batch": "Replace FLookupObject void pointer with typed object target",
-    "parent": "38a5dfa4",
-    "source_commit": "ab79325d",
+    "batch": "Bound DIB palette header reads with spans",
+    "parent": "56b11688",
+    "source_commit": "e31e4bf7",
     "macos_sdl_debug_build": "make test-unit rebuilt the strict SDL Debug targets and passed all 18 desktop unit tests.",
     "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
@@ -30616,10 +30647,10 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
-    "api_audit": "FLookupObject accepts XFER::OBJECTTARGET, a variant of PLANET*, THING*, or FLEET*. XFER::LookupTarget supplies the matching alternative. The game-object enum still chooses the same lookup function and fallback; XFER storage and record layouts are unchanged.",
+    "api_audit": "DibNumColors and PaletteSize consume byte spans rather than void* headers. Both reject inputs too short for the size prefix or selected header; HpalFromDib checks the palette bytes against the resource size. DIB formats and generated palette sizes are unchanged for valid inputs.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit ab79325d verified locally; ledger checkpoint recorded.",
+    "status": "Source commit e31e4bf7 verified locally; ledger checkpoint recorded.",
     "remaining_work": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
