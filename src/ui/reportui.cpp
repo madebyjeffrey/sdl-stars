@@ -16,6 +16,7 @@
 // Wheel deltas short of a notch, for rows and for columns.
 static std::int16_t dWheelRows;
 static std::int16_t dWheelCols;
+static constexpr std::size_t cchDblDash = sizeof("-- ") - 1;
 
 static void SetReportScrollInfo(HWND hwnd, int iMax, int cPage, int iPos, BOOL fRedraw) {
     SCROLLINFO si = {sizeof(si), win32::SIF_RANGE | win32::SIF_PAGE | win32::SIF_POS, 0, 0, 0, 0, 0};
@@ -1454,7 +1455,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         case colFleetCloak:
             i = PctCloakFromLpfl(app, lpfl);
             if (i == 0) {
-                cch = std::strlen(app.state.szDblDash);
+                cch = cchDblDash;
                 psz = app.state.szDblDash;
             } else {
                 psz = szT;
@@ -1667,7 +1668,7 @@ void DrawMineralItem(APPSESSION &app, HDC hdc, std::int16_t x, std::int16_t y, s
         psz = szNumber.data();
         cch = static_cast<std::int16_t>(szNumber.size());
     } else {
-        cch = std::strlen(app.state.szDblDash);
+        cch = cchDblDash;
         psz = app.state.szDblDash;
     }
     RightTextOut(app, hdc, x, y, psz, cch, 0);
