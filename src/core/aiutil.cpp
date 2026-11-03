@@ -1556,11 +1556,11 @@ void ValidateStarbaseHistory(APPSESSION &app) {
     return;
 }
 
-void GetResourcesAvailable(APPSESSION &app, PLANET *lppl, std::int32_t *rgRes) {
+void GetResourcesAvailable(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgRes) {
     std::int16_t i;
     std::int32_t cRes;
 
-    ColonyIO().pfnEstimateMining(app, lppl, rgRes, -1, 0);
+    ColonyIO().pfnEstimateMining(app, lppl, rgRes.data(), -1, 0);
     for (i = 0; i < 3; i++) {
         rgRes[i] += lppl->rgwtMin[i];
     }
@@ -1572,7 +1572,7 @@ void GetResourcesAvailable(APPSESSION &app, PLANET *lppl, std::int32_t *rgRes) {
     return;
 }
 
-void GetProdQCost(APPSESSION &app, PLANET *lppl, std::int32_t *rgCost) {
+void GetProdQCost(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgCost) {
     std::int32_t rgCostCur[4];
     PLPROD *lpplprod;
     std::int16_t i;
@@ -2327,7 +2327,7 @@ std::int16_t FCreateAiStarbase(APPSESSION &app, std::int16_t ishdef, std::int16_
     return FChangeAiShdef(app, &shdef, ishdef + 16);
 }
 
-std::int16_t FAIFling(APPSESSION &app, PLANET *lppl, std::int32_t *rgResAvail) {
+std::int16_t FAIFling(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail) {
     PLANET *lpplHit;
     POINT16 pt;
     std::int32_t dy;
@@ -2359,7 +2359,7 @@ std::int16_t FAIFling(APPSESSION &app, PLANET *lppl, std::int32_t *rgResAvail) {
         i++;
         lpprod++;
     }
-    if (app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard && *rgResAvail + rgResAvail[1] + rgResAvail[2] > 3000 && lppl->fStarbase &&
+    if (app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard && rgResAvail[0] + rgResAvail[1] + rgResAvail[2] > 3000 && lppl->fStarbase &&
         ColonyIO().pfnWarp(app, lppl, &fTwoMAs) >= 10 && RandomIO().pfnRandom(app, 4) == 0) {
         pt = app.state.rgptPlan[lppl->id];
         for (iT = 0; iT <= 2 && lppl->rgwtMin[iT] <= 12500; iT++) {
@@ -2393,9 +2393,9 @@ std::int16_t FAIFling(APPSESSION &app, PLANET *lppl, std::int32_t *rgResAvail) {
             if (rgResAvail[2] > 20000 && RandomIO().pfnRandom(app, 3) != 0) {
                 AddItemToQueue(app, iobjPacketGerm, 80, grobjPlanet, addItemEnd);
             }
-            if (*rgResAvail > 3000 && rgResAvail[1] > 4000 && rgResAvail[2] > 3000) {
+            if (rgResAvail[0] > 3000 && rgResAvail[1] > 4000 && rgResAvail[2] > 3000) {
                 AddItemToQueue(app, iobjPacketMixed, 30, grobjPlanet, addItemEnd);
-            } else if (*rgResAvail > 1500 && rgResAvail[1] > 2250 && rgResAvail[2] > 1500) {
+            } else if (rgResAvail[0] > 1500 && rgResAvail[1] > 2250 && rgResAvail[2] > 1500) {
                 AddItemToQueue(app, iobjPacketMixed, 15, grobjPlanet, addItemEnd);
             } else {
                 for (iT = 0; iT < 3; iT++) {
@@ -2579,7 +2579,7 @@ std::int16_t FUpgradeAiStarbase(APPSESSION &app, PLANET *lppl, std::int16_t ishd
     return 0;
 }
 
-std::int16_t FQueueAiTerraforming(APPSESSION &app, PLANET *lppl, std::int32_t *rgResAvail, std::int32_t *rgResCost) {
+std::int16_t FQueueAiTerraforming(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
     std::int16_t i;
     std::int16_t j;
     std::int16_t dEnv;
@@ -2625,7 +2625,7 @@ std::int16_t FQueueAiTerraforming(APPSESSION &app, PLANET *lppl, std::int32_t *r
     return 0;
 }
 
-std::int16_t FQueueAiScanner(APPSESSION &app, PLANET *lppl, std::int32_t *rgResAvail, std::int32_t *rgResCost) {
+std::int16_t FQueueAiScanner(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
     std::int16_t i;
     std::int16_t j;
     std::int32_t rgItemCost[4];
@@ -2659,7 +2659,7 @@ std::int16_t FQueueAiScanner(APPSESSION &app, PLANET *lppl, std::int32_t *rgResA
     return 0;
 }
 
-std::int16_t FQueueAiDefenses(APPSESSION &app, PLANET *lppl, std::int32_t *rgResAvail, std::int32_t *rgResCost) {
+std::int16_t FQueueAiDefenses(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
     std::int16_t i;
     std::int16_t j;
     PROD   *lpprod;
@@ -2689,7 +2689,7 @@ std::int16_t FQueueAiDefenses(APPSESSION &app, PLANET *lppl, std::int32_t *rgRes
     return 0;
 }
 
-void HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, PROD *rgprod, std::int16_t ishdefSBLatest, std::int32_t *rgResAvail, std::int32_t *rgResCost) {
+void HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, PROD *rgprod, std::int16_t ishdefSBLatest, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
     PLANET *lppl;
     std::int16_t i;
     std::int16_t ipl;
