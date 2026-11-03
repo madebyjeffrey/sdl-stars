@@ -19,8 +19,8 @@ static REPORTTEXTRESULT SzReportText(std::string_view sz) {
     return szResult;
 }
 
-static std::array<char, 360> SzReportLabel(std::string_view sz) {
-    return SzReportText(sz).sz;
+static REPORTTEXTRESULT SzReportLabel(std::string_view sz) {
+    return SzReportText(sz);
 }
 
 REPORTTEXTRESULT PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
@@ -705,7 +705,7 @@ void DumpFleets(APPSESSION &app) {
                     cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
                     RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
                     if (lpfl->det == detAll) {
-                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl).sz.data());
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl).sz.view());
                     } else {
                         szForm[1] = 0;
                         cchForm = 1;

@@ -25,7 +25,7 @@ struct FLEETETARESULT {
     std::string_view view() const noexcept { return {sz.data(), static_cast<std::size_t>(cch)}; }
 };
 struct TASKNAMERESULT {
-    std::array<char, 360> sz;
+    REPORTTEXTRESULT sz;
     std::int16_t icr;
 };
 FLEETETARESULT PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl);

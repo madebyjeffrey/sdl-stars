@@ -38,6 +38,7 @@ static void test_ReportLabels_owned_results(void) {
     strcpy(app.state.szWork, "unrelated drawing text");
     TEST_CHECK(strcmp(szDest.data(), "(Delayed)") == 0);
     TEST_CHECK(strcmp(szTask.sz.data(), "Lay Mine Field  2y") == 0);
+    TEST_CHECK(szTask.sz.view() == "Lay Mine Field  2y");
     TEST_CHECK(strcmp(szNext.sz.data(), "Route") == 0);
     TEST_CHECK(strcmp(TextIO().pfnCompressed(app, idsLayMineField).data(), "Lay Mine Field") == 0);
     fl.cord = 1;

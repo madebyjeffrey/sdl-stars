@@ -1410,13 +1410,13 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
         }
         case colFleetTask: {
             const auto taskName = PszGetTaskName(app, lpfl);
-            szReportText = taskName.sz;
+            szReportText = taskName.sz.sz;
             i = taskName.icr;
-            psz = szReportText.data();
+            psz = taskName.sz.data();
             if (i != -1) {
                 win32::SetTextColor(hdc, app.lpui->rgcrMinerals[i]);
             }
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, taskName.sz.cch, nullptr);
             break;
         }
         case colFleetEta: {
@@ -2042,12 +2042,12 @@ TryTier2:
             break;
         case colFleetTask: {
             auto taskName = PszGetTaskName(app, lpfl1);
-            szReportText = taskName.sz;
+            szReportText = taskName.sz.sz;
             i1 = taskName.icr;
             psz = szReportText.data();
             CchCopyUtf8Prefix(std::span{szT}, psz);
             taskName = PszGetTaskName(app, lpfl2);
-            szReportText = taskName.sz;
+            szReportText = taskName.sz.sz;
             i2 = taskName.icr;
             psz = szReportText.data();
             iRet = std::strcmp(szT, psz);
