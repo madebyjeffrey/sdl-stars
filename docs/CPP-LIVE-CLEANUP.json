@@ -26536,6 +26536,31 @@
       "api_audit": "PRODUCTIONETARESULT carries the formatter byte count and exposes a bounded view; its two display consumers no longer rescan or copy through an intermediate array.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
+    },
+    {
+      "batch": "Return planet label byte lengths",
+      "parent": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
+      "source_commit": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
+      "macos_debug_build": "make compile passes with strict warnings and header checks.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "tutorial": "Available SDL tutorial smoke checkpoint passes 1/1.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "baseline": "Unchanged; planet and environment label bytes, UTF-8 truncation, report serialization, and ETA values are unchanged.",
+      "api_audit": "PszCalcEnvVar and PszCalcGravity return PLANETTEXTRESULT with exact formatted byte counts. Drawing, popup, and report consumers use bounded views or the returned count; the previous fixed-array behavior is preserved at array-only callers.",
+      "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
+      "diff_check": "Pass."
     }
   ],
   "generators": [
@@ -26957,14 +26982,14 @@
     "memcpy_audit": "59 current calls: 39 in src and 20 in compat/win32/src. Remaining byte/wire/ABI calls still require classification."
   },
   "current_checkpoint": {
-    "batch": "Return production ETA text length",
-    "status": "Committed as c7769b6b. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
-    "parent": "05e0cfd7",
-    "change": "PRODUCTIONETARESULT carries the formatter byte count and exposes a bounded view; its two display consumers no longer rescan or copy through an intermediate array.",
+    "batch": "Return planet label byte lengths",
+    "status": "Committed as e58fb16b. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "parent": "c7769b6b",
+    "change": "PszCalcEnvVar and PszCalcGravity return PLANETTEXTRESULT with exact formatted byte counts. Drawing, popup, and report consumers use bounded views or the returned count; the previous fixed-array behavior is preserved at array-only callers.",
     "verification": {
-      "batch": "Return production ETA text length",
-      "parent": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
-      "source_commit": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
+      "batch": "Return planet label byte lengths",
+      "parent": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
+      "source_commit": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
       "macos_debug_build": "make compile passes with strict warnings and header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -26981,8 +27006,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; ETA text bytes and estimates are unchanged; the result now also returns the formatter byte count.",
-      "api_audit": "PRODUCTIONETARESULT carries the formatter byte count and exposes a bounded view; its two display consumers no longer rescan or copy through an intermediate array.",
+      "baseline": "Unchanged; planet and environment label bytes, UTF-8 truncation, report serialization, and ETA values are unchanged.",
+      "api_audit": "PszCalcEnvVar and PszCalcGravity return PLANETTEXTRESULT with exact formatted byte counts. Drawing, popup, and report consumers use bounded views or the returned count; the previous fixed-array behavior is preserved at array-only callers.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -27041,7 +27066,8 @@
       "RawLoad16/32 and RawStore16/32 now take byte spans rather than void pointers.",
       "All 32 allocator, battle, bitmap, and test callers pass explicit scalar extents.",
       "PszPlayerName now returns a PLAYERNAMERESULT with the composed UTF-8 byte length and unchanged 50-byte storage; seven drawing rescans use the length, and direct formatting/copying uses views.",
-      "PszProductionETA now returns its exact UTF-8 byte count with the existing bounded result; its UI consumers use the length or a bounded text view."
+      "PszProductionETA now returns its exact UTF-8 byte count with the existing bounded result; its UI consumers use the length or a bounded text view.",
+      "PszCalcEnvVar and PszCalcGravity now return PLANETTEXTRESULT with exact UTF-8 byte lengths; drawing, popup, and report callers use bounded text views."
     ],
     "current_source_audits": {
       "tracked_c_translation_units": 44,
@@ -27052,7 +27078,7 @@
       "c11_boundary": "C is enabled only for independent test/reference targets; production is C++20/Objective-C++20.",
       "core_strlen_residual": "FLEET::lpszName remains a legacy heap-owned C string in a layout-sensitive struct with no stored length. WriteRtString now accepts std::string_view; conversion from the field is confined to the call boundary without changing FLEET layout.",
       "scan_scope": "Tracked src and compat/win32/include/src plus generated version_resource.h; compat/win32/upstream SDK headers are excluded from owned-code C/C++ macro cleanup.",
-      "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remains outstanding; local macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass through c7769b6b.",
+      "platform_qualification": "Current-source Windows SDL and Linux desktop qualification remains outstanding; local macOS Debug build, desktop/host units, tutorial smoke, and native/host regressions pass through e58fb16b.",
       "c_test_translation_units": {
         "compatibility": 3,
         "sdk_reference": 39,
@@ -27063,7 +27089,7 @@
       "owned_definitions": "Header guards and NOMINMAX; FSHIFT is undefined to avoid an SDK collision.",
       "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format argument C-string overloads remain at null-check, %s/%p and CRT formatting boundaries.",
       "profile_fields": "COMPATPROFILE owns szParsed; optional section/key/value string_views borrow from it until node destruction. NUL truncation and empty-versus-absent semantics are preserved.",
-      "source_head": "c7769b6b",
+      "source_head": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
       "raw_copy_call_audit": {
         "source_head": "3670b2be",
         "owned_production_calls": 0,
@@ -27081,11 +27107,12 @@
       "wire_record_prefix_apis": "Eight variable-length prefix helpers use mutable byte spans; remaining pointer-only helpers use fixed wire extents.",
       "wire_prefix_apis": "All variable-width prefix helpers take spans; fixed-width header/message/battle prefix helpers take fixed-extent spans.",
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
-      "strlen_occurrence_inventory": "92 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
-      "ui_text_lengths": "Twenty-three redundant UI rescans have been replaced across the tracked UI text-length batches; seven player-name rescans and one production ETA rescan were removed in the latest source batches.",
+      "strlen_occurrence_inventory": "91 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
+      "ui_text_lengths": "Twenty-four redundant UI rescans have been replaced across the tracked UI text-length batches; nine player-name, production ETA, and planet environment rescans were removed in the latest source batches.",
       "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
       "c_macro_inventory": "Owned application API macro count remains zero; no macro inventory changes in this batch.",
-      "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view."
+      "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
+      "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views."
     },
     "next": [
       "L05 bounded text destinations, remaining const-text interfaces, and post-migration scratch/borrowed-return audit.",
@@ -27366,10 +27393,10 @@
         "message": "Use profile text length in font settings"
       }
     ],
-    "source_commit": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
-    "latest_change": "PRODUCTIONETARESULT carries the formatter byte count and exposes a bounded view; its two display consumers no longer rescan or copy through an intermediate array.",
+    "source_commit": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
+    "latest_change": "PszCalcEnvVar and PszCalcGravity return PLANETTEXTRESULT with exact formatted byte counts. Drawing, popup, and report consumers use bounded views or the returned count; the previous fixed-array behavior is preserved at array-only callers.",
     "c_macro_audit": {
-      "source_head": "c7769b6b",
+      "source_head": "e58fb16b",
       "date": "2026-11-02",
       "tracked_c_translation_units": 44,
       "production_c_translation_units": 0,
@@ -27383,16 +27410,16 @@
       "owned_definitions": "Owned application trees contain header guards, NOMINMAX, generated resource tokens and platform/test configuration only; no owned function-like API macros. Vendored upstream FreeAPI headers retain their compatibility macros.",
       "typed_api_replacements": "Packed-word, resource, color and parameter-extraction names are C++ functions/templates; no SDL convenience array/zero or fixed-width integer literal macros remain in owned C++ application sources.",
       "remaining_c_translation_units": "Independent compatibility and SDK/tutorial reference witnesses plus precision scaffolds; CMake production languages remain C++20/Objective-C++20.",
-      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through c7769b6b.",
+      "platform_qualification": "Windows SDL and Linux desktop current-source qualification remains outstanding; local macOS and host verification passes through e58fb16b.",
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
-    "latest_source_commit": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
-    "latest_batch_status": "Committed as c7769b6b. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+    "latest_source_commit": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
+    "latest_batch_status": "Committed as e58fb16b. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
     "latest_published_head": "ef24142a",
     "latest_batch_verification": {
-      "batch": "Return production ETA text length",
-      "parent": "05e0cfd710fc17300c7969fe4e6a1e979414e8af",
-      "source_commit": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
+      "batch": "Return planet label byte lengths",
+      "parent": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
+      "source_commit": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
       "macos_debug_build": "make compile passes with strict warnings and header checks.",
       "desktop_unit_tests": "18/18 pass.",
       "host_unit_tests": "29/29 pass.",
@@ -27409,8 +27436,8 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; ETA text bytes and estimates are unchanged; the result now also returns the formatter byte count.",
-      "api_audit": "PRODUCTIONETARESULT carries the formatter byte count and exposes a bounded view; its two display consumers no longer rescan or copy through an intermediate array.",
+      "baseline": "Unchanged; planet and environment label bytes, UTF-8 truncation, report serialization, and ETA values are unchanged.",
+      "api_audit": "PszCalcEnvVar and PszCalcGravity return PLANETTEXTRESULT with exact formatted byte counts. Drawing, popup, and report consumers use bounded views or the returned count; the previous fixed-array behavior is preserved at array-only callers.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
     },
@@ -27429,11 +27456,12 @@
         "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
       },
       "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-      "ui_text_lengths": "Twenty-three redundant UI rescans have been replaced across the tracked UI text-length batches; seven player-name rescans and one production ETA rescan were removed in the latest source batches.",
-      "source_head": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
-      "strlen_occurrence_inventory": "92 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
+      "ui_text_lengths": "Twenty-four redundant UI rescans have been replaced across the tracked UI text-length batches; nine player-name, production ETA, and planet environment rescans were removed in the latest source batches.",
+      "source_head": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
+      "strlen_occurrence_inventory": "91 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
       "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
-      "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view."
+      "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
+      "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views."
     }
   },
   "milestone_d_checkpoint": {
@@ -27920,8 +27948,8 @@
       "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers."
     }
   },
-  "latest_source_commit": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
-  "latest_batch_status": "Committed as c7769b6b. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
+  "latest_source_commit": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
+  "latest_batch_status": "Committed as e58fb16b. Strict macOS Debug build, desktop/host unit suites, full native/host regressions and tutorial smoke pass; Windows/Linux qualification remains outstanding.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
@@ -27937,10 +27965,11 @@
       "review_result": "All remaining calls are classified as byte/wire/heap-storage movement, native object-representation access, unaligned packed or SDK buffer ingress/egress, or Win32 callback/parameter ABI representation. No further mechanical typed-value replacement is indicated."
     },
     "bounded_part_names": "NATIVEPARTCOMMONVIEW::szName returns a bounded std::string_view; fixed record layout and catalog storage are unchanged.",
-    "ui_text_lengths": "Twenty-three redundant UI rescans have been replaced across the tracked UI text-length batches; seven player-name rescans and one production ETA rescan were removed in the latest source batches.",
-    "source_head": "c7769b6bc6c2f5c92f6b8c1fd9e76f7deebf0234",
-    "strlen_occurrence_inventory": "92 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
+    "ui_text_lengths": "Twenty-four redundant UI rescans have been replaced across the tracked UI text-length batches; nine player-name, production ETA, and planet environment rescans were removed in the latest source batches.",
+    "source_head": "e58fb16b795f0443d73d1dd7bbd97faf3c389796",
+    "strlen_occurrence_inventory": "91 strlen occurrences remain in src and compat/win32/src C++ headers/sources; this raw count is not an actionable replacement count because many uses are C-string or ABI boundaries.",
     "player_name_results": "PszPlayerName returns fixed 50-byte owned storage and its exact composed UTF-8 byte length; existing storage budget is unchanged.",
-    "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view."
+    "production_eta_results": "PszProductionETA returns its existing fixed text and ETA values plus the exact UTF-8 byte count; both UI consumers use that count or its bounded view.",
+    "planet_text_results": "PszCalcEnvVar and PszCalcGravity return fixed 360-byte owned storage with exact UTF-8 byte lengths; UI/report copies and popup text use bounded views."
   }
 }
