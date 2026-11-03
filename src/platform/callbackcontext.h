@@ -3,8 +3,10 @@
 
 // Foreign callback signatures cannot carry the application's explicit owner.
 // Windows and queued timers borrow this context for their existing lifetimes.
+class APPSESSION;
 void *PvCompatCallbackContext() noexcept;
 void *PBindCompatCallbackContext(void *lpv) noexcept;
+inline APPSESSION &AppCompatCallbackContext() noexcept { return *static_cast<APPSESSION *>(PvCompatCallbackContext()); }
 
 class COMPATCALLBACKCONTEXTSCOPE {
     void *lpvPrevious;

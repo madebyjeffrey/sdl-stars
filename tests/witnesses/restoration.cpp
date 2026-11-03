@@ -45,7 +45,7 @@ static void TestSetMsgTitle(APPSESSION &app, void *hwnd) {
         app.state.gd.fTutorial = 0;
 }
 static void TestInvalidateRect(void *hwnd, void *rect, int erase) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(!rect && erase);
     if (hwnd == app.lpui->hwndMessage)
@@ -72,7 +72,7 @@ static void TestRefitFrameChildren(APPSESSION &app) {
     event("R;");
 }
 static void TestFUiUpdateWindow(void *hwnd) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(hwnd == app.lpui->hwndScanner && !app.state.gd.fNoScannerDraw);
     event("U;");
@@ -141,7 +141,7 @@ static int16_t TestFind(APPSESSION &app) {
     return FFindSomethingAndSelectIt(app);
 }
 static void TestSend(HWND hwnd, int message, int command, int param) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(hwnd == app.lpui->hwndFrame && message == win32::WM_COMMAND && command == IDM_FRAME_POST_OPEN && param == 0);
     RestoreGameWindows(app);

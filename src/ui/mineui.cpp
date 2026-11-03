@@ -10,7 +10,7 @@
 #include "race_query_io.h"
 
 LRESULT  MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
     PAINTSTRUCT ps;

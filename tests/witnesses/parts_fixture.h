@@ -24,14 +24,14 @@ static void Call(int tag) {
     rgCalls[cCalls++] = tag;
 }
 static int16_t QueryStat(PLAYER *p, RaceStat stat) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     CHECK(app.state.idPlayer >= 0 && app.state.idPlayer < 16 && p == &app.state.rgplr[app.state.idPlayer] && stat == rsMajorAdv);
     Call(0);
     return GetRaceStat(p, stat);
 }
 static int16_t QueryGrbit(PLAYER *p, RaceGrbit bit) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     CHECK(app.state.idPlayer >= 0 && app.state.idPlayer < 16 && p == &app.state.rgplr[app.state.idPlayer]);
     Call(100 + bit);

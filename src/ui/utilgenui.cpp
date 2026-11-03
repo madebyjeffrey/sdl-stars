@@ -13,7 +13,7 @@
 #include <limits>
 
 INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
     char     szValue[33];
     char    *pch;
     std::uint32_t dw;
@@ -1014,7 +1014,7 @@ HGLOBAL HdibLoadBigResource(APPSESSION &app, BitmapId idb) {
 }
 
 INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     char    szPass[60];
     RECT    rc;
@@ -1076,7 +1076,7 @@ INT_PTR  PasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 }
 
 INT_PTR  NewPasswordDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     char    szPass[20];
     char    szPassConfirm[20];
@@ -1192,7 +1192,7 @@ void HideProgressGauge(APPSESSION &app) {
 
 INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     std::array<char, cchCatalogText> szCatalogPsz{};
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
     PAINTSTRUCT ps;

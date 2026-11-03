@@ -48,7 +48,7 @@ LWriteProdQ:
 
 INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     std::array<char, cchCatalogText> szCatalogMenuText{};
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC                hdc;
     PAINTSTRUCT        ps;
@@ -619,7 +619,7 @@ void FillProdSrcLB(APPSESSION &app, HWND hwndLB, std::int16_t mdFill) {
 
 INT_PTR  ZipProdDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     std::array<char, cchCatalogText> szCatalogPsz{};
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
     PAINTSTRUCT ps;

@@ -22,7 +22,7 @@ static BOOL fNativeSaveOwner, fCheckIcon, fIconPassed;
 #endif
 
 static void  CheckQuit(HWND hwndTimer, UINT msg, UINT_PTR id, DWORD time) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     STARSCOMPATSNAPSHOT snap = {};
     HWND hwnd;

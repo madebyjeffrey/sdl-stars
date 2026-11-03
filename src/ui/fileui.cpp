@@ -9,7 +9,7 @@
 #include "desktop_choice_io.h"
 
 INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
     switch (message) {
     case win32::WM_INITDIALOG:
         return 1;

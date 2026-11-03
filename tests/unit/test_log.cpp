@@ -893,7 +893,7 @@ static void test_routing_replay_read_boundaries(void) {
 }
 
 static void ChangeZipProdDuringAlert() {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     app.state.vrgZipProd[0].fNoResearch = 0x42;
     app.state.vrgZipProd[0].cpq = 0xab;

@@ -235,7 +235,7 @@ static int TestFLibraryNameAvailable(APPSESSION &, std::string_view root, std::s
     return ok;
 }
 static size_t TestNativeStrlen(std::string_view szPath) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     if (szPath.data() == szLibraryRoot) {
         int ok = decision();

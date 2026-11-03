@@ -35,7 +35,7 @@ static std::int16_t yPanTop;
 static std::int16_t FAltDown(void) { return ControlIO().pfnGetKeyState(win32::VK_MENU) < 0; }
 
 LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
     POINT16     pt;
@@ -2750,7 +2750,7 @@ std::int16_t FGetNextObjHere(APPSESSION &app, SCAN *pscan, std::int16_t fOnlyOur
 }
 
 INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     char szName[40];
     RECT rc;

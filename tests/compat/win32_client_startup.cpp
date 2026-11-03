@@ -284,7 +284,7 @@ static BOOL FCheckScannerDrag(APPSESSION &app) {
 
 static int iTransportPreset = -1, cTransportMenus;
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     if (iRosterMenu >= 0) {
         HMENU hmenuLibrary = win32::GetSubMenu(hmenu, 1);
@@ -578,7 +578,7 @@ static win32::files::FILESELECTIONRESULT IChooseTypedStartupFile(HWND, const win
 
 bool SDL_ShowWindow(SDL_Window *lpWindow);
 extern "C" bool SDLCALL StarsTest_SDL_ShowWindow(SDL_Window *lpWindow) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HWND hwnd;
     bool fResult;
@@ -939,7 +939,7 @@ static BOOL FPostOwnedTestFolder(HWND hwnd, char *pszFolder) {
 }
 
 static void  CheckWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HWND hwndDialog, hwndControl;
     (void)hwnd; (void)msg; (void)dwTime;
@@ -1501,7 +1501,7 @@ static BOOL FCheckGameplayWorkflows(APPSESSION &app) {
 }
 
 INT_PTR StarsTest_AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
     const char *pszChoice = PszCompatEnvironment("STARS_CLIENT_SWITCH_CHOICE");
     if (pszChoice && message == win32::WM_INITDIALOG) {
         if (!strcmp(pszChoice, "save")) win32::EndDialog(hwnd, 1);
@@ -1804,7 +1804,7 @@ LDone:
 }
 
 static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HWND lpFrame, lpTitle;
     char szRaceName[256], szDuplicate[512], szExport[512], szManaged[512], szExportSnapshot[512];

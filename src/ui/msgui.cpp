@@ -15,7 +15,7 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     std::array<char, 256> szMessage{};
     std::array<char, cchCatalogText> szCatalogLpsz{};
     std::array<char, 50> szPlayerName{};
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
     std::int16_t     i;

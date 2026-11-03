@@ -211,7 +211,7 @@ static uint8_t rgbAtAlert[3];
 static int cHeaderAlerts;
 
 static void CaptureReadFailure() {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     hdrAtAlert = app.state.hdrCur;
     memcpy(rgbAtAlert, app.state.rgbCur, sizeof(rgbAtAlert));

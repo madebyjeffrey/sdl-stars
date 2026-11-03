@@ -36,7 +36,7 @@ extern "C" bool SDLCALL StarsTest_SDL_OpenURL(const char *pszUri) {
     return true;
 }
 static void  ChoosePages(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HWND hwndDialog, hwndEdit;
     char sz[2];
@@ -70,7 +70,7 @@ static BOOL FTextViewContracts(APPSESSION &app) {
     return 1;
 }
 static void  PrintGame(HWND hwnd, UINT msg, UINT_PTR id, DWORD ticks) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     GAME gameSav;
     const char *pszOutput = getenv("STARS_PRINTMAP_OUTPUT");

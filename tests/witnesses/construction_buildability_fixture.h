@@ -13,7 +13,7 @@ static void Query(int tag) {
     }
 }
 static int16_t GateStat(PLAYER *p, RaceStat stat) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     if (fInCheck)
         assert(p == &app.state.rgplr[app.state.idPlayer] && stat == rsMajorAdv);
@@ -21,7 +21,7 @@ static int16_t GateStat(PLAYER *p, RaceStat stat) {
     return GetRaceStat(p, stat);
 }
 static int16_t GateGrbit(PLAYER *p, RaceGrbit bit) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     if (fInCheck)
         assert(p == &app.state.rgplr[app.state.idPlayer]);

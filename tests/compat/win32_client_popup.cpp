@@ -74,7 +74,7 @@ static int TestBrowserAvailableTechnology(APPSESSION &app) {
 }
 
 static void  CloseDesigner(HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     (void)hwnd; (void)msg; (void)time;
     if (!win32::IsWindowVisible(app.lpui->hwndSlotDlg)) return;

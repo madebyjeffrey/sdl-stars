@@ -23,7 +23,7 @@ struct RESEARCHESCAPE {};
 
 static void hv(int32_t value) { hash = hash * std::uint32_t{16777619} ^ (uint32_t)value; }
 int16_t     TestGetRaceStat(PLAYER *p, RaceStat stat) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     if (stat == rsMajorAdv) {
         primaries++;
@@ -34,7 +34,7 @@ int16_t     TestGetRaceStat(PLAYER *p, RaceStat stat) {
     return GetRaceStat(p, stat);
 }
 int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(bit == ibitRaceGeneralizedResearch || bit == ibitRaceTT);
     hv(30);

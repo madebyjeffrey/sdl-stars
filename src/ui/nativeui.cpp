@@ -33,7 +33,7 @@ constexpr auto WM_STARS_SYSCOMMAND = (win32::WM_APP + 1);
 // FrameWndProcDeferred defers FrameWndProc's restore and maximize commands
 // to the message loop and passes every other message straight through.
 LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     switch (msg) {
     case win32::WM_SYSCOMMAND:

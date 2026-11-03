@@ -106,7 +106,7 @@ static void TestEndDialog(HWND hwnd, int result) {
     event(result ? "End1;" : "End0;");
 }
 static void TestStickyDlgPos(HWND hwnd, POINT16 *point, int restore) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(hwnd == HwndWitness(7) && point == &app.lpui->ptStickyProduceDlg && !restore);
     event("Sticky;");
@@ -196,7 +196,7 @@ static void TestInvalidateRect(HWND hwnd, RECT *r, int erase) {
     } while (0)
 
 static intptr_t TestLUiDialogBox(HINSTANCE instance, LPCSTR resource, HWND parent, DLGPROC proc) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(instance == app.lpui->hInst && resource == win32::MAKEINTRESOURCE(IDD_PRODUCTION) && parent == app.lpui->hwndFrame && proc == ProductionDlg && app.lpui->fDlgUp);
     event("Make;Modal;");

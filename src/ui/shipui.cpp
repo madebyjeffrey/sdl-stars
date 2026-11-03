@@ -1342,7 +1342,7 @@ std::int16_t TransferStuff(APPSESSION &app, std::int16_t id1, GrobjClass grobj1,
 }
 
 INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
     std::int16_t     dyMore;
@@ -2344,7 +2344,7 @@ void DeleteCurWayPoint(APPSESSION &app, std::int16_t fBackup) {
 }
 
 LRESULT  FakeEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     if (msg != win32::WM_CHAR || ((wParam >= '0' && wParam <= '9') || wParam == 8)) {
         return ui::CallWindowProc(app.lpui->lpfnRealEditProc, hwnd, msg, wParam, lParam);

@@ -41,7 +41,7 @@ static HWND HwndModal(void);
 static BOOL FSaveState(APPSESSION &app, const char *pszName);
 
 BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *prc) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     SDL_Event event = {};
     HWND hwndRoot = HwndCompatRoot(hwnd);
@@ -465,7 +465,7 @@ static BOOL FSaveReport(APPSESSION &app, const char *pszPath) {
 }
 
 static void  RunTutorial(HWND hwndTimer, UINT message, UINT_PTR id, DWORD tick) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HWND hwndModal;
     FLEET *lpfl;

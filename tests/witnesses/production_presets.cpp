@@ -96,7 +96,7 @@ static std::int16_t TestCchGetString(APPSESSION &, StringId id, std::span<char> 
     return static_cast<std::int16_t>(CchCopyUtf8(out, std::string_view(szItem).substr(0, 14)));
 }
 static int TestLUiDialogBox(int instance, int resource, HWND hwnd, int proc) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     (void)instance;
     (void)hwnd;

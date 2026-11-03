@@ -82,7 +82,7 @@ std::int16_t FCheckQueuedShip(APPSESSION &app, HWND hwnd, SHDEF *lpshdef, std::i
 }
 
 INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     RECT               rcWindow;
     HDC                hdc;
@@ -1704,7 +1704,7 @@ void FillBuildPartsLB(APPSESSION &app, HWND hwndLB, std::int16_t grbit) {
 }
 
 LRESULT  FakeListProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     POINT16 pt;
     std::int16_t iSel;

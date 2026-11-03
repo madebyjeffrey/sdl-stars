@@ -258,7 +258,7 @@ std::int16_t SetVCRBoard(APPSESSION &app, std::int16_t iStep) {
 }
 
 INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
     std::int16_t     i;

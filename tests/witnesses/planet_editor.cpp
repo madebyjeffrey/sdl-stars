@@ -119,7 +119,7 @@ static int planetRange(APPSESSION &app, const void *p, size_t n) {
     return a >= b && a <= e && n <= e - a;
 }
 static void TestcheckedMemcpy(std::span<std::byte> dst, std::span<const std::byte> src) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(dst.size() == src.size());
     guardBytes = dst.size();

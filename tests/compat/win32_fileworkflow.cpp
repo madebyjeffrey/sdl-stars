@@ -115,7 +115,7 @@ int16_t StarsTest_AlertSz(APPSESSION &, std::string_view sz, int16_t mbType) {
     return IDOK;
 }
 static void  FileWorkflow(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HWND hwndDialog;
     HWND hwndParentSav;

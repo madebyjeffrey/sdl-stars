@@ -85,7 +85,7 @@ static int TestGetRaceStat(void *p, int stat) {
 }
 static void  TestAdvanceTutor(APPSESSION &) { tutorials++; }
 static void TestguardedMemcpy(std::span<std::byte> dst, std::span<const std::byte> src) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(dst.size() == src.size());
     uintptr_t d = reinterpret_cast<uintptr_t>(dst.data()), s = reinterpret_cast<uintptr_t>(src.data());

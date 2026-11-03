@@ -85,7 +85,7 @@ static void RefitPlanetPane(APPSESSION &app, HWND hwnd) {
 }
 
 LRESULT  PlanetPaneWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     PLANETPANE *lp = LpPlanetPane(hwnd);
     RECT rc;

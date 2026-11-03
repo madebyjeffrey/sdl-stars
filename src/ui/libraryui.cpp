@@ -358,7 +358,7 @@ static void GetGameLibraryName(APPSESSION &app, std::string_view pszName, std::s
 }
 
 INT_PTR  LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
     char szMessage[512];
     POINT16 pt = {-1, -1};
 
@@ -382,7 +382,7 @@ INT_PTR  LibraryGameRevisionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 }
 
 INT_PTR  LibraryNameDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
     std::span<char, 256> *pszName;
     char szName[256];
     std::array<char, cchCatalogText> szMessage{};
@@ -798,7 +798,7 @@ static std::int16_t FindRaceVersion(APPSESSION &app, RACEVERSIONS *prv, std::str
 }
 
 INT_PTR  LibraryRaceSaveDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     char szMessage[512];
     POINT16 pt = {-1, -1};

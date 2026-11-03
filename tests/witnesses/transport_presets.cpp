@@ -62,7 +62,7 @@ static intptr_t TestLUiSendMessage(HWND hwnd, int message, int value, LPARAM par
     abort();
 }
 static void TestFUiSetWindowText(HWND hwnd, const char *s) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     if (hwnd == app.lpui->hwndOrderED) {
         strcpy(editText, s);
@@ -151,7 +151,7 @@ static void TestInvalidateRect(HWND hwnd, void *rc, int erase) {
 }
 static void TestHwndUiSetFocus(HWND hwnd) { (void)hwnd; }
 static int  TestLUiDialogBox(int instance, int resource, HWND hwnd, int proc) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     (void)instance;
     (void)hwnd;

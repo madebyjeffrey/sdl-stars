@@ -198,7 +198,7 @@ static void RefreshScannerInspector(APPSESSION &app, HWND hwnd) {
 }
 
 static LRESULT  ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     RECT rc;
     int i;
@@ -244,7 +244,7 @@ static LRESULT  ScannerInspectorProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 
 HWND ShowScannerInspector(void) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     WNDCLASS wc = {0};
 

@@ -551,7 +551,7 @@ static void TestMessagePackingAdmissionAndPrepend(void) {
 static bool fCleanupKeptState;
 static int cSessionPayloadReleased;
 static LRESULT  SessionCleanupProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     if (msg == win32::WM_APP + 77) {
         HB *lphb = app.state.rglphb[htPerm];

@@ -168,7 +168,7 @@ static int16_t TestIWarpMAFromLppl(APPSESSION &, PLANET *p, int16_t *flag) {
     return warp;
 }
 static int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     assert(p == app.state.rgplr && bit == ibitRaceMineralAlchemy);
     return (int16_t)cheapFixture;

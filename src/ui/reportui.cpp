@@ -27,7 +27,7 @@ static void SetReportScrollInfo(HWND hwnd, int iMax, int cPage, int iPos, BOOL f
 }
 
 LRESULT  ReportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     HDC         hdc;
     HMENU       hmenu;
@@ -430,7 +430,7 @@ NoHdrDraw:
 }
 
 INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     std::int16_t     i;
     RECT        rc;
@@ -2701,7 +2701,7 @@ void ExecuteReportClick(APPSESSION &app, POINT16 pt, ReportType irpt, std::int16
 }
 
 INT_PTR  PrintMapDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    APPSESSION &app = AppCompatCallbackContext();
 
     std::int16_t i;
     RECT    rc;
