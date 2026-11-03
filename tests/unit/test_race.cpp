@@ -81,7 +81,7 @@ static void CloseRaceInput(APPSESSION &app) {
     StreamClose(app);
     CchCopyUtf8(std::span{app.state.szWork}, "changed-by-close");
 }
-static std::array<char, 256> CaptureRaceInputDiagnostic(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams) {
+static MESSAGETEXTRESULT CaptureRaceInputDiagnostic(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams) {
     TEST_CHECK(ids == idsFileDoesBelongVersionStars && pParams.empty());
     szRaceInputDiagnostic = app.state.szWork;
     return PszFormatIds(app, ids, pParams);

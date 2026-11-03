@@ -115,12 +115,14 @@ static void TestMessageAndVersionText(void) {
     const auto szFormat = PszFormatString(app, "\\w \\i \\u", std::span<const std::int16_t>{rgParams});
     const auto szCompressed = PszGetCompressedMessage(app, idmHaveReceivedOneBattleRecordingYear);
     TEST_CHECK(SzMessageBytes(PszFormatString(app, "\\w \\i \\u", std::span<const std::int16_t>{rgParams}).data()) == "World-\xce\xa9 -123 55");
+    TEST_CHECK(szFormat.cch == static_cast<std::int16_t>(std::string_view{"World-\xce\xa9 -123 55"}.size()));
     TEST_CHECK(std::string_view(app.state.szMsgBuf) == "World-\xce\xa9 -123 55");
     TEST_CHECK(SzMessageBytes(PszFormatMessage(app, idmHaveReceivedOneBattleRecordingYear, {}).data()) == pszBattle);
     TEST_CHECK(std::string_view(app.state.szMsgBuf) == pszBattle);
     const auto szExpanded = PszFormatMessage(app, idmHaveReceivedOneBattleRecordingYear, {});
-    TEST_CHECK(SzMessageBytes(PszFormatIds(app, idsNewTurnAvailable, {}).data()) == "The new turn is available.");
     const auto szIds = TextIO().pfnFormat(app, idsNewTurnAvailable, {});
+    TEST_CHECK(SzMessageBytes(PszFormatIds(app, idsNewTurnAvailable, {}).data()) == "The new turn is available.");
+    TEST_CHECK(szIds.cch == static_cast<std::int16_t>(std::string_view{"The new turn is available."}.size()));
     TEST_CHECK(std::string_view(app.state.szWork) == "World-\xce\xa9");
     ResetMessages(app);
     TEST_CHECK(SzMessageBytes(PszGetMessageN(app, -1).data()).empty());
@@ -205,7 +207,7 @@ static void TestMessageInputBounds(void) {
     TEST_CHECK(std::string_view(PszFormatString(app, std::string_view(rgFormat, 3), std::span<const std::int16_t>{rgParams}.first(1)).data()) == "A42");
     TEST_CHECK(std::string_view(PszFormatString(app, std::string_view(rgFormat, 2), {}).data()) == "A");
     TEST_CHECK(std::string_view(PszFormatString(app, std::string_view(rgNul, 3), {}).data()) == "A");
-    TEST_CHECK(PszFormatString(app, {}, {})[0] == 0);
+    TEST_CHECK(PszFormatString(app, {}, {}).data()[0] == 0);
     for (const char ch : std::string_view("eEIiLlZSmMPpFsjgGoOuzknUVv")) {
         const std::string sz = std::string("prefix\\") + ch;
         TEST_CHECK(std::string_view(PszFormatString(app, sz, {}).data()) == "prefix");
@@ -502,7 +504,7 @@ static void TestDefinitionLineVariants(void) {
 }
 
 static void TestFormattedTextBounds(void) {
-    std::array<char, 256> szMessage{};
+    MESSAGETEXTRESULT szMessage{};
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
 #else

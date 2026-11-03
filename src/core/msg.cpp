@@ -567,9 +567,9 @@ static MESSAGETEXTRESULT PszFormatStringResult(APPSESSION &app, std::string_view
 
 MESSAGETEXTRESULT PszFormatMessage(APPSESSION &app, MessageId idm, std::span<const std::int16_t> pParams) { return PszFormatStringResult(app, PszGetCompressedMessage(app, idm).data(), pParams); }
 
-std::array<char, 256> PszFormatString(APPSESSION &app, std::string_view pszFormat, std::span<const std::int16_t> pParamsReal) { return PszFormatStringResult(app, pszFormat, pParamsReal).sz; }
+MESSAGETEXTRESULT PszFormatString(APPSESSION &app, std::string_view pszFormat, std::span<const std::int16_t> pParamsReal) { return PszFormatStringResult(app, pszFormat, pParamsReal); }
 
-std::array<char, 256> PszFormatIds(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }
+MESSAGETEXTRESULT PszFormatIds(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams) { return PszFormatString(app, TextIO().pfnCompressed(app, ids).data(), pParams); }
 
 std::int16_t FRemovePlayerMessage(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj) {
     std::uint8_t *lpbMax;
