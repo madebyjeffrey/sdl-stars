@@ -314,10 +314,11 @@
         "typed-fixed-array-size-queries",
         "bounded-help-filename-case-comparison",
         "scanner-private-boolean-helper-results",
-        "message-format-result-byte-count"
+        "message-format-result-byte-count",
+        "bounded-text-destination-classification"
       ],
       "pending_substeps": [
-        "bounded-text-destinations",
+        "formatter-caller-return-audit",
         "post-migration-scratch-storage-and-borrowed-return-audit"
       ],
       "metadata_scan": {
@@ -28716,7 +28717,7 @@
       },
       "status": "No additional owned native file/path output-pointer interfaces found; L06 substep closed.",
       "remaining_work": [
-        "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+        "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
       ]
@@ -28893,7 +28894,7 @@
     "latest_batch": "Return hull initiative values",
     "latest_published_head": "8eb069fc",
     "active_stages": [
-      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+      "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
     ],
     "pending_stage": "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome.",
@@ -29353,7 +29354,7 @@
       "current_source_after_c5378ae9": "Windows/Linux qualification remains pending; local macOS/host units and regressions pass through this source commit."
     },
     "remaining_work": [
-      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+      "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
@@ -29784,7 +29785,7 @@
       "diff_check": "Pass.",
       "status": "Source commit 28417798 verified locally; ledger checkpoint recorded.",
       "remaining_work": [
-        "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+        "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
       ],
@@ -29854,7 +29855,7 @@
     "next": "D06 qualify native Windows/Linux adapters and complete remaining platform/full-suite checks; then assess expansion beyond current eight UI callers."
   },
   "remaining_work": [
-    "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+    "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
     "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
     "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
   ],
@@ -30335,7 +30336,7 @@
       "diff_check": "Pass.",
       "status": "Source commit 6391e1fe and ledger checkpoint 4155e4b0 are published on origin/develop. macOS SDL Debug build, focused game-library publication/safety/delete/file-workflow checks, desktop units 18/18, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux qualification remains open.",
       "remaining_work": [
-        "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+        "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
         "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
         "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
       ],
@@ -30343,7 +30344,7 @@
       "ledger_commit": "4155e4b0ee388e05d227dc38ca3b0b845b7141fa"
     },
     "remaining_work": [
-      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+      "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, then resolve any failures and record the final macro/C inventory outcome."
     ],
@@ -30660,23 +30661,23 @@
     "api_audit": "PszFormatString, PszFormatIds and TEXTIO::pfnFormat preserve MESSAGETEXTRESULT, including its exact UTF-8 byte count. Formatting output and buffer capacity remain unchanged.",
     "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
     "diff_check": "Pass.",
-    "status": "Source commit 29a731f9 verified locally; L05/L06 reports recorded.",
+    "status": "Source commit 5988b374 committed after static source review; git diff --check passes. Current L05 build and runtime suites have not been run; L05/L06 reports recorded.",
     "remaining_work": [
-      "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
+      "L05: complete the snprintf-style caller-return audit, remaining const-text interfaces, and the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
       "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
     ],
     "next": "Use docs/CPP-LIVE-L05-REPORT.md and docs/CPP-LIVE-L06-REPORT.md to close the remaining text/ownership and buffer/length audits, then qualify the current source on Windows/Linux and close chooser coverage."
   },
   "latest_l05_destination_scan": {
-    "source_commit": "c845deb9",
-    "formatter_destination_callsites": 626,
-    "cch_sprintf_utf8_prefix_sites": 432,
-    "cch_snprintf_bounded_span_sites": 194,
+    "source_commit": "5988b374",
+    "formatter_destination_callsites": 625,
+    "cch_sprintf_utf8_prefix_sites": 439,
+    "cch_snprintf_bounded_span_sites": 186,
     "legacy_owned_c_string_copy_calls": 0,
     "report": "docs/CPP-LIVE-L05-DESTINATION-SCAN.md",
     "callsite_inventory": "docs/CPP-LIVE-L05-FORMATTER-DESTINATIONS.csv",
-    "status": "Scan and capacity/truncation inventory recorded. L05 bounded-text-destinations remains open while unchecked fixed-size display formatting and caller-side strict truncation handling are reconciled.",
-    "formatter_inventory_rows_including_span_wrapper_declarations": 628
+    "status": "Destination classification is complete. Caller-return review remains open for 186 snprintf-style production calls; this pass repaired identified display and strict-path cases. The post-migration scratch/borrowed-return audit remains open.",
+    "formatter_inventory_rows_including_span_wrapper_declarations": 627
   }
 }
