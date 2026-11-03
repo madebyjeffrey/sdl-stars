@@ -2012,20 +2012,24 @@ static bool FPaletteDib(HDC lpdc, const BITMAPINFO *lpbmi, const void *lpBits, U
     WORD index;
     PALETTEENTRY pe;
     const BYTE *rgb = reinterpret_cast<const BYTE *>(lpbmi);
-    if (usage == win32::DIB_RGB_COLORS) return FCompatNativeDib(lpbmi, std::numeric_limits<std::size_t>::max(), lpBits, std::numeric_limits<std::size_t>::max(), lpdib);
-    if (usage != win32::DIB_PAL_COLORS || !lpbmi || lpbmi->bmiHeader.biSize != sizeof(info.bi)) return 0;
+    if (usage == win32::DIB_RGB_COLORS) {
+        if (!lpbmi || !lpdib) return false;
+        return FCompatNativeDib(lpbmi->bmiHeader, rgb, static_cast<const BYTE *>(lpBits), *lpdib);
+    }
+    if (usage != win32::DIB_PAL_COLORS || !lpbmi || lpbmi->bmiHeader.biSize != sizeof(info.bi)) return false;
     info.bi = lpbmi->bmiHeader;
-    if (info.bi.biBitCount != 1 && info.bi.biBitCount != 4 && info.bi.biBitCount != 8) return 0;
+    if (info.bi.biBitCount != 1 && info.bi.biBitCount != 4 && info.bi.biBitCount != 8) return false;
     c = info.bi.biClrUsed ? info.bi.biClrUsed : 1u << info.bi.biBitCount;
-    if (c > (1u << info.bi.biBitCount)) return 0;
+    if (c > (1u << info.bi.biBitCount)) return false;
     for (i = 0; i < c; i++) {
         std::memcpy(&index, rgb + sizeof(info.bi) + i * sizeof(index), sizeof(index));
-        if (index >= lpdc->lppalette->cEntries) return 0;
+        if (index >= lpdc->lppalette->cEntries) return false;
         pe = RgpeCompatPalette(lpdc->lppalette)[index];
         info.rgq[i] = RGBQUAD{pe.peBlue, pe.peGreen, pe.peRed, 0};
     }
     // The decoder copies the color table; only the caller's bits remain borrowed.
-    return FCompatNativeDib(&info, sizeof(info), lpBits, std::numeric_limits<std::size_t>::max(), lpdib);
+    if (!lpdib) return false;
+    return FCompatNativeDib(info.bi, reinterpret_cast<const BYTE *>(&info), static_cast<const BYTE *>(lpBits), *lpdib);
 }
 
 int win32::StretchDIBits(HDC hdc, int xDest, int yDest, int cxDest, int cyDest,

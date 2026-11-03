@@ -6,7 +6,7 @@
 #include <limits>
 
 static bool FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, std::size_t cbInfo,
-                           const void *lpBits, std::size_t cbBits, COMPATDIB *lpdib) {
+                           const BYTE *lpBits, std::size_t cbBits, COMPATDIB &dib) {
     std::size_t i;
 
     if (bi.biPlanes != 1 || bi.biCompression != win32::BI_RGB || bi.biWidth <= 0 ||
@@ -18,52 +18,47 @@ static bool FCompatDibInfo(const BITMAPINFOHEADER &bi, const BYTE *rgb, std::siz
     if (bi.biWidth > 16384 || bi.biHeight > 16384 || bi.biHeight < -16384 ||
         static_cast<std::uint64_t>(bi.biWidth) * static_cast<std::uint64_t>((bi.biHeight < 0 ? -bi.biHeight : bi.biHeight)) > std::uint64_t{67108864})
         return SDL_SetError("DIB exceeds the initial 16384-axis / 64M-pixel limit");
-    *lpdib = {};
-    lpdib->cx = bi.biWidth;
-    lpdib->cy = bi.biHeight < 0 ? -bi.biHeight : bi.biHeight;
-    lpdib->fTopDown = bi.biHeight < 0;
-    lpdib->cBits = bi.biBitCount;
-    lpdib->cColors = bi.biBitCount <= 8 ? static_cast<int>((bi.biClrUsed ? bi.biClrUsed : 1u << bi.biBitCount)) : 0;
-    if (bi.biClrUsed > 256 || (lpdib->cColors != 0 && lpdib->cColors > (1 << bi.biBitCount)) ||
+    dib = {};
+    dib.cx = bi.biWidth;
+    dib.cy = bi.biHeight < 0 ? -bi.biHeight : bi.biHeight;
+    dib.fTopDown = bi.biHeight < 0;
+    dib.cBits = bi.biBitCount;
+    dib.cColors = bi.biBitCount <= 8 ? static_cast<int>((bi.biClrUsed ? bi.biClrUsed : 1u << bi.biBitCount)) : 0;
+    if (bi.biClrUsed > 256 || (dib.cColors != 0 && dib.cColors > (1 << bi.biBitCount)) ||
         (bi.biBitCount > 8 && bi.biClrUsed != 0))
         return SDL_SetError("Invalid DIB color table");
-    lpdib->cbInfo = cbWireDibHeader + static_cast<std::size_t>(lpdib->cColors) * cbWireRgbQuad;
-    lpdib->cbRow = ((static_cast<std::size_t>(lpdib->cx) * lpdib->cBits + 31) / 32) * 4;
-    lpdib->cbBits = lpdib->cbRow * static_cast<std::size_t>(lpdib->cy);
-    if (cbInfo < lpdib->cbInfo || cbBits < lpdib->cbBits || !lpBits ||
-        (bi.biSizeImage != 0 && bi.biSizeImage < lpdib->cbBits))
+    dib.cbInfo = cbWireDibHeader + static_cast<std::size_t>(dib.cColors) * cbWireRgbQuad;
+    dib.cbRow = ((static_cast<std::size_t>(dib.cx) * dib.cBits + 31) / 32) * 4;
+    dib.cbBits = dib.cbRow * static_cast<std::size_t>(dib.cy);
+    if (cbInfo < dib.cbInfo || cbBits < dib.cbBits || !lpBits ||
+        (bi.biSizeImage != 0 && bi.biSizeImage < dib.cbBits))
         return SDL_SetError("Truncated DIB color table or pixel buffer");
-    for (i = 0; i < static_cast<std::size_t>(lpdib->cColors); i++)
-        lpdib->rgcr[i] = win32::RGB(rgb[cbWireDibHeader + i * 4 + 2], rgb[cbWireDibHeader + i * 4 + 1], rgb[cbWireDibHeader + i * 4]);
-    lpdib->lpBits = static_cast<const BYTE *>((lpBits));
-    return 1;
+    for (i = 0; i < static_cast<std::size_t>(dib.cColors); i++)
+        dib.rgcr[i] = win32::RGB(rgb[cbWireDibHeader + i * 4 + 2], rgb[cbWireDibHeader + i * 4 + 1], rgb[cbWireDibHeader + i * 4]);
+    dib.lpBits = lpBits;
+    return true;
 }
 
-BOOL FCompatDib(std::span<const BYTE> rgbInfo, std::span<const BYTE> rgbBits, COMPATDIB &dib) {
+bool FCompatDib(std::span<const BYTE> rgbInfo, std::span<const BYTE> rgbBits, COMPATDIB &dib) {
     BITMAPINFOHEADER bi;
     std::uint32_t cbHeader;
 
-    if (rgbInfo.size() < 4) return 0;
+    if (rgbInfo.size() < 4) return false;
     NATIVEBYTEREADER(std::as_bytes(rgbInfo.first(4))).FReadU32Le(cbHeader);
     if (cbHeader != cbWireDibHeader || rgbInfo.size() < cbWireDibHeader)
         return SDL_SetError("DIB input requires a BITMAPINFOHEADER");
     FDecodeDibHeader(std::as_bytes(rgbInfo.first(cbWireDibHeader)), bi);
-    return FCompatDibInfo(bi, rgbInfo.data(), rgbInfo.size(), rgbBits.data(), rgbBits.size(), &dib);
+    return FCompatDibInfo(bi, rgbInfo.data(), rgbInfo.size(), rgbBits.data(), rgbBits.size(), dib);
 }
 
 // Genuine GDI callers supply native SDK headers/palette storage. Keep this
 // native-layout seam separate from embedded-resource decoding.
-BOOL FCompatNativeDib(const void *lpInfo, std::size_t cbInfo, const void *lpBits, std::size_t cbBits, COMPATDIB *lpdib) {
-    BITMAPINFOHEADER bi;
-    DWORD cbHeader;
-
+bool FCompatNativeDib(const BITMAPINFOHEADER &bi, const BYTE *rgbInfo, const BYTE *lpBits, COMPATDIB &dib) {
     static_assert(sizeof(BITMAPINFOHEADER) == cbWireDibHeader && sizeof(RGBQUAD) == cbWireRgbQuad);
-    if (!lpInfo || !lpdib || cbInfo < sizeof(cbHeader)) return 0;
-    std::memcpy(&cbHeader, lpInfo, sizeof(cbHeader));
-    if (cbHeader != sizeof(bi) || cbInfo < sizeof(bi))
+    if (bi.biSize != sizeof(bi))
         return SDL_SetError("DIB input requires a BITMAPINFOHEADER");
-    std::memcpy(&bi, lpInfo, sizeof(bi));
-    return FCompatDibInfo(bi, static_cast<const BYTE *>(lpInfo), cbInfo, lpBits, cbBits, lpdib);
+    return FCompatDibInfo(bi, rgbInfo, std::numeric_limits<std::size_t>::max(),
+                          lpBits, std::numeric_limits<std::size_t>::max(), dib);
 }
 
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib) {

@@ -222,8 +222,8 @@ struct COMPATDIB {
     const BYTE *lpBits;
 };
 
-BOOL FCompatDib(std::span<const BYTE> rgbInfo, std::span<const BYTE> rgbBits, COMPATDIB &dib);
-BOOL FCompatNativeDib(const void *lpInfo, std::size_t cbInfo, const void *lpBits, std::size_t cbBits, COMPATDIB *lpdib);
+bool FCompatDib(std::span<const BYTE> rgbInfo, std::span<const BYTE> rgbBits, COMPATDIB &dib);
+bool FCompatNativeDib(const BITMAPINFOHEADER &bi, const BYTE *rgbInfo, const BYTE *lpBits, COMPATDIB &dib);
 SDL_Surface *LpCompatDibSurface(const COMPATDIB *lpdib);
 HBITMAP HbmpCompatResource(const BYTE *rgb, std::size_t cb);
 
