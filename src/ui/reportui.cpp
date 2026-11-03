@@ -1173,6 +1173,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
     std::array<char, 360> szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     PLANETNAMERESULT szPlanetName{};
+    FLEETNAMERESULT szFleetName{};
     std::array<char, 360> szReportText{};
     std::uint8_t *lpbd;
     char     szT[100];
@@ -1394,9 +1395,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             if (app.state.sel.grobj == grobjFleet && app.state.sel.fl.id == lpfl->id) {
                 win32::SetTextColor(hdc, 127);
             }
-            szObjectName = PszGetFleetName(app, lpfl->id);
-            psz = szObjectName.data();
-            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+            szFleetName = PszGetFleetNameResult(app, lpfl->id);
+            win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, szFleetName.data(), static_cast<int>(szFleetName.size()), nullptr);
             break;
         case colFleetLocation:
             if (lpfl->idPlanet != idPlanetDeepSpace) {
@@ -1569,9 +1569,8 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 if (app.state.sel.scan.grobj == grobjFleet && app.state.rglpfl[app.state.sel.scan.ifl]->id == lpfl->id) {
                     win32::SetTextColor(hdc, 127);
                 }
-                szObjectName = PszGetFleetName(app, lpfl->id);
-                psz = szObjectName.data();
-                win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, std::strlen(psz), nullptr);
+                szFleetName = PszGetFleetNameResult(app, lpfl->id);
+                win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, szFleetName.data(), static_cast<int>(szFleetName.size()), nullptr);
                 break;
             case colEnemyFleetLocation:
                 if (lpfl->idPlanet != idPlanetDeepSpace) {

@@ -526,6 +526,9 @@ static void test_ObjectName_contract(void) {
     TEST_CHECK(std::string_view(PszFormatString(app, "\\p|\\w", std::span<const std::int16_t>{rgParams}).data()) == "007|007");
     app.state.idPlayer = 0;
     CchCopyUtf8Prefix(std::span{app.state.rgplr[1].szName}, "Race-\xce\xa9");
+    const auto szFleetResult = PszGetFleetNameResult(app, 512);
+    TEST_CHECK(szFleetResult.view() == "Race-\xce\xa9 Fleet #1");
+    TEST_CHECK(szFleetResult.size() == std::string_view{"Race-\xce\xa9 Fleet #1"}.size());
     TEST_CHECK(SzObjectNameBytes(PszGetFleetName(app, 0)) == "Fleet #1");
     TEST_CHECK(SzObjectNameBytes(PszGetFleetName(app, 512)) == "Race-\xce\xa9 Fleet #1");
     rglpflSav = app.state.rglpfl; cFleetSav = app.state.cFleet;

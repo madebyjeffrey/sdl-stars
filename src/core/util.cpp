@@ -799,7 +799,7 @@ std::array<char, 360> PszGetThingName(APPSESSION &app, std::int16_t id) {
     return SzLocationLabel(app.state.szWork);
 }
 
-std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id) {
+FLEETNAMERESULT PszGetFleetNameResult(APPSESSION &app, std::int16_t id) {
     std::array<char, cchCatalogText> szCatalogLpsz{};
     std::int16_t cshdef;
     std::int16_t iplr;
@@ -821,7 +821,7 @@ std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id) {
         szPlr[0] = 0;
     }
     if (lpfl && lpfl->lpszName) {
-        CchSprintf(app.state.szWork, "%s%s", szPlr, lpfl->lpszName);
+        cch = CchSprintf(app.state.szWork, "%s%s", szPlr, lpfl->lpszName);
     } else {
         if (lpfl) {
             ishdef = IshdefPrimaryFromLpfl(app, lpfl, &cshdef);
@@ -843,9 +843,15 @@ std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id) {
             szCatalogLpsz = TextIO().pfnCompressed(app, idsFleet);
             lpsz = szCatalogLpsz.data();
         }
-        CchSprintf(app.state.szWork, "%s%s #%d", szPlr, lpsz, ifl + 1);
+        cch = CchSprintf(app.state.szWork, "%s%s #%d", szPlr, lpsz, ifl + 1);
     }
-    return SzLocationLabel(app.state.szWork);
+    FLEETNAMERESULT szResult{};
+    szResult.cch = CchCopyUtf8Prefix(std::span{szResult.rgch}, std::string_view{app.state.szWork, cch});
+    return szResult;
+}
+
+std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id) {
+    return PszGetFleetNameResult(app, id).rgch;
 }
 
 std::uint16_t WFromLpfl(APPSESSION &app, FLEET *lpfl) {

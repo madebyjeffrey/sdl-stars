@@ -43,6 +43,15 @@ struct PLANETNAMERESULT {
     std::size_t size() const noexcept { return cch; }
     std::string_view view() const noexcept { return {rgch.data(), cch}; }
 };
+struct FLEETNAMERESULT {
+    std::array<char, 360> rgch{};
+    std::size_t cch = 0;
+
+    char *data() noexcept { return rgch.data(); }
+    const char *data() const noexcept { return rgch.data(); }
+    std::size_t size() const noexcept { return cch; }
+    std::string_view view() const noexcept { return {rgch.data(), cch}; }
+};
 PLAYERNAMERESULT PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr);
 std::int16_t  FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, std::int32_t *pdmgPeople, std::int32_t *pdmgPeopleMin, std::int32_t *pdmgPeopleSmart, std::int32_t *pdmgBldg, std::int32_t *ppctTerra,
                               std::int16_t *pfMulti);
@@ -57,6 +66,7 @@ std::int16_t  FLookupObject(APPSESSION &app, GrobjClass grobj, std::int16_t id, 
 std::int16_t  FLookupOrbitingXfer(APPSESSION &app, std::int16_t idPlanet, std::int16_t iNth, XFER *pxf, std::int16_t idSkip);
 std::array<char, 360> PszGetThingName(APPSESSION &app, std::int16_t id);
 std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id);
+FLEETNAMERESULT PszGetFleetNameResult(APPSESSION &app, std::int16_t id);
 std::uint16_t WFromLpfl(APPSESSION &app, FLEET *lpfl);
 std::array<char, 360> PszFleetNameFromWord(APPSESSION &app, std::uint16_t w);
 std::array<char, 360> PszGetPlanetName(APPSESSION &app, std::int16_t id);
