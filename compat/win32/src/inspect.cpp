@@ -20,7 +20,7 @@ static HWND (*pfnObjectInspector)(void);
 void StarsCompatSetObjectInspector(HWND (*pfnShow)(void)) {
     if (SDL_IsMainThread()) pfnObjectInspector = pfnShow;
 }
-static BOOL fInspectorClass;
+static bool fInspectorClass;
 static STARSCOMPATSNAPSHOT snapInspector;
 
 static void AppendStyle(std::span<char> rgch, std::size_t &cch, std::string_view pszName) {
@@ -265,7 +265,7 @@ static void InspectRows(HWND hwndList, std::uint64_t idParent, int cDepth) {
     }
 }
 
-static BOOL RefreshInspector(HWND hwnd) {
+static bool RefreshInspector(HWND hwnd) {
     std::optional<STARSCOMPATSNAPSHOT> snap;
     HWND hwndList = win32::GetDlgItem(hwnd, 1);
     snap = StarsCompatCaptureHierarchy();

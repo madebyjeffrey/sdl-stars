@@ -17,7 +17,7 @@ struct COMPATTIMER {
 
 static COMPATTIMER *lpTimers;
 static UINT_PTR idTimerNext = 1;
-static BOOL fEventsOwned;
+static bool fEventsOwned;
 
 static COMPATTIMER *LpTimer(HWND hwnd, UINT_PTR id) {
     COMPATTIMER *lp;

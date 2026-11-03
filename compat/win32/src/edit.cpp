@@ -169,7 +169,7 @@ static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUnd
     if (win32::IsWindow(hwnd)) ChangedEdit(hwnd, 1);
 }
 
-static BOOL UndoEdit(HWND hwnd) {
+static bool UndoEdit(HWND hwnd) {
     char *psz;
     UINT ichFirst, ichLast, cchBefore;
     hwnd->fEditTyping = 0;
@@ -197,10 +197,10 @@ static BOOL UndoEdit(HWND hwnd) {
     return 1;
 }
 
-static BOOL CopyEdit(HWND hwnd) {
+static bool CopyEdit(HWND hwnd) {
     UINT ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret), ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
     char *psz;
-    BOOL fOk;
+    bool fOk;
     std::size_t cch = ichLast - ichFirst;
     if (ichFirst == ichLast || (hwnd->dwStyle & win32::ES_PASSWORD)) return 0;
     psz = static_cast<char *>((SDL_malloc(cch + 1)));

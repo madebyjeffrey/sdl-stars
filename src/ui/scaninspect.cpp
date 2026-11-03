@@ -14,7 +14,7 @@
 
 static HWND hwndScanInspector;
 static SCANSNAPSHOT snapScanInspector;
-static BOOL fScanInspectorClass;
+static bool fScanInspectorClass;
 
 static bool FScannerReady(APPSESSION &app) {
     if (StarsCompatWindowId(app.lpui->hwndScanner) == 0) return 0;

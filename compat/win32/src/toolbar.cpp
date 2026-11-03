@@ -80,7 +80,7 @@ static int HitToolbar(COMPATTOOLBAR *lp, POINT pt) {
     return -lp->CButtons() - 1;
 }
 
-static BOOL AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rgbtn) {
+static bool AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rgbtn) {
     auto lptoolbarKeep = hwnd->lptoolbar;
     COMPATTOOLBAR *lp = lptoolbarKeep.get();
     std::vector<COMPATTOOLBUTTON> rgNew;

@@ -16,7 +16,7 @@ static unsigned int rgcClick[3];
 static BYTE rgbInput[256], rgbRead[256], rgbRecent[256], rgbAsync[256];
 static POINT ptCursor;
 static HWND hwndCursor;
-static BOOL fCursor, fInputKeys;
+static bool fCursor, fInputKeys;
 
 void CompatCopyInput(BYTE *rgb, LPPOINT lppt) {
     std::copy_n(rgbInput, sizeof(rgbInput), rgb);

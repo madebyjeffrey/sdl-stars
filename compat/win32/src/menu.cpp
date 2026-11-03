@@ -433,7 +433,7 @@ static void ClosePopups(COMPATTRACK *lpt, int cKeep) {
             win32::SendMessageA(lpt->hwndOwner, win32::WM_UNINITMENUPOPUP, reinterpret_cast<WPARAM>(lp->hmenu), 0);
     }
 }
-static BOOL OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) {
+static bool OpenPopup(COMPATTRACK *lpt, HMENU hmenu, int x, int y, int iParent) {
     HMENU lp;
     COMPATPOPUP *lppop;
     HDC hdc;
@@ -554,7 +554,7 @@ static int IMenuBarPoint(HWND hwnd, POINT pt) {
         if (win32::GetMenuItemRect(hwnd, lpwin->hmenu, static_cast<UINT>(i), &rc) && win32::PtInRect(&rc, pt)) return i;
     return -1;
 }
-static BOOL OpenMenuBar(COMPATTRACK *lpt, int i, BOOL fKeyboard) {
+static bool OpenMenuBar(COMPATTRACK *lpt, int i, bool fKeyboard) {
     HWND lpwin = LpCompatWindow(lpt->hwndOwner);
     HMENU lp = LpMenu(lpt->hmenuBar), hsub;
     RECT rc;
@@ -588,7 +588,7 @@ static void StepMenuBar(COMPATTRACK *lpt, int dir) {
         }
     }
 }
-static BOOL PopupInput(COMPATTRACK *lpt, const win32::MSG *lpmsg) {
+static bool PopupInput(COMPATTRACK *lpt, const win32::MSG *lpmsg) {
     COMPATPOPUP *lppop;
     HMENU lp;
     POINT pt;
@@ -681,7 +681,7 @@ static bool FMenuTracked(HMENU hmenu) {
     }
     return 0;
 }
-static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc, HMENU hbar, int iBar, BOOL fKeyboard) {
+static bool TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc, HMENU hbar, int iBar, bool fKeyboard) {
     COMPATTRACK track = {};
     HWND hwndCapture;
     win32::MSG msg;

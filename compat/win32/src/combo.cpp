@@ -178,7 +178,7 @@ static void ComboFont(HWND hwnd) {
     if (lp->hwndEdit) win32::SendMessageA(lp->hwndEdit, win32::WM_SETFONT, reinterpret_cast<WPARAM>(hwnd->hfontControl), 0);
     if (FCombo(hwnd, lp)) LayoutCombo(hwnd, 0);
 }
-static BOOL DrawComboItem(HWND hwnd, HDC hdc, const RECT *lprc, int i, BOOL fSelection, BOOL fSelected) {
+static bool DrawComboItem(HWND hwnd, HDC hdc, const RECT *lprc, int i, bool fSelection, bool fSelected) {
     auto lpcomboKeep = hwnd->lpcombo;
     COMPATCOMBO *lp = lpcomboKeep.get();
     DRAWITEMSTRUCT ds = {};

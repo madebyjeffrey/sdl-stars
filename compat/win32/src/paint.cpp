@@ -60,7 +60,7 @@ static COMPATOBJECT *lpObjects;
 static HDC lpDCs;
 static std::uintptr_t idDCNext = 1;
 static COMPATOBJECT rgStock[18];
-static BOOL fStock;
+static bool fStock;
 static PALETTEENTRY rgpeDefault[] = {
     {0, 0, 0, 0}, {128, 0, 0, 0}, {0, 128, 0, 0}, {128, 128, 0, 0},
     {0, 0, 128, 0}, {128, 0, 128, 0}, {0, 128, 128, 0}, {192, 192, 192, 0},

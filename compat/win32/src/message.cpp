@@ -162,7 +162,7 @@ void CompatStopAsyncMessages() noexcept {
     }
 }
 
-static BOOL PostOwnedMessage(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
+static bool PostOwnedMessage(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOAD payload, LPARAM lParam) {
     {
         std::unique_lock guard(lockPosts);
         if (!fAcceptPosts) return 0;
@@ -175,7 +175,7 @@ static BOOL PostOwnedMessage(std::uint64_t idWindow, UINT msg, STARSCOMPATPAYLOA
     return 1;
 }
 
-static BOOL PushAsyncPost(COMPATASYNCPOST *lp) noexcept {
+static bool PushAsyncPost(COMPATASYNCPOST *lp) noexcept {
     COMPATASYNCOWNER producer(lp);
     {
         std::unique_lock guard(lockPosts);
