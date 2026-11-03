@@ -27100,7 +27100,7 @@
     "reason": "Resume the live C++ cleanup after publishing the toolbar ownership batch and accumulated cleanup commits to develop.",
     "branch": "develop",
     "latest_batch": "L05 retire lstrlenA and bound UI text measurement",
-    "latest_published_head": "bdba7844",
+    "latest_published_head": "0ef5060e",
     "active_stages": [
       "L05: finish remaining bounded text destinations and const-text interfaces; complete the post-migration scratch-storage and borrowed-return audit.",
       "L06: finish remaining buffer/length service interfaces and native file/path result work; complete chooser Milestone D native Windows/Linux qualification and any missing end-to-end chooser coverage."
@@ -27118,7 +27118,7 @@
       "windows_sdk_matrix": "failure: SDK build subprocess returned exit status 1; detailed SDK artifact log was unavailable.",
       "windows_sdl": "failure: entry.cpp unused argc under -Werror; fixed in 60a94d06.",
       "linux_desktop": "failure: win32_fileworkflow omitted STARS_TEST_GAME_PATH; fixed in 75767e02.",
-      "current_source_rerun": "No run exists for the pushed head bdba7844 (Actions query total_count 0). The connected GitHub tools cannot dispatch a workflow; Windows SDL/Linux desktop qualification remains pending."
+      "current_source_rerun": "No run exists for the pushed head 0ef5060e (Actions query total_count 0). The connected GitHub tools cannot dispatch a workflow; Windows SDL/Linux desktop qualification remains pending."
     },
     "restart_order": [
       "Continue L05 bounded text destinations, const-text interfaces and scratch/borrowed-return audit.",
@@ -27462,7 +27462,7 @@
       }
     ],
     "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "latest_batch_status": "Committed as 5a62be5e. Strict macOS SDL Debug build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open.",
+    "latest_batch_status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
     "platform_ci": {
       "current_source_after_fc3bb6a0": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
       "current_source_after_4983e9ac": "Windows/Linux qualification remains pending; prior CI evidence predates this source commit.",
@@ -27501,7 +27501,7 @@
   },
   "current_checkpoint": {
     "batch": "L05 retire lstrlenA and bound UI text measurement",
-    "status": "Committed locally as 5a62be5e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. This commit is not yet published; Windows/Linux qualification remains open.",
+    "status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
     "parent": "0719d5f6",
     "change": "Retired win32::lstrlenA. RightTextOut measures NUL termination only inside its mutable span; DrawScannerSBar uses the count returned by its UTF-8 copy.",
     "verification": {
@@ -27931,8 +27931,8 @@
       "borrowed_return_audit": "Removed redundant SDL window-title duplication, Windows chooser malloc/realloc buffers, and dialog-template per-field/item allocations. Remaining text/scratch/borrowed-return audit is still active."
     },
     "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "latest_batch_status": "Committed as 5a62be5e. Strict macOS SDL Debug build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open.",
-    "latest_published_head": "bdba7844",
+    "latest_batch_status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
+    "latest_published_head": "0ef5060e",
     "latest_batch_verification": {
       "batch": "L05 retire lstrlenA and bound UI text measurement",
       "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
@@ -28007,7 +28007,7 @@
     "branch": "develop",
     "batch": "L05 retire lstrlenA and bound UI text measurement",
     "source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-    "status": "Committed locally as 5a62be5e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. This commit is not yet published; Windows/Linux qualification remains open.",
+    "status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
     "changes": [
       "PopupMenu label arrays now use optional string_view entries, preserving null submenu markers while supporting bounded labels.",
       "Labels and submenu titles are copied into owned strings only at the NUL-terminated Win32 menu boundary.",
@@ -28462,7 +28462,7 @@
     }
   },
   "latest_source_commit": "5a62be5ec0b73d2c57525e9db2a0a27013eb4630",
-  "latest_batch_status": "Committed as 5a62be5e. Strict macOS SDL Debug build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences/errors, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open.",
+  "latest_batch_status": "Published to origin/develop at 0ef5060e. Strict macOS SDL build, desktop units 18/18, win32_services 1/1, native regression 519 matches with zero differences, and tutorial smoke 1/1 pass. Windows/Linux current-source qualification remains open; GitHub has no workflow run for this head.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
