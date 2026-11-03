@@ -1739,17 +1739,22 @@ std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
     char *pch, *pchBackslash;
     std::int16_t      fRet;
     std::size_t ichFileName, ichFileExtension, cchDirectory;
+    std::size_t cchFile;
+    int cchCopy;
 
     if (app.state.ini.fStartupFile) {
-        CchCopyUtf8(std::span{szFile}, app.state.szBase);
+        cchCopy = CchCopyUtf8(std::span{szFile}, app.state.szBase);
+        if (cchCopy < 0) return 0;
+        cchFile = static_cast<std::size_t>(cchCopy);
         pch = std::strrchr(app.state.szBase, chDirSep);
         if (pch)
             *pch = 0;
         pch = std::strrchr(szFile, 46);
         if (!pch) {
             SetSzWorkFromDt(app, dtHost, iplrNone);
-            if (CchCopyUtf8(std::span{szFile}, app.state.szWork) < 0)
-                return 0;
+            cchCopy = CchCopyUtf8(std::span{szFile}, app.state.szWork);
+            if (cchCopy < 0) return 0;
+            cchFile = static_cast<std::size_t>(cchCopy);
             pch = std::strrchr(szFile, 46);
         }
         ichFileExtension = static_cast<std::size_t>(pch - szFile + 1);
@@ -1766,7 +1771,10 @@ std::int16_t FOpenGame(APPSESSION &app, HWND hwnd, std::int16_t fRaceOnly) {
     request.rgFilters = ui::files::RgParseFilters(std::string_view{rgchFilterText.data()});
     result = ui::files::ChooseFile(hwnd, std::move(request));
     pSelected = std::get_if<win32::files::FILESELECTIONSELECTED>(&result);
-    if (!pSelected || CchCopyUtf8(std::span{szFile}, pSelected->szPath) < 0) return 0;
+    if (!pSelected) return 0;
+    cchCopy = CchCopyUtf8(std::span{szFile}, pSelected->szPath);
+    if (cchCopy < 0) return 0;
+    cchFile = static_cast<std::size_t>(cchCopy);
     pch = std::strrchr(szFile, '/');
     pchBackslash = std::strrchr(szFile, '\\');
     if (pchBackslash && (!pch || pchBackslash > pch)) pch = pchBackslash;
@@ -1779,7 +1787,7 @@ LGotFileName:
     if (fRaceOnly) {
         if (fRet > 0) {
             if (!FIsManagedLibraryRaceFile(szFile)) return FImportLibraryRace(app, hwnd, szFile);
-            pch = szFile + std::strlen(szFile);
+            pch = szFile + cchFile;
             while (pch > szFile && pch[-1] != '/' && pch[-1] != '\\') pch--;
             return FLoadLibraryRace(app, hwnd, pch);
         }
