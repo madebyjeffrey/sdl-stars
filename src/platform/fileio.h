@@ -93,8 +93,8 @@ int ISyncNativeFile(NATIVEFILE *pf);
 int ICopyNativePermissions(NATIVEFILE *pf, std::string_view szExisting);
 std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(NATIVEFILE *pf);
 std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(std::string_view szPath);
-int FNativeStreamError(NATIVEFILE *pf);
-int FNativeStreamEof(NATIVEFILE *pf);
+bool FNativeStreamError(NATIVEFILE *pf);
+bool FNativeStreamEof(NATIVEFILE *pf);
 int ChGetNativeFile(NATIVEFILE *pf);
 int ChPutNativeFile(int ch, NATIVEFILE *pf);
 // Binary line bytes retain embedded NULs/newlines. A bounded view reserves a

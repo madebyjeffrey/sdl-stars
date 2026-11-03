@@ -17,7 +17,7 @@ static NATIVEFILE *copyOpen(std::string_view path, NATIVEFILEMODE mode) {
     return f;
 }
 static size_t copyRead(std::span<std::byte> data, NATIVEFILE *f) { return f == copySource && (faults & 1) ? 0 : CbReadNativeStream(data, f); }
-static int    copyError(NATIVEFILE *f) { return FNativeStreamError(f) || (f == copySource && (faults & 1)); }
+static bool   copyError(NATIVEFILE *f) { return FNativeStreamError(f) || (f == copySource && (faults & 1)); }
 static size_t copyWrite(std::span<const std::byte> data, NATIVEFILE *f) { return CbWriteNativeStream(faults & 2 ? data.first(data.size() / 2) : data, f); }
 static int    copyClose(NATIVEFILE *f) {
     int forced = (f == copySource && (faults & 4)) || (f == copyTarget && (faults & 8));

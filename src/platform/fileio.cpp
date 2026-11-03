@@ -384,8 +384,8 @@ int ISyncNativeFile(NATIVEFILE *pf) {
     return fsync(pf->fd);
 #endif
 }
-int FNativeStreamError(NATIVEFILE *pf) { return !pf || pf->fError; }
-int FNativeStreamEof(NATIVEFILE *pf) { return pf && pf->fEof; }
+bool FNativeStreamError(NATIVEFILE *pf) { return !pf || pf->fError; }
+bool FNativeStreamEof(NATIVEFILE *pf) { return pf && pf->fEof; }
 int ChGetNativeFile(NATIVEFILE *pf) { unsigned char ch; return CReadNative(std::span{&ch, 1}, pf) == 1 ? ch : EOF; }
 int ChPutNativeFile(int ch, NATIVEFILE *pf) { unsigned char byte = static_cast<unsigned char>(ch); return CWriteNative(std::span{&byte, 1}, pf) == 1 ? byte : EOF; }
 std::optional<std::size_t> CchGetNativeLine(std::span<char> sz, NATIVEFILE *pf) {
