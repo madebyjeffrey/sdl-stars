@@ -350,9 +350,11 @@ std::int64_t LSeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN o
 }
 int ISeekNativeFile(NATIVEFILE *pf, std::int64_t ib, NATIVESEEKORIGIN origin) { return LSeekNativeFile(pf, ib, origin) < 0 ? -1 : 0; }
 std::int64_t LNativePosition(NATIVEFILE *pf) { if (!pf) { errno = EBADF; return -1; } return pf->ib; }
-std::int64_t CbNativeFile(NATIVEFILE *pf) {
-    if (!pf) { errno = EBADF; return -1; }
-    return FileCall<std::int64_t>(pf, -1, [&] { return pf->Size(); });
+std::optional<std::int64_t> CbNativeFile(NATIVEFILE *pf) {
+    if (!pf) { errno = EBADF; return std::nullopt; }
+    const std::int64_t cb = FileCall<std::int64_t>(pf, -1, [&] { return pf->Size(); });
+    if (cb < 0) return std::nullopt;
+    return cb;
 }
 int ITruncateNativeFile(NATIVEFILE *pf, std::int64_t cb) {
     if (!pf || !(pf->grfAccess & 2) || cb < 0) { errno = EBADF; return -1; }
@@ -808,9 +810,7 @@ std::int32_t LNativeSeekLegacy(std::int16_t hf, std::int32_t ib, NATIVESEEKORIGI
 std::optional<std::int64_t> CbNativeSizeLegacy(std::int16_t hf) {
     return FileCall<std::optional<std::int64_t>>(nullptr, std::nullopt, [&]() -> std::optional<std::int64_t> {
         std::lock_guard<std::mutex> guard(Files().lock);
-        std::int64_t cb = CbNativeFile(LegacyFile(hf));
-        if (cb < 0) return std::nullopt;
-        return cb;
+        return CbNativeFile(LegacyFile(hf));
     });
 }
 void CloseNativeLegacy(std::int16_t hf) {

@@ -48,6 +48,8 @@ static void TestNativeFiles(void) {
     nfr = HfOpenFile(szFile, {.mdAccess = NATIVEFILEACCESS::readWrite, .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fTruncate = true});
     hfFile = nfr.hf; fMissing = nfr.fMissing;
     TEST_ASSERT(hfFile != -1 && !fMissing);
+    errno = 0;
+    TEST_CHECK(!CbNativeFile(nullptr) && errno == EBADF);
     TEST_CHECK(CbWriteFile(hfFile, std::as_bytes(std::span{"abcdef"}).first(6)) == 6 && CbFileSize(hfFile) == 6);
     TEST_CHECK(LSeekFile(hfFile, 2, NATIVESEEKORIGIN::begin) == 2 && CbReadFile(hfFile, std::as_writable_bytes(std::span{rgb}).first(static_cast<std::size_t>(4))) == 4 && memcmp(rgb, "cdef", 4) == 0);
     CloseFile(hfFile);

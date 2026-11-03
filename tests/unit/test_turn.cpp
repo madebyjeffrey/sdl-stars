@@ -109,8 +109,8 @@ static void test_DefinitionCreation_logging(void) {
         NATIVEFILEOWNER lpfile(PfNativeOpen(szFile.c_str(), NATIVEFILEMODE::read), ICloseNativeFile);
         TEST_ASSERT(lpfile);
         const auto cb = CbNativeFile(lpfile.get());
-        TEST_ASSERT(cb >= 0 && cb < 16000);
-        szDefinition.resize(static_cast<std::size_t>(cb));
+        TEST_ASSERT(cb && *cb < 16000);
+        szDefinition.resize(static_cast<std::size_t>(*cb));
         TEST_ASSERT(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{szDefinition})) == szDefinition.size());
     }
     {
@@ -318,8 +318,8 @@ static std::vector<std::byte> RgbReadBackupFile(const std::string &szFile) {
     NATIVEFILEOWNER lpfile(PfNativeOpen(szFile.c_str(), NATIVEFILEMODE::read), ICloseNativeFile);
     TEST_ASSERT_(lpfile, "open %s", szFile.c_str());
     const auto cb = CbNativeFile(lpfile.get());
-    TEST_ASSERT(cb >= 0 && cb < 65536);
-    std::vector<std::byte> rgb(static_cast<std::size_t>(cb));
+    TEST_ASSERT(cb && *cb < 65536);
+    std::vector<std::byte> rgb(static_cast<std::size_t>(*cb));
     TEST_ASSERT(CbReadNativeFile(lpfile.get(), rgb) == rgb.size());
     return rgb;
 }

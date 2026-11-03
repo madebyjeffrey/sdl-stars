@@ -213,15 +213,15 @@ UINT win32::_lwrite(HFILE hf, LPCCH rgb, UINT cb) {
 
 DWORD win32::GetFileSize(HANDLE h, LPDWORD lpdwHigh) {
     COMPATFILE *lp;
-    std::int64_t cb;
+    std::optional<std::int64_t> cb;
     DWORD dw = win32::INVALID_FILE_SIZE;
     INT_PTR id = reinterpret_cast<INT_PTR>(h);
 
     std::unique_lock lockFiles(fFileLock);
     lp = id >= 0 && id <= std::numeric_limits<int>::max() ? LpFile(static_cast<HFILE>(id)) : nullptr;
-    if (lp && (cb = CbNativeFile(lp->pf)) >= 0) {
-        dw = static_cast<DWORD>(static_cast<std::uint64_t>(cb));
-        if (lpdwHigh) *lpdwHigh = static_cast<DWORD>((static_cast<std::uint64_t>(cb) >> 32));
+    if (lp && (cb = CbNativeFile(lp->pf))) {
+        dw = static_cast<DWORD>(static_cast<std::uint64_t>(*cb));
+        if (lpdwHigh) *lpdwHigh = static_cast<DWORD>((static_cast<std::uint64_t>(*cb) >> 32));
         win32::SetLastError(win32::NO_ERROR);
     } else if (lp) win32::SetLastError(DwFileError());
     else win32::SetLastError(win32::ERROR_INVALID_HANDLE);

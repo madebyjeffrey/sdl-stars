@@ -16,8 +16,8 @@ static std::string SzReadReportFile(const std::string &szFile) {
     NATIVEFILEOWNER lpfile(PfNativeOpen(szFile.c_str(), NATIVEFILEMODE::read), ICloseNativeFile);
     TEST_ASSERT_(lpfile, "open %s", szFile.c_str());
     const auto cb = CbNativeFile(lpfile.get());
-    TEST_ASSERT(cb >= 0 && cb < 65536);
-    std::string sz(static_cast<std::size_t>(cb), '\0');
+    TEST_ASSERT(cb && *cb < 65536);
+    std::string sz(static_cast<std::size_t>(*cb), '\0');
     TEST_ASSERT(CbReadNativeFile(lpfile.get(), std::as_writable_bytes(std::span{sz})) == sz.size());
     return sz;
 }
