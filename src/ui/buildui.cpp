@@ -1144,7 +1144,7 @@ void DrawBuildSelComp(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw) {
         rc.left += 8;
         rc.right -= 8;
         c = hsShip.cItem;
-        PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, rgCosts);
+        PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, std::span<std::uint16_t, 4>{rgCosts});
         for (k = 0; k < 3; k++) {
             rc.top += app.state.dyArial8;
             win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);

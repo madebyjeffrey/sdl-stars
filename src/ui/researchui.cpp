@@ -946,7 +946,7 @@ void DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_
             }
         }
         dxStr += 77;
-        PartQueryIO().pfnTrueCost(app, app.state.idPlayer, ppart, rgCosts);
+        PartQueryIO().pfnTrueCost(app, app.state.idPlayer, ppart, std::span<std::uint16_t, 4>{rgCosts});
         for (i = 0; i <= 5; i++) {
             if (i != 4 && i != 3) {
                 win32::SelectObject(hdc, app.lpui->rghfontArial8[1]);

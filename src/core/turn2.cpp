@@ -133,12 +133,12 @@ void Produce(APPSESSION &app) {
                         continue;
                     }
                     prodPartial.cItem = 0;
-                    cBuilt = ProductionIO().pfnBuild(app, lppl, lpprod, &prodPartial, rgResAvail, fPrevProdIsAlch, &mdStatusRaw, 0);
+                    cBuilt = ProductionIO().pfnBuild(app, lppl, lpprod, &prodPartial, std::span<std::int32_t, 4>{rgResAvail}, fPrevProdIsAlch, &mdStatusRaw, 0);
                     mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                     if (fAutoBuildDone && (mdStatus == mdProdStatSomeAuto || mdStatus == mdProdStatNoneAuto)) {
                         fAutoBuildDone = 0;
                     }
-                    if (cBuilt > 0 && !ProductionIO().pfnApply(app, lppl, static_cast<GrobjClass>(lpprod->grobj), lpprod->iItem, cBuilt, rgResAvail) &&
+                    if (cBuilt > 0 && !ProductionIO().pfnApply(app, lppl, static_cast<GrobjClass>(lpprod->grobj), lpprod->iItem, cBuilt, std::span<std::int32_t, 4>{rgResAvail}) &&
                         (lpprod->grobj != grobjPlanet || lpprod->iItem >= mdIdleFactory)) {
                         lpprod->cItem = 0;
                     }

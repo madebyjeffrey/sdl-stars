@@ -1577,7 +1577,7 @@ void UpdateShdefCost(APPSESSION &app, SHDEF *lpshdef) {
     lphul = &PartQueryIO().pfnHull(lpshdef->hul.ihuldef)->hul;
     part.hs.grhst = hstNone;
     part.SetPhul(lphul);
-    PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, rgCosts);
+    PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, std::span<std::uint16_t, 4>{rgCosts});
     for (c = 0; c < 3; c++) {
         rgMin[c] = static_cast<std::uint32_t>(rgCosts[c]);
     }
@@ -1589,7 +1589,7 @@ void UpdateShdefCost(APPSESSION &app, SHDEF *lpshdef) {
         if (lphul->rghs[c].cItem > 0) {
             part.hs = lphul->rghs[c];
             PartQueryIO().pfnLookup(app, &part);
-            PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, rgCosts);
+            PartQueryIO().pfnTrueCost(app, app.state.idPlayer, &part, std::span<std::uint16_t, 4>{rgCosts});
             for (k = 0; k < 3; k++) {
                 rgMin[k] += static_cast<std::uint32_t>((lphul->rghs[c].cItem * rgCosts[k]));
             }
