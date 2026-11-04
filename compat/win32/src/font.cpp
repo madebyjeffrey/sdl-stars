@@ -297,7 +297,7 @@ std::optional<SIZE> FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz)
 }
 
 bool FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
-                          void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv) {
+                          void (*pfn)(COMPATTEXTDRAW &, std::int64_t, std::int64_t, BYTE), COMPATTEXTDRAW &draw) {
     LOGFONTA lf;
     COMPATGLYPH *lp, *lpRaster;
     int i = 0, j, x, y;
@@ -323,7 +323,7 @@ bool FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<co
         if (!lp || !lpRaster) return 0;
         for (y = 0; y < lpRaster->cy; y++) for (x = 0; x < lpRaster->cx; x++)
             if (lpRaster->rgb[static_cast<std::size_t>(y) * lpRaster->cx + x])
-                pfn(lpv, dx * iScale + lpRaster->x + x,
+                pfn(draw, dx * iScale + lpRaster->x + x,
                     lpfont->tm.tmAscent * iScale - (iScale == 1 ? lpfont : lpfont->lpScaled.get())->tm.tmAscent + lpRaster->y + y,
                     lpRaster->rgb[static_cast<std::size_t>(y) * lpRaster->cx + x]);
         // Keep logical advances and baselines: Retina rasterization must not reflow the UI.

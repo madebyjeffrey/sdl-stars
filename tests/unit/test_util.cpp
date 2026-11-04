@@ -418,13 +418,12 @@ static void test_FLookupPart_host(void) {
 #endif
     COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
 
-    PART part;
+    PART part{};
     NATIVEPARTCOMMONVIEW comPrior;
     ENGINE *pengine;
     int16_t cMassSav;
     int16_t idPlayerSav = app.state.idPlayer;
 
-    memset(&part, 0, sizeof(part));
     app.state.idPlayer = iplrNone;
     TEST_CHECK(FLookupPartX(app, &part, hstEngine, iengineSettlersDelight) == mdPartAvailAvailable);
     TEST_CHECK(part.pengine() == LpengineFromId(iengineSettlersDelight));

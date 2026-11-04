@@ -394,13 +394,13 @@ std::int16_t FLookupPart(APPSESSION &app, PART *ppart) {
     return app.state.idPlayer == iplrNone ? static_cast<int>(mdPartAvailAvailable) : PartQueryIO().pfnTechStatus(app, std::span<const std::int8_t, 6>{ppart->pcom().rgTech(), 6});
 }
 
-void LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart) {
-    ppart->hs.iItem = iplanetarySnooper620X;
-    ppart->hs.grhst = hstPlanetary;
-    while (ppart->hs.iItem >= iplanetaryViewer50 && PartQueryIO().pfnLookup(app, ppart) != mdPartAvailAvailable && ppart->hs.iItem != iplanetaryViewer50) {
-        ppart->hs.iItem--;
+PART LookupBestPlanetaryScanner(APPSESSION &app, PART part) {
+    part.hs.iItem = iplanetarySnooper620X;
+    part.hs.grhst = hstPlanetary;
+    while (part.hs.iItem >= iplanetaryViewer50 && PartQueryIO().pfnLookup(app, &part) != mdPartAvailAvailable && part.hs.iItem != iplanetaryViewer50) {
+        part.hs.iItem--;
     }
-    return;
+    return part;
 }
 
 std::int16_t TechStatus(APPSESSION &app, std::span<const std::int8_t, 6> rgTech) {

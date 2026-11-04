@@ -223,6 +223,7 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
     std::int16_t      yOffset;
     HBRUSH       hbrSav;
     HCURSOR      hcs;
+    FRAMEWINDOWPOINTRESULT framePoint;
     POINT16      ptOld;
     PaneSplitter grSel;
     std::int16_t      grSelRaw;
@@ -557,12 +558,13 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         hcs = nullptr;
         if (win32::IsIconic(hwnd) != 0)
             goto Default;
-        GetCursorPos16(&pt);
-        ScreenToClient16(app.lpui->hwndFrame, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(app.lpui->hwndFrame, pt).pt;
         ControlIO().pfnGetClientRect(hwnd, &rc);
         if (win32::PtInRect(&rc, PointFrom16(pt)) == 0)
             goto Default;
-        hcs = HcrsFromFrameWindowPt(app, pt, nullptr);
+        framePoint = HcrsFromFrameWindowPt(app, pt);
+        hcs = framePoint.hcs;
         if (!hcs)
             goto Default;
         win32::SetCursor(hcs);
@@ -570,10 +572,12 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
     case win32::WM_LBUTTONDOWN:
         pt.x = LOWORD(lParam);
         pt.y = HIWORD(lParam);
-        hcs = HcrsFromFrameWindowPt(app, pt, &grSelRaw);
+        framePoint = HcrsFromFrameWindowPt(app, pt);
+        hcs = framePoint.hcs;
         if (!hcs) {
             return 0;
         }
+        grSelRaw = framePoint.grSel;
         grSel = static_cast<PaneSplitter>(grSelRaw);
         hdc = win32::GetDC(hwnd);
         hbrSav = static_cast<HBRUSH>(win32::SelectObject(hdc, app.lpui->hbr50Screen));
@@ -585,7 +589,9 @@ LRESULT  FrameWndProc(APPSESSION &app, HWND hwnd, UINT msg, WPARAM wParam, LPARA
         ptOld = pt;
         ptAct.y = 0;
         ptAct.x = 0;
-        while (FGetMouseMove(&pt)) {
+        for (MOUSEMOVERESULT mouseMove = FGetMouseMove(); ; mouseMove = FGetMouseMove()) {
+            if (mouseMove.point) pt = *mouseMove.point;
+            if (!mouseMove.fContinue) break;
             if (pt.x != ptOld.x || pt.y != ptOld.y) {
                 ptD.x = pt.x - ptStart.x;
                 ptD.y = pt.y - ptStart.y;
@@ -809,7 +815,7 @@ POINT16 InvertPaneBorder(APPSESSION &app, HDC hdc, PaneSplitter grSel, POINT16 d
     return dpt;
 }
 
-HCURSOR HcrsFromFrameWindowPt(APPSESSION &app, POINT16 pt, std::int16_t *pgrSel) {
+FRAMEWINDOWPOINTRESULT HcrsFromFrameWindowPt(APPSESSION &app, POINT16 pt) {
     HCURSOR hcs;
     std::int16_t fInHBar2;
     std::int16_t fInHBar1;
@@ -840,10 +846,7 @@ HCURSOR HcrsFromFrameWindowPt(APPSESSION &app, POINT16 pt, std::int16_t *pgrSel)
     } else {
         hcs = app.lpui->hcurResizeWE;
     }
-    if (pgrSel) {
-        *pgrSel = fInHBar1 * 2 + fInVBar + fInHBar2 * 4;
-    }
-    return hcs;
+    return {hcs, static_cast<std::int16_t>(fInHBar1 * 2 + fInVBar + fInHBar2 * 4)};
 }
 
 void RestoreSelection(APPSESSION &app) {
@@ -934,6 +937,7 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
     std::int32_t  ldx;
     HFONT    hfontPrintTiny;
     HFONT    hfontPrint;
+    HFONTPRINTERRESULT printerFont;
     POINT16  ptLegendB;
     POINT16  ptLegendA;
     std::int16_t  dyPrint;
@@ -1072,8 +1076,12 @@ void CommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam) {
                 dxDPI = win32::GetDeviceCaps(pd.hDC, win32::LOGPIXELSX);
                 dyDPI = win32::GetDeviceCaps(pd.hDC, win32::LOGPIXELSY);
                 dMargin = 32;
-                hfontPrint = HfontPrinterCreate(app, pd.hDC, 8, &dyPrint);
-                hfontPrintTiny = HfontPrinterCreate(app, pd.hDC, 5, &dyPrintTiny);
+                printerFont = HfontPrinterCreate(app, pd.hDC, 8);
+                hfontPrint = printerFont.hfont;
+                if (printerFont.dyFont) dyPrint = *printerFont.dyFont;
+                printerFont = HfontPrinterCreate(app, pd.hDC, 5);
+                hfontPrintTiny = printerFont.hfont;
+                if (printerFont.dyFont) dyPrintTiny = *printerFont.dyFont;
                 win32::SetBkMode(pd.hDC, win32::TRANSPARENT);
                 rc.top = 0;
                 rc.left = 0;
@@ -2034,8 +2042,8 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_SETCURSOR:
     case win32::WM_LBUTTONDOWN:
     case win32::WM_RBUTTONDOWN:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (pt.x < 6 || pt.x >= app.state.dyArial8 + 7 || pt.y < 48)
             break;
         iDiamond = static_cast<std::int16_t>((pt.y - 48)) / (app.state.dyArial8 + 4);
@@ -2061,7 +2069,7 @@ INT_PTR  HostModeDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                                                                                 : 3;
             win32::AppendMenuA(hmenuPopup, (i == iSel ? 8 : 0) | mf, i + 15000, app.state.szWork);
         }
-        ClientToScreen16(hwnd, &pt);
+        pt = ClientToScreen16(hwnd, pt).pt;
         tpm = message == win32::WM_LBUTTONDOWN ? win32::TPM_LEFTBUTTON : win32::TPM_RIGHTBUTTON;
         ui::TrackPopupMenu(hmenuPopup, win32::TPM_CENTERALIGN | tpm, pt.x, pt.y, 0, hwnd, nullptr);
         win32::DestroyMenu(hmenuPopup);
@@ -2283,15 +2291,16 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
     return;
 }
 
-void GetWindowRc(HWND hwnd, RECT *prc) {
+RECT GetWindowRc(HWND hwnd) {
     WINDOWPLACEMENT wndpl;
+    RECT rc;
 
     wndpl.length = 22;
     win32::GetWindowPlacement(hwnd, &wndpl);
-    *prc = wndpl.rcNormalPosition;
-    prc->right -= prc->left;
-    prc->bottom -= prc->top;
-    return;
+    rc = wndpl.rcNormalPosition;
+    rc.right -= rc.left;
+    rc.bottom -= rc.top;
+    return rc;
 }
 
 void SetWindowIniString(APPSESSION &app, HWND hwnd) {
@@ -2305,7 +2314,7 @@ void SetWindowIniString(APPSESSION &app, HWND hwnd) {
     } else {
         ch = 'R';
     }
-    GetWindowRc(hwnd, &rc);
+    rc = GetWindowRc(hwnd);
     CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsC04d04d04d04d).data(), ch, rc.left, rc.top, rc.right, rc.bottom);
     return;
 }

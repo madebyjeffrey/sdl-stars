@@ -18,14 +18,14 @@ static POINT ptCursor;
 static HWND hwndCursor;
 static bool fCursor, fInputKeys;
 
-void CompatCopyInput(BYTE *rgb, LPPOINT lppt) {
-    std::copy_n(rgbInput, sizeof(rgbInput), rgb);
-    if (fCursor) *lppt = ptCursor;
+std::optional<POINT> CompatCopyInput(std::span<BYTE, 256> rgb) {
+    std::copy(std::begin(rgbInput), std::end(rgbInput), rgb.begin());
+    return fCursor ? std::optional<POINT>{ptCursor} : std::nullopt;
 }
-void CompatReadInput(const BYTE *rgb) { std::copy_n(rgb, sizeof(rgbRead), rgbRead); }
+void CompatReadInput(std::span<const BYTE, 256> rgb) { std::copy(rgb.begin(), rgb.end(), std::begin(rgbRead)); }
 BOOL win32::SetKeyboardState(BYTE *rgb) {
     if (!SDL_IsMainThread() || !rgb) return 0;
-    CompatReadInput(rgb);
+    CompatReadInput(std::span<const BYTE, 256>{rgb, 256});
     return 1;
 }
 void CompatResetInput(void) {
@@ -62,11 +62,10 @@ static void InputModifiers(SDL_Keymod mod) {
     rgbInput[win32::VK_SCROLL] = static_cast<BYTE>(((rgbInput[win32::VK_SCROLL] & 0x80) | !!(mod & SDL_KMOD_SCROLL)));
 }
 
-static bool FInputPoint(float fx, float fy, int *lpx, int *lpy) {
+static std::optional<POINT> FInputPoint(float fx, float fy) {
     if (!std::isfinite(fx) || !std::isfinite(fy) || static_cast<double>(fx) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(fx) > std::numeric_limits<std::int32_t>::max() ||
-        static_cast<double>(fy) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(fy) > std::numeric_limits<std::int32_t>::max()) return 0;
-    *lpx = static_cast<int>(fx); *lpy = static_cast<int>(fy);
-    return 1;
+        static_cast<double>(fy) < std::numeric_limits<std::int32_t>::min() || static_cast<double>(fy) > std::numeric_limits<std::int32_t>::max()) return std::nullopt;
+    return POINT{static_cast<LONG>(static_cast<int>(fx)), static_cast<LONG>(static_cast<int>(fy))};
 }
 
 static WPARAM WInputButtons(void) {
@@ -112,7 +111,9 @@ BOOL win32::GetCursorPos(LPPOINT lppt) {
         hwnd = lpWindow ? LpCompatWindowFromId(SDL_GetWindowID(lpWindow)) : nullptr;
         if (hwnd) {
             SDL_GetMouseState(&x, &y);
-            if (!FInputPoint(x, y, &pt.x, &pt.y)) return 0;
+            const auto inputPoint = FInputPoint(x, y);
+            if (!inputPoint) return 0;
+            pt = *inputPoint;
             pt.y -= CyCompatMenuBar(hwnd);
             if (!win32::ClientToScreen(hwnd, &pt)) return 0;
             *lppt = pt;
@@ -163,23 +164,17 @@ BOOL win32::ReleaseCapture(void) {
     return 1;
 }
 
-static HWND HwndMouseTarget(HWND hwndRoot, int *lpx, int *lpy) {
+static COMPATMOUSEHITRESULT HwndMouseTarget(HWND hwndRoot, POINT pt) {
     HWND hwnd = win32::GetCapture(), hwndHit;
-    POINT pt;
-    int x, y;
 
-    *lpy -= CyCompatMenuBar(hwndRoot);
-    x = *lpx; y = *lpy;
-    if (!hwnd) return HwndCompatMouse(hwndRoot, lpx, lpy);
+    pt.y -= CyCompatMenuBar(hwndRoot);
+    if (!hwnd) return HwndCompatMouse(hwndRoot, pt);
     if (!FCaptureForeground(hwnd)) {
-        hwndHit = HwndCompatMouse(hwndRoot, &x, &y);
-        if (hwndHit != hwnd && !win32::IsChild(hwnd, hwndHit))
-            return HwndCompatMouse(hwndRoot, lpx, lpy);
+        hwndHit = HwndCompatMouse(hwndRoot, pt).hwnd;
+        if (hwndHit != hwnd && !win32::IsChild(hwnd, hwndHit)) return HwndCompatMouse(hwndRoot, pt);
     }
-    pt.x = *lpx; pt.y = *lpy;
-    if (!win32::ClientToScreen(hwndRoot, &pt) || !win32::ScreenToClient(hwnd, &pt)) return nullptr;
-    *lpx = pt.x; *lpy = pt.y;
-    return hwnd;
+    if (!win32::ClientToScreen(hwndRoot, &pt) || !win32::ScreenToClient(hwnd, &pt)) return {nullptr, pt};
+    return {hwnd, pt};
 }
 
 void CompatTextInput(HWND hwnd, const char *pszText) {
@@ -538,7 +533,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         if (!hwnd)
             return;
         hwndRoot = hwnd;
-        if (!FInputPoint(lpevent->motion.x, lpevent->motion.y, &x, &y)) return;
+        {
+            const auto inputPoint = FInputPoint(lpevent->motion.x, lpevent->motion.y);
+            if (!inputPoint) return;
+            x = inputPoint->x; y = inputPoint->y;
+        }
         if (!win32::GetCapture() && y >= 0 && y < CyCompatMenuBar(hwnd)) {
             POINT pt = {x, y - CyCompatMenuBar(hwnd)};
             InputMouse(hwndRoot, x, y, 0);
@@ -546,8 +545,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             if (win32::ClientToScreen(hwnd, &pt)) CompatPostInput(hwnd, win32::WM_NCMOUSEMOVE, win32::HTMENU, win32::MAKELPARAM(pt.x, pt.y));
             return;
         }
-        hwnd = HwndMouseTarget(hwnd, &x, &y);
-        if (!hwnd) return;
+        {
+            const auto target = HwndMouseTarget(hwnd, POINT{x, y});
+            if (!target.hwnd) return;
+            hwnd = target.hwnd; x = target.pt.x; y = target.pt.y;
+        }
         buttons = 0;
         if (lpevent->motion.state & SDL_BUTTON_LMASK) buttons |= win32::MK_LBUTTON;
         if (lpevent->motion.state & SDL_BUTTON_RMASK) buttons |= win32::MK_RBUTTON;
@@ -564,7 +566,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         if (!hwnd)
             return;
         hwndRoot = hwnd;
-        if (!FInputPoint(lpevent->button.x, lpevent->button.y, &x, &y)) return;
+        {
+            const auto inputPoint = FInputPoint(lpevent->button.x, lpevent->button.y);
+            if (!inputPoint) return;
+            x = inputPoint->x; y = inputPoint->y;
+        }
         if (!win32::GetCapture() && y >= 0 && y < CyCompatMenuBar(hwnd)) {
             POINT pt = {x, y - CyCompatMenuBar(hwnd)};
             if (lpevent->button.button == SDL_BUTTON_LEFT) {
@@ -575,8 +581,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
             }
             return;
         }
-        hwnd = HwndMouseTarget(hwnd, &x, &y);
-        if (!hwnd) return;
+        {
+            const auto target = HwndMouseTarget(hwnd, POINT{x, y});
+            if (!target.hwnd) return;
+            hwnd = target.hwnd; x = target.pt.x; y = target.pt.y;
+        }
         if (lpevent->button.button == SDL_BUTTON_LEFT) {
             iButton = 0;
             buttons = win32::MK_LBUTTON;
@@ -612,7 +621,11 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         hwnd = win32::GetFocus();
         if (!win32::IsWindowEnabled(hwnd)) hwnd = hwndRoot;
         if (!win32::IsWindowEnabled(hwnd)) return;
-        if (!FInputPoint(lpevent->wheel.mouse_x, lpevent->wheel.mouse_y, &x, &y)) return;
+        {
+            const auto inputPoint = FInputPoint(lpevent->wheel.mouse_x, lpevent->wheel.mouse_y);
+            if (!inputPoint) return;
+            x = inputPoint->x; y = inputPoint->y;
+        }
         buttons = WInputButtons();
         InputMouse(hwndRoot, x, y, buttons);
         dx = lpevent->wheel.x; dy = lpevent->wheel.y;

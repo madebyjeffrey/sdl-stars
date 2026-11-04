@@ -452,8 +452,8 @@ INT_PTR  RaceWizardDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::EndPaint(hwnd, &ps);
         return 1;
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (IrcRaceDlgHitTest(app, pt) < 0)
             break;
         win32::SetCursor(app.lpui->hcurHand);
@@ -693,7 +693,9 @@ std::int16_t FTrackRaceDlg2(APPSESSION &app, HWND hwnd, POINT16 pt, std::int16_t
         win32::SetCapture(hwnd);
         win32::SetCursor(app.lpui->hcurCloseGrab);
         dWidth = static_cast<std::int16_t>((app.state.vplr.rgEnvVarMax[i] - app.state.vplr.rgEnvVarMin[i])) / 2;
-        while (FGetMouseMove(&pt)) {
+        for (MOUSEMOVERESULT mouseMove = FGetMouseMove(); ; mouseMove = FGetMouseMove()) {
+            if (mouseMove.point) pt = *mouseMove.point;
+            if (!mouseMove.fContinue) break;
             if (pt.x < app.lpui->vrgrcRCW[irc].left) {
                 pt.x = app.lpui->vrgrcRCW[irc].left;
             }
@@ -825,8 +827,8 @@ INT_PTR  RaceWizardDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         break;
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (IrcRaceDlgHitTest(app, pt) < 0)
             break;
         win32::SetCursor(app.lpui->hcurHand);

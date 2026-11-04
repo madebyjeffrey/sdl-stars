@@ -492,8 +492,8 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case win32::WM_SETCURSOR:
         if (app.state.fRCWReadOnly)
             break;
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (pt.x < app.lpui->xNewGameDiamond || pt.x >= app.lpui->xNewGameDiamond + app.state.dyArial8 + 1 || pt.y < 6)
             break;
         iDiamond = static_cast<std::int16_t>((pt.y - 6)) / (app.state.dyArial8 + 4);
@@ -513,7 +513,7 @@ INT_PTR  NewGameDlg2(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if (iDiamond >= 16 || static_cast<std::int16_t>((pt.y - 6)) % (app.state.dyArial8 + 4) >= app.state.dyArial8 + 1)
             break;
         iCurVal = app.state.vrgplrTypeNew[iDiamond];
-        ClientToScreen16(hwnd, &pt);
+        pt = ClientToScreen16(hwnd, pt).pt;
         rghmenuSubPopup[0] = win32::CreatePopupMenu();
         for (i = 0; i < 6; i++) {
             iChecked = iCurVal == i * 4 + 1 ? 8 : 0;
@@ -812,8 +812,8 @@ INT_PTR  NewGameDlg3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         break;
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (IrcRaceDlgHitTest(app, pt) < 0)
             break;
         win32::SetCursor(app.lpui->hcurHand);

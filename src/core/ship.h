@@ -3,6 +3,12 @@
 
 #include "common.h"
 #include <cstdint>
+#include <span>
+
+struct CSHQUEUEDRESULT {
+    std::int16_t cshQueued;
+    std::int16_t fProgress;
+};
 
 std::int16_t FCanSplit(APPSESSION &app, std::int32_t cBoat);
 std::int16_t FCanSplitAll(APPSESSION &app, std::int32_t cBoat);
@@ -23,10 +29,10 @@ void    FleetTransferCargoBalance(APPSESSION &app, FLEET *pflNew1, FLEET *pflNew
 void    DestroyAllIshdefSB(APPSESSION &app, std::int16_t ishdefSB, std::int16_t iplr);
 void    DestroyAllIshdef(APPSESSION &app, std::int16_t ishdef, std::int16_t iplr);
 void    RemoveIshdefFromAllQueues(APPSESSION &app, std::int16_t ishdef, std::int16_t fSpaceDocks);
-std::int16_t CshQueued(APPSESSION &app, std::int16_t ishdef, std::int16_t *pfProgress, std::int16_t fSpaceDocks);
+CSHQUEUEDRESULT CshQueued(APPSESSION &app, std::int16_t ishdef, std::int16_t fSpaceDocks);
 void    Merge2Fleets(APPSESSION &app, FLEET *lpflDst, FLEET *lpflDel, std::int16_t fNoDelete);
 void    FleetOrdersChangeTarget(APPSESSION &app, FLEET *lpflOld);
-void    GetTruePartCost(APPSESSION &app, std::int16_t iPlayer, PART *ppart, std::uint16_t *rgCost);
+void    GetTruePartCost(APPSESSION &app, std::int16_t iPlayer, PART *ppart, std::span<std::uint16_t, 4> rgCost);
 std::int16_t IWarpBestForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord);
 std::int16_t IWarpFastestForWaypoint(APPSESSION &app, FLEET *lpfl, ORDER *lpord);
 

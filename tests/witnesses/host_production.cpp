@@ -163,9 +163,9 @@ static int16_t TestPctPlanetDesirability(APPSESSION &, PLANET *p, int16_t player
     assert(p == &planet && !player);
     return 100;
 }
-static int16_t TestIWarpMAFromLppl(APPSESSION &, PLANET *p, int16_t *flag) {
-    assert(p == &planet && !flag);
-    return warp;
+static WARPRESULT TestIWarpMAFromLppl(APPSESSION &, PLANET *p) {
+    assert(p == &planet);
+    return {warp, 0};
 }
 static int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
     APPSESSION &app = AppCompatCallbackContext();
@@ -178,13 +178,13 @@ static void TestGetProductionCosts(APPSESSION &, PLANET *p, PROD *row, std::span
     assert(p == &planet && !player && one);
     memcpy(out.data(), quote, 16);
 }
-static int16_t TestFBuildObject(APPSESSION &, PLANET *p, GrobjClass kind, int16_t item, int16_t count, int32_t *resources) {
+static int16_t TestFBuildObject(APPSESSION &, PLANET *p, GrobjClass kind, int16_t item, int16_t count, std::span<int32_t, 4> resources) {
     (void)kind;
     (void)item;
     assert(p == &planet && count > 0);
     applications++;
     event('A');
-    memcpy(seenResources, resources, 16);
+    std::copy(resources.begin(), resources.end(), seenResources);
     resources[0] += resourceDelta;
     return (int16_t)applied;
 }
@@ -197,7 +197,7 @@ static int16_t TestFBuildObject(APPSESSION &, PLANET *p, GrobjClass kind, int16_
         }                                                                                                                                                      \
     } while (0)
 
-static int16_t TestCBuildProdItem(APPSESSION &app, PLANET *p, PROD *row, PROD *partial, int32_t *resources, int16_t alchemy, int16_t *status, int16_t calc) {
+static int16_t TestCBuildProdItem(APPSESSION &app, PLANET *p, PROD *row, PROD *partial, std::span<int32_t, 4> resources, int16_t alchemy, int16_t *status, int16_t calc) {
     assert(p == &planet && partial && !partial->cItem && status && !calc && builds < 260);
     traceIndex[builds] = (int)(row - p->lpplprod->rgprod());
     traceAlchemy[builds] = alchemy;

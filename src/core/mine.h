@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include <cstdint>
+#include <span>
 
 struct MINEFIELDCOUNTSRESULT {
     std::int16_t ithFound;
@@ -11,6 +12,6 @@ struct MINEFIELDCOUNTSRESULT {
 
 MINEFIELDCOUNTSRESULT GetMineFieldCounts(APPSESSION &app, std::uint16_t id);
 std::int16_t FOtherStuffAtScanSel(APPSESSION &app);
-void    EstMineralsMined(APPSESSION &app, PLANET *lppl, std::int32_t *plQuan, std::int32_t cMines, std::int16_t fApply);
+void    EstMineralsMined(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 3> plQuan, std::int32_t cMines, std::int16_t fApply);
 
 #endif

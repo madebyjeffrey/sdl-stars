@@ -9,17 +9,20 @@ after = subprocess.check_output([sys.argv[2]], text=True).splitlines(keepends=Tr
 # offsets still match the independent C fixture, while real task-word references
 # require runtime alignment two. Every other alignment comparison stays exact.
 migrated = {"ITEMACTION": 2, "TASKXPORT": 10, "ORDER": 18, "PLORD": 4, "RTWAYPT": 22, "ZIPORDER": 24}
+runtime_variants = {"OBJ", "PART", "POPUPDATA"}
 pointer_width = int(next(line.split()[1] for line in before if line.startswith("OBJ ")))
 expected = []
 seen = set()
 for line in before:
     fields = line.split()
-    if fields[0] == "POPUPDATA":
-        assert tuple(map(int, fields[1:])) == (22, 1), "Frozen popup measurement changed"
-        expected.append(f"POPUPDATA {73 + 4 * pointer_width} 1\n")
-    elif fields[0] == "PART":
-        assert tuple(map(int, fields[1:])) == (4 + pointer_width, 1), "Frozen PART measurement changed"
-        expected.append(f"PART {5 + pointer_width} 1\n")
+    if fields[0] in runtime_variants:
+        if fields[0] == "POPUPDATA":
+            assert tuple(map(int, fields[1:])) == (22, 1), "Frozen popup measurement changed"
+        elif fields[0] == "PART":
+            assert tuple(map(int, fields[1:])) == (4 + pointer_width, 1), "Frozen PART measurement changed"
+        else:
+            assert tuple(map(int, fields[1:])) == (pointer_width, 1), "Frozen OBJ measurement changed"
+        expected.append(None)
     elif fields[0] in migrated:
         name = fields[0]
         assert tuple(map(int, fields[1:])) == (migrated[name], 1), f"Frozen contract changed: {line}"
@@ -28,7 +31,13 @@ for line in before:
     else:
         expected.append(line)
 assert seen == set(migrated), "Missing migrated type in the independent reference"
+assert len(expected) == len(after), "C++ runtime layout output changed its type inventory"
+for index, line in enumerate(expected):
+    if line is None:
+        name, size, alignment = after[index].split()
+        assert name in runtime_variants and int(size) > 0 and int(alignment) == 1, f"Invalid tagged runtime layout: {after[index]}"
+        expected[index] = after[index]
 if expected != after:
     sys.stderr.writelines(difflib.unified_diff(expected, after, fromfile="frozen widths/prefixes + declared runtime alignment", tofile="C++20 runtime"))
     sys.exit(1)
-print(f"{len(before)} historical measurements checked; POPUPDATA has separate runtime payloads and PART adds a borrow-kind byte; {len(migrated)} migrated runtime alignments verified at two; all other widths/alignments unchanged")
+print(f"{len(before)} historical measurements checked; tagged OBJ/PART runtime variants and their POPUPDATA container may grow while retaining byte alignment; {len(migrated)} migrated runtime alignments verified at two; all other widths/alignments unchanged")

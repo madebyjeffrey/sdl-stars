@@ -748,7 +748,7 @@ struct _msgturn {
 
 struct _obj {
     // Drawing callbacks borrow the object chosen by their tile group.
-    // Converting through void preserves that pointer without an inactive union.
+    // Keep this packed callback payload pointer-sized; the accessors carry its type.
     void *lpv;
     PLANET *ppl() const noexcept { return static_cast<PLANET *>(lpv); }
     FLEET *pfl() const noexcept { return static_cast<FLEET *>(lpv); }
@@ -759,16 +759,39 @@ struct _obj {
 }; /* Runtime borrow; never serialized. */
 
 enum PartPointerKind : std::uint8_t { ppkCommon, ppkArmor, ppkHull, ppkEngine, ppkScanner, ppkBeam, ppkTorp, ppkBomb, ppkShield, ppkSpecial, ppkSpecialSB, ppkMines, ppkMining, ppkPlanetary, ppkTerra };
+using PARTTARGET = std::variant<COMPART *, ARMOR *, HUL *, ENGINE *, SCANNER *, BEAM *, TORP *, BOMB *, SHIELD *,
+                                SPECIAL *, SPECIALSB *, MINES *, MINING *, PLANETARY *, TERRA *>;
 class NATIVEPARTCOMMONVIEW;
 
 struct _part {
     HS hs;
 private:
+    // Win16 record packing also covers this runtime carrier. Keep its stored
+    // pointer and tag naturally accessed through the packed scalar fields.
     void *lpv;
     PartPointerKind ppk;
+    PARTTARGET Target() const noexcept {
+        switch (ppk) {
+        case ppkCommon: return static_cast<COMPART *>(lpv);
+        case ppkArmor: return static_cast<ARMOR *>(lpv);
+        case ppkHull: return static_cast<HUL *>(lpv);
+        case ppkEngine: return static_cast<ENGINE *>(lpv);
+        case ppkScanner: return static_cast<SCANNER *>(lpv);
+        case ppkBeam: return static_cast<BEAM *>(lpv);
+        case ppkTorp: return static_cast<TORP *>(lpv);
+        case ppkBomb: return static_cast<BOMB *>(lpv);
+        case ppkShield: return static_cast<SHIELD *>(lpv);
+        case ppkSpecial: return static_cast<SPECIAL *>(lpv);
+        case ppkSpecialSB: return static_cast<SPECIALSB *>(lpv);
+        case ppkMines: return static_cast<MINES *>(lpv);
+        case ppkMining: return static_cast<MINING *>(lpv);
+        case ppkPlanetary: return static_cast<PLANETARY *>(lpv);
+        case ppkTerra: return static_cast<TERRA *>(lpv);
+        }
+        return static_cast<COMPART *>(nullptr);
+    }
 public:
-    // Retain the pointer kind independently of hs: a failed lookup leaves the
-    // previous catalog borrow installed even after the caller changes hs.
+    // The typed target stays installed after a failed lookup, even if hs changes.
     NATIVEPARTCOMMONVIEW pcom() const noexcept;
     void SetPcom(NATIVEPARTCOMMONVIEW pcom) noexcept;
     void SetPcom(COMPART *pcom) noexcept { lpv = pcom; ppk = ppkCommon; }

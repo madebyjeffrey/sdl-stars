@@ -20,41 +20,31 @@ static inline POINT16 PointTo16(POINT pt) {
     return out;
 }
 
+struct POINT16CONVERSIONRESULT {
+    bool fSuccess;
+    POINT16 pt;
+};
+
 // GetCursorPos16 stores the cursor position in a Stars point.
-static inline bool GetCursorPos16(POINT16 *ppt, BOOL (*pfnCursorPos)(LPPOINT) = win32::GetCursorPos) {
+static inline POINT16CONVERSIONRESULT GetCursorPos16(BOOL (*pfnCursorPos)(LPPOINT) = win32::GetCursorPos) {
     // Callers still use the point when a backend cannot report its position.
     POINT pt = {0, 0};
-    bool  ret = pfnCursorPos(&pt);
-    *ppt = PointTo16(pt);
-    return ret;
+    bool fSuccess = pfnCursorPos(&pt);
+    return {fSuccess, PointTo16(pt)};
 }
 
 // ScreenToClient16 converts a Stars point from screen to client coordinates.
-static inline bool ScreenToClient16(HWND hwnd, POINT16 *ppt) {
-    POINT pt = PointFrom16(*ppt);
-    bool  ret = win32::ScreenToClient(hwnd, &pt);
-    *ppt = PointTo16(pt);
-    return ret;
+static inline POINT16CONVERSIONRESULT ScreenToClient16(HWND hwnd, POINT16 pt16) {
+    POINT pt = PointFrom16(pt16);
+    bool fSuccess = win32::ScreenToClient(hwnd, &pt);
+    return {fSuccess, PointTo16(pt)};
 }
 
 // ClientToScreen16 converts a Stars point from client to screen coordinates.
-static inline bool ClientToScreen16(HWND hwnd, POINT16 *ppt) {
-    POINT pt = PointFrom16(*ppt);
-    bool  ret = win32::ClientToScreen(hwnd, &pt);
-    *ppt = PointTo16(pt);
-    return ret;
-}
-
-// MapWindowPoints16 maps c Stars points from one window's coordinates to
-// another's.
-static inline int MapWindowPoints16(HWND hwndFrom, HWND hwndTo, POINT16 *ppt, UINT c) {
-    int ret = 0;
-    for (UINT i = 0; i < c; i++) {
-        POINT pt = PointFrom16(ppt[i]);
-        ret = win32::MapWindowPoints(hwndFrom, hwndTo, &pt, 1);
-        ppt[i] = PointTo16(pt);
-    }
-    return ret;
+static inline POINT16CONVERSIONRESULT ClientToScreen16(HWND hwnd, POINT16 pt16) {
+    POINT pt = PointFrom16(pt16);
+    bool fSuccess = win32::ClientToScreen(hwnd, &pt);
+    return {fSuccess, PointTo16(pt)};
 }
 
 // GetTextExtent measures text like Win16 GetTextExtent, which Win32 dropped:

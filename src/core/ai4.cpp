@@ -8,7 +8,7 @@
 #include "race_query_io.h"
 #include "random_io.h"
 
-void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
+void DoCyberAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod) {
     AISHDEFSTATUSRESULT shdefStatus;
     std::int32_t        rgResCost[4];
     std::int16_t        cSBDefenderFleets;
@@ -390,7 +390,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
         lpciPlan = CivFromLp(app, app.state.vlpbAiData + (lppl->id * 2 + 2));
         lpciPlanTemp = CtvFromLp(app, app.state.vlpbAiData + (dOffsetPlanTemp + lppl->id * 2));
         ChangeMainObjSel(app, grobjPlanet, lppl->id);
-        ProductionIO().pfnInitialize(app, rgprod);
+        ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
         fWrite = 0;
         lNewPop = static_cast<std::uint32_t>((lppl->rgwtMin[3] * PctTrueMaxGrowth(app, app.state.idPlayer)));
         GetResourcesAvailable(app, lppl, rgResAvail);
@@ -492,6 +492,7 @@ void DoCyberAiTurn(APPSESSION &app, PROD *rgprod) {
 }
 
 void DoCyberPackets(APPSESSION &app) {
+    WARPRESULT warp;
     std::int16_t        fTwoMA;
     std::int32_t        rgResCost[4];
     std::int32_t        rgResAvail[4];
@@ -533,7 +534,7 @@ void DoCyberPackets(APPSESSION &app) {
             lpciPlan = CivFromLp(app, app.state.vlpbAiData + (lppl->id * 2 + 2));
             lpciPlanTemp = CtvFromLp(app, app.state.vlpbAiData + (dOffsetPlanTemp + lppl->id * 2));
             ChangeMainObjSel(app, grobjPlanet, lppl->id);
-            ProductionIO().pfnInitialize(app, rgprod);
+            ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
             fWrite = 0;
             GetResourcesAvailable(app, lppl, rgResAvail);
             GetProdQCost(app, lppl, rgResCost);
@@ -578,11 +579,15 @@ void DoCyberPackets(APPSESSION &app) {
                     }
                     if (!fWrite)
                         goto LFinish;
-                    iWarpSrc = ColonyIO().pfnWarp(app, lppl, &fTwoMA) - 4;
+                    warp = ColonyIO().pfnWarp(app, lppl);
+                    iWarpSrc = warp.iWarp - 4;
+                    fTwoMA = warp.fTwo;
                     if (fTwoMA) {
                         iWarpSrc++;
                     }
-                    iWarpDst = ColonyIO().pfnWarp(app, lpplDst, &fTwoMA) - 4;
+                    warp = ColonyIO().pfnWarp(app, lpplDst);
+                    iWarpDst = warp.iWarp - 4;
+                    fTwoMA = warp.fTwo;
                     if (fTwoMA) {
                         iWarpDst++;
                     }
@@ -614,14 +619,18 @@ void DoCyberPackets(APPSESSION &app) {
                     lpciPlanT = app.state.vlpbAiData + (dOffsetPlanTemp + lpplDst->id * 2);
                     iPacketAdd = 0;
                     if (lpplDst->fStarbase) {
-                        iWarpDst = ColonyIO().pfnWarp(app, lpplDst, &fTwoMA);
+                        warp = ColonyIO().pfnWarp(app, lpplDst);
+                        iWarpDst = warp.iWarp;
+                        fTwoMA = warp.fTwo;
                         if (fTwoMA) {
                             iWarpDst++;
                         }
                     } else {
                         iWarpDst = 0;
                     }
-                    iWarp = ColonyIO().pfnWarp(app, lppl, &fTwoMA) + 3;
+                    warp = ColonyIO().pfnWarp(app, lppl);
+                    iWarp = warp.iWarp + 3;
+                    fTwoMA = warp.fTwo;
                     dDistance = static_cast<double>(static_cast<std::int16_t>((iWarp * iWarp)));
                     dDistanceTgt = DGetDistance(app.state.rgptPlan[lppl->id].x, app.state.rgptPlan[lppl->id].y, app.state.rgptPlan[lpplDst->id].x, app.state.rgptPlan[lpplDst->id].y);
                     dMod = static_cast<double>((static_cast<double>(static_cast<std::uint32_t>(((iWarp * iWarp - iWarpDst * iWarpDst) * (100 - (lpplDst->uDefGuess + 5))))) / 16000.0));
@@ -685,7 +694,9 @@ void DoCyberPackets(APPSESSION &app) {
                     } else {
                         lpciPlan.SetFLaunchedPkt(0);
                     }
-                    iWarp = ColonyIO().pfnWarp(app, lppl, &fTwoMA) - 1;
+                    warp = ColonyIO().pfnWarp(app, lppl);
+                    iWarp = warp.iWarp - 1;
+                    fTwoMA = warp.fTwo;
                     app.state.sel.pl.iWarpFling = iWarp;
                     if (!lpciPlan.fNeedScanPkt()) {
                         app.state.sel.pl.idFling = idPlanDst;
@@ -715,7 +726,7 @@ std::int16_t IdGetBestScannerDest(APPSESSION &app, PLANET *lppl, CompassDir iDir
 
     ptEdge = app.state.rgptPlan[lppl->id];
     iSize = 400 * app.state.game.mdSize + 400;
-    iWarp = ColonyIO().pfnWarp(app, lppl, nullptr) + 3;
+    iWarp = ColonyIO().pfnWarp(app, lppl).iWarp + 3;
     iDistance = iWarp * iWarp;
     ptEdge.x -= 1000;
     ptEdge.y -= 1000;
@@ -859,7 +870,7 @@ void FillProductionQueue(APPSESSION &app) {
         if (!app.state.vrglpplAi[ipl])
             break;
         ChangeMainObjSel(app, grobjPlanet, lppl->id);
-        ProductionIO().pfnInitialize(app, rgprod);
+        ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
         FinishProduction(app, FFillProdMinesAndFactories(app, lppl));
     }
     return;
@@ -1134,6 +1145,7 @@ std::int16_t FEnumPickUp(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) {
 }
 
 std::int16_t FEnumNeedMinerals(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) {
+    WARPRESULT warp;
     double         dDistance;
     std::int16_t        iWarpSrc;
     std::int16_t        fTwoMA;
@@ -1161,11 +1173,15 @@ std::int16_t FEnumNeedMinerals(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTes
     }
     if ((lpplSrc->rgwtMin[0] > 700 && lpciPlanTemp.At(lpplTest->id).fNeedsMin1()) || (lpplSrc->rgwtMin[1] > 700 && lpciPlanTemp.At(lpplTest->id).fNeedsMin2()) ||
         (lpplSrc->rgwtMin[2] > 700 && lpciPlanTemp.At(lpplTest->id).fNeedsMin3())) {
-        iWarpSrc = ColonyIO().pfnWarp(app, lpplSrc, &fTwoMA);
+        warp = ColonyIO().pfnWarp(app, lpplSrc);
+        iWarpSrc = warp.iWarp;
+        fTwoMA = warp.fTwo;
         if (fTwoMA) {
             iWarpSrc++;
         }
-        iWarpDst = ColonyIO().pfnWarp(app, lpplTest, &fTwoMA);
+        warp = ColonyIO().pfnWarp(app, lpplTest);
+        iWarpDst = warp.iWarp;
+        fTwoMA = warp.fTwo;
         if (fTwoMA) {
             iWarpDst++;
         }
@@ -1180,6 +1196,7 @@ std::int16_t FEnumNeedMinerals(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTes
 }
 
 std::int16_t FEnumPktAttack(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) {
+    WARPRESULT warp;
     double     dDistance;
     std::int16_t    fTwoMA;
     double     dMod;
@@ -1205,12 +1222,16 @@ std::int16_t FEnumPktAttack(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) 
         if (app.state.rglpshdefSB[lpplTest->iPlayer][lpplTest->isb].det != detAll) {
             return 0;
         }
-        iWarpDst = ColonyIO().pfnWarp(app, lpplTest, &fTwoMA);
+        warp = ColonyIO().pfnWarp(app, lpplTest);
+        iWarpDst = warp.iWarp;
+        fTwoMA = warp.fTwo;
         if (fTwoMA) {
             iWarpDst++;
         }
     }
-    dDistance = iWarp = ColonyIO().pfnWarp(app, lpplSrc, &fTwoMA) + 3;
+    warp = ColonyIO().pfnWarp(app, lpplSrc);
+    dDistance = iWarp = warp.iWarp + 3;
+    fTwoMA = warp.fTwo;
     if (iWarp == iWarpDst) {
         return 0;
     }
@@ -1252,7 +1273,7 @@ std::int16_t iBuildCyberStarbase(APPSESSION &app, PLANET *lppl) {
         return -1;
     }
     ChangeMainObjSel(app, grobjPlanet, lppl->id);
-    ProductionIO().pfnInitialize(app, rgprod);
+    ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
     if (lppl->rgMinConc[0] > 15 && lppl->rgMinConc[1] > 15 && lppl->rgMinConc[2] > 15) {
         ishdefSB = IshdefAiSBLatest(app);
     } else {

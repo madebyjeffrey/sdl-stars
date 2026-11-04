@@ -9,7 +9,7 @@
 #include "capacity_io.h"
 #include "random_io.h"
 
-void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
+void DoMacintiAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod) {
     AISHDEFSTATUSRESULT shdefStatus;
     std::int16_t  iLatestCargo;
     std::int16_t  cColFleet;
@@ -287,7 +287,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
                     FinishProduction(app, 0);
                 } else {
                     cRes = ResearchIO().pfnResources(app, lppl, app.state.idPlayer);
-                    if (app.state.game.turn > 120 && ColonyIO().pfnWarp(app, lppl, &j) >= 10 && lppl->rgwtMin[3] > 10000 && RandomIO().pfnRandom(app, 4) == 0) {
+                    if (app.state.game.turn > 120 && ColonyIO().pfnWarp(app, lppl).iWarp >= 10 && lppl->rgwtMin[3] > 10000 && RandomIO().pfnRandom(app, 4) == 0) {
                         lpplBest = nullptr;
                         lLeast = 100000;
                         i = 0;
@@ -307,7 +307,7 @@ void DoMacintiAiTurn(APPSESSION &app, PROD *rgprod) {
                                 lpplDest = app.state.vrglpplAi[iplDest];
                                 if (!app.state.vrglpplAi[iplDest])
                                     break;
-                                if (lpplDest->rgwtMin[i] < lLeast && ColonyIO().pfnWarp(app, lpplDest, &j) >= 10) {
+                                if (lpplDest->rgwtMin[i] < lLeast && ColonyIO().pfnWarp(app, lpplDest).iWarp >= 10) {
                                     l = LDistance2(app.state.rgptPlan[lppl->id], app.state.rgptPlan[lpplDest->id]);
                                     if (l < 91204) {
                                         lLeast = lpplDest->rgwtMin[i];

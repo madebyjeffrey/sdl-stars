@@ -4,16 +4,17 @@
 #include <cstring>
 
 #define CHECK(f) do { if (!(f)) { std::fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
-static void CountGlyph(void *lpv, int64_t x, int64_t y, BYTE alpha) {
-    int *pc = static_cast<int *>(lpv);
+static int cPixels;
+static void CountGlyph(COMPATTEXTDRAW &, int64_t x, int64_t y, BYTE alpha) {
     (void)x; (void)y;
-    if (alpha) (*pc)++;
+    if (alpha) cPixels++;
 }
 int main() {
     LOGFONTA lf = {};
     std::optional<SIZE> before, after;
     char sz[3] = {};
-    int ch, cPixels = 0;
+    int ch;
+    COMPATTEXTDRAW draw{};
     std::optional<TEXTMETRICA> metrics;
     NATIVEOWNER<COMPATFONT, FreeCompatFont> lpfont, lpfontRetained;
 
@@ -32,7 +33,7 @@ int main() {
     }
     after = FCompatFontSizeUtf8(lpfont.get(), std::string_view{"\xc4\x80", 2}); CHECK(after);
     CHECK(before->cx == after->cx && before->cy == after->cy);
-    CHECK(FCompatFontDrawScaled(lpfont.get(), std::string_view{"\xc4\x80", 2}, {}, 2, CountGlyph, &cPixels));
+    CHECK(FCompatFontDrawScaled(lpfont.get(), std::string_view{"\xc4\x80", 2}, {}, 2, CountGlyph, draw));
     CHECK(cPixels > 0);
     lpfontRetained = std::move(lpfont); CompatShutdownFonts();
     // Module cleanup drops its root; a live face still owns its library.

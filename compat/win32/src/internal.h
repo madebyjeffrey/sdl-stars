@@ -14,6 +14,7 @@
 #include <SDL3/SDL.h>
 #include "platform.h"
 void CompatAbortCallback(HWND hwnd) noexcept;
+void CompatCaptureCallbackError(HWND hwnd) noexcept;
 
 struct COMPATPRINT;
 
@@ -30,6 +31,12 @@ bool FCompatPrinterBusy(COMPATPRINT *lpprint);
 void CompatSetDialogError(DWORD dw);
 
 struct COMPATFONT;
+struct COMPATTEXTDRAW {
+    HDC lpdc;
+    RECT rc;
+    std::int64_t x, y;
+    double cs, sn;
+};
 
 struct COMPATLIST;
 
@@ -45,6 +52,7 @@ struct COMPATCOMBO {
     bool fDropped, fOpening, fClosing, fSync, fExtended, fSizing;
 };
 struct COMPATSCROLL { int iMin, iMax, iPos; UINT cPage; bool fDisable; };
+struct COMPATMOUSEHITRESULT { HWND hwnd; POINT pt; };
 struct COMPATFONTDATA { const BYTE *rgb; std::size_t cb; };
 extern const COMPATFONTDATA rgCompatFontData[12];
 COMPATFONT *LpNewCompatFont(const LOGFONTA *lplf);
@@ -52,7 +60,7 @@ void FreeCompatFont(COMPATFONT *lpfont) noexcept;
 std::optional<TEXTMETRICA> FCompatFontMetrics(COMPATFONT *lpfont);
 std::optional<SIZE> FCompatFontSizeUtf8(COMPATFONT *lpfont, std::string_view sz);
 bool FCompatFontDrawScaled(COMPATFONT *lpfont, std::string_view sz, std::span<const INT> rgdx, int iScale,
-                          void (*pfn)(void *, std::int64_t, std::int64_t, BYTE), void *lpv);
+                          void (*pfn)(COMPATTEXTDRAW &, std::int64_t, std::int64_t, BYTE), COMPATTEXTDRAW &draw);
 void CompatShutdownFonts(void);
 
 struct COMPATCLASS {
@@ -242,7 +250,7 @@ HWND LpCompatWindow(HWND hwnd);
 HWND LpCompatWindowFromId(SDL_WindowID id);
 void CompatFocusWindow(HWND hwnd);
 HWND HwndCompatRoot(HWND hwnd);
-HWND HwndCompatMouse(HWND hwnd, int *lpx, int *lpy);
+COMPATMOUSEHITRESULT HwndCompatMouse(HWND hwnd, POINT pt);
 bool FCompatPresent(HWND hwnd);
 bool FCompatRefreshPresent(HWND hwnd);
 bool FCompatCanvas(HWND hwnd);
@@ -259,8 +267,8 @@ void CompatFreeMenuBar(HWND hwnd);
 bool FCompatMenuMessage(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatRouteEvent(const SDL_Event *lpevent);
 bool CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
-void CompatCopyInput(BYTE *rgb, LPPOINT lppt);
-void CompatReadInput(const BYTE *rgb);
+std::optional<POINT> CompatCopyInput(std::span<BYTE, 256> rgb);
+void CompatReadInput(std::span<const BYTE, 256> rgb);
 void CompatResetInput(void);
 HWND HwndCompatPointerRoot(void);
 void CompatTextInput(HWND hwnd, const char *psz);
@@ -292,7 +300,6 @@ std::optional<std::string> SzCompatFileUri(const char *pszPath);
 bool FCompatOpenDocument(const char *pszPath);
 
 // C++ callback thunks return errors through pending state, never through C.
-void CompatInvokeCleanup(void (*lpfn)(void *), void *lpv, HWND hwnd) noexcept;
 LRESULT CompatInvokeWindowProc(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM w, LPARAM l) noexcept;
 void CompatInvokeTimerProc(TIMERPROC lpfn, HWND hwnd, UINT msg, UINT_PTR id, DWORD tick) noexcept;
 HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd) noexcept;

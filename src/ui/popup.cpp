@@ -277,7 +277,7 @@ void Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y) {
 
     pt.x = x;
     pt.y = y;
-    ClientToScreen16(hwnd, &pt);
+    pt = ClientToScreen16(hwnd, pt).pt;
     hdc = win32::GetDC(hwnd);
     hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, app.lpui->rghfontArial8[0]));
     switch (app.lpui->GlobalPD.grPopup) {
@@ -427,7 +427,7 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
     hmenuSub = nullptr;
     pt.x = x;
     pt.y = y;
-    ClientToScreen16(hwnd, &pt);
+    pt = ClientToScreen16(hwnd, pt).pt;
     hmenuPopup = win32::CreatePopupMenu();
     app.lpui->iPopMenuSel = -1;
     for (i = 0; i < cString; i++) {

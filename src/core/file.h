@@ -17,7 +17,7 @@ void    ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::span<std::uint8_t> rgbReco
 std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::string_view pszExt);
 std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, std::int16_t fHistory, std::int16_t fPreInited);
 std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl);
-std::int16_t UnpackBattlePlan(APPSESSION &app, std::span<const std::uint8_t> rgbRecord, BTLPLAN *lpbtlplan, std::int16_t iplan);
+std::optional<BTLPLAN> UnpackBattlePlan(APPSESSION &app, std::span<const std::uint8_t> rgbRecord, std::int16_t iplan);
 void    UpdateBattleRecords(APPSESSION &app);
 void    DestroyCurGame(APPSESSION &app);
 void    FileError(APPSESSION &app, StringId ids);

@@ -3,10 +3,9 @@
 
 #include "structs.h"
 #include <algorithm>
-#include <cassert>
-#include <cstdlib>
 #include <string_view>
 #include <type_traits>
+#include <variant>
 
 template<std::size_t cch>
 static std::string_view SzvPartName(const char (&sz)[cch]) noexcept {
@@ -18,36 +17,19 @@ static std::string_view SzvPartName(const char (&sz)[cch]) noexcept {
 // Callbacks may replace the carrier; catalog reads must still use this object.
 class NATIVEPARTCOMMONVIEW {
     friend struct _part;
-    void *lpv;
-    PartPointerKind ppk;
-    NATIVEPARTCOMMONVIEW(void *lpv, PartPointerKind ppk) noexcept : lpv(lpv), ppk(ppk) {}
+    PARTTARGET lpv;
+    explicit NATIVEPARTCOMMONVIEW(PARTTARGET lpv) noexcept : lpv(lpv) {}
     template<class F> decltype(auto) Visit(F fn) const noexcept {
-        switch (ppk) {
-        case ppkCommon: return fn(*static_cast<COMPART *>(lpv));
-        case ppkArmor: return fn(*static_cast<ARMOR *>(lpv));
-        case ppkHull: return fn(*static_cast<HUL *>(lpv));
-        case ppkEngine: return fn(*static_cast<ENGINE *>(lpv));
-        case ppkScanner: return fn(*static_cast<SCANNER *>(lpv));
-        case ppkBeam: return fn(*static_cast<BEAM *>(lpv));
-        case ppkTorp: return fn(*static_cast<TORP *>(lpv));
-        case ppkBomb: return fn(*static_cast<BOMB *>(lpv));
-        case ppkShield: return fn(*static_cast<SHIELD *>(lpv));
-        case ppkSpecial: return fn(*static_cast<SPECIAL *>(lpv));
-        case ppkSpecialSB: return fn(*static_cast<SPECIALSB *>(lpv));
-        case ppkMines: return fn(*static_cast<MINES *>(lpv));
-        case ppkMining: return fn(*static_cast<MINING *>(lpv));
-        case ppkPlanetary: return fn(*static_cast<PLANETARY *>(lpv));
-        case ppkTerra: return fn(*static_cast<TERRA *>(lpv));
-        }
-        assert(false && "catalog borrow kind was not initialized");
-        std::abort();
+        return std::visit([fn](auto *lpItem) -> decltype(auto) { return fn(*lpItem); }, lpv);
     }
 public:
-    NATIVEPARTCOMMONVIEW() noexcept : lpv(nullptr), ppk(ppkCommon) {}
-    explicit operator bool() const noexcept { return lpv != nullptr; }
-    const void *Lpv() const noexcept { return lpv; }
+    NATIVEPARTCOMMONVIEW() noexcept : lpv(static_cast<COMPART *>(nullptr)) {}
+    explicit operator bool() const noexcept { return std::visit([](auto *lpItem) { return lpItem != nullptr; }, lpv); }
     friend bool operator==(NATIVEPARTCOMMONVIEW a, NATIVEPARTCOMMONVIEW b) noexcept { return a.lpv == b.lpv; }
-    friend bool operator==(NATIVEPARTCOMMONVIEW a, const void *b) noexcept { return a.lpv == b; }
+    template<class T> friend bool operator==(NATIVEPARTCOMMONVIEW a, T *b) noexcept {
+        const auto *lpPointer = std::get_if<T *>(&a.lpv);
+        return lpPointer && *lpPointer == b;
+    }
     const std::int8_t *rgTech() const noexcept { return Visit([](auto &item) { return item.rgTech; }); }
     std::string_view szName() const noexcept {
         return Visit([](auto &item) {
@@ -71,8 +53,28 @@ public:
     std::int16_t ibmp() const noexcept { return Visit([](auto &item) { return item.ibmp; }); }
 };
 
-inline NATIVEPARTCOMMONVIEW PART::pcom() const noexcept { return {lpv, ppk}; }
-inline void PART::SetPcom(NATIVEPARTCOMMONVIEW pcom) noexcept { lpv = pcom.lpv; ppk = pcom.ppk; }
+inline NATIVEPARTCOMMONVIEW PART::pcom() const noexcept { return NATIVEPARTCOMMONVIEW{Target()}; }
+inline void PART::SetPcom(NATIVEPARTCOMMONVIEW pcom) noexcept {
+    std::visit([this](auto *lpItem) {
+        using T = std::remove_pointer_t<decltype(lpItem)>;
+        lpv = lpItem;
+        if constexpr (std::is_same_v<T, COMPART>) ppk = ppkCommon;
+        else if constexpr (std::is_same_v<T, ARMOR>) ppk = ppkArmor;
+        else if constexpr (std::is_same_v<T, HUL>) ppk = ppkHull;
+        else if constexpr (std::is_same_v<T, ENGINE>) ppk = ppkEngine;
+        else if constexpr (std::is_same_v<T, SCANNER>) ppk = ppkScanner;
+        else if constexpr (std::is_same_v<T, BEAM>) ppk = ppkBeam;
+        else if constexpr (std::is_same_v<T, TORP>) ppk = ppkTorp;
+        else if constexpr (std::is_same_v<T, BOMB>) ppk = ppkBomb;
+        else if constexpr (std::is_same_v<T, SHIELD>) ppk = ppkShield;
+        else if constexpr (std::is_same_v<T, SPECIAL>) ppk = ppkSpecial;
+        else if constexpr (std::is_same_v<T, SPECIALSB>) ppk = ppkSpecialSB;
+        else if constexpr (std::is_same_v<T, MINES>) ppk = ppkMines;
+        else if constexpr (std::is_same_v<T, MINING>) ppk = ppkMining;
+        else if constexpr (std::is_same_v<T, PLANETARY>) ppk = ppkPlanetary;
+        else if constexpr (std::is_same_v<T, TERRA>) ppk = ppkTerra;
+    }, pcom.lpv);
+}
 
 static_assert(std::is_trivially_copyable_v<PART>);
 #endif

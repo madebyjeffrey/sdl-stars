@@ -3,7 +3,7 @@
 #include <callbackcontext.h>
 #include <new>
 
-static void CaptureCallbackError(HWND hwnd) noexcept {
+void CompatCaptureCallbackError(HWND hwnd) noexcept {
     StarsCapturePendingError();
     CompatAbortCallback(hwnd);
 }
@@ -15,9 +15,9 @@ LRESULT CompatInvokeWindowProc(WNDPROC lpfn, HWND hwnd, UINT msg, WPARAM w, LPAR
         return lpfn(hwnd, msg, w, l);
     } catch (const std::bad_alloc &) {
         try { StarsThrowError(starsErrorMemory, 0); }
-        catch (...) { CaptureCallbackError(hwnd); }
+        catch (...) { CompatCaptureCallbackError(hwnd); }
     } catch (...) {
-        CaptureCallbackError(hwnd);
+        CompatCaptureCallbackError(hwnd);
     }
     return 0;
 }
@@ -29,9 +29,9 @@ void CompatInvokeTimerProc(TIMERPROC lpfn, HWND hwnd, UINT msg, UINT_PTR id, DWO
         lpfn(hwnd, msg, id, tick);
     } catch (const std::bad_alloc &) {
         try { StarsThrowError(starsErrorMemory, 0); }
-        catch (...) { CaptureCallbackError(hwnd); }
+        catch (...) { CompatCaptureCallbackError(hwnd); }
     } catch (...) {
-        CaptureCallbackError(hwnd);
+        CompatCaptureCallbackError(hwnd);
     }
 }
 
@@ -39,14 +39,6 @@ HWND CompatInvokeInspector(HWND (*pfn)(void), HWND hwnd) noexcept {
     HWND lpwin = LpCompatWindow(hwnd);
     COMPATCALLBACKCONTEXTSCOPE context(lpwin ? lpwin->lpvCallbackContext : PvCompatCallbackContext());
     try { return pfn(); }
-    catch (...) { CaptureCallbackError(hwnd); }
+    catch (...) { CompatCaptureCallbackError(hwnd); }
     return nullptr;
-}
-
-void CompatInvokeCleanup(void (*lpfn)(void *), void *lpv, HWND hwnd) noexcept {
-    try { lpfn(lpv); }
-    catch (const std::bad_alloc &) {
-        try { StarsThrowError(starsErrorMemory, 0); }
-        catch (...) { CaptureCallbackError(hwnd); }
-    } catch (...) { CaptureCallbackError(hwnd); }
 }

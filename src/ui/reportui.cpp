@@ -493,8 +493,8 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if (app.state.gd.fScoreVictory != 2) {
             return 0;
         }
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (pt.y >= app.lpui->dyArial10 + app.state.dyArial8 - 2 || pt.y <= 2) {
             return 0;
         }
@@ -516,7 +516,7 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             rgszScan[c++] = &app.state.szWork[i * 40];
         }
         iSel = ControlIO().pfnPopupMenu(app, hwnd, LOWORD(lParam), HIWORD(lParam), c,
-                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, std::span{rgszScan}.first(static_cast<std::size_t>(c)), -2, 0);
         if (iSel == -1) {
             return 0;
         }
@@ -1209,6 +1209,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
     std::int16_t  iItem;
     PLANET   pl;
     std::int16_t  fEnough;
+    PRIMARYHULLRESULT primaryHull;
 
     szT[0] = '8';
     dx = LOWORD(GetTextExtent(hdc, szT, 1));
@@ -1270,7 +1271,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             rc.top = prc->top;
             rc.bottom = rc.top + dx;
             win32::FillRect(hdc, &rc, hbr);
-            if (ColonyIO().pfnWarp(app, lppl, nullptr) > 0) {
+            if (ColonyIO().pfnWarp(app, lppl).iWarp > 0) {
                 rc.top = prc->top + dx + 1;
                 rc.bottom = rc.top + dx;
                 win32::FillRect(hdc, &rc, app.lpui->hbrPurple);
@@ -1296,7 +1297,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             i = lppl->cDefenses;
             j = ColonyIO().pfnOperableDefenses(app, lppl, app.state.idPlayer, 0);
             if (i > 0) {
-                CalcPctSurvive(app, lppl, &pct, nullptr);
+                pct = CalcPctSurvive(app, lppl).pct;
                 pct = static_cast<float>((static_cast<double>(1.0) - pct));
                 cch = CchSprintf(szT, app.state.PCTDXPCTDPCTPCT, LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
                                LOWORD(static_cast<std::int32_t>(((pct - static_cast<double>(static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
@@ -1345,7 +1346,7 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             xCur = dx * 4 + prc->left;
             if (icol == colPlanetMiningRate) {
                 xCur -= dx;
-                ColonyIO().pfnEstimateMining(app, lppl, rgl, -1, 0);
+                ColonyIO().pfnEstimateMining(app, lppl, std::span{rgl}.first<3>(), -1, 0);
             }
             for (i = 0; i < 3; i++) {
                 if (icol == colPlanetMinerals) {
@@ -1456,7 +1457,9 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
             DrawMineralItem(app, hdc, dx * 4 + prc->left, prc->top, -fEnough, lpfl->rgwtMin[4]);
             break;
         case colFleetComposition:
-            i = IshdefPrimaryFromLpfl(app, lpfl, &j);
+            primaryHull = IshdefPrimaryFromLpfl(app, lpfl);
+            i = primaryHull.ishdef;
+            j = primaryHull.cDiff;
             if (lpfl->rgdv[i].dp != 0) {
                 win32::SetTextColor(hdc, 0xff);
             }
@@ -1598,7 +1601,9 @@ void DrawReportItem(APPSESSION &app, HDC hdc, RECT *prc, ReportType irpt, std::i
                 win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, psz, cch, nullptr);
                 break;
             case colEnemyFleetComposition:
-                i = IshdefPrimaryFromLpfl(app, lpfl, &j);
+                primaryHull = IshdefPrimaryFromLpfl(app, lpfl);
+                i = primaryHull.ishdef;
+                j = primaryHull.cDiff;
                 prc->right -= 6 * dx;
                 szClass = SzvPartName(app.state.rglpshdef[lpfl->iPlayer][i].hul.szClass);
                 win32::ExtTextOutA(hdc, prc->left, prc->top, win32::ETO_CLIPPED, prc, szClass.data(), static_cast<int>(szClass.size()), nullptr);
@@ -1803,6 +1808,8 @@ int ICompReport(APPSESSION &app, std::uint16_t *pid1, std::uint16_t *pid2) {
     std::int16_t      ibtl2;
     std::int16_t      ibtl1;
     std::optional<NATIVEBATTLEDATAVIEW> obdv2;
+    PRIMARYHULLRESULT primaryHull1;
+    PRIMARYHULLRESULT primaryHull2;
 
     iRet = 0;
     iSubsort = app.lpui->vprptCur->iSubsort;
@@ -1907,13 +1914,13 @@ TryTier2:
             if (lppl1->cDefenses == 0) {
                 pct1 = static_cast<float>(0);
             } else {
-                CalcPctSurvive(app, lppl1, &pct1, nullptr);
+                pct1 = CalcPctSurvive(app, lppl1).pct;
                 pct1 = static_cast<float>((static_cast<double>(1.0) - pct1));
             }
             if (lppl2->cDefenses == 0) {
                 pct2 = static_cast<float>(0);
             } else {
-                CalcPctSurvive(app, lppl2, &pct2, nullptr);
+                pct2 = CalcPctSurvive(app, lppl2).pct;
                 pct2 = static_cast<float>((static_cast<double>(1.0) - pct2));
             }
             if (static_cast<double>(pct1) < static_cast<double>(pct2)) {
@@ -1940,12 +1947,12 @@ TryTier2:
                 iLast = iSubsort;
                 iFirst = iSubsort;
             }
-            ColonyIO().pfnEstimateMining(app, lppl1, rgl, -1, 0);
+            ColonyIO().pfnEstimateMining(app, lppl1, std::span{rgl}.first<3>(), -1, 0);
             l1 = 0;
             for (i = iFirst; i <= iLast; i++) {
                 l1 += rgl[i];
             }
-            ColonyIO().pfnEstimateMining(app, lppl2, rgl, -1, 0);
+            ColonyIO().pfnEstimateMining(app, lppl2, std::span{rgl}.first<3>(), -1, 0);
             l2 = 0;
             for (i = iFirst; i <= iLast; i++) {
                 l2 += rgl[i];
@@ -2040,8 +2047,12 @@ TryTier2:
             l2 = PctCloakFromLpfl(app, lpfl2);
             goto LRetDiff;
         case colFleetComposition:
-            l1 = IshdefPrimaryFromLpfl(app, lpfl1, &i1);
-            l2 = IshdefPrimaryFromLpfl(app, lpfl2, &i2);
+            primaryHull1 = IshdefPrimaryFromLpfl(app, lpfl1);
+            primaryHull2 = IshdefPrimaryFromLpfl(app, lpfl2);
+            l1 = primaryHull1.ishdef;
+            i1 = primaryHull1.cDiff;
+            l2 = primaryHull2.ishdef;
+            i2 = primaryHull2.cDiff;
             if (l1 == l2) {
                 iRet = lpfl1->rgcsh[l1] - lpfl2->rgcsh[l2];
             } else {
@@ -2243,8 +2254,12 @@ TryTier2:
                 iRet = std::string_view{szT}.compare(psz);
                 break;
             case colEnemyFleetComposition:
-                l1 = IshdefPrimaryFromLpfl(app, lpfl1, &i1);
-                l2 = IshdefPrimaryFromLpfl(app, lpfl2, &i2);
+                primaryHull1 = IshdefPrimaryFromLpfl(app, lpfl1);
+                primaryHull2 = IshdefPrimaryFromLpfl(app, lpfl2);
+                l1 = primaryHull1.ishdef;
+                i1 = primaryHull1.cDiff;
+                l2 = primaryHull2.ishdef;
+                i2 = primaryHull2.cDiff;
                 if (l1 == l2) {
                     iRet = lpfl1->rgcsh[l1] - lpfl2->rgcsh[l2];
                 } else {
@@ -2437,7 +2452,7 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
             psz[i] = std::nullopt;
         }
     }
-    iRet = ControlIO().pfnPopupMenu(app, app.lpui->hwndReportDlg, pt.x, pt.y, cItems, {}, psz, -1, fRightBtn);
+    iRet = ControlIO().pfnPopupMenu(app, app.lpui->hwndReportDlg, pt.x, pt.y, cItems, {}, std::span{psz}.first(static_cast<std::size_t>(cItems)), -1, fRightBtn);
     if (iRet >= 0) {
         app.state.gd.fChgReports = 1;
         if (iRet < iSortLast) {
@@ -2605,7 +2620,7 @@ void ExecuteReportClick(APPSESSION &app, POINT16 pt, ReportType irpt, std::int16
             app.lpui->GlobalPD.SetRgi(0, i);
             app.lpui->GlobalPD.SetRgi(2, app.state.sel.pl.rgwtMin[i]);
             app.lpui->GlobalPD.SetRgi(3, static_cast<std::uint32_t>(app.state.sel.pl.rgMinConc[i]));
-            ColonyIO().pfnEstimateMining(app, &app.state.sel.pl, rglQuan, -1, 0);
+            ColonyIO().pfnEstimateMining(app, &app.state.sel.pl, std::span{rglQuan}.first<3>(), -1, 0);
             app.lpui->GlobalPD.SetRgi(4, rglQuan[i]);
             app.lpui->GlobalPD.SetRgi(1, app.state.sel.pl.fHomeworld);
             Popup(app, app.lpui->hwndReportDlg, pt.x, pt.y);

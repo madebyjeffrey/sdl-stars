@@ -21,7 +21,7 @@ std::int16_t ChangeProduction(APPSESSION &app, std::int16_t fClear) {
             fSuccess = 1;
             goto LWriteProdQ;
         }
-        ProductionIO().pfnInitialize(app, rgprod);
+        ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
         app.lpui->fDlgUp = 1;
         fSuccess = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_PRODUCTION), app.lpui->hwndFrame, ProductionDlg, 0);
         app.lpui->hwndProdDlg = nullptr;
@@ -187,7 +187,7 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rgszZip[cMax++] = sz255;
         szCatalogMenuText = TextIO().pfnCompressed(app, idsCustomize);
         rgszZip[cMax++] = szCatalogMenuText.data();
-        i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, {}, rgszZip, -1, 1);
+        i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, {}, std::span{rgszZip}.first(static_cast<std::size_t>(cMax)), -1, 1);
         if (i == cMax - 1) {
             CustomizeProductionPresets(app, hwnd);
             break;
@@ -199,8 +199,8 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     case win32::WM_SETCURSOR:
         hcs = nullptr;
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (win32::PtInRect(&app.lpui->rcProdDiamond, PointFrom16(pt)) == 0)
             break;
         win32::SetCursor(app.lpui->hcurArrowHelp);
@@ -441,7 +441,7 @@ void ProdCommandHandler(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam
         } else {
             PresentationIO().pfnSelectPlanet(app, c, 0);
         }
-        ProductionIO().pfnInitialize(app, nullptr);
+        ProductionIO().pfnInitialize(app, std::nullopt);
         InitializeProductionDlg(app, hwnd);
         ControlIO().pfnGetClientRect(hwnd, &rc);
         rc.top = app.lpui->yTopFutureTech;

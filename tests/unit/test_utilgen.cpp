@@ -239,13 +239,10 @@ static POINT16 Pt(int16_t x, int16_t y) {
 // CheckCross checks that a route crosses a radius-10 field centered on it
 // for 20 ly, from 40 to 60 ly along a 100 ly route.
 static void CheckCross(POINT16 ptFrom, POINT16 ptTo, POINT16 ptField) {
-    int16_t dStart;
-    int16_t dEnd;
-
-    dStart = dEnd = -1;
-    TEST_ASSERT(FIntersectCircleLine(ptFrom, ptTo, ptField, 100, 100, &dStart, &dEnd));
-    TEST_CHECK_(dStart == 40, "start %d", dStart);
-    TEST_CHECK_(dEnd == 60, "end %d", dEnd);
+    const auto interval = FIntersectCircleLine(ptFrom, ptTo, ptField, 100, 100);
+    TEST_ASSERT(interval.has_value());
+    TEST_CHECK_(interval->dStart == 40, "start %d", interval->dStart);
+    TEST_CHECK_(interval->dEnd == 60, "end %d", interval->dEnd);
 }
 
 static void test_FIntersectCircleLine_horizontal(void) {
@@ -267,12 +264,9 @@ static void test_FIntersectCircleLine_vertical(void) {
 }
 
 static void test_FIntersectCircleLine_miss(void) {
-    int16_t dStart;
-    int16_t dEnd;
-
-    TEST_CHECK(!FIntersectCircleLine(Pt(0, 0), Pt(100, 0), Pt(50, 20), 100, 100, &dStart, &dEnd));
+    TEST_CHECK(!FIntersectCircleLine(Pt(0, 0), Pt(100, 0), Pt(50, 20), 100, 100));
     // A field behind the route's start.
-    TEST_CHECK(!FIntersectCircleLine(Pt(0, 0), Pt(100, 0), Pt(-50, 0), 100, 100, &dStart, &dEnd));
+    TEST_CHECK(!FIntersectCircleLine(Pt(0, 0), Pt(100, 0), Pt(-50, 0), 100, 100));
 }
 
 static void test_NumberText_owned(void) {
@@ -421,7 +415,11 @@ static void test_XorFileBuf_unaligned_bytes(void) {
         for (int i = 0; i < cb; i++) rgb[ib + i] = (uint8_t)(i * 17 + 5);
         SetFileSeeds(app, 123456, 789012);
         XorFileBuf(app, std::as_writable_bytes(std::span{rgb}).subspan(static_cast<std::size_t>(ib), static_cast<std::size_t>(cb)));
-        GetFileSeeds(app, &lSeed1, &lSeed2);
+        {
+            const FILESEEDSRESULT seeds = GetFileSeeds(app);
+            lSeed1 = seeds.lSeed1;
+            lSeed2 = seeds.lSeed2;
+        }
         TEST_CHECK(!memcmp(rgb + ib, golden, cb));
         TEST_CHECK(lSeed1 == seeds[(cb + 3) / 4][0] && lSeed2 == seeds[(cb + 3) / 4][1]);
         for (int i = 0; i < ib; i++) TEST_CHECK(rgb[i] == 0xa5);
@@ -446,11 +444,19 @@ static void test_XorFileBuf_seed_alias_order(void) {
 
     SetFileSeeds(app, 123456, 789012);
     XorFileBuf(app, std::as_writable_bytes(std::span{&app.state.lFileSeed1, 1}));
-    GetFileSeeds(app, &lSeed1, &lSeed2);
+    {
+        const FILESEEDSRESULT seeds = GetFileSeeds(app);
+        lSeed1 = seeds.lSeed1;
+        lSeed2 = seeds.lSeed2;
+    }
     TEST_CHECK(lSeed1 == -1966203050 && lSeed2 == 2041708718);
     SetFileSeeds(app, 123456, 789012);
     XorFileBuf(app, std::as_writable_bytes(std::span{&app.state.lFileSeed2, 1}));
-    GetFileSeeds(app, &lSeed1, &lSeed2);
+    {
+        const FILESEEDSRESULT seeds = GetFileSeeds(app);
+        lSeed1 = seeds.lSeed1;
+        lSeed2 = seeds.lSeed2;
+    }
     TEST_CHECK(lSeed1 == 645001258 && lSeed2 == -720506926);
 }
 

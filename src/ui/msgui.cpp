@@ -96,8 +96,8 @@ LRESULT  MessageWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         return 1;
     case win32::WM_SETCURSOR:
         hcs = nullptr;
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (HtMsgBox(app, pt) == htMsgNone)
             goto Default;
         win32::SetCursor(app.lpui->hcurHand);
@@ -636,7 +636,7 @@ std::int16_t FFinishPlrMsgEntry(APPSESSION &app, std::int16_t dInc) {
 void SetMsgTitle(APPSESSION &app, HWND hwnd) {
     std::int16_t cMsgTot;
     std::int16_t i;
-    MSGBIG  mb;
+    std::optional<MSGBIG> mb;
     char    ch;
     char    szT[80];
     std::int16_t sw;
@@ -705,10 +705,10 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
             ControlIO().pfnEnableWindow(app.lpui->rghwndMsgBtn[1], 1);
             goto FinishUp;
         }
-        if (app.state.cMsg != 0 && app.state.iMsgCur < app.state.cMsg && FGetNMsgbig(app, static_cast<MessageId>(app.state.iMsgCur), &mb)) {
-            if (mb.wGoto != gotoNone) {
-                app.lpui->idMsgObj = mb.wGoto & 0x7fff;
-                switch (mb.wGoto) {
+        if (app.state.cMsg != 0 && app.state.iMsgCur < app.state.cMsg && (mb = FGetNMsgbig(app, static_cast<MessageId>(app.state.iMsgCur)))) {
+            if (mb->wGoto != gotoNone) {
+                app.lpui->idMsgObj = mb->wGoto & 0x7fff;
+                switch (mb->wGoto) {
                 case gotoResearch:
                     app.lpui->mdMsgObj = mdMsgObjResearch;
                     break;
@@ -720,24 +720,24 @@ void SetMsgTitle(APPSESSION &app, HWND hwnd) {
                     break;
                 case gotoThing:
                     app.lpui->mdMsgObj = mdMsgObjThing;
-                    app.lpui->vptMsg.x = mb.rgParam[0];
+                    app.lpui->vptMsg.x = mb->rgParam[0];
                     break;
                 case gotoBattleReport:
                     app.lpui->mdMsgObj = mdMsgObjBattleReport;
                     break;
                 default:
-                    if ((mb.wGoto & 0xc000) == 0xc000) {
+                    if ((mb->wGoto & 0xc000) == 0xc000) {
                         app.lpui->mdMsgObj = mdMsgObjPart;
-                    } else if (mb.wGoto & 0x4000) {
-                        app.lpui->idMsgObj = mb.wGoto & 0x3fff;
+                    } else if (mb->wGoto & 0x4000) {
+                        app.lpui->idMsgObj = mb->wGoto & 0x3fff;
                         if (app.lpui->idMsgObj == 2048) {
                             app.lpui->mdMsgObj = mdMsgObjRelations;
                         } else {
                             app.lpui->mdMsgObj = mdMsgObjBattle;
-                            app.lpui->vptMsg.x = mb.rgParam[0];
-                            app.lpui->vptMsg.y = mb.rgParam[1];
+                            app.lpui->vptMsg.x = mb->rgParam[0];
+                            app.lpui->vptMsg.y = mb->rgParam[1];
                         }
-                    } else if (mb.wGoto < 0) {
+                    } else if (mb->wGoto < 0) {
                         if (LpflFromId(app, app.lpui->idMsgObj)) {
                             app.lpui->mdMsgObj = mdMsgObjFleet;
                         } else {

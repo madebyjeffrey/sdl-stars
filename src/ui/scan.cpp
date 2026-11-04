@@ -121,8 +121,8 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         win32::EndPaint(hwnd, &ps);
         break;
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(app.lpui->hwndScanner, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(app.lpui->hwndScanner, pt).pt;
         ControlIO().pfnGetClientRect(hwnd, &rc);
         if (win32::PtInRect(&rc, PointFrom16(pt)) == 0)
             goto Default;
@@ -135,7 +135,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             win32::SetCursor(app.lpui->hcurOpenGrab);
         } else if (app.state.gd.fSetMassMode || app.state.gd.fSetRouteMode ||
                    (app.state.sel.grobj == grobjPlanet &&
-                    (((ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) && ColonyIO().pfnWarp(app, &app.state.sel.pl, nullptr) > 0) || (ControlIO().pfnGetAsyncKeyState(win32::VK_CONTROL) & 0xfffe)))) {
+                    (((ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) && ColonyIO().pfnWarp(app, &app.state.sel.pl).iWarp > 0) || (ControlIO().pfnGetAsyncKeyState(win32::VK_CONTROL) & 0xfffe)))) {
             win32::SetCursor(app.lpui->hcurScanAdd);
         } else {
             win32::SetCursor(app.lpui->hcurScanner);
@@ -170,7 +170,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ptPan = pt;
         ScanToLogical(app, &pt);
         FFindNearestObject(app, pt, static_cast<GrobjClass>(app.state.gd.fSetMassMode != 0 || app.state.gd.fSetRouteMode ? grobjPlanet : grobjPlanet | grobjFleet | grobjOther | grobjThing), &scan);
-        if ((app.state.gd.fSetMassMode || (app.state.sel.grobj == grobjPlanet && (wParam & 4) && ColonyIO().pfnWarp(app, &app.state.sel.pl, nullptr) > 0)) && msg == win32::WM_LBUTTONDOWN) {
+        if ((app.state.gd.fSetMassMode || (app.state.sel.grobj == grobjPlanet && (wParam & 4) && ColonyIO().pfnWarp(app, &app.state.sel.pl).iWarp > 0)) && msg == win32::WM_LBUTTONDOWN) {
             DrawShipScanPath(app, nullptr, 0);
             if (scan.idpl == app.state.sel.pl.id) {
                 app.state.sel.pl.idFling = 0;
@@ -377,7 +377,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 fPanDown = 0;
                 pt.x = static_cast<short>(LOWORD(lParam));
                 pt.y = static_cast<short>(HIWORD(lParam));
-                ScreenToClient16(hwnd, &pt);
+                pt = ScreenToClient16(hwnd, pt).pt;
                 ZoomScanAt(app, iScanNew, pt);
             }
             break;
@@ -456,7 +456,7 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
     std::int16_t  id;
     COLORREF crFore;
     std::int16_t  iBkPrev;
-    POINT16  ptD;
+    SCANORIENTATIONRESULT orientation;
     PLANET  *lpplMac;
     std::int16_t  yBmp;
     std::int16_t  dy;
@@ -479,7 +479,6 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
     RECT     rcDraw;
     std::int16_t  dRange;
     std::int16_t  idP;
-    POINT16  ptO;
     std::int16_t  fSelected;
     std::int16_t  fMA;
     std::int16_t  fStarbase;
@@ -502,6 +501,7 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
     std::int16_t  rgrad[250];
     DRAWCIR  dc;
     std::int16_t  dPlanRange;
+    SCANNERRANGERESULT scannerRange;
     std::int16_t  dThingRange;
     std::int16_t  ropSav;
     std::int16_t  fDetonating;
@@ -549,7 +549,7 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
             win32::SetWindowOrgEx(hdc, prc->left & 0xfff8, prc->top & 0xfff8, nullptr);
             pt.y = 0;
             pt.x = 0;
-            ClientToScreen16(app.lpui->hwndScanner, &pt);
+            pt = ClientToScreen16(app.lpui->hwndScanner, pt).pt;
             ptOrigin.x = (ptOrigin.x + 8 - (pt.x & 7)) & 7;
             ptOrigin.y = (ptOrigin.y + 8 - (pt.y & 7)) & 7;
             rcDraw = *prc;
@@ -616,7 +616,9 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
         lpplMac = app.state.lpPlanets + app.state.cPlanet;
         for (; lppl < lpplMac; lppl++) {
             if (lppl->iPlayer == app.state.idPlayer) {
-                dRange = GetPlanetScannerRange(app, lppl, &dPlanRange);
+                const auto scannerRange = GetPlanetScannerRange(app, lppl);
+                dRange = scannerRange.dRange;
+                dPlanRange = scannerRange.dDeep;
                 if (dPlanRange > 0) {
                     fPlanetScanner = 1;
                 }
@@ -636,7 +638,9 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
             if (!app.state.rglpfl[i])
                 break;
             if (lpfl->iPlayer == app.state.idPlayer) {
-                dRange = GetFleetScannerRange(app, lpfl, &dPlanRange, nullptr, nullptr);
+                scannerRange = GetFleetScannerRange(app, lpfl);
+                dRange = scannerRange.dRange;
+                dPlanRange = scannerRange.dPlanRange;
                 if (dPlanRange > 0) {
                     fPlanetScanner |= 2;
                 }
@@ -666,7 +670,9 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
             lpplMac = app.state.lpPlanets + app.state.cPlanet;
             for (; lppl < lpplMac; lppl++) {
                 if (lppl->iPlayer == app.state.idPlayer) {
-                    dRange = GetPlanetScannerRange(app, lppl, &dPlanRange);
+                    const auto scannerRange = GetPlanetScannerRange(app, lppl);
+                    dRange = scannerRange.dRange;
+                    dPlanRange = scannerRange.dDeep;
                     if (dPlanRange > 0) {
                         dRange >>= 1;
                         if (app.lpui->vpctRadarView < 100) {
@@ -688,7 +694,9 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                 if (!app.state.rglpfl[i])
                     break;
                 if (lpfl->iPlayer == app.state.idPlayer) {
-                    dRange = GetFleetScannerRange(app, lpfl, &dPlanRange, nullptr, nullptr);
+                    scannerRange = GetFleetScannerRange(app, lpfl);
+                    dRange = scannerRange.dRange;
+                    dPlanRange = scannerRange.dPlanRange;
                     if (dPlanRange > 0) {
                         if (app.lpui->vpctRadarView < 100) {
                             dPlanRange = win32::MulDiv(dPlanRange, app.lpui->vpctRadarView, 100);
@@ -744,8 +752,8 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                             win32::BitBlt(hdc, pt.x - 5, pt.y - 5, 11, 11, hdcMem, 11, 80, win32::SRCAND);
                             win32::SelectObject(hdcMem, app.lpui->hbmpScanShip);
                         } else {
-                            GetScanFleetOrientation(app, lpfl, &ptO, &ptD);
-                            win32::BitBlt(hdc, pt.x - ptD.x / 2, pt.y - ptD.y / 2, ptD.x, ptD.y, hdcMem, ptO.x, ptO.y, win32::SRCAND);
+                            orientation = GetScanFleetOrientation(app, lpfl);
+                            win32::BitBlt(hdc, pt.x - orientation.ptSize.x / 2, pt.y - orientation.ptSize.y / 2, orientation.ptSize.x, orientation.ptSize.y, hdcMem, orientation.ptOrigin.x, orientation.ptOrigin.y, win32::SRCAND);
                         }
                     }
                 }
@@ -876,8 +884,8 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                     hbmpTrSav = static_cast<HBITMAP>(win32::SelectObject(hdcMem, app.lpui->hbmpScanShip));
                     crFore = win32::SetTextColor(hdc, 16776960);
                     crBack = win32::SetBkColor(hdc, 0);
-                    GetDxDyOrientation(app, lpth->tht().ptDest().x() - lpth->pt().x(), lpth->tht().ptDest().y() - lpth->pt().y(), &ptO, &ptD);
-                    win32::BitBlt(hdc, pt.x - ptD.x / 2, pt.y - ptD.y / 2, ptD.x, ptD.y, hdcMem, ptO.x, ptO.y, win32::SRCPAINT);
+                    orientation = GetDxDyOrientation(app, lpth->tht().ptDest().x() - lpth->pt().x(), lpth->tht().ptDest().y() - lpth->pt().y());
+                    win32::BitBlt(hdc, pt.x - orientation.ptSize.x / 2, pt.y - orientation.ptSize.y / 2, orientation.ptSize.x, orientation.ptSize.y, hdcMem, orientation.ptOrigin.x, orientation.ptOrigin.y, win32::SRCPAINT);
                     win32::SetTextColor(hdc, crFore);
                     win32::SetBkColor(hdc, crBack);
                     win32::SelectObject(hdcMem, hbmpTrSav);
@@ -1018,7 +1026,7 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                 if (app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef == ihuldefOrbitalFort) {
                     fStarbase = 2;
                 }
-                fMA = ColonyIO().pfnWarp(app, lppl, nullptr) > 0;
+                fMA = ColonyIO().pfnWarp(app, lppl).iWarp > 0;
                 fStargate = IStargateFromLppl(app, lppl) != -1;
             } else {
                 fMA = 0;
@@ -1272,10 +1280,10 @@ std::int16_t DrawScanner(APPSESSION &app, HDC hdc, RECT *prc) {
                         }
                         win32::SetTextColor(hdc, cr);
                         win32::SetBkColor(hdc, 0);
-                        GetScanFleetOrientation(app, lpflT, &ptO, &ptD);
-                        win32::BitBlt(hdc, pt.x - ptD.x / 2, pt.y - ptD.y / 2, ptD.x, ptD.y, hdcMem, ptO.x, ptO.y, win32::SRCPAINT);
+                        orientation = GetScanFleetOrientation(app, lpflT);
+                        win32::BitBlt(hdc, pt.x - orientation.ptSize.x / 2, pt.y - orientation.ptSize.y / 2, orientation.ptSize.x, orientation.ptSize.y, hdcMem, orientation.ptOrigin.x, orientation.ptOrigin.y, win32::SRCPAINT);
                         if ((app.lpui->grbitScan & grbitScanShipCounts) && !lpflT->fDone) {
-                            DrawScanFleetCount(app, lpflT, pt.x, pt.y - ptD.y / 2 - 2, hdc, hdcMem);
+                            DrawScanFleetCount(app, lpflT, pt.x, pt.y - orientation.ptSize.y / 2 - 2, hdc, hdcMem);
                         }
                         win32::SelectObject(hdcMem, app.lpui->hbmpScanner);
                     }
@@ -2426,7 +2434,7 @@ std::int16_t FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan) {
         for (ipt = 0; ipt < cpt; ipt++) {
             LogicalToScan(app, &rgpt[ipt]);
         }
-        BoundPoints(&rc, rgpt, cpt);
+        BoundPoints(&rc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
         ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, &rc, 0);
     }
     return 1;
@@ -2517,7 +2525,9 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
     hcurSav = win32::SetCursor(app.lpui->hcurCloseGrab);
     win32::SetCapture(app.lpui->hwndScanner);
     ptNew = pt;
-    while (FGetMouseMove(&ptNew)) {
+    for (MOUSEMOVERESULT mouseMove = FGetMouseMove(); ; mouseMove = FGetMouseMove()) {
+        if (mouseMove.point) ptNew = *mouseMove.point;
+        if (!mouseMove.fContinue) break;
         ptNew.x = (((0) > (StarsMin(rc.right, ptNew.x))) ? (0) : (StarsMin(rc.right, ptNew.x)));
         ptNew.y = (((0) > (StarsMin(rc.bottom, ptNew.y))) ? (0) : (StarsMin(rc.bottom, ptNew.y)));
         if (pt.x != ptNew.x || pt.y != ptNew.y) {
@@ -2529,7 +2539,7 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
             ScanToLogical(app, &ptLogical);
             grTypeIn = !(ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) & 0xfffe) ? 79 : 143;
             FFindNearestObject(app, ptLogical, static_cast<GrobjClass>(grTypeIn), &scan);
-            DrawScanXorLines(app, hdc, rgpt, cpt);
+            DrawScanXorLines(app, hdc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
             if (scan.grobj == grobjNone) {
                 rgpt[0] = ptLogical;
                 sbar.id = -1;
@@ -2555,7 +2565,7 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
             sbar.pt = rgpt[0];
             sbar.grbit = scan.grobj;
             LogicalToScan(app, rgpt);
-            DrawScanXorLines(app, hdc, rgpt, cpt);
+            DrawScanXorLines(app, hdc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
             sbar.pscan = nullptr;
             DrawScannerSBar(app, hdc, nullptr, &sbar, 0);
 
@@ -2587,7 +2597,7 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
                 }
                 win32::SelectObject(hdc, hpenSav);
             }
-            DrawScanXorLines(app, hdc, rgpt, cpt);
+            DrawScanXorLines(app, hdc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
             rgpt[0] = rgpt[1];
             if (app.lpui->grbitScan & grbitScanFleetPaths) {
                 hpenSav = static_cast<HPEN>(win32::SelectObject(hdc, app.lpui->hpenStarbase));
@@ -2599,7 +2609,7 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
                 }
                 win32::SelectObject(hdc, hpenSav);
             }
-            DrawScanXorLines(app, hdc, rgpt, cpt);
+            DrawScanXorLines(app, hdc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
             if (!fDel)
                 goto Done;
             DeleteCurWayPoint(app, fDup == 1);
@@ -2615,7 +2625,7 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
             }
             win32::SelectObject(hdc, hpenSav);
         }
-        DrawScanXorLines(app, hdc, rgpt, cpt);
+        DrawScanXorLines(app, hdc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
         rgpt[0] = rgpt[1];
         if (app.lpui->grbitScan & grbitScanFleetPaths) {
             win32::ExcludeClipRect(hdc, 0, rc.bottom - app.lpui->dySBar, rc.right, rc.bottom);
@@ -2627,7 +2637,7 @@ std::int16_t FHandleWayPointDrag(APPSESSION &app, POINT16 pt) {
             }
             win32::SelectObject(hdc, hpenSav);
         }
-        DrawScanXorLines(app, hdc, rgpt, cpt);
+        DrawScanXorLines(app, hdc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
         RedrawScanSel(app, nullptr, 0);
         switch (scan.grobj) {
         case grobjPlanet:
@@ -2662,7 +2672,7 @@ Done:
     win32::ReleaseDC(app.lpui->hwndScanner, hdc);
     if (fChg && (app.lpui->grbitScan & grbitScanFleetPaths)) {
         rgpt[1] = ptNew;
-        BoundPoints(&rc, rgpt, cpt);
+        BoundPoints(&rc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
         hdc = win32::GetDC(app.lpui->hwndScanner);
         DrawScanner(app, hdc, &rc);
         win32::ReleaseDC(app.lpui->hwndScanner, hdc);
@@ -2670,12 +2680,14 @@ Done:
     return fChg;
 }
 
-void DrawScanXorLines(APPSESSION &app, HDC hdc, POINT16 *rgpt, std::int16_t cpt) {
+void DrawScanXorLines(APPSESSION &app, HDC hdc, std::span<const POINT16> rgpt) {
     HPEN    hpenSav;
     std::int16_t iRopSav;
     std::int16_t i;
+    std::int16_t cpt;
     RECT    rc;
 
+    cpt = static_cast<std::int16_t>(rgpt.size());
     ControlIO().pfnGetClientRect(app.lpui->hwndScanner, &rc);
     win32::ExcludeClipRect(hdc, 0, rc.bottom - app.lpui->dySBar, rc.right, rc.bottom);
     if (cpt == 4 && rgpt[2].x == rgpt[3].x && rgpt[2].y == rgpt[3].y) {
@@ -2690,7 +2702,7 @@ void DrawScanXorLines(APPSESSION &app, HDC hdc, POINT16 *rgpt, std::int16_t cpt)
     hpenSav = static_cast<HPEN>(win32::SelectObject(hdc, hpenSav));
     iRopSav = win32::SetROP2(hdc, win32::R2_XORPEN);
     win32::MoveToEx(hdc, rgpt[2].x, rgpt[2].y, nullptr);
-    win32::LineTo(hdc, rgpt->x, rgpt->y);
+    win32::LineTo(hdc, rgpt[0].x, rgpt[0].y);
     if (cpt > 3) {
         win32::LineTo(hdc, rgpt[3].x, rgpt[3].y);
     }
@@ -2905,7 +2917,7 @@ LNotAFleetId:
     goto GoWithPartial;
 }
 
-void GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl, POINT16 *ppt, POINT16 *pptD) {
+SCANORIENTATIONRESULT GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl) {
     std::int16_t dy;
     std::int16_t dx;
 
@@ -2923,13 +2935,13 @@ void GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl, POINT16 *ppt, POINT16
         dx = lpfl->dirFltX() - 127;
         dy = lpfl->dirFltY() - 127;
     }
-    GetDxDyOrientation(app, dx, dy, ppt, pptD);
-    return;
+    return GetDxDyOrientation(app, dx, dy);
 }
 
-void GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy, POINT16 *ppt, POINT16 *pptD) {
+SCANORIENTATIONRESULT GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy) {
     double  dbl;
     std::int16_t iBmp;
+    SCANORIENTATIONRESULT orientation{};
 
     iBmp = 0;
     if (dx == 0 && dy == 0)
@@ -2940,14 +2952,14 @@ void GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy, POINT
     iBmp = (8 - (LOWORD(static_cast<std::int32_t>(dbl)) & 7) + 1) & 7;
 
 LFinishUp:
-    pptD->x = pptD->y = app.state.iScanZoom < zoom100 ? 7 : 9;
+    orientation.ptSize.x = orientation.ptSize.y = app.state.iScanZoom < zoom100 ? 7 : 9;
     if (app.state.iScanZoom >= zoom100) {
-        ppt->x = 7;
+        orientation.ptOrigin.x = 7;
     } else {
-        ppt->x = 0;
+        orientation.ptOrigin.x = 0;
     }
-    ppt->y = iBmp * pptD->y;
-    return;
+    orientation.ptOrigin.y = iBmp * orientation.ptSize.y;
+    return orientation;
 }
 
 std::int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
@@ -2978,7 +2990,9 @@ std::int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
     iropSav = win32::SetROP2(hdc, win32::R2_XORPEN);
     ptNew = pt;
     LogicalToScan(app, &ptNew);
-    while (FGetRMouseMove(&ptNew)) {
+    for (MOUSEMOVERESULT mouseMove = FGetRMouseMove(); ; mouseMove = FGetRMouseMove()) {
+        if (mouseMove.point) ptNew = *mouseMove.point;
+        if (!mouseMove.fContinue) break;
         ptNew.x = (((0) > (StarsMin(rc.right, ptNew.x))) ? (0) : (StarsMin(rc.right, ptNew.x)));
         ptNew.y = (((0) > (StarsMin(rc.bottom, ptNew.y))) ? (0) : (StarsMin(rc.bottom, ptNew.y)));
         ptLogical = ptNew;

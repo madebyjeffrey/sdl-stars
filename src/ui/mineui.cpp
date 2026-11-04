@@ -54,8 +54,8 @@ LRESULT  MineWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::SetBkColor(reinterpret_cast<HDC>(wParam), app.lpui->crButtonFace);
         return reinterpret_cast<LRESULT>(app.lpui->hbrButtonFace);
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         ControlIO().pfnGetClientRect(hwnd, &rc);
         if (win32::PtInRect(&rc, PointFrom16(pt)) == 0)
             goto Default;
@@ -142,6 +142,7 @@ void InvalidateMineralBars(APPSESSION &app) {
 }
 
 void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
+    std::optional<TERRAFORMRESULT> terra;
     PLANETTEXTRESULT szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
@@ -180,8 +181,6 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
     std::int32_t    lDecay;
     std::int16_t    iplrbmp;
     THING     *lpthDest;
-    std::int16_t    fCanTerraform;
-    std::int16_t    rgMin[3];
     std::int16_t    xL;
     std::int16_t    dyRow;
     std::int16_t    iMax;
@@ -198,8 +197,6 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
     std::int16_t    xR;
     std::int16_t    dxRLabels;
     std::int16_t    iCur;
-    std::int16_t    rgCost[3];
-    std::int16_t    rgMax[3];
     std::int16_t    dxLabels;
     std::int16_t    dx;
     std::int16_t    xBeg;
@@ -623,7 +620,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             win32::PatBlt(hdc, xL, 3 * dyRow + yCur, xR - xL, 1, win32::PATCOPY);
             win32::SetTextColor(hdc, app.lpui->crButtonText);
             win32::SetBkMode(hdc, win32::TRANSPARENT);
-            fCanTerraform = ColonyIO().pfnCanTerraform(app, &pl, rgMin, rgMax, rgCost, 1);
+            terra = ColonyIO().pfnCanTerraform(app, &pl, 1);
             dx = xR - xL - 4;
             dy = (dyRow - app.state.dyArial8) >> 1;
             i = 0;
@@ -666,16 +663,16 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                         xBeg--;
                         c += 2;
                     }
-                    if (fCanTerraform) {
+                    if (terra && terra->fCan) {
                         yTop--;
-                        if (rgMin[i] != envNone) {
-                            dxBar = 0 <= iCur - rgMin[i] ? iCur - rgMin[i] : 0;
+                        if (terra->rgEnvMin[i] != envNone) {
+                            dxBar = 0 <= iCur - terra->rgEnvMin[i] ? iCur - terra->rgEnvMin[i] : 0;
                         } else {
                             dxBar = 0;
                         }
                         xBeg = xL + 2 + win32::MulDiv(iCur - dxBar, dx, 100);
-                        if (rgMax[i] != envNone) {
-                            dxBar = 0 <= rgMax[i] - iCur ? rgMax[i] - iCur : 0;
+                        if (terra->rgEnvMax[i] != envNone) {
+                            dxBar = 0 <= terra->rgEnvMax[i] - iCur ? terra->rgEnvMax[i] - iCur : 0;
                         } else {
                             dxBar = 0;
                         }
@@ -724,7 +721,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
             }
             RightTextOut(app, hdc, xL - 4, dy, "kT", 2, 0);
             if (pl.iPlayer == app.state.idPlayer) {
-                ColonyIO().pfnEstimateMining(app, &pl, rgl, -1, 0);
+                ColonyIO().pfnEstimateMining(app, &pl, std::span{rgl}.first<3>(), -1, 0);
             } else {
                 rgl[2] = 0;
                 rgl[1] = 0;
@@ -737,7 +734,7 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                         if (lpfl->idPlanet == pl.id && lpfl->iPlayer == app.state.idPlayer && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
                             cMines = ColonyIO().pfnFleetMining(app, lpfl);
                             if (cMines > 0) {
-                                ColonyIO().pfnEstimateMining(app, &pl, rglT, cMines, 0);
+                                ColonyIO().pfnEstimateMining(app, &pl, std::span{rglT}.first<3>(), cMines, 0);
                                 for (iT = 0; iT < 3; iT++) {
                                     rgl[iT] += rglT[iT];
                                 }
@@ -880,6 +877,7 @@ HtMineType HtMineWindow(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t
 }
 
 void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg, std::int16_t sks) {
+    std::optional<TERRAFORMRESULT> terra;
     PLANET    *lppl;
     HtMineType ht;
     PART       part;
@@ -889,10 +887,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
     FLEET     *lpfl;
     std::int16_t    rgid[16];
     std::int16_t    ishdef;
-    std::int16_t    rgMin[3];
     PLANET     pl;
-    std::int16_t    rgCost[3];
-    std::int16_t    rgMax[3];
     std::int16_t    fOurs;
     std::int16_t    i;
     std::int16_t    idNew;
@@ -944,7 +939,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                     }
                 }
                 if (c > 1) {
-                    c = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, c, {}, rgpsz, -1, 1);
+                    c = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, c, {}, std::span{rgpsz}.first(static_cast<std::size_t>(c)), -1, 1);
                     if (c == -1)
                         break;
                 } else {
@@ -991,9 +986,10 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
             } else {
                 app.lpui->GlobalPD.iPlanVal = envNone;
             }
-            if (pl.det >= detSome && ColonyIO().pfnCanTerraform(app, &pl, rgMin, rgMax, rgCost, 1)) {
-                app.lpui->GlobalPD.iPlanMin = rgMin[app.lpui->GlobalPD.iPlanetVar];
-                app.lpui->GlobalPD.SetIPlanMax(rgMax[app.lpui->GlobalPD.iPlanetVar]);
+            terra = ColonyIO().pfnCanTerraform(app, &pl, 1);
+            if (pl.det >= detSome && terra && terra->fCan) {
+                app.lpui->GlobalPD.iPlanMin = terra->rgEnvMin[app.lpui->GlobalPD.iPlanetVar];
+                app.lpui->GlobalPD.SetIPlanMax(terra->rgEnvMax[app.lpui->GlobalPD.iPlanetVar]);
                 if (app.lpui->GlobalPD.iPlanMin == envNone) {
                     app.lpui->GlobalPD.iPlanMin = app.lpui->GlobalPD.iPlanVal;
                 }
@@ -1115,7 +1111,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                     iChecked = i;
                 }
             }
-            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, 9, {}, psz, iChecked, 1);
+            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, 9, {}, std::span{psz}.first(9), iChecked, 1);
             if (i == -1 || rgi[i] == app.lpui->cMinGrafMax)
                 break;
             app.lpui->cMinGrafMax = rgi[i];
@@ -1139,7 +1135,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                 if (pl.det > detSome) {
                     lVal = 0;
                     app.lpui->GlobalPD.SetRgi(2, pl.rgwtMin[ht - 1]);
-                    ColonyIO().pfnEstimateMining(app, &pl, rglQuan, -1, 0);
+                    ColonyIO().pfnEstimateMining(app, &pl, std::span{rglQuan}.first<3>(), -1, 0);
                     app.lpui->GlobalPD.SetRgi(4, rglQuan[ht - 1]);
                     if (pl.iPlayer == iplrNone) {
                         for (ifl = 0; ifl < app.state.cFleet; ifl++) {
@@ -1149,7 +1145,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                             if (lpfl->idPlanet == pl.id && lpfl->iPlayer == app.state.idPlayer && !lpfl->fDead && lpfl->lpplord->rgord()[0].grTask == grTaskMine) {
                                 cMines = ColonyIO().pfnFleetMining(app, lpfl);
                                 if (cMines > 0) {
-                                    ColonyIO().pfnEstimateMining(app, &pl, rglT, cMines, 0);
+                                    ColonyIO().pfnEstimateMining(app, &pl, std::span{rglT}.first<3>(), cMines, 0);
                                     lVal += rglT[ht - 1];
                                 }
                             }

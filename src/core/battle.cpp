@@ -190,7 +190,7 @@ std::int16_t FDumpCargo(APPSESSION &app, FLEET *lpfl) {
         }
     } else {
         pt = lpfl->pt;
-        DropSalvage(app, &app.state.lpthBattle, lpfl->rgwtMin, lpfl->iplr(), &pt);
+        DropSalvage(app, app.state.lpthBattle, std::span{lpfl->rgwtMin}.first<3>(), lpfl->iplr(), &pt);
     }
     for (i = 0; i <= 2; i++) {
         lpfl->rgwtMin[i] = 0;
@@ -198,13 +198,13 @@ std::int16_t FDumpCargo(APPSESSION &app, FLEET *lpfl) {
     return 1;
 }
 
-void DropSalvage(APPSESSION &app, THING **plpth, std::int32_t *rgwtMinerals, std::int16_t iplr, POINT16 *ppt) {
+void DropSalvage(APPSESSION &app, THING *&plpth, std::span<std::int32_t, 3> rgwtMinerals, std::int16_t iplr, POINT16 *ppt) {
     std::int32_t wtTotal;
     std::int32_t wt;
     std::int16_t i;
     THING  *lpth;
 
-    lpth = *plpth;
+    lpth = plpth;
     wtTotal = 0;
     for (i = 0; i < app.state.game.cPlanMax; i++) {
         if (ppt->x == app.state.rgptPlan[i].x && ppt->y == app.state.rgptPlan[i].y) {
@@ -264,11 +264,11 @@ void DropSalvage(APPSESSION &app, THING **plpth, std::int32_t *rgwtMinerals, std
                 break;
         }
     }
-    *plpth = lpth;
+    plpth = lpth;
     return;
 }
 
-std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack, std::uint16_t *pgrfPlayer, std::uint16_t *pgrfSpectator) {
+BATTLEPARTICIPANTS CplrBattle(APPSESSION &app, FLEET *lpfl) {
     std::int16_t   iplrStarbase;
     FLEET    *lpflCur;
     std::int32_t   rgcsh[16];
@@ -288,6 +288,7 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
     std::uint16_t  grfPlayer;
     std::int16_t   ctokNew;
     std::int16_t   ctokFleet;
+    BATTLEPARTICIPANTS result{};
 
     fAttack = 0;
     iplrStarbase = iplrNone;
@@ -295,8 +296,8 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
     cshdef = 0;
     app.state.grfMissed = 0;
     cflTotal = 0;
-    *pgrfSpectator = 0;
-    std::fill_n(rggrfAttack, 16, 0);
+    result.grfSpectator = 0;
+    result.rggrfAttack.fill(0);
     std::ranges::fill(rgcsh, 0);
     if (lpfl->idPlanet != idPlanetDeepSpace) {
         lppl = LpplFromId(app, lpfl->idPlanet);
@@ -308,7 +309,7 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
                 switch (iplrAttack) {
                 case iplrAttackEveryone:
                     /* NATIVE: original indexed with iplrCur before it was set; see WIN16-PARITY.md */
-                    rggrfAttack[iplrStarbase] = ~(1 << iplrStarbase) & 0xffff;
+                    result.rggrfAttack[iplrStarbase] = ~(1 << iplrStarbase) & 0xffff;
                     break;
                 case iplrAttackEnemies:
                 case iplrAttackNeutralsEnemies:
@@ -316,19 +317,19 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
                         if (i != iplrStarbase) {
                             mdRel = app.state.rgplr[iplrStarbase].rgmdRelation[i];
                             if (mdRel == 2 || (mdRel == 0 && iplrAttack == iplrAttackNeutralsEnemies)) {
-                                rggrfAttack[iplrStarbase] |= 1 << i;
+                                result.rggrfAttack[iplrStarbase] |= 1 << i;
                             }
                         }
                     }
                     break;
                 default:
                     /* NATIVE: original indexed with iplrCur before it was set; see WIN16-PARITY.md */
-                    rggrfAttack[iplrStarbase] |= 1 << (iplrAttack - 4);
+                    result.rggrfAttack[iplrStarbase] |= 1 << (iplrAttack - 4);
                     break;
                 }
             }
         } else if (lppl->iPlayer != iplrNone) {
-            *pgrfSpectator |= 1 << lppl->iPlayer;
+            result.grfSpectator |= 1 << lppl->iPlayer;
         }
     }
     lpflCur = lpfl;
@@ -348,7 +349,7 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
             case iplrAttackNobody:
                 break;
             case iplrAttackEveryone:
-                rggrfAttack[iplrCur] = ~(1 << iplrCur) & 0xffff;
+                result.rggrfAttack[iplrCur] = ~(1 << iplrCur) & 0xffff;
                 break;
             case iplrAttackEnemies:
             case iplrAttackNeutralsEnemies:
@@ -356,13 +357,13 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
                     if (i != iplrCur) {
                         mdRel = app.state.rgplr[iplrCur].rgmdRelation[i];
                         if (mdRel == 2 || (mdRel == 0 && iplrAttack == iplrAttackNeutralsEnemies)) {
-                            rggrfAttack[iplrCur] |= 1 << i;
+                            result.rggrfAttack[iplrCur] |= 1 << i;
                         }
                     }
                 }
                 break;
             default:
-                rggrfAttack[iplrCur] |= 1 << (iplrAttack - 4);
+                result.rggrfAttack[iplrCur] |= 1 << (iplrAttack - 4);
                 break;
             }
         }
@@ -372,25 +373,25 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
         lpflCur = lpflCur->lpflNext;
     } while (lpflCur != lpfl);
     if (!fAttack) {
-        return 0;
+        return result;
     }
     iplrAttack = iplrAttackNobody;
     for (i = 0; i < app.state.game.cPlayer; i++) {
-        if (rggrfAttack[i] != 0) {
-            iplrAttack = static_cast<AttackWho>(iplrAttack | grfPlayer & rggrfAttack[i]);
+        if (result.rggrfAttack[i] != 0) {
+            iplrAttack = static_cast<AttackWho>(iplrAttack | grfPlayer & result.rggrfAttack[i]);
         }
     }
     if (iplrAttack == iplrAttackNobody) {
-        return 0;
+        return result;
     }
     for (i = 0; i < app.state.game.cPlayer; i++) {
-        if (rggrfAttack[i] & iplrAttack) {
+        if (result.rggrfAttack[i] & iplrAttack) {
             iplrAttack = static_cast<AttackWho>(iplrAttack | 1 << i);
         }
         if (1 << i & iplrAttack) {
             for (iplrCur = 0; iplrCur < app.state.game.cPlayer; iplrCur++) {
-                if (1 << i & rggrfAttack[iplrCur]) {
-                    rggrfAttack[i] |= 1 << iplrCur;
+                if (1 << i & result.rggrfAttack[iplrCur]) {
+                    result.rggrfAttack[i] |= 1 << iplrCur;
                 }
             }
         }
@@ -402,17 +403,17 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
         iplrCur = lpflCur->iPlayer;
         grPlr = 1 << iplrCur;
         if ((grfPlayer & grPlr) && !(iplrAttack & grPlr)) {
-            rggrfAttack[iplrCur] = 0;
+            result.rggrfAttack[iplrCur] = 0;
             for (i = 0; i < app.state.game.cPlayer; i++) {
                 if (i != iplrCur && app.state.rgplr[iplrCur].rgmdRelation[i] == 1 && (1 << i & iplrAttack)) {
-                    if (1 << i & rggrfAttack[iplrCur]) {
-                        rggrfAttack[iplrCur] = 0;
+                    if (1 << i & result.rggrfAttack[iplrCur]) {
+                        result.rggrfAttack[iplrCur] = 0;
                         break;
                     }
-                    rggrfAttack[iplrCur] |= rggrfAttack[i];
+                    result.rggrfAttack[iplrCur] |= result.rggrfAttack[i];
                 }
             }
-            if (rggrfAttack[iplrCur] != 0) {
+            if (result.rggrfAttack[iplrCur] != 0) {
                 iplrAttack = static_cast<AttackWho>(iplrAttack | grPlr);
             } else {
                 grfPlayer &= ~grPlr;
@@ -439,7 +440,7 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
                 }
             }
         } else {
-            *pgrfSpectator |= grPlr;
+            result.grfSpectator |= grPlr;
             lpflCur->fInclude = 0;
         }
         lpflCur = lpflCur->lpflNext;
@@ -499,11 +500,9 @@ std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack
             } while (lpflCur != lpfl);
         }
     }
-    *pgrfPlayer = grfPlayer;
-    if (fChange) {
-        return -1;
-    }
-    return cplr;
+    result.grfPlayer = grfPlayer;
+    result.cplr = fChange ? -1 : cplr;
+    return result;
 }
 
 std::int16_t SpdOfShip(APPSESSION &app, FLEET *lpfl, std::int16_t ishdef, TOK *ptok, std::int16_t fDumpCargo, SHDEF *lpshdef) {
@@ -637,9 +636,7 @@ void DoBattles(APPSESSION &app, std::int16_t fPostMovement) {
     std::int16_t  cplr;
     std::int16_t  ifl;
     FLEET   *lpfl;
-    std::uint16_t grfSpectator;
-    std::uint16_t grfPlayer;
-    std::uint16_t rggrfAttack[16];
+    BATTLEPARTICIPANTS battle;
 
     LinkFleets(app, fPostMovement);
     static_assert(std::is_trivially_default_constructible_v<TOK> && std::is_trivially_destructible_v<TOK>);
@@ -651,8 +648,9 @@ void DoBattles(APPSESSION &app, std::int16_t fPostMovement) {
             break;
         lpfl->fBombed = 0;
         if (!lpfl->fDone && !lpfl->fDead && lpfl->lpflNext) {
-            cplr = CplrBattle(app, lpfl, rggrfAttack, &grfPlayer, &grfSpectator);
-            if (cplr != -1 && cplr != 0 && FDoCoolBattle(app, lpfl, cplr, rggrfAttack, grfPlayer, grfSpectator)) {
+            battle = CplrBattle(app, lpfl);
+            cplr = battle.cplr;
+            if (cplr != -1 && cplr != 0 && FDoCoolBattle(app, lpfl, cplr, std::span<const std::uint16_t, 16>{battle.rggrfAttack}, battle.grfPlayer, battle.grfSpectator)) {
             }
         }
     }
@@ -746,7 +744,7 @@ void CheckInitiative(APPSESSION &app, TOK *ptok) {
     return;
 }
 
-void CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, std::span<std::uint8_t, 64> rgfInit) {
+bool CheckWeapons(APPSESSION &app, TOK *ptok, std::span<std::uint8_t, 64> rgfInit) {
     std::int16_t pctJam;
     std::int32_t ldp;
     std::int32_t pctBeamDef;
@@ -764,7 +762,9 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, st
     HUL    *lphul;
     std::int16_t dxyPart;
     PART    part;
+    bool fDampeningField;
 
+    fDampeningField = false;
     pctCap = 1000;
     pctBeamDef = 1000;
     pctHit = 10000;
@@ -811,7 +811,7 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, st
                     pctJam = 90;
                     break;
                 case ispecialEEnergyDampener:
-                    *pfDampeningField = 1;
+                    fDampeningField = true;
                     break;
                 case ispecialETachyonDetector:
                     ptok->fDetector = 1;
@@ -911,7 +911,7 @@ void CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, st
     } else {
         ptok->dpShield = LOWORD(ldp);
     }
-    return;
+    return fDampeningField;
 }
 
 void RandomizeTokOrder(APPSESSION &app) {
@@ -972,7 +972,9 @@ INITIATIVERANGE InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc,
             ptok->csh = 1;
             ptok->ishdef = lppl->isb + 16;
             CheckInitiative(app, ptok);
-            CheckWeapons(app, ptok, &fDampeningField, rgfInit);
+            if (CheckWeapons(app, ptok, rgfInit)) {
+                fDampeningField = 1;
+            }
             rgfTorp[iplr] |= ptok->fTorp;
             if (ptok->initBase == 0xff) {
                 ptok->mdTarget0 = mdTargetUnarmedShips;
@@ -1009,7 +1011,9 @@ INITIATIVERANGE InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc,
                         ptok->csh = lpflCur->rgcsh[ishdef];
                         ptok->dv.dp = lpflCur->rgdv[ishdef].dp;
                         CheckInitiative(app, ptok);
-                        CheckWeapons(app, ptok, &fDampeningField, rgfInit);
+                        if (CheckWeapons(app, ptok, rgfInit)) {
+                            fDampeningField = 1;
+                        }
                         rgfTorp[iplr] |= ptok->fTorp;
                         CheckTarget(app, ptok, lpflCur, ishdef);
                         ptok->spd = SpdOfShip(app, lpflCur, ishdef, ptok, fDumpCargo, nullptr);
@@ -1203,7 +1207,7 @@ MOVEMENTRANGECANDIDATE DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::ui
                 dz++;
             }
             if (dz <= dzMax && (ptokTarget->dpShield > 0 || dzNonSapper == ptok->dxyLim || dz <= static_cast<std::uint16_t>((dzNonSapper + ptok->dMovesLeft)))) {
-                return {ptok->dMovesLeft, 0xff};
+                return {static_cast<std::int16_t>(ptok->dMovesLeft), 0xff};
             }
             if (static_cast<std::int16_t>(dz) < dzBest && DpFromPtokBrcToBrc(app, ptok, 0, 0, ptokTarget, 0) > 0) {
                 dzBest = dz;
@@ -1997,7 +2001,7 @@ void KillShips(APPSESSION &app, TOK *ptok, std::int16_t cshKill, std::int16_t is
             flDead.iPlayer = flSrc.iPlayer;
             flDead.pt = flSrc.pt;
             flDead.idPlanet = flSrc.idPlanet;
-            CreateSalvage(app, &flDead, &app.state.lpthBattle);
+            CreateSalvage(app, &flDead, app.state.lpthBattle);
         }
         if (!lpfl->fDead) {
             *lpfl = flSrc;
@@ -2006,7 +2010,7 @@ void KillShips(APPSESSION &app, TOK *ptok, std::int16_t cshKill, std::int16_t is
     return;
 }
 
-void CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth) {
+void CreateSalvage(APPSESSION &app, FLEET *pfl, THING *&plpth) {
     std::int32_t wtTotal;
     SHDEF  *lpshdefT;
     PLANET *lppl;
@@ -2259,7 +2263,7 @@ std::int16_t DxyFromSpdRound(std::uint16_t spd, std::int16_t iRound) {
     return dxy;
 }
 
-std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std::uint16_t *rggrfAttack, std::uint16_t grfPlayer, std::uint16_t grfSpectator) {
+std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std::span<const std::uint16_t, 16> rggrfAttack, std::uint16_t grfPlayer, std::uint16_t grfSpectator) {
     std::int16_t  cShipsInvolved;
     TOK     *ptok;
     std::uint16_t wt;
@@ -2481,7 +2485,7 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
             break;
     }
     BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetCbData(app.state.lpbBattleCur - static_cast<std::uint8_t *>(lpbtldata));
-    SendBattleMessages(app, lpfl, cplr, BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).id(), rgPlrLosses, grfPlayer, cShipsInvolved, cShdefsInvolved, grfSpectator);
+    SendBattleMessages(app, lpfl, cplr, BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).id(), std::span<std::uint16_t, 256>{rgPlrLosses}, grfPlayer, cShipsInvolved, cShdefsInvolved, grfSpectator);
     BdvFromPrefix(std::span<std::uint8_t, cbWireBattleData>{lpbtldata, cbWireBattleData}).SetGrfPlr(grfPlayer);
     /* NATIVE: Win16 offsets include its 16-byte HB, not native address bits. */
     lphb = LphbFromLpHt(app, lpbSav, htBattle);
@@ -2495,31 +2499,30 @@ std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std:
     return 1;
 }
 
-std::int16_t ITechLearnATech(APPSESSION &app, std::int16_t iplr, std::int16_t x, std::int16_t y, MessageId idm, std::uint16_t *piGoto) {
-    std::uint16_t iGoto;
+TECHLEARNRESULT ITechLearnATech(APPSESSION &app, std::int16_t iplr, std::int16_t x, std::int16_t y, MessageId idm) {
     std::int16_t  fBattle;
     std::int16_t  i;
     std::int16_t  iTech;
     std::int32_t  l;
+    TRADERPARTRESULT traderPart;
 
     fBattle = idm != static_cast<MessageId>(idmNone);
     if (app.state.rgplr[iplr].fLearned || RandomIO().pfnRandom(app, 100) < 50) {
-        return 0;
+        return {0, std::nullopt};
     }
     for (i = 0; i < 13; i++) {
         iTech = RandomIO().pfnRandom(app, 13);
         if (app.state.rgTechTrader[iTech] != 0 && !(1 << iTech & app.state.rgplr[iplr].grbitTrader)) {
             if (RandomIO().pfnRandom(app, 100) < app.state.rgTechTrader[iTech]) {
-                idm = static_cast<MessageId>(IdmGiveTraderPart(app, static_cast<GrbitTrader>(1 << iTech), iplr, &iGoto));
+                traderPart = IdmGiveTraderPart(app, static_cast<GrbitTrader>(1 << iTech), iplr);
+                idm = traderPart.idm;
                 if (fBattle) {
                     // The battle wreckage versions of the part and hull messages.
                     idm = static_cast<MessageId>(idm + idmExaminationWreckageBattleUncoveredPlansNewPart - idmHasAbsorbedMysteryTraderHaveGivenPlans);
-                    TurnIO().pfnMessage2(app, iplr, idm, static_cast<MsgGoto>(iGoto), x, y);
-                } else if (piGoto) {
-                    *piGoto = iGoto;
+                    TurnIO().pfnMessage2(app, iplr, idm, traderPart.gotoTarget, x, y);
                 }
                 app.state.rgplr[iplr].fLearned = 1;
-                return -(iTech + 1);
+                return {static_cast<std::int16_t>(-(iTech + 1)), fBattle ? std::nullopt : std::optional<MsgGoto>(traderPart.gotoTarget)};
             }
         }
     }
@@ -2536,17 +2539,15 @@ std::int16_t ITechLearnATech(APPSESSION &app, std::int16_t iplr, std::int16_t x,
                     l = static_cast<std::int32_t>((l * 2));
                 }
                 TurnIO().pfnMessage(app, iplr, idm, gotoResearch, x, y, iTech, LOWORD(l), HIWORD(l), 0, 0);
-            } else if (piGoto) {
-                *piGoto = 0xfffe;
             }
             app.state.rgplr[iplr].fLearned = 1;
-            return iTech + 1;
+            return {static_cast<std::int16_t>(iTech + 1), fBattle ? std::nullopt : std::optional<MsgGoto>(gotoResearch)};
         }
     }
-    return 0;
+    return {0, std::nullopt};
 }
 
-void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std::int16_t idBtl, std::uint16_t *rgPlrLosses, std::int16_t grfPlayer, std::int16_t cShipsInvolved, std::int16_t cShdefsInvolved,
+void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std::int16_t idBtl, std::span<std::uint16_t, 256> rgPlrLosses, std::int16_t grfPlayer, std::int16_t cShipsInvolved, std::int16_t cShdefsInvolved,
                         std::uint16_t grfSpectator) {
     std::int16_t   iplrStarbase;
     std::int16_t   iplr;
@@ -2626,7 +2627,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
             if (cShipsInvolved == 2) {
                 pwThem = nullptr;
                 pwUs = nullptr;
-                pw = rgPlrLosses;
+                pw = rgPlrLosses.data();
                 for (i = 0; i < 16; i++) {
                     j = 0;
                     while (j < 16) {
@@ -2656,13 +2657,13 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                     idm = idmBattleTookPlaceDestroyedTakingDamage;
                 }
                 if (pwUs) {
-                    i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
+                    i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses.data())) >> 1;
                     i = (i & 0xf0) << 1 | (i & 0xf);
                 } else {
                     i = iplrStarbase << 5 | (isb + 0x10);
                 }
                 if (pwThem) {
-                    j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
+                    j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses.data())) >> 1;
                     j = (j & 0xf0) << 1 | (j & 0xf);
                 } else {
                     j = iplrStarbase << 5 | (isb + 0x10);
@@ -2670,13 +2671,13 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                 TurnIO().pfnMessage(app, iplr, idm, static_cast<MsgGoto>(idBtl | 0x4000), x, y, i, j, 0, 0, 0);
                 if (!fAlive || (lppl && lppl->iPlayer != iplrNone && iplr != lppl->iPlayer))
                     continue;
-                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
+                static_cast<void>(ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour));
                 continue;
             }
             if (cShdefsInvolved == 2) {
                 pwThem = nullptr;
                 pwUs = nullptr;
-                pw = rgPlrLosses;
+                pw = rgPlrLosses.data();
                 for (i = 0; i < 16; i++) {
                     j = 0;
                     while (j < 16) {
@@ -2719,21 +2720,21 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                 do {
                     if (!lpfl->fDead) {
                         if (lpfl->iPlayer == iplr && pwUs) {
-                            cUs += lpfl->rgcsh[((reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1) - (lpfl->iPlayer << 4)];
+                            cUs += lpfl->rgcsh[((reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses.data())) >> 1) - (lpfl->iPlayer << 4)];
                         } else if (pwThem) {
-                            cThem += lpfl->rgcsh[((reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1) - (lpfl->iPlayer << 4)];
+                            cThem += lpfl->rgcsh[((reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses.data())) >> 1) - (lpfl->iPlayer << 4)];
                         }
                     }
                     lpfl = lpfl->lpflNext;
                 } while (lpfl != lpflBtl && lpfl);
                 if (pwUs) {
-                    i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
+                    i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses.data())) >> 1;
                     i = (i & 0xf0) << 1 | (i & 0xf);
                 } else {
                     i = iplrStarbase << 5 | (isb + 0x10);
                 }
                 if (pwThem) {
-                    j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
+                    j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses.data())) >> 1;
                     j = (j & 0xf0) << 1 | (j & 0xf);
                 } else {
                     j = iplrStarbase << 5 | (isb + 0x10);
@@ -2741,13 +2742,13 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                 TurnIO().pfnMessage(app, iplr, idm, static_cast<MsgGoto>(idBtl | 0x4000), x, y, i, cUs, j, cThem, 0);
                 if (!fAlive || (lppl && lppl->iPlayer != iplrNone && iplr != lppl->iPlayer))
                     continue;
-                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
+                static_cast<void>(ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour));
                 continue;
             }
         CommonCountingCode:
             cThem = 0;
             cUs = 0;
-            pw = rgPlrLosses;
+            pw = rgPlrLosses.data();
             for (i = 0; i < 16; i++) {
                 j = 0;
                 while (j < 16) {
@@ -2801,7 +2802,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                     if ((iThem & 0xf) == iplrStarbase) {
                         j = iplrStarbase << 5 | (isb + 0x10);
                     } else {
-                        j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
+                        j = (reinterpret_cast<std::uint8_t *>(pwThem) - reinterpret_cast<std::uint8_t *>(rgPlrLosses.data())) >> 1;
                         j = (j & 0xf0) << 1 | (j & 0xf);
                     }
                 }
@@ -2809,7 +2810,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                     if (iplr == iplrStarbase) {
                         i = iplrStarbase << 5 | (isb + 0x10);
                     } else {
-                        i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses)) >> 1;
+                        i = (reinterpret_cast<std::uint8_t *>(pwUs) - reinterpret_cast<std::uint8_t *>(rgPlrLosses.data())) >> 1;
                         i = (i & 0xf0) << 1 | (i & 0xf);
                     }
                 }
@@ -2854,7 +2855,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                 }
                 if (cUsDead == cUs || (lppl && lppl->iPlayer != iplrNone && iplr != lppl->iPlayer))
                     continue;
-                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
+                static_cast<void>(ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour));
                 continue;
             }
             if (cUsDead == 0) {
@@ -2876,11 +2877,11 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
                 TurnIO().pfnMessage2(app, iplr, idmBattleTookPlacePressGotoButtonView, static_cast<MsgGoto>(idBtl | 0x4000), x, y);
             }
             if (fAlive && (!lppl || lppl->iPlayer == iplrNone || iplr == lppl->iPlayer)) {
-                ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
+                static_cast<void>(ITechLearnATech(app, iplr, x, y, idmWreckageDiscoveredBattleHasBoostedResearchResour));
             }
         } else if (lppl && lppl->iPlayer == iplr) {
             TurnIO().pfnMessage2(app, iplr, idmColonyReportsBattleTookPlaceOrbitForces, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
-            ITechLearnATech(app, iplr, x, y, idmFleetFoundWreckageBattleWhichHasBoosted, nullptr);
+            static_cast<void>(ITechLearnATech(app, iplr, x, y, idmFleetFoundWreckageBattleWhichHasBoosted));
         } else if (iplr & grfSpectator) {
             lpfl = lpflBtl;
             while (lpfl->iPlayer != iplr) {
@@ -2890,7 +2891,7 @@ void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std:
             }
             if (lpfl && lpfl->iPlayer == iplr) {
                 TurnIO().pfnMessage(app, iplr, idmReportsBattleTookPlaceForcesInvolved, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lpfl->pt.x, lpfl->pt.y, 0, 0, 0, 0);
-                ITechLearnATech(app, iplr, x, y, idmWreckageBattleOccurredOrbitHasBoostedResearch, nullptr);
+                static_cast<void>(ITechLearnATech(app, iplr, x, y, idmWreckageBattleOccurredOrbitHasBoostedResearch));
             }
         }
         if (1 << iplr & app.state.grfMissed) {
@@ -2940,28 +2941,24 @@ std::int16_t FAttackPlayer(APPSESSION &app, FLEET *lpfl, std::int16_t iplr) {
 void DoBombing(APPSESSION &app) {
     MessageId idmDst;
     std::int32_t   modKill;
-    std::int16_t   fMulti;
     std::int32_t   cKillPeople;
-    std::int32_t   dmgBombBldg;
     std::int32_t   cKillPeopleS;
     std::int32_t   cKillMine;
-    std::int32_t   dmgBombFloor;
     MessageId idmSrc;
     std::int32_t   cKillDefenses;
     std::int32_t   cKillFact;
-    std::int32_t   pctTerra;
     PLANET   *lppl;
     std::int16_t   ifl;
     FLEET    *lpfl;
     std::int32_t   cPPE;
-    std::int32_t   dmgBombPeople;
     float     pctSmart;
     float     pctSuccess;
-    std::int32_t   dmgPeopleSmart;
+    SURVIVALRESULT survival;
     double    pctSuccessHalf;
     std::int16_t   pctTot;
     std::int16_t   dChg;
     std::int16_t   i;
+    BOMBDAMAGERESULT bombDamage;
 
     for (ifl = 0; ifl < app.state.cFleet; ifl++) {
         lpfl = app.state.rglpfl[ifl];
@@ -2970,21 +2967,23 @@ void DoBombing(APPSESSION &app) {
         if (!lpfl->fDead && lpfl->idPlanet != idPlanetDeepSpace && !lpfl->fBombed) {
             lppl = app.state.lpPlanets + lpfl->idPlanet;
             if (lppl->iPlayer != lpfl->iPlayer && lppl->iPlayer != iplrNone && FAttackPlayer(app, lpfl, lppl->iPlayer) && !lppl->fStarbase &&
-                FCalcFleetBombDamage(app, lpfl, &dmgBombPeople, &dmgBombFloor, &dmgPeopleSmart, &dmgBombBldg, &pctTerra, &fMulti)) {
-                CalcPctSurvive(app, lppl, &pctSuccess, &pctSmart);
+                (bombDamage = FCalcFleetBombDamage(app, lpfl)).fDamage) {
+                survival = CalcPctSurvive(app, lppl);
+                pctSuccess = survival.pct;
+                pctSmart = survival.pctSmart;
                 if (static_cast<double>(pctSuccess) < static_cast<double>(1.0)) {
-                    if (dmgBombPeople > 0) {
-                        dmgBombPeople = static_cast<std::int32_t>((static_cast<double>(dmgBombPeople) * pctSuccess + 0.5));
+                    if (bombDamage.dmgPeople > 0) {
+                        bombDamage.dmgPeople = static_cast<std::int32_t>((static_cast<double>(bombDamage.dmgPeople) * pctSuccess + 0.5));
                     }
-                    if (dmgBombFloor > 0) {
-                        dmgBombFloor = static_cast<std::int32_t>((static_cast<double>(dmgBombFloor) * pctSuccess + 0.5));
+                    if (bombDamage.dmgPeopleMin > 0) {
+                        bombDamage.dmgPeopleMin = static_cast<std::int32_t>((static_cast<double>(bombDamage.dmgPeopleMin) * pctSuccess + 0.5));
                     }
-                    if (dmgPeopleSmart > 0) {
-                        dmgPeopleSmart = static_cast<std::int32_t>((static_cast<double>(dmgPeopleSmart) * pctSmart + 0.5));
+                    if (bombDamage.dmgPeopleSmart > 0) {
+                        bombDamage.dmgPeopleSmart = static_cast<std::int32_t>((static_cast<double>(bombDamage.dmgPeopleSmart) * pctSmart + 0.5));
                     }
-                    if (dmgBombBldg > 0) {
+                    if (bombDamage.dmgBldg > 0) {
                         pctSuccessHalf = static_cast<double>((1.0 - (static_cast<double>(1.0) - pctSuccess) / 2.0));
-                        dmgBombBldg = static_cast<std::int32_t>((static_cast<double>(dmgBombBldg) * pctSuccessHalf + 0.5));
+                        bombDamage.dmgBldg = static_cast<std::int32_t>((static_cast<double>(bombDamage.dmgBldg) * pctSuccessHalf + 0.5));
                     }
                 }
                 cPPE = lppl->cMines + lppl->cFactories + static_cast<std::uint32_t>(lppl->cDefenses);
@@ -2992,8 +2991,8 @@ void DoBombing(APPSESSION &app) {
                 cKillPeople = 0;
                 cKillMine = 0;
                 cKillFact = 0;
-                if (dmgBombBldg > 0 && cPPE > 0) {
-                    cKillFact = static_cast<std::uint32_t>((lppl->cFactories * dmgBombBldg));
+                if (bombDamage.dmgBldg > 0 && cPPE > 0) {
+                    cKillFact = static_cast<std::uint32_t>((lppl->cFactories * bombDamage.dmgBldg));
                     modKill = static_cast<std::int32_t>((cKillFact % cPPE));
                     cKillFact = static_cast<std::int32_t>((cKillFact / cPPE));
                     if (modKill > 0) {
@@ -3002,7 +3001,7 @@ void DoBombing(APPSESSION &app) {
                     if (cKillFact > static_cast<std::int32_t>(lppl->cFactories)) {
                         cKillFact = lppl->cFactories;
                     }
-                    cKillDefenses = static_cast<std::uint32_t>((lppl->cDefenses * dmgBombBldg));
+                    cKillDefenses = static_cast<std::uint32_t>((lppl->cDefenses * bombDamage.dmgBldg));
                     modKill = static_cast<std::int32_t>((cKillDefenses % cPPE));
                     cKillDefenses = static_cast<std::int32_t>((cKillDefenses / cPPE));
                     if (modKill > 0) {
@@ -3011,28 +3010,28 @@ void DoBombing(APPSESSION &app) {
                     if (cKillDefenses > static_cast<std::int32_t>(lppl->cDefenses)) {
                         cKillDefenses = lppl->cDefenses;
                     }
-                    cKillMine = dmgBombBldg - (cKillFact + cKillDefenses);
+                    cKillMine = bombDamage.dmgBldg - (cKillFact + cKillDefenses);
                     if (cKillMine > static_cast<std::int32_t>(lppl->cMines)) {
                         cKillMine = lppl->cMines;
                     }
                 }
-                if ((dmgBombPeople > 0 || dmgBombFloor > 0 || dmgPeopleSmart > 0) && lppl->rgwtMin[3] > 0) {
-                    cKillPeopleS = static_cast<std::int32_t>((lppl->rgwtMin[3] * dmgPeopleSmart)) / 1000;
+                if ((bombDamage.dmgPeople > 0 || bombDamage.dmgPeopleMin > 0 || bombDamage.dmgPeopleSmart > 0) && lppl->rgwtMin[3] > 0) {
+                    cKillPeopleS = static_cast<std::int32_t>((lppl->rgwtMin[3] * bombDamage.dmgPeopleSmart)) / 1000;
                     if (cKillPeopleS >= lppl->rgwtMin[3]) {
                         cKillPeopleS = lppl->rgwtMin[3] - 1;
                     }
-                    cKillPeople = static_cast<std::uint32_t>(((lppl->rgwtMin[3] - cKillPeopleS) * dmgBombPeople));
+                    cKillPeople = static_cast<std::uint32_t>(((lppl->rgwtMin[3] - cKillPeopleS) * bombDamage.dmgPeople));
                     modKill = static_cast<std::int32_t>((cKillPeople % 1000));
                     cKillPeople = static_cast<std::int32_t>((cKillPeople / 1000));
                     if (modKill > 0) {
                         cKillPeople += static_cast<std::uint32_t>((RandomIO().pfnRandom(app, 1000) <= modKill));
                     }
                     cKillPeople += cKillPeopleS;
-                    if (dmgBombPeople > 0 && cKillPeople <= 0) {
+                    if (bombDamage.dmgPeople > 0 && cKillPeople <= 0) {
                         cKillPeople = 1;
                     }
-                    if (cKillPeople < dmgBombFloor) {
-                        cKillPeople = dmgBombFloor;
+                    if (cKillPeople < bombDamage.dmgPeopleMin) {
+                        cKillPeople = bombDamage.dmgPeopleMin;
                     }
                     if (cKillPeople > lppl->rgwtMin[3]) {
                         cKillPeople = lppl->rgwtMin[3];
@@ -3050,47 +3049,47 @@ void DoBombing(APPSESSION &app) {
                 if (cKillDefenses > 0) {
                     lppl->cDefenses -= cKillDefenses;
                 }
-                if (pctTerra > 0) {
+                if (bombDamage.pctTerra > 0) {
                     pctTot = 0;
-                    pctTerra -= static_cast<std::int32_t>(((static_cast<double>(1.0) - pctSuccess) * pctTerra / 2));
-                    if (pctTerra > 500) {
-                        pctTerra = 500;
+                    bombDamage.pctTerra -= static_cast<std::int32_t>(((static_cast<double>(1.0) - pctSuccess) * bombDamage.pctTerra / 2));
+                    if (bombDamage.pctTerra > 500) {
+                        bombDamage.pctTerra = 500;
                     }
                     for (i = 0; i < 3; i++) {
                         dChg = lppl->rgEnvVar[i] - lppl->rgEnvVarOrig[i];
                         if (dChg > 0) {
-                            if (dChg >= pctTerra) {
-                                dChg = LOWORD(pctTerra);
+                            if (dChg >= bombDamage.pctTerra) {
+                                dChg = LOWORD(bombDamage.pctTerra);
                             }
                             lppl->rgEnvVar[i] -= dChg;
                             pctTot += dChg;
                         } else if (dChg < 0) {
-                            if (static_cast<std::int16_t>(-dChg) >= pctTerra) {
-                                dChg = -LOWORD(pctTerra);
+                            if (static_cast<std::int16_t>(-dChg) >= bombDamage.pctTerra) {
+                                dChg = -LOWORD(bombDamage.pctTerra);
                             }
                             lppl->rgEnvVar[i] -= dChg;
                             pctTot += -dChg;
                         }
                     }
                     if (pctTot > 0) {
-                        TurnIO().pfnMessage(app, lpfl->iPlayer, !fMulti ? idmHasRetroBombedUndoingTerraforming : idmFleetsHaveRetroBombedUndoingTerraforming,
+                        TurnIO().pfnMessage(app, lpfl->iPlayer, !bombDamage.fMulti ? idmHasRetroBombedUndoingTerraforming : idmFleetsHaveRetroBombedUndoingTerraforming,
                                     static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id, pctTot, 0, 0, 0, 0);
-                        TurnIO().pfnMessage(app, lppl->iPlayer, !fMulti ? idmHasRetroBombedUndoingTerraforming : idmFleetsHaveRetroBombedUndoingTerraforming2, static_cast<MsgGoto>(lppl->id),
+                        TurnIO().pfnMessage(app, lppl->iPlayer, !bombDamage.fMulti ? idmHasRetroBombedUndoingTerraforming : idmFleetsHaveRetroBombedUndoingTerraforming2, static_cast<MsgGoto>(lppl->id),
                                     lpfl->id, lppl->id, pctTot, 0, 0, 0, 0);
                     }
                 }
                 cPPE = cKillMine + cKillFact + cKillDefenses;
                 if (cPPE > 0) {
                     if (lppl->rgwtMin[3] > 0) {
-                        idmSrc = !fMulti ? idmHasBombedKillingColonistsDestroyingOneInstallati : idmFleetsHaveBombedKillingColonistsDestroyingOne;
-                        idmDst = !fMulti ? idmHasBombedKillingColonistsDestroyingOneInstallati3 : idmFleetsHaveBombedKillingColonistsDestroyingOne3;
+                        idmSrc = !bombDamage.fMulti ? idmHasBombedKillingColonistsDestroyingOneInstallati : idmFleetsHaveBombedKillingColonistsDestroyingOne;
+                        idmDst = !bombDamage.fMulti ? idmHasBombedKillingColonistsDestroyingOneInstallati3 : idmFleetsHaveBombedKillingColonistsDestroyingOne3;
                         if (cPPE > 1) {
                             idmSrc = static_cast<MessageId>(idmSrc + 1);
                             idmDst = static_cast<MessageId>(idmDst + 1);
                         }
                     } else {
-                        idmSrc = !fMulti ? idmHasBombedKillingOffEnemyColonists : idmFleetsHaveBombedKillingOffEnemyColonists;
-                        idmDst = !fMulti ? idmHasBombedKillingColonists3 : idmFleetsHaveBombedKillingColonists3;
+                        idmSrc = !bombDamage.fMulti ? idmHasBombedKillingOffEnemyColonists : idmFleetsHaveBombedKillingOffEnemyColonists;
+                        idmDst = !bombDamage.fMulti ? idmHasBombedKillingColonists3 : idmFleetsHaveBombedKillingColonists3;
                         goto GenericBombMsg;
                     }
                     if (cKillPeople > 0) {
@@ -3123,11 +3122,11 @@ void DoBombing(APPSESSION &app) {
                     }
                 } else if (cKillPeople > 0) {
                     if (lppl->rgwtMin[3] > 0) {
-                        idmSrc = !fMulti ? idmHasBombedKillingColonists : idmFleetsHaveBombedKillingColonists;
-                        idmDst = !fMulti ? idmHasBombedKillingColonists2 : idmFleetsHaveBombedKillingColonists2;
+                        idmSrc = !bombDamage.fMulti ? idmHasBombedKillingColonists : idmFleetsHaveBombedKillingColonists;
+                        idmDst = !bombDamage.fMulti ? idmHasBombedKillingColonists2 : idmFleetsHaveBombedKillingColonists2;
                     } else {
-                        idmSrc = !fMulti ? idmHasBombedKillingOffEnemyColonists : idmFleetsHaveBombedKillingOffEnemyColonists;
-                        idmDst = !fMulti ? idmHasBombedKillingColonists3 : idmFleetsHaveBombedKillingColonists3;
+                        idmSrc = !bombDamage.fMulti ? idmHasBombedKillingOffEnemyColonists : idmFleetsHaveBombedKillingOffEnemyColonists;
+                        idmDst = !bombDamage.fMulti ? idmHasBombedKillingColonists3 : idmFleetsHaveBombedKillingColonists3;
                     }
                     TurnIO().pfnMessage(app, lpfl->iPlayer, idmSrc, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id, LOWORD(cKillPeople), 0, 0, 0, 0);
                     TurnIO().pfnMessage(app, lppl->iPlayer, idmDst, static_cast<MsgGoto>(lppl->id), lpfl->id, lppl->id, LOWORD(cKillPeople), 0, 0, 0, 0);

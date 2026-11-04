@@ -5,6 +5,7 @@
 #include <cstring>
 
 struct COMPATDLGCREATE { DLGPROC lpfn; HFONT hfont; int cxUnit, cyUnit; BOOL fModal; };
+struct DIALOGUNITSRESULT { HFONT hfont; int cxUnit, cyUnit; bool fReady; };
 
 void CompatDestroyDialog(HWND hwnd) {
     if (hwnd->hfontDialog) win32::DeleteObject(hwnd->hfontDialog);
@@ -75,34 +76,42 @@ BOOL win32::MapDialogRect(HWND hwnd, LPRECT lprc) {
     lprc->top = win32::MulDiv(lprc->top, lp->cyDlgUnit, 8); lprc->bottom = win32::MulDiv(lprc->bottom, lp->cyDlgUnit, 8);
     return 1;
 }
-static bool FDialogUnits(COMPATDLGTEMPLATE *lpdlg, COMPATDLGCREATE *lpc) {
+static DIALOGUNITSRESULT FDialogUnits(COMPATDLGTEMPLATE *lpdlg) {
     LOGFONTA lf = {};
     HDC hdc;
     HGDIOBJ hold;
     SIZE size;
     TEXTMETRICA tm;
     BOOL fOk;
+    HFONT hfont;
+    int cxUnit = 0, cyUnit = 0;
     const char *pszFont;
     lf.lfHeight = lpdlg->cPoints ? -win32::MulDiv(lpdlg->cPoints, 96, 72) : -11;
     lf.lfWeight = win32::FW_NORMAL;
     pszFont = lpdlg->szFont ? lpdlg->szFont->c_str() : "MS Sans Serif";
     CchCopyUtf8(std::span{lf.lfFaceName}, std::string_view{pszFont, CchUtf8Prefix(pszFont, sizeof(lf.lfFaceName) - 1)});
-    lpc->hfont = win32::CreateFontIndirectA(&lf);
-    if (!lpc->hfont || !(hdc = win32::CreateCompatibleDC(nullptr))) return 0;
-    hold = win32::SelectObject(hdc, lpc->hfont);
+    hfont = win32::CreateFontIndirectA(&lf);
+    if (!hfont) return {nullptr, cxUnit, cyUnit, false};
+    hdc = win32::CreateCompatibleDC(nullptr);
+    if (!hdc) return {hfont, cxUnit, cyUnit, false};
+    hold = win32::SelectObject(hdc, hfont);
     fOk = win32::GetTextExtentPoint32A(hdc, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 52, &size) && win32::GetTextMetricsA(hdc, &tm);
-    if (fOk) { lpc->cxUnit = (size.cx / 26 + 1) / 2; lpc->cyUnit = tm.tmHeight; fOk = lpc->cxUnit > 0 && lpc->cyUnit > 0; }
-    win32::SelectObject(hdc, hold); win32::DeleteDC(hdc); return fOk;
+    if (fOk) { cxUnit = (size.cx / 26 + 1) / 2; cyUnit = tm.tmHeight; fOk = cxUnit > 0 && cyUnit > 0; }
+    win32::SelectObject(hdc, hold); win32::DeleteDC(hdc);
+    return {hfont, cxUnit, cyUnit, fOk != 0};
 }
 HWND HwndCompatDynamicDialog(LPCSTR pszTitle, DWORD dwStyle, DWORD dwExStyle, const RECT *lprc,
                              HWND hwndOwner, DLGPROC lpfn) {
     COMPATDLGTEMPLATE dlg = {};
     COMPATDLGCREATE dc = {};
+    DIALOGUNITSRESULT units{};
     HWND hwnd;
     COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) win32::DeleteObject(dc.hfont); });
     dlg.cPoints = 8;
     dc.lpfn = lpfn; dc.fModal = 1;
-    if (!FDialogUnits(&dlg, &dc)) return nullptr;
+    units = FDialogUnits(&dlg);
+    dc.hfont = units.hfont; dc.cxUnit = units.cxUnit; dc.cyUnit = units.cyUnit;
+    if (!units.fReady) return nullptr;
     hwnd = win32::CreateWindowExA(dwExStyle, "#32770", pszTitle, dwStyle & ~win32::WS_VISIBLE,
                          lprc->left, lprc->top, lprc->right - lprc->left, lprc->bottom - lprc->top,
                          hwndOwner, nullptr, win32::GetModuleHandleA(nullptr), &dc);
@@ -126,6 +135,7 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     WORD i;
     LPCSTR pszClass, pszTitle;
     BOOL fFocus;
+    DIALOGUNITSRESULT units{};
     COMPATCLEANUPSCOPE freeTemplate([&] { CompatFreeDialogTemplate(&dlg); });
     COMPATCLEANUPSCOPE deleteFont([&] { if (dc.hfont) win32::DeleteObject(dc.hfont); });
     COMPATCLEANUPSCOPE destroyDialog([&] { if (win32::IsWindow(hwnd)) win32::DestroyWindow(hwnd); }, hwndOwner);
@@ -139,7 +149,9 @@ static HWND HwndCreateDialog(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPRO
     if (!rgbTemplate || !FCompatDialogTemplate(std::span{rgbTemplate, cbTemplate}, dlg)) return nullptr;
     if (dlg.idClass || (dlg.szClass && !dlg.szClass->empty()) || dlg.idMenu || (dlg.szMenu && !dlg.szMenu->empty())) goto done;
     dc.lpfn = lpfn; dc.fModal = fModal;
-    if (!FDialogUnits(&dlg, &dc)) goto done;
+    units = FDialogUnits(&dlg);
+    dc.hfont = units.hfont; dc.cxUnit = units.cxUnit; dc.cyUnit = units.cyUnit;
+    if (!units.fReady) goto done;
     hwnd = win32::CreateWindowExA(dlg.dwExStyle, "#32770", dlg.szTitle ? dlg.szTitle->c_str() : nullptr, dlg.dwStyle & ~win32::WS_VISIBLE,
                          win32::MulDiv(dlg.x, dc.cxUnit, 4), win32::MulDiv(dlg.y, dc.cyUnit, 8),
                          win32::MulDiv(dlg.cx, dc.cxUnit, 4), win32::MulDiv(dlg.cy, dc.cyUnit, 8), hwndOwner, nullptr, hinst, &dc);

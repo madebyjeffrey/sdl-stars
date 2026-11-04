@@ -80,17 +80,17 @@ static int HitToolbar(COMPATTOOLBAR *lp, POINT pt) {
     return -lp->CButtons() - 1;
 }
 
-static bool AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rgbtn) {
+static bool AddButtons(HWND hwnd, int iInsert, std::span<const TBBUTTON> rgbtn) {
     auto lptoolbarKeep = hwnd->lptoolbar;
     COMPATTOOLBAR *lp = lptoolbarKeep.get();
     std::vector<COMPATTOOLBUTTON> rgNew;
     std::string_view szText;
     std::size_t i;
-    if (!rgbtn || iInsert < 0 || iInsert > lp->CButtons() || c > 4096 || c + static_cast<std::size_t>(lp->CButtons()) > 4096 ||
+    if (iInsert < 0 || iInsert > lp->CButtons() || rgbtn.size() > 4096 || rgbtn.size() + static_cast<std::size_t>(lp->CButtons()) > 4096 ||
         lp->cbButton != sizeof(TBBUTTON)) return 0;
-    try { rgNew.reserve(c); }
+    try { rgNew.reserve(rgbtn.size()); }
     catch (const std::bad_alloc &) { return 0; }
-    for (i = 0; i < c; i++) {
+    for (i = 0; i < rgbtn.size(); i++) {
         COMPATTOOLBUTTON button = {};
         button.btn = rgbtn[i];
         // This subset accepts direct UTF-8 text, not string pool/callback indices.
@@ -105,7 +105,7 @@ static bool AddButtons(HWND hwnd, int iInsert, std::size_t c, const TBBUTTON *rg
         } else if (rgbtn[i].iString > 0) break;
         rgNew.push_back(std::move(button));
     }
-    if (i != c) return 0;
+    if (i != rgbtn.size()) return 0;
     try { lp->rgbtn.insert(lp->rgbtn.begin() + iInsert, std::make_move_iterator(rgNew.begin()), std::make_move_iterator(rgNew.end())); }
     catch (const std::bad_alloc &) { return 0; }
     lp->iDown = lp->iHot = -1;
@@ -338,8 +338,13 @@ LRESULT  CompatToolbarProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
     case win32::WM_PAINT: PaintToolbar(hwnd); return 0;
     case win32::WM_ERASEBKGND: return 1;
     case win32::TB_BUTTONSTRUCTSIZE: lp->cbButton = static_cast<UINT>(w); return 0;
-    case win32::TB_ADDBUTTONSA: return AddButtons(hwnd, lp->CButtons(), static_cast<std::size_t>(w), reinterpret_cast<const TBBUTTON *>(l));
-    case win32::TB_INSERTBUTTONA: return AddButtons(hwnd, (((static_cast<int>(w)) < (lp->CButtons())) ? (static_cast<int>(w)) : (lp->CButtons())), 1, reinterpret_cast<const TBBUTTON *>(l));
+    case win32::TB_ADDBUTTONSA:
+        if (!l || w > 4096) return 0;
+        return AddButtons(hwnd, lp->CButtons(), std::span{reinterpret_cast<const TBBUTTON *>(l), static_cast<std::size_t>(w)});
+    case win32::TB_INSERTBUTTONA:
+        if (!l) return 0;
+        return AddButtons(hwnd, (((static_cast<int>(w)) < (lp->CButtons())) ? (static_cast<int>(w)) : (lp->CButtons())),
+                          std::span{reinterpret_cast<const TBBUTTON *>(l), std::size_t{1}});
     case win32::TB_DELETEBUTTON:
         i = static_cast<int>(w); if (i < 0 || i >= lp->CButtons()) return 0;
         lp->rgbtn.erase(lp->rgbtn.begin() + i); lp->iDown = lp->iHot = -1; HideTip(hwnd); LayoutToolbar(hwnd); return 1;

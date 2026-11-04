@@ -5,6 +5,7 @@
 #endif
 #include "callbackcontext.h"
 #include <cinttypes>
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -117,10 +118,9 @@ static int16_t TestPctPlanetDesirability(APPSESSION &, PLANET *p, int16_t player
     (void)player;
     return 100;
 }
-static int16_t TestIWarpMAFromLppl(APPSESSION &, PLANET *p, int16_t *flag) {
+static WARPRESULT TestIWarpMAFromLppl(APPSESSION &, PLANET *p) {
     (void)p;
-    assert(!flag);
-    return 10;
+    return {10, 0};
 }
 static int16_t TestFSendPlrMsg2(APPSESSION &, int16_t player, MessageId id, MsgGoto a, int16_t b, int16_t c) {
     (void)player;
@@ -153,7 +153,7 @@ static int16_t TestRandom(APPSESSION &app, int16_t bound) {
     return value;
 }
 
-static void TestEstMineralsMined(APPSESSION &app, PLANET *p, int32_t *out, int32_t count, int16_t apply) {
+static void TestEstMineralsMined(APPSESSION &app, PLANET *p, std::span<int32_t, 3> out, int32_t count, int16_t apply) {
     assert(count == -1 && apply);
     seen = p;
     year++;
@@ -199,7 +199,7 @@ static void TestcheckedCopy(std::span<std::byte> dst, std::span<const std::byte>
         }                                                                                                                                                      \
     } while (0)
 
-static int16_t TestCBuildProdItem(APPSESSION &app, PLANET *p, PROD *row, PROD *partial, int32_t *res, int16_t alchemy, int16_t *status, int16_t calc) {
+static int16_t TestCBuildProdItem(APPSESSION &app, PLANET *p, PROD *row, PROD *partial, std::span<int32_t, 4> res, int16_t alchemy, int16_t *status, int16_t calc) {
     seen = p;
     escape(4);
     assert(!calc && builds < 400);
@@ -236,7 +236,7 @@ static int16_t TestCBuildProdItem(APPSESSION &app, PLANET *p, PROD *row, PROD *p
         built = year == terminalYear ? forcedBuilt : (year == firstYear ? 1 : 0);
         *status = year == terminalYear ? terminalStatus : static_cast<int16_t>(year == firstYear ? mdProdStatSomeAuto : mdProdStatBlockedSame);
     }
-    memcpy(lastResources, res, 16);
+    std::copy(res.begin(), res.end(), lastResources);
     return built;
 }
 static uint16_t TestExtent(APPSESSION &, const void *p) { return (uint16_t)heap[slot(p)].bytes; }

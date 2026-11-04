@@ -372,7 +372,7 @@ void InitTiles(APPSESSION &app) {
     return;
 }
 
-void GetIniWinRc(APPSESSION &app, std::string_view szSection, std::string_view szIniFile, StringId ids, WN *pwn) {
+WN GetIniWinRc(APPSESSION &app, std::string_view szSection, std::string_view szIniFile, StringId ids) {
     std::int16_t fInitalized;
     std::int16_t fMinimized;
     std::int16_t fMaximized;
@@ -383,6 +383,7 @@ void GetIniWinRc(APPSESSION &app, std::string_view szSection, std::string_view s
     std::int16_t i;
     std::int16_t fNeg;
     std::int16_t rg[4];
+    WN result;
     std::size_t ich;
     char ch;
     std::string szSectionOwned{szSection};
@@ -427,11 +428,11 @@ void GetIniWinRc(APPSESSION &app, std::string_view szSection, std::string_view s
         fMinimized = szWindowSettings[0] == 'I';
         fInitalized = 1;
     }
-    pwn->rc = rc;
-    pwn->fMaximized = fMaximized;
-    pwn->fMinimized = fMinimized;
-    pwn->fInitalized = fInitalized;
-    return;
+    result.rc = rc;
+    result.fMaximized = fMaximized;
+    result.fMinimized = fMinimized;
+    result.fInitalized = fInitalized;
+    return result;
 }
 
 void ReadIniSettings(APPSESSION &app) {
@@ -452,29 +453,29 @@ void ReadIniSettings(APPSESSION &app) {
     app.state.ini.fWait = 0;
     TextIO().pfnCchGetString(app, idsWindows, std::span{szSection});
     TextIO().pfnCchGetString(app, idsStarsIni, std::span{szIniFile});
-    GetIniWinRc(app, szSection, szIniFile, idsMain, &app.state.ini.wnFrame);
-    GetIniWinRc(app, szSection, szIniFile, idsReportfleetwin, &wnT);
+    app.state.ini.wnFrame = GetIniWinRc(app, szSection, szIniFile, idsMain);
+    wnT = GetIniWinRc(app, szSection, szIniFile, idsReportfleetwin);
     if (wnT.rc.left != -32768) {
         app.state.vrptFleet.ptDlg.x = wnT.rc.left;
         app.state.vrptFleet.ptDlg.y = wnT.rc.top;
         app.state.vrptFleet.ptSize.x = wnT.rc.right - wnT.rc.left;
         app.state.vrptFleet.ptSize.y = wnT.rc.bottom - wnT.rc.top;
     }
-    GetIniWinRc(app, szSection, szIniFile, idsReportefleetwin, &wnT);
+    wnT = GetIniWinRc(app, szSection, szIniFile, idsReportefleetwin);
     if (wnT.rc.left != -32768) {
         app.state.vrptEFleet.ptDlg.x = wnT.rc.left;
         app.state.vrptEFleet.ptDlg.y = wnT.rc.top;
         app.state.vrptEFleet.ptSize.x = wnT.rc.right - wnT.rc.left;
         app.state.vrptEFleet.ptSize.y = wnT.rc.bottom - wnT.rc.top;
     }
-    GetIniWinRc(app, szSection, szIniFile, idsReportbtlwin, &wnT);
+    wnT = GetIniWinRc(app, szSection, szIniFile, idsReportbtlwin);
     if (wnT.rc.left != -32768) {
         app.state.vrptBattle.ptDlg.x = wnT.rc.left;
         app.state.vrptBattle.ptDlg.y = wnT.rc.top;
         app.state.vrptBattle.ptSize.x = wnT.rc.right - wnT.rc.left;
         app.state.vrptBattle.ptSize.y = wnT.rc.bottom - wnT.rc.top;
     }
-    GetIniWinRc(app, szSection, szIniFile, idsReportplanwin, &wnT);
+    wnT = GetIniWinRc(app, szSection, szIniFile, idsReportplanwin);
     if (wnT.rc.left != -32768) {
         app.state.vrptPlanet.ptDlg.x = wnT.rc.left;
         app.state.vrptPlanet.ptDlg.y = wnT.rc.top;
@@ -514,10 +515,10 @@ void ReadIniSettings(APPSESSION &app) {
     app.state.gd.fToolbar = i != 0;
     TextIO().pfnCchGetString(app, idsPlanettiles, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
-    ReadIniTileSettings(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)}, app.lpui->rgtilePlanet, 6);
+    ReadIniTileSettings(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)}, std::span{app.lpui->rgtilePlanet});
     TextIO().pfnCchGetString(app, idsShiptiles, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "X", app.state.szWork, 20, szIniFile);
-    ReadIniTileSettings(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)}, app.lpui->rgtileShip, 7);
+    ReadIniTileSettings(std::string_view{app.state.szWork, static_cast<std::size_t>(cch)}, std::span{app.lpui->rgtileShip});
     TextIO().pfnCchGetString(app, idsSelection, std::span{szEntry});
     cch = ProfileTextIO().pfnReadString(szSection, szEntry, "N", app.state.szWork, 20, szIniFile);
     ReadIniSelection(app, std::string_view{app.state.szWork, static_cast<std::size_t>(cch)});
@@ -648,11 +649,11 @@ void ReadIniSettings(APPSESSION &app) {
     return;
 }
 
-void ReadIniTileSettings(std::string_view szFormat, TILE *rgtile, std::int16_t ctile) {
+void ReadIniTileSettings(std::string_view szFormat, std::span<TILE> rgtile) {
     TILE     tile;
     std::int16_t  fPopped;
-    std::int16_t  i;
-    std::int16_t  iTile;
+    std::size_t i;
+    std::size_t iTile;
     std::size_t ich;
     std::uint16_t iCol;
     std::uint16_t iBit;
@@ -677,9 +678,9 @@ void ReadIniTileSettings(std::string_view szFormat, TILE *rgtile, std::int16_t c
         iBit = !fPopped ? ch - 'a' : ch - 'A';
         if (static_cast<std::int16_t>(iBit) < 0)
             continue;
-        for (i = iTile; i < ctile && rgtile[i].id != iBit; i++) {
+        for (i = iTile; i < rgtile.size() && rgtile[i].id != iBit; i++) {
         }
-        if (i == ctile)
+        if (i == rgtile.size())
             continue;
         rgtile[i].iCol = iCol;
         rgtile[i].fPopped = fPopped;
@@ -690,7 +691,7 @@ void ReadIniTileSettings(std::string_view szFormat, TILE *rgtile, std::int16_t c
         }
         iTile++;
     }
-    for (i = iTile; i < ctile; i++) {
+    for (i = iTile; i < rgtile.size(); i++) {
         if (rgtile[i].iCol < iCol) {
             rgtile[i].iCol = iCol;
         }

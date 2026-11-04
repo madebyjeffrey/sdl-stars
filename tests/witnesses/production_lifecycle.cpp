@@ -52,7 +52,7 @@ static void fail(int stage) {
     if (failAt == stage)
         StarsThrowError(starsErrorMemory, 0);
 }
-static void TestInitProduction(APPSESSION &app, PROD *rows) {
+static void TestInitProduction(APPSESSION &app, std::optional<std::span<PROD, 64>> rows) {
     event(rows ? "I;" : "i;");
     initCalls++;
     app.state.gd.fNoResearchSav = app.state.sel.pl.fNoResearch;

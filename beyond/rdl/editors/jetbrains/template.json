@@ -1,0 +1,17 @@
+{
+  "id": "rdl",
+  "name": "RDL Language Server",
+  "programArgs": {
+    "default": "rdl lsp",
+    "windows": "rdl.exe lsp"
+  },
+  "fileTypeMappings": [
+    {
+      "fileType": {
+        "name": "RDL",
+        "patterns": ["*.rdl"]
+      },
+      "languageId": "rdl"
+    }
+  ]
+}

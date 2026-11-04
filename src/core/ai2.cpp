@@ -8,7 +8,7 @@
 #include "race_query_io.h"
 #include "random_io.h"
 
-void DoMaidAiTurn(APPSESSION &app, PROD *rgprod) {
+void DoMaidAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod) {
     std::int32_t rgResCost[4];
     std::int32_t rgResAvail[4];
     std::int16_t iroCur;
@@ -40,7 +40,7 @@ std::int16_t FPotentISWarFleet(APPSESSION &app, FLEET *lpfl, std::int16_t iPoten
     return 0;
 }
 
-void DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod) {
+void DoAutomitronAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod) {
     AISHDEFSTATUSRESULT shdefStatus;
     std::int16_t  cExistCargo;
     std::uint16_t rgCosts[4];
@@ -512,7 +512,7 @@ void EnsureISShdefs(APPSESSION &app, std::int16_t iroCur) {
     return;
 }
 
-void DoRototillAiTurn(APPSESSION &app, PROD *rgprod) {
+void DoRototillAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod) {
     AISHDEFSTATUSRESULT shdefStatus;
     std::int32_t  rgResCost[4];
     std::int32_t  rgResAvail[4];

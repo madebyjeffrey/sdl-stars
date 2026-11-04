@@ -9,7 +9,7 @@ extern CybertronRecipe vrgCyberIshAip[];
 extern std::uint8_t         vrgCyberAip[cvrgCyberAip];
 extern std::uint8_t         vrgAiCybertronResOrder[];
 
-void    DoCyberAiTurn(APPSESSION &app, PROD *rgprod);
+void    DoCyberAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
 void    DoCyberPackets(APPSESSION &app);
 std::int16_t IdGetBestScannerDest(APPSESSION &app, PLANET *lppl, CompassDir iDir);
 std::int16_t FAddPacketToQueue(APPSESSION &app, PLANET *lppl);

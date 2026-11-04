@@ -145,6 +145,7 @@ static std::optional<std::int16_t> IplrFromExt(std::string_view pszExt) {
 }
 
 std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::string_view pszExt) {
+    WARPRESULT warp;
     std::int16_t  iplrSav;
     std::int16_t  cPlanetHist;
     STARPACK sp;
@@ -730,7 +731,9 @@ LNextTurn:
             if (!app.state.rglpbtlplan[iP]) {
                 app.state.rglpbtlplan[iP] = LpAlloc<BTLPLAN>(app, 16 * sizeof(BTLPLAN), htShips);
             }
-            if (!UnpackBattlePlan(app, std::span(reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)), app.state.rglpbtlplan[iP] + app.state.rgcbtlplan[iP], app.state.rgcbtlplan[iP])) goto Corrupt;
+            const auto btlplan = UnpackBattlePlan(app, std::span(reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)), app.state.rgcbtlplan[iP]);
+            if (!btlplan) goto Corrupt;
+            app.state.rglpbtlplan[iP][app.state.rgcbtlplan[iP]] = *btlplan;
             app.state.rgcbtlplan[iP]++;
             RecordIO().pfnReadRt(app);
         }
@@ -786,7 +789,9 @@ LNextTurn:
                 if (lpth->ith() == ithMineralPacket && lpth->thp().iWarp() != 0) {
                     lppl = LpplFromId(app, lpth->thp().idPlanet());
                     if (lppl && lppl->iPlayer == iPlayer) {
-                        iWarp = ColonyIO().pfnWarp(app, lppl, &fTwo);
+                        warp = ColonyIO().pfnWarp(app, lppl);
+                        iWarp = warp.iWarp;
+                        fTwo = warp.fTwo;
                         if (iWarp + fTwo < lpth->thp().iWarp() + 4) {
                             FSendPlrMsg2XGen(app, 0, idmMassPacketAppearsCollisionCourseWhichCurrently, gotoThing, lpth->idFull(), lppl->id);
                         }
@@ -1099,19 +1104,20 @@ Corrupt:
     return 0;
 }
 
-std::int16_t UnpackBattlePlan(APPSESSION &app, std::span<const std::uint8_t> rgbRecord, BTLPLAN *lpbtlplan, std::int16_t iplan) {
+std::optional<BTLPLAN> UnpackBattlePlan(APPSESSION &app, std::span<const std::uint8_t> rgbRecord, std::int16_t iplan) {
     char szName[32];
+    BTLPLAN btlplan{};
 
     if (rgbRecord.size() < 4) goto invalid;
     if (!FReadUserString(app, std::as_bytes(rgbRecord.subspan(4)), std::span{szName}.first(sizeof(szName)))) goto invalid;
-    FDecodeBattlePlanPrefix(std::as_bytes(rgbRecord.first(cbWireBattlePlan)), *lpbtlplan);
-    CchCopyUtf8(std::span{lpbtlplan->szName}, szName);
-    lpbtlplan->iplan = iplan;
-    return 1;
+    FDecodeBattlePlanPrefix(std::as_bytes(rgbRecord.first(cbWireBattlePlan)), btlplan);
+    CchCopyUtf8(std::span{btlplan.szName}, szName);
+    btlplan.iplan = iplan;
+    return btlplan;
 invalid:
     FileError(app, idsGameFileAppearsCorruptUnableLoadFile);
     if (FStarsRecoveryActive()) StarsThrowError(starsErrorFile, app.state.idsFileError);
-    return 0;
+    return std::nullopt;
 }
 
 void UpdateBattleRecords(APPSESSION &app) {

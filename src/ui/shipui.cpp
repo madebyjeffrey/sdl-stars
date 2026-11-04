@@ -484,7 +484,7 @@ void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
                         ids = idsPlanetaryDataAvailableEstimateMineralMiningRates;
                         goto ShowString;
                     }
-                    ColonyIO().pfnEstimateMining(app, lppl, rgl, cMine, 0);
+                    ColonyIO().pfnEstimateMining(app, lppl, std::span{rgl}.first<3>(), cMine, 0);
                     c = TextIO().pfnCchGetString(app, idsMiningRatePerYear, std::span{app.state.szWork});
                     win32::TextOutA(hdc, xLeft, yTopMsg, app.state.szWork, c);
                     yTopMsg += dyCur;
@@ -866,18 +866,24 @@ void ShipCommandProc(APPSESSION &app, HWND hwnd, WPARAM wParam, LPARAM lParam) {
         }
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[0] && HIWORD(wParam) == 0) {
         lSel = ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_GETCURSEL, 0, 0);
-        if (lSel != -1 && FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), &xf, app.state.sel.fl.id)) {
-            TransferStuff(app, app.state.sel.fl.id, grobjFleet, xf.id, xf.grobj, mdXferCargo);
+        if (lSel != -1) {
+            if (auto xfer = FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), app.state.sel.fl.id)) {
+                TransferStuff(app, app.state.sel.fl.id, grobjFleet, xfer->id, xfer->grobj, mdXferCargo);
+            }
         }
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[1] && HIWORD(wParam) == 0) {
         lSel = ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_GETCURSEL, 0, 0);
-        if (lSel != -1 && FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), &xf, app.state.sel.fl.id) && xf.grobj == grobjFleet) {
-            PresentationIO().pfnSelectFleet(app, 0, xf.id);
+        if (lSel != -1) {
+            if (auto xfer = FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), app.state.sel.fl.id); xfer && xfer->grobj == grobjFleet) {
+                PresentationIO().pfnSelectFleet(app, 0, xfer->id);
+            }
         }
     } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[2] && HIWORD(wParam) == 0) {
         lSel = ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_GETCURSEL, 0, 0);
-        if (lSel != -1 && FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), &xf, app.state.sel.fl.id) && xf.grobj == grobjFleet) {
-            TransferStuff(app, app.state.sel.fl.id, grobjFleet, xf.id, grobjFleet, mdXferShips);
+        if (lSel != -1) {
+            if (auto xfer = FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), app.state.sel.fl.id); xfer && xfer->grobj == grobjFleet) {
+                TransferStuff(app, app.state.sel.fl.id, grobjFleet, xfer->id, grobjFleet, mdXferShips);
+            }
             if (app.lpui->grbitScan & grbitScanFleetPaths) {
                 ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, nullptr, 1);
             }
@@ -1094,7 +1100,7 @@ void DrawFleetGauge(APPSESSION &app, HDC hdc, RECT *prc, FLEET *lpfl, std::int16
             }
         }
     }
-    l = LDrawGauge(app, hdc, prc, cSections, rgSize, rghbr, lMax);
+    l = LDrawGauge(app, hdc, prc, std::span{rgSize}.first(static_cast<std::size_t>(cSections)), std::span{rghbr}.first(static_cast<std::size_t>(cSections)), lMax);
     iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     if (grbit == 6) {
         if (l != 0) {
@@ -1152,7 +1158,9 @@ void DrawFleetBitmap(APPSESSION &app, FLEET *lpfl, HDC hdc, std::int16_t x, std:
         y += 2;
     }
     if (ibmp < 0) {
-        i = IshdefPrimaryFromLpfl(app, lpfl, &cDiff);
+        const auto primaryHull = IshdefPrimaryFromLpfl(app, lpfl);
+        i = primaryHull.ishdef;
+        cDiff = primaryHull.cDiff;
         ibmp = app.state.rglpshdef[lpfl->iPlayer][i].hul.ibmp;
     }
     ibmp %= 148;
@@ -1376,7 +1384,7 @@ INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::GetWindowRect(hwndBtn, &rcBtn);
                 pt.x = rcBtn.left;
                 pt.y = rcBtn.top;
-                ScreenToClient16(hwnd, &pt);
+                pt = ScreenToClient16(hwnd, pt).pt;
                 pt.y += dyMore;
                 pt.x -= dx;
                 ControlIO().pfnSetWindowPos(hwndBtn, nullptr, pt.x, pt.y, 0, 0, win32::SWP_NOSIZE);
@@ -1384,7 +1392,7 @@ INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::GetWindowRect(hwndBtn, &rcBtn);
                 pt.x = rcBtn.left;
                 pt.y = rcBtn.top;
-                ScreenToClient16(hwnd, &pt);
+                pt = ScreenToClient16(hwnd, pt).pt;
                 pt.y += dyMore;
                 pt.x -= dx;
                 ControlIO().pfnSetWindowPos(hwndBtn, nullptr, pt.x, pt.y, 0, 0, win32::SWP_NOSIZE);
@@ -1392,7 +1400,7 @@ INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 win32::GetWindowRect(hwndBtn, &rcBtn);
                 pt.x = rcBtn.left;
                 pt.y = rcBtn.top;
-                ScreenToClient16(hwnd, &pt);
+                pt = ScreenToClient16(hwnd, pt).pt;
                 pt.y += dyMore;
                 pt.x -= dx;
                 ControlIO().pfnSetWindowPos(hwndBtn, nullptr, pt.x, pt.y, 0, 0, win32::SWP_NOSIZE);
@@ -1476,7 +1484,9 @@ std::int16_t FTrackXfer(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t
         win32::SetCapture(hwnd);
         ptOld.y = -1;
         ptOld.x = -1;
-        while (FGetMouseMove(&pt)) {
+        for (MOUSEMOVERESULT mouseMove = FGetMouseMove(); ; mouseMove = FGetMouseMove()) {
+            if (mouseMove.point) pt = *mouseMove.point;
+            if (!mouseMove.fContinue) break;
             if (pt.x != ptOld.x || pt.y != ptOld.y) {
                 ptOld = pt;
                 if (btn.iSide == 1 && app.state.pxfer[1].grobj == grobjThing) {
@@ -1568,6 +1578,7 @@ void UpdateXferBtns(APPSESSION &app) {
 
 void DrawXferDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, MineralType iSupply) {
     RECT    rgrc[2];
+    XFERRECTSRESULT xferRects;
     std::int16_t fCreatedDC;
     std::int16_t i;
     std::int16_t dxCtr;
@@ -1588,7 +1599,9 @@ void DrawXferDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, MineralType iSu
         if (iSupply == SupplyButtonsOnly)
             goto RelDC;
     }
-    GetXferLeftRightRcs(app, prc, rgrc, &rgrc[1]);
+    xferRects = GetXferLeftRightRcs(app, prc);
+    rgrc[0] = xferRects.rcLeft;
+    rgrc[1] = xferRects.rcRight;
     for (i = 0; i < 2; i++) {
         if (app.lpui->mdXferDlg == mdXferShips) {
             DrawFleetShipsXferSide(app, hdc, &rgrc[i], &app.state.pxfer[i].fl(), iSupply);
@@ -1615,14 +1628,15 @@ RelDC:
     return;
 }
 
-void GetXferLeftRightRcs(APPSESSION &app, RECT *prcWhole, RECT *prcLeft, RECT *prcRight) {
-    win32::SetRect(prcLeft, 0, 0, prcWhole->right >> 1, prcWhole->bottom);
-    ExpandRc(prcLeft, -(app.state.dyArial8 + 3) - 4, -4);
-    prcLeft->left -= app.state.dyArial8 + 1;
-    win32::SetRect(prcRight, prcWhole->right >> 1, 0, prcWhole->right, prcWhole->bottom);
-    ExpandRc(prcRight, -(app.state.dyArial8 + 3) - 4, -4);
-    prcRight->right += app.state.dyArial8 + 1;
-    return;
+XFERRECTSRESULT GetXferLeftRightRcs(APPSESSION &app, RECT *prcWhole) {
+    XFERRECTSRESULT result{};
+    win32::SetRect(&result.rcLeft, 0, 0, prcWhole->right >> 1, prcWhole->bottom);
+    ExpandRc(&result.rcLeft, -(app.state.dyArial8 + 3) - 4, -4);
+    result.rcLeft.left -= app.state.dyArial8 + 1;
+    win32::SetRect(&result.rcRight, prcWhole->right >> 1, 0, prcWhole->right, prcWhole->bottom);
+    ExpandRc(&result.rcRight, -(app.state.dyArial8 + 3) - 4, -4);
+    result.rcRight.right += app.state.dyArial8 + 1;
+    return result;
 }
 
 std::int16_t FSetupXferBtns(APPSESSION &app, RECT *prc) {
@@ -1639,6 +1653,7 @@ std::int16_t FSetupXferBtns(APPSESSION &app, RECT *prc) {
     RECT    rcBtn;
     RECT    rcLeft;
     RECT    rc;
+    XFERRECTSRESULT xferRects;
 
     cBtn = 0;
     dxLabels = app.lpui->mdXferDlg == mdXferShips ? 140 : 75;
@@ -1672,7 +1687,9 @@ std::int16_t FSetupXferBtns(APPSESSION &app, RECT *prc) {
         i++;
         dy += app.state.dyArial8 + 6;
     }
-    GetXferLeftRightRcs(app, prc, &rcLeft, &rcRight);
+    xferRects = GetXferLeftRightRcs(app, prc);
+    rcLeft = xferRects.rcLeft;
+    rcRight = xferRects.rcRight;
     if (app.lpui->mdXferDlg != mdXferShips) {
         if (app.state.pxfer->grobj != grobjPlanet) {
             rc = rcLeft;
@@ -1996,6 +2013,7 @@ void DrawPlanetXferSide(APPSESSION &app, HDC hdc, RECT *prc, PLANET *ppl, Minera
 }
 
 HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::int16_t fCursor, std::int16_t fRightBtn) {
+    WARPRESULT warp;
     std::int32_t    lCur;
     HDC        hdc;
     PLANET     pl;
@@ -2137,7 +2155,9 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::in
             grbit = 6;
         } else if (win32::PtInRect(&app.lpui->rgrcRef[15], PointFrom16(pt)) != 0) {
             irc = 15;
-            iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, &fTwoMAs);
+            warp = ColonyIO().pfnWarp(app, &app.state.sel.pl);
+            iWarp = warp.iWarp;
+            fTwoMAs = warp.fTwo;
             lTempMax = static_cast<std::int16_t>((iWarp - 1));
             lMax = static_cast<std::int16_t>((iWarp - 1));
             lTempMin = 1;
@@ -2151,7 +2171,7 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::in
                 idPlan = app.state.sel.pl.id;
             }
             lSel = ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_GETCURSEL, 0, 0);
-            FLookupOrbitingXfer(app, idPlan, LOWORD(lSel), &xf, iSkip);
+            if (auto xfer = FLookupOrbitingXfer(app, idPlan, LOWORD(lSel), iSkip)) xf = *xfer;
             if (xf.grobj != grobjFleet || xf.iPlayerObj() != app.state.idPlayer) {
                 return nullptr;
             }
@@ -2193,8 +2213,8 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::in
                 if (lSel == -1) {
                     return nullptr;
                 }
-                if (FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), &xf, app.state.sel.grobj == grobjFleet ? app.state.sel.fl.id : idflNone)) {
-                    TransferStuff(app, app.state.sel.id, app.state.sel.grobj, xf.id, xf.grobj, mdXferCargo);
+                if (auto xfer = FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), app.state.sel.grobj == grobjFleet ? app.state.sel.fl.id : idflNone)) {
+                    TransferStuff(app, app.state.sel.id, app.state.sel.grobj, xfer->id, xfer->grobj, mdXferCargo);
                 }
                 return nullptr;
             }
@@ -2225,7 +2245,12 @@ HCURSOR ClickInShipOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::in
     lTempMax = lMax < lTempMax ? lMax : lTempMax;
     lTempMin = 0 <= lTempMin ? lTempMin : 0;
     fFirst = 1;
-    while (fFirst || FGetMouseMove(&pt)) {
+    for (MOUSEMOVERESULT mouseMove{true, std::nullopt}; ; ) {
+        if (!fFirst) {
+            mouseMove = FGetMouseMove();
+            if (mouseMove.point) pt = *mouseMove.point;
+            if (!mouseMove.fContinue) break;
+        }
         fFirst = 0;
         if (pt.x != ptOld.x || pt.y != ptOld.y) {
             ptOld = pt;
@@ -2343,7 +2368,7 @@ void DeleteCurWayPoint(APPSESSION &app, std::int16_t fBackup) {
             for (ipt = 0; ipt < cpt; ipt++) {
                 LogicalToScan(app, &rgpt[ipt]);
             }
-            BoundPoints(&rc, rgpt, cpt);
+            BoundPoints(&rc, std::span{rgpt}.first(static_cast<std::size_t>(cpt)));
             ControlIO().pfnInvalidateRect(app.lpui->hwndScanner, &rc, 1);
         }
     }
@@ -2592,7 +2617,7 @@ void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
             }
             szCatalogMenuText = TextIO().pfnCompressed(app, idsCustomize);
             rgszZip[cMax++] = szCatalogMenuText.data();
-            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, {}, rgszZip, -1, 1);
+            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, {}, std::span{rgszZip}.first(static_cast<std::size_t>(cMax)), -1, 1);
             if (i == cMax - 1) {
                 std::copy_n(app.state.vrgZip, std::size(rgzo), rgzo);
                 fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), app.lpui->hwndFrame, ZipOrderDlg, 0);

@@ -8,6 +8,11 @@
 #include <string_view>
 #include <windows.h>
 
+struct HFONTPRINTERRESULT {
+    HFONT hfont;
+    std::optional<std::int16_t> dyFont;
+};
+
 INT_PTR  RandomSeedDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             CtrTextOut(HDC hdc, std::int16_t x, std::int16_t y, std::string_view szText);
 std::int16_t          DxStreamTextOut(HDC hdc, std::int16_t &x, std::int16_t y, std::string_view szText, std::int16_t fPrint);
@@ -24,14 +29,18 @@ void DiaganolTextOut(APPSESSION &app, HDC hdc, RECT *prc, std::string_view szTex
 void ExpandRc(RECT *prc, std::int16_t dx, std::int16_t dy);
 void OffsetRc(RECT *prc, std::int16_t dx, std::int16_t dy);
 void StickyDlgPos(HWND hwnd, POINT16 *ppt, std::int16_t fInit);
-std::int32_t  LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t cSegs, std::int32_t *rgSize, HBRUSH *rghbr, std::int32_t cTot);
+std::int32_t  LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, std::span<const std::int32_t> rgSize, std::span<HBRUSH> rghbr, std::int32_t cTot);
 void     _Draw3dFrame(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t fErase);
 void     InitBtnTrack(BTNT *pbtnt, HWND hwnd, HDC hdc, RECT *prc, std::int16_t btf, std::int16_t dTimer, std::int16_t fInitDown, std::int16_t fNoEndRedraw, const char *szText);
 std::int16_t  FTrackBtn(APPSESSION &app, BTNT *pbtnt);
 void     DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t fDown,
                  std::optional<std::string_view> szText);
-std::int16_t  FGetMouseMove(POINT16 *ppt);
-std::int16_t  FGetRMouseMove(POINT16 *ppt);
+struct MOUSEMOVERESULT {
+    bool fContinue;
+    std::optional<POINT16> point;
+};
+MOUSEMOVERESULT FGetMouseMove();
+MOUSEMOVERESULT FGetRMouseMove();
 void     DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc);
 // Text must terminate inside its mutable view; rejected views stay untouched.
 bool FStringFitsScreen(APPSESSION &app, std::span<char> lpsz, std::int16_t dxMax);
@@ -50,6 +59,6 @@ void             ShowProgressGauge(APPSESSION &app);
 void             HideProgressGauge(APPSESSION &app);
 INT_PTR  ProgressGaugeDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 void             DrawProgressGauge(APPSESSION &app, HDC hdcOrig, std::int16_t fFull, std::int16_t iNumOnly);
-HFONT            HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize, std::int16_t *pdyFont);
+HFONTPRINTERRESULT HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize);
 
 #endif

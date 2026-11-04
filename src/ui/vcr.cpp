@@ -308,8 +308,8 @@ INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::FillRect(reinterpret_cast<HDC>(wParam), &rc, app.lpui->hbrButtonFace);
         return 1;
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (pt.x > 8 && pt.x < (app.lpui->dxyVCRSquare + 3) * 10 + 8 && pt.y >= 8 && pt.y < (app.lpui->dxyVCRSquare + 3) * 10 + 8) {
             win32::SetCursor(app.lpui->hcurHand);
             return 1;
@@ -1165,7 +1165,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
     if (c == 0) {
         return -1;
     }
-    iSel = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, {}, rgsz, iChecked, 1);
+    iSel = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, {}, std::span{rgsz}.first(static_cast<std::size_t>(c)), iChecked, 1);
     if (iSel == -1) {
         return -1;
     }

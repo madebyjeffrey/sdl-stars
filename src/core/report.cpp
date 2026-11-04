@@ -428,7 +428,7 @@ void DumpPlanets(APPSESSION &app) {
                 }
                 RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
                 if (lppl->det == detAll) {
-                    CalcPctSurvive(app, lppl, &pct, nullptr);
+                    pct = CalcPctSurvive(app, lppl).pct;
                     pct = static_cast<float>((static_cast<double>(1.0) - pct));
                     cchForm = 1 + static_cast<std::size_t>(CchSprintf(std::span{szForm}.subspan(1), "%ld\t%ld\t%d.%d%%", static_cast<std::int32_t>(lppl->cMines), static_cast<std::int32_t>(lppl->cFactories), LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
                                LOWORD(static_cast<std::int32_t>(((pct - static_cast<double>(static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000)))));
@@ -456,7 +456,7 @@ void DumpPlanets(APPSESSION &app) {
                 cchForm = 1;
                 for (i = 0; i < 3; i++) {
                     if (lppl->det >= detMore) {
-                        ColonyIO().pfnEstimateMining(app, lppl, rgl, -1, 0);
+                        ColonyIO().pfnEstimateMining(app, lppl, std::span{rgl}.first<3>(), -1, 0);
                         cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, rgl[i]).data());
                     }
                     RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
@@ -499,7 +499,9 @@ void DumpPlanets(APPSESSION &app) {
                     if (lppl->det == detAll) {
                         cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl)).data());
                         RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
-                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, GetPlanetScannerRange(app, lppl, &i)).data());
+                        const auto scannerRange = GetPlanetScannerRange(app, lppl);
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, scannerRange.dRange).data());
+                        i = scannerRange.dDeep;
                         RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
                         cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
                         RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
@@ -572,6 +574,7 @@ DisplayStatus:
 }
 
 void DumpFleets(APPSESSION &app) {
+    SCANNERRANGERESULT scannerRange;
     std::array<char, 360> szObjectName{};
     std::int16_t  iplr;
     StringId ids;
@@ -696,7 +699,9 @@ void DumpFleets(APPSESSION &app) {
                     RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
                     cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, PctCloakFromLpfl(app, lpfl)).data());
                     RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
-                    j = GetFleetScannerRange(app, lpfl, &i, nullptr, nullptr);
+                    scannerRange = GetFleetScannerRange(app, lpfl);
+                    j = scannerRange.dRange;
+                    i = scannerRange.dPlanRange;
                     if (j == -1) {
                         j = 0;
                     }

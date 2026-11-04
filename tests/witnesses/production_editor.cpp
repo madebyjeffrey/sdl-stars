@@ -54,10 +54,9 @@ static int TestFLookupPart(APPSESSION &, PART *p) {
     (void)p;
     return genesis ? mdPartAvailAvailable : 0;
 }
-static int16_t TestIWarpMAFromLppl(APPSESSION &, void *p, void *q) {
+static WARPRESULT TestIWarpMAFromLppl(APPSESSION &, void *p) {
     (void)p;
-    (void)q;
-    return warp;
+    return {static_cast<std::int16_t>(warp), 0};
 }
 static int16_t TestCMaxFactories(APPSESSION &, void *p, int player) {
     (void)p;
@@ -245,12 +244,12 @@ int main(void) {
     reset(app, 0, 0);
     app.state.sel.pl.fNoResearch = 1;
     app.state.gd.fTutorial = 1;
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(app.state.gd.fNoResearchSav && app.state.lpplProdGlob->iprodMac == 0 && app.state.lpplProdGlob->iprodMax == 2 && app.state.cProdGlob == 9 && tutorials == 1);
     CHECK(catalog[0].iItem == 11 && catalog[1].iItem == 27 && catalog[2].iItem == 0 && catalog[8].iItem == 6);
     reset(app, 0, 1);
     app.state.sel.pl.isb = 15;
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(app.state.lpplProdGlob->iprodMax == 0 && app.state.lpplProdGlob->iprodMac == 0 && lastBytes == 4);
     reset(app, 0, 0);
     app.state.sel.pl.fStarbase = 1;
@@ -266,7 +265,7 @@ int main(void) {
     }
     for (i = 0; i < 10; i++)
         baseDefs[i].fFree = 0;
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(app.state.cProdGlob == 43);
     for (i = 0; i < 16; i++)
         CHECK(catalog[i].grobj == 2 && catalog[i].iItem == (unsigned)i && catalog[i].cItem == 1023);
@@ -287,20 +286,20 @@ int main(void) {
     app.state.rgshdef[0].fGift = 1;
     app.state.rgshdef[1].hul.wtEmpty = 101;
     app.state.rgshdef[2].fFree = 1;
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(catalog[0].grobj == 2 && catalog[0].iItem == 3 && catalog[1].grobj == 1);
     reset(app, 0, 0);
     primary = 8;
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(app.state.cProdGlob == 5 && catalog[0].iItem == 11 && catalog[1].iItem == 3 && catalog[4].iItem == 6);
     reset(app, 0, 0);
     primary = 3;
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(app.state.cProdGlob == 7 && catalog[6].iItem == 6);
     reset(app, 0, 0);
     maxFactories = -32768;
     app.state.sel.pl.cFactories = 1;
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(catalog[0].iItem == 7 && catalog[0].cItem == 1020);
     // One following row is a defined non-overlapping copy, but pointer and index diverge.
     reset(app, 2, 1);
@@ -309,7 +308,7 @@ int main(void) {
     app.state.sel.pl.lpplprod->rgprod()[1] = a;
     app.state.sel.pl.lpplprod->rgprod()[1].pct = 66;
     app.state.sel.pl.lpplprod->rgprod()[1].unused = 17;
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(app.state.lpplProdGlob->iprodMac == 1 && app.state.lpplProdGlob->rgprod()[0].cItem == 10 && app.state.lpplProdGlob->rgprod()[1].cItem == 1);
     CHECK(app.state.lpplProdGlob->rgprod()[0].pct == 66 && app.state.lpplProdGlob->rgprod()[0].unused == 17 && catalog[0].cItem == 0 && app.state.sel.pl.lpplprod->rgprod()[1].cItem == 10);
     reset(app, 3, 1);
@@ -318,7 +317,7 @@ int main(void) {
     app.state.sel.pl.lpplprod->rgprod()[1] = a;
     app.state.sel.pl.lpplprod->rgprod()[2] = a;
     try {
-        InitProduction(app, catalog);
+        InitProduction(app, std::span<PROD, 64>{catalog});
         CHECK(0);
     } catch (const FIXTUREESCAPE &) {
     }
@@ -330,7 +329,7 @@ int main(void) {
     app.state.sel.pl.lpplprod->rgprod()[2] = a;
     app.state.sel.pl.lpplprod->rgprod()[3] = a;
     try {
-        InitProduction(app, catalog);
+        InitProduction(app, std::span<PROD, 64>{catalog});
         CHECK(0);
     } catch (const FIXTUREESCAPE &) {
     }
@@ -339,7 +338,7 @@ int main(void) {
     maxFactories = 5;
     app.state.sel.pl.lpplprod->rgprod()[0] = row(3, 7, 1);
     app.state.sel.pl.lpplprod->rgprod()[1] = row(4, 7, 1);
-    InitProduction(app, catalog);
+    InitProduction(app, std::span<PROD, 64>{catalog});
     CHECK(app.state.lpplProdGlob->rgprod()[0].cItem == 3 && app.state.lpplProdGlob->rgprod()[1].cItem == 2 && catalog[0].cItem == 0);
     // All finite/unlimited source amounts and modifier combinations for new rows.
     for (mode = 0; mode < 4; mode++)

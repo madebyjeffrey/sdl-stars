@@ -532,32 +532,32 @@ static std::optional<std::size_t> FReadLegacyRaceString(APPSESSION &app, std::sp
     return static_cast<std::size_t>(cOut) + 1;
 }
 
-static std::int16_t FReadLegacyRacePlayer(APPSESSION &app, PLAYER *pplr, std::span<const std::uint8_t> lpb, std::int16_t fPlural) {
+static std::optional<PLAYER> FReadLegacyRacePlayer(APPSESSION &app, std::span<const std::uint8_t> lpb, std::int16_t fPlural) {
     std::int16_t iOff;
     std::optional<std::size_t> cbRead;
+    PLAYER plr{};
 
-    *pplr = {};
-    if (lpb.size() < cbWirePlayerPartial) return 0;
+    if (lpb.size() < cbWirePlayerPartial) return std::nullopt;
     if ((lpb[6] & 7) == detAll) {
         iOff = cbWirePlayerPrefix;
-        if (lpb.size() <= static_cast<std::size_t>(iOff) || lpb[iOff] > sizeof(pplr->rgmdRelation) ||
-            lpb[iOff] > lpb.size() - static_cast<std::size_t>(iOff) - 1) return 0;
-        FDecodePlayer(std::as_bytes(lpb), *pplr, iOff);
-        std::memmove(pplr->rgmdRelation, lpb.data() + iOff + 1, lpb[iOff]);
+        if (lpb.size() <= static_cast<std::size_t>(iOff) || lpb[iOff] > sizeof(plr.rgmdRelation) ||
+            lpb[iOff] > lpb.size() - static_cast<std::size_t>(iOff) - 1) return std::nullopt;
+        FDecodePlayer(std::as_bytes(lpb), plr, iOff);
+        std::memmove(plr.rgmdRelation, lpb.data() + iOff + 1, lpb[iOff]);
         iOff += lpb[iOff] + 1;
     } else {
         iOff = cbWirePlayerPartial;
-        FDecodePlayer(std::as_bytes(lpb), *pplr, iOff);
+        FDecodePlayer(std::as_bytes(lpb), plr, iOff);
     }
-    if (!(cbRead = FReadLegacyRaceString(app, std::as_bytes(lpb.subspan(static_cast<std::size_t>(iOff))), std::span{pplr->szName}))) return 0;
+    if (!(cbRead = FReadLegacyRaceString(app, std::as_bytes(lpb.subspan(static_cast<std::size_t>(iOff))), std::span{plr.szName}))) return std::nullopt;
     iOff += static_cast<std::int16_t>(*cbRead);
     if (fPlural) {
-        if (!(cbRead = FReadLegacyRaceString(app, std::as_bytes(lpb.subspan(static_cast<std::size_t>(iOff))), std::span{pplr->szNames}))) return 0;
+        if (!(cbRead = FReadLegacyRaceString(app, std::as_bytes(lpb.subspan(static_cast<std::size_t>(iOff))), std::span{plr.szNames}))) return std::nullopt;
         iOff += static_cast<std::int16_t>(*cbRead);
     }
-    if (static_cast<std::size_t>(iOff) != lpb.size()) return 0;
-    pplr->fLearned = 0;
-    return 1;
+    if (static_cast<std::size_t>(iOff) != lpb.size()) return std::nullopt;
+    plr.fLearned = 0;
+    return plr;
 }
 
 static std::int16_t FConvertLegacyRaceNames(APPSESSION &app, PLAYER *pplr, std::int16_t fPlural) {
@@ -650,8 +650,10 @@ std::int16_t FWasRaceFile(APPSESSION &app, std::string_view szFile, std::int16_t
                     if (app.state.hdrCur.rt == rtPlr) {
                         idsError = idsGameFileAppearsCorruptUnableLoadFile;
                         if (fLegacy) {
-                            if (!FReadLegacyRacePlayer(app, &plr,
-                                    std::span{reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)}, fPlural)) goto LBadFile;
+                            const auto legacyPlayer = FReadLegacyRacePlayer(app,
+                                std::span{reinterpret_cast<const std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)}, fPlural);
+                            if (!legacyPlayer) goto LBadFile;
+                            plr = *legacyPlayer;
                         } else {
                             ReadRtPlr(app, &plr, std::span(reinterpret_cast<std::uint8_t *>(app.state.rgbCur), static_cast<std::size_t>(app.state.hdrCur.cb)));
                         }

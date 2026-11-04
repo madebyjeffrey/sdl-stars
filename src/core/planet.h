@@ -2,6 +2,21 @@
 #define STARS_DECOMPILED_PLANET_H
 
 #include "common.h"
+#include <array>
+#include <span>
+#include <optional>
+
+struct TERRAFORMRESULT {
+    bool fCan;
+    std::array<std::int16_t, 3> rgEnvMin;
+    std::array<std::int16_t, 3> rgEnvMax;
+    std::array<std::optional<std::int16_t>, 3> rgEnvCost;
+};
+
+struct WARPRESULT {
+    std::int16_t iWarp;
+    std::int16_t fTwo;
+};
 #include <cstdint>
 #include <string_view>
 
@@ -41,13 +56,13 @@ std::int16_t CMaxOperableFactories(APPSESSION &app, PLANET *lppl, std::int16_t i
 std::int16_t CMaxDefenses(APPSESSION &app, PLANET *lppl, std::int16_t iplr);
 std::int16_t CMaxOperableDefenses(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t fNextYear);
 std::int16_t CResourcesAtPlanet(APPSESSION &app, PLANET *lppl, std::int16_t iplr);
-std::int16_t IWarpMAFromLppl(APPSESSION &app, PLANET *lppl, std::int16_t *pfTwo);
+WARPRESULT IWarpMAFromLppl(APPSESSION &app, PLANET *lppl);
 std::int16_t StargateRangeFromLppl(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t ish);
 std::int16_t FProdIsTerra(PROD *lpprod);
 std::int16_t IpctCanTerraformLppl(APPSESSION &app, PLANET *lppl);
-std::int16_t FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t *rgEnvMin, std::int16_t *rgEnvMax, std::int16_t *rgEnvCost, std::int16_t fHelp);
+std::optional<TERRAFORMRESULT> FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t fHelp);
 void    UninhabitPlanet(APPSESSION &app, PLANET *lppl);
-std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr, std::int16_t *ppctSteal);
+std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr);
 
 std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, std::span<char> szLine);
 std::array<char, 360> PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod);

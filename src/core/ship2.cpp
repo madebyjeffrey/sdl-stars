@@ -27,6 +27,7 @@ std::int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, std::int16_t isbsSrc, s
     std::int16_t   dpPerShdefOld;
     std::int16_t   cshDamagedOld;
     FLEET     flDead;
+    STARGATEDAMAGERESULT damageResult;
 
     cshdef = 0;
     cshKill = 0;
@@ -44,7 +45,8 @@ std::int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, std::int16_t isbsSrc, s
         if (flSrc.rgcsh[ishdef] != 0) {
             cshdef++;
             cshOrig += flSrc.rgcsh[ishdef];
-            switch (MdCalcStargateDamage(app, isbsSrc, isbsDst, dDist, app.state.rglpshdef[flSrc.iPlayer][ishdef].hul.wtEmpty, &rgpct[ishdef])) {
+            damageResult = MdCalcStargateDamage(app, isbsSrc, isbsDst, dDist, app.state.rglpshdef[flSrc.iPlayer][ishdef].hul.wtEmpty);
+            switch (damageResult.status) {
             case -1:
                 TurnIO().pfnMessage(app, flSrc.iPlayer, idmAttemptedUseStargateReachCouldBecauseDestination, static_cast<MsgGoto>(flSrc.id | 0x8000), flSrc.id, flSrc.idPlanet, id, 0, 0, 0, 0);
                 return 0;
@@ -56,6 +58,9 @@ std::int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, std::int16_t isbsSrc, s
                 break;
             case 1:
                 flSrc.fNoHeal = 1;
+            }
+            if (damageResult.pctDmg) {
+                rgpct[ishdef] = *damageResult.pctDmg;
             }
         }
     }
@@ -161,7 +166,7 @@ std::int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, std::int16_t isbsSrc, s
     return 1;
 }
 
-std::int16_t MdCalcStargateDamage(APPSESSION &app, std::int16_t isbsSrc, std::int16_t isbsDst, std::int16_t dDist, std::int16_t wt, std::int16_t *ppctDmg) {
+STARGATEDAMAGERESULT MdCalcStargateDamage(APPSESSION &app, std::int16_t isbsSrc, std::int16_t isbsDst, std::int16_t dDist, std::int16_t wt) {
     std::int32_t dBaseDistance;
     PART    partDst;
     PART    partSrc;
@@ -180,11 +185,11 @@ std::int16_t MdCalcStargateDamage(APPSESSION &app, std::int16_t isbsSrc, std::in
         dBaseDistance = 8000;
     }
     if (static_cast<std::int32_t>(dDist) > static_cast<std::int32_t>(static_cast<std::uint32_t>((dBaseDistance * 5)))) {
-        return -1;
+        return {-1, std::nullopt};
     }
     if ((partSrc.pspecialsb()->grAbility > 0 && static_cast<std::int32_t>(wt) > static_cast<std::int32_t>(static_cast<std::uint32_t>((partSrc.pspecialsb()->grAbility * 5)))) ||
         (partDst.pspecialsb()->grAbility > 0 && static_cast<std::int32_t>(wt) > static_cast<std::int32_t>(static_cast<std::uint32_t>((partDst.pspecialsb()->grAbility * 5))))) {
-        return -2;
+        return {-2, std::nullopt};
     }
     if (dDist > dBaseDistance) {
         pctSurvive = static_cast<std::int32_t>((static_cast<std::int32_t>(((static_cast<std::uint32_t>((dBaseDistance * 5)) - dDist) * 2500)) / dBaseDistance));
@@ -203,11 +208,9 @@ std::int16_t MdCalcStargateDamage(APPSESSION &app, std::int16_t isbsSrc, std::in
             goto TotalDeath;
         pctSurvive = static_cast<std::int32_t>((pctSurvive * pctSurviveT)) / 10000;
     }
-    *ppctDmg = LOWORD(static_cast<std::int32_t>(((10000 - pctSurvive) / 100)));
-    return 1;
+    return {1, LOWORD(static_cast<std::int32_t>(((10000 - pctSurvive) / 100)))};
 TotalDeath:
-    *ppctDmg = 100;
-    return 0;
+    return {0, 100};
 }
 
 void KillUsedWaypoints(APPSESSION &app) {
@@ -324,7 +327,7 @@ void NoAutoTrackFleet(APPSESSION &app, FLEET *lpflTarget) {
 void AutoRouteFleet(APPSESSION &app, FLEET *lpfl, PLANET *lppl) {
     std::int32_t dTravel;
     std::int16_t iWarp;
-    std::int16_t pctDmg;
+    STARGATEDAMAGERESULT damageResult;
     std::int16_t wt;
     std::int32_t cTurns;
     std::int16_t i;
@@ -365,7 +368,8 @@ void AutoRouteFleet(APPSESSION &app, FLEET *lpfl, PLANET *lppl) {
                     }
                 }
             }
-            if (MdCalcStargateDamage(app, isbsSrc, isbsDst, LOWORD(dTravel), wtBig, &pctDmg) == 1 && pctDmg == 0) {
+            damageResult = MdCalcStargateDamage(app, isbsSrc, isbsDst, LOWORD(dTravel), wtBig);
+            if (damageResult.status == 1 && damageResult.pctDmg == 0) {
                 iWarp = 11;
             }
         }

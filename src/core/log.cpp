@@ -681,6 +681,7 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
     std::int16_t iordLog, grTaskLog;
     std::uint16_t wOrderLog;
     RTCHGSHDEF rtchgshdef{};
+    std::optional<BTLPLAN> btlplan;
     std::int16_t idFleet, cShipXfer;
     std::size_t cchName;
     char *pchNameEnd;
@@ -1137,7 +1138,9 @@ std::int16_t FRunLogRecord(APPSESSION &app, RecordType rt, std::int16_t cb, std:
             if (i >= 16)
                 goto BombOut;
         }
-        if (!UnpackBattlePlan(app, std::span<const std::uint8_t>(lpb, static_cast<std::size_t>(cb)), app.state.rglpbtlplan[app.state.idPlayer] + i, i)) return 0;
+        btlplan = UnpackBattlePlan(app, std::span<const std::uint8_t>(lpb, static_cast<std::size_t>(cb)), i);
+        if (!btlplan) return 0;
+        app.state.rglpbtlplan[app.state.idPlayer][i] = *btlplan;
         if (i == app.state.rgcbtlplan[app.state.idPlayer]) app.state.rgcbtlplan[app.state.idPlayer]++;
         break;
     case rtLogFleetPlan:

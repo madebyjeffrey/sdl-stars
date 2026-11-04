@@ -152,7 +152,7 @@ std::optional<STARSCOMPATSNAPSHOT> StarsCompatCaptureHierarchy() {
         return std::nullopt;
     }
     std::reverse(rgWindow.begin(), rgWindow.end());
-    return std::move(rgWindow);
+    return rgWindow;
 }
 
 static bool FWriteString(NATIVEFILE *lpfile, std::string_view szValue) {

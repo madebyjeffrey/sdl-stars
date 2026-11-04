@@ -33,7 +33,7 @@ SHDEF     *LpshdefSBT();
 PLANETARY *LpplanetaryFromId(std::int16_t id);
 std::int16_t    FLookupPartX(APPSESSION &app, PART *ppart, std::uint16_t grhst, std::uint16_t iItem);
 std::int16_t    FLookupPart(APPSESSION &app, PART *ppart);
-void       LookupBestPlanetaryScanner(APPSESSION &app, PART *ppart);
+PART       LookupBestPlanetaryScanner(APPSESSION &app, PART part);
 std::int16_t    TechStatus(APPSESSION &app, std::span<const std::int8_t, 6> rgTech);
 
 #endif

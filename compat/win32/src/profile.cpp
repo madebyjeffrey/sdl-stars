@@ -33,6 +33,8 @@ static void FreeProfile(COMPATPROFILE *lp) {
     }
 }
 
+struct PROFILELOADRESULT { COMPATPROFILE *lpHead; bool fLoaded; };
+
 static std::string_view SzTrimProfile(std::string_view sz) {
     while (!sz.empty() && std::isspace(static_cast<unsigned char>(sz.front()))) sz.remove_prefix(1);
     while (!sz.empty() && std::isspace(static_cast<unsigned char>(sz.back()))) sz.remove_suffix(1);
@@ -68,24 +70,25 @@ static COMPATPROFILE *LpProfileLine(const char *pszRaw) {
     return profileOwner.release();
 }
 
-static bool FLoadProfile(std::string_view pszPath, COMPATPROFILE **lplp) {
+static PROFILELOADRESULT FLoadProfile(std::string_view pszPath) {
     const PROFILEIO &io = ProfileIO();
     NATIVEFILE *fp = nullptr;
     std::optional<std::string> sz;
     std::size_t cbTotal = 0, cbLine;
-    COMPATPROFILE **lplpNext = lplp;
+    COMPATPROFILE *lpHead = nullptr;
+    COMPATPROFILE **lplpNext = &lpHead;
     bool fRet = false;
     NATIVECLEANUPSCOPE releaseProfile([&]() noexcept {
         sz.reset();
         if (fp) io.pfnClose(fp);
-        if (!fRet) { FreeProfile(*lplp); *lplp = nullptr; }
+        if (!fRet) { FreeProfile(lpHead); lpHead = nullptr; }
     });
 
-    *lplp = nullptr;
     fp = io.pfnOpen(pszPath, NATIVEFILEMODE::read);
     if (!fp) {
         win32::SetLastError(DwProfileError());
-        return errno == ENOENT;
+        fRet = errno == ENOENT;
+        goto LReturn;
     }
     while ((sz = io.pfnReadLine(fp))) {
         cbLine = sz->size();
@@ -102,7 +105,8 @@ static bool FLoadProfile(std::string_view pszPath, COMPATPROFILE **lplp) {
     if (FNativeStreamError(fp)) { win32::SetLastError(win32::ERROR_READ_FAULT); goto LReturn; }
     fRet = true;
 LReturn:
-    return fRet;
+    releaseProfile.Close();
+    return {lpHead, fRet};
 }
 
 static COMPATPROFILE *LpProfileSection(COMPATPROFILE *lp, std::string_view szSection) {
@@ -191,6 +195,7 @@ static bool FMakeProfileDir(std::string_view szPath) {
 DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR pszDefault,
                                     LPSTR szResult, DWORD cchMax, LPCSTR pszFile) {
     std::optional<std::string> szPath;
+    PROFILELOADRESULT profileResult{};
     COMPATPROFILE *lpAll = nullptr, *lp, *lpKey;
     std::string_view szName;
     std::string_view szValue;
@@ -205,7 +210,8 @@ DWORD win32::GetPrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR p
     szPath = SzProfilePath(pszFile);
     if (!szPath) return 0;
     lockProfile.lock();
-    FLoadProfile(*szPath, &lpAll);
+    profileResult = FLoadProfile(*szPath);
+    lpAll = profileResult.lpHead;
     if (fMulti) {
         lp = pszSection ? LpProfileSection(lpAll, pszSection) : lpAll;
         if (pszSection && lp) lp = lp->lpNext;
@@ -269,6 +275,7 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     std::string szLine;
     std::string_view szSection, szKey, szValue, szInputFile;
     std::optional<std::string> szPath;
+    PROFILELOADRESULT profileResult{};
     COMPATPROFILE *lpAll = nullptr, *lpSection, *lpKey, *lpNew, *lp;
     COMPATPROFILE **lplp;
     BOOL fRet = 0;
@@ -294,7 +301,9 @@ BOOL win32::WritePrivateProfileStringA(LPCSTR pszSection, LPCSTR pszKey, LPCSTR 
     if (!szPath) return 0;
     szInputFile = pszFile;
     lockProfile.lock();
-    if (!FLoadProfile(*szPath, &lpAll)) goto LReturn;
+    profileResult = FLoadProfile(*szPath);
+    lpAll = profileResult.lpHead;
+    if (!profileResult.fLoaded) goto LReturn;
     lpSection = LpProfileSection(lpAll, szSection);
     lpKey = pszKey ? LpProfileKey(lpSection, szKey) : nullptr;
     if (!pszKey || !pszValue) {

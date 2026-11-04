@@ -10,6 +10,7 @@
 #include <new>
 #include <cstdlib>
 #include <cstring>
+#include <optional>
 #include <string_view>
 #include <unistd.h>
 
@@ -132,15 +133,15 @@ static cairo_status_t WritePDF(void *lpv, const unsigned char *rgb, unsigned cb)
     COMPATPRINT *lp = static_cast<COMPATPRINT *>((lpv));
     return CWriteNative(std::span{rgb, cb}, lp->lpfile.get()) == cb ? CAIRO_STATUS_SUCCESS : CAIRO_STATUS_WRITE_ERROR;
 }
-static int StartPrint(COMPATPRINT *lp, int cb, LPCSTR pszTitle) {
+static int StartPrint(COMPATPRINT *lp, std::optional<std::string_view> szTitle) {
     OPENFILENAMEA ofn = {};
     char szFile[PATH_MAX] = "Stars map.pdf";
     NATIVEFILETEMPRESULT nft;
     int cch;
-    if (lp->fActive || cb < 0 || cb > 4096 || (cb != 0 && !pszTitle)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
-    if (cb != 0 && !FUtf8Valid(std::string_view{pszTitle, static_cast<std::size_t>(cb)})) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
-    if (cb) std::copy_n(pszTitle, cb, lp->szTitle);
-    lp->szTitle[cb] = 0;
+    if (lp->fActive || !szTitle || szTitle->size() > 4096) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
+    if (!FUtf8Valid(*szTitle)) { win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return win32::SP_ERROR; }
+    std::copy(szTitle->begin(), szTitle->end(), lp->szTitle);
+    lp->szTitle[szTitle->size()] = 0;
     if (!lp->fSpool && !*lp->szTarget) {
         ofn.lStructSize = sizeof(ofn); ofn.hwndOwner = win32::IsWindow(lp->hwndOwner) ? lp->hwndOwner : nullptr;
         ofn.lpstrFile = szFile; ofn.nMaxFile = sizeof(szFile);
@@ -248,7 +249,11 @@ static int IEscapePrinter(COMPATPRINT *lp, HDC hdc, int idEscape, int cb, LPCSTR
     }
     lpSurface = LpCompatPrinterSurface(hdc);
     if (idEscape == win32::STARTDOC) {
-        id = StartPrint(lp, cb, pszIn);
+        std::optional<std::string_view> szTitle;
+        if (cb >= 0 && cb <= 4096 && (cb == 0 || pszIn)) {
+            szTitle = cb == 0 ? std::string_view{} : std::string_view{pszIn, static_cast<std::size_t>(cb)};
+        }
+        id = StartPrint(lp, szTitle);
         if (id > 0) SDL_FillSurfaceRect(lpSurface, nullptr, SDL_MapSurfaceRGB(lpSurface, 255, 255, 255));
         return id;
     }

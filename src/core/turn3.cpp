@@ -9,6 +9,8 @@
 #include "race_query_io.h"
 
 void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
+    SCANNERRANGERESULT scannerRange;
+    TECHLEARNRESULT techLearnResult;
     std::int16_t        fMining;
     std::int32_t        amountWP;
     XferActionType action;
@@ -104,7 +106,8 @@ void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
                         xWP = 0xffff;
                         fHasPermission = lpfl->iPlayer == lpflWP->iPlayer;
                         if (!fHasPermission) {
-                            GetFleetScannerRange(app, lpfl, nullptr, nullptr, &fHasPermission);
+                            scannerRange = GetFleetScannerRange(app, lpfl);
+                            fHasPermission |= scannerRange.iSteal;
                             if (!fHasPermission)
                                 break;
                             fStealing = 1;
@@ -133,7 +136,8 @@ void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
                         fHasPermission = lpfl->iPlayer == pl.iPlayer ? 3 : 0;
                         if (fHasPermission)
                             break;
-                        GetFleetScannerRange(app, lpfl, nullptr, nullptr, &fHasPermission);
+                        scannerRange = GetFleetScannerRange(app, lpfl);
+                        fHasPermission |= scannerRange.iSteal;
                         if (fHasPermission == 1) {
                             fHasPermission = 0;
                         }
@@ -645,8 +649,10 @@ void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
                                         HIWORD(lResUltimate), 0);
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited5 + pl.fStarbase);
                             if (pl.fStarbase) {
-                                i = ITechLearnATech(app, pl.iPlayer, 0, 0, static_cast<MessageId>(idmNone), &iGoto);
+                                techLearnResult = ITechLearnATech(app, pl.iPlayer, 0, 0, static_cast<MessageId>(idmNone));
+                                i = techLearnResult.iResult;
                                 if (i != 0) {
+                                    iGoto = static_cast<std::uint16_t>(techLearnResult.gotoTarget.value_or(static_cast<MsgGoto>(pl.id)));
                                     idm = idmHasDismantledKtMineralsWhichHaveDeposited3;
                                     if (i < 0) {
                                         i = -(i + 1);
@@ -664,15 +670,17 @@ void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
                                         HIWORD(lResUltimate), i);
                         } else if (pl.id == idplNone) {
                             lpthWP = nullptr;
-                            DropSalvage(app, &lpthWP, pl.rgwtMin, lpfl->iplr(), &ord.pt);
+                            DropSalvage(app, lpthWP, std::span{pl.rgwtMin}.first<3>(), lpfl->iplr(), &ord.pt);
                             TurnIO().pfnMessage2(app, lpfl->iPlayer, idmHasDismantledScrapLeftDeepSpace, gotoThing, lpthWP->idFull(), WFromLpfl(app, lpfl));
                         } else {
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited + pl.fStarbase);
                             TurnIO().pfnMessage(app, lpfl->iPlayer, idm, static_cast<MsgGoto>(iGoto), WFromLpfl(app, lpfl), LOWORD(lXferMinerals), HIWORD(lXferMinerals), pl.id, 0, 0, 0);
                             idm = static_cast<MessageId>(idmHasDismantledKtMineralsWhichHaveDeposited4 + pl.fStarbase);
                             if (pl.fStarbase) {
-                                i = ITechLearnATech(app, pl.iPlayer, 0, 0, static_cast<MessageId>(idmNone), &iGoto);
+                                techLearnResult = ITechLearnATech(app, pl.iPlayer, 0, 0, static_cast<MessageId>(idmNone));
+                                i = techLearnResult.iResult;
                                 if (i != 0) {
+                                    iGoto = static_cast<std::uint16_t>(techLearnResult.gotoTarget.value_or(static_cast<MsgGoto>(pl.id)));
                                     idm = idmHasDismantledKtMineralsStarbaseOrbitingProcess;
                                     if (i < 0) {
                                         i = -(i + 1);
@@ -724,7 +732,7 @@ void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
                         TurnIO().pfnMessage2(app, lpfl->iPlayer, idmRemoteMiningRobotsHadOrdersMinePlanet, static_cast<MsgGoto>(lpfl->id | 0x8000), lpfl->id, lppl->id);
                         goto CancelOrder;
                     }
-                    ColonyIO().pfnEstimateMining(app, lppl, rglQuan, cMine, 1);
+                    ColonyIO().pfnEstimateMining(app, lppl, std::span{rglQuan}.first<3>(), cMine, 1);
                 } else if (ord.grTask == grTaskAutoRoute) {
                     if (lpfl->cord != 1 || lpfl->idPlanet == idPlanetDeepSpace)
                         continue;

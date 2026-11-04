@@ -11,9 +11,10 @@
 static int32_t   capcfg[110];
 static int       extraCalls, extraPlayer, extraTrace[16][4], selectedScanner;
 static SPECIALSB fakeSpecial[16];
-static void      CapabilityScanner(APPSESSION &app, PART *part) {
-    LookupBestPlanetaryScanner(app, part);
-    selectedScanner = part->hs.iItem;
+static PART      CapabilityScanner(APPSESSION &app, PART part) {
+    part = LookupBestPlanetaryScanner(app, part);
+    selectedScanner = part.hs.iItem;
+    return part;
 }
 static int16_t CapabilityLookup(APPSESSION &app, PART *part) {
     unsigned mask = part->hs.grhst, item = part->hs.iItem;
@@ -31,7 +32,13 @@ static int16_t CapabilityLookup(APPSESSION &app, PART *part) {
             part->SetPplanetary(rgplanetary + item);
         status = (cfg[2] & (1 << item)) ? 1 : -1;
     }
-    assert(part->pcom() == (COMPART *)(mask == hstSpecialSB ? (void *)(cfg[1] ? fakeSpecial + item : rgspecialSB + item) : (void *)(rgplanetary + item)));
+    if (mask == hstSpecialSB) {
+        SPECIALSB *pspecial = cfg[1] ? fakeSpecial + item : rgspecialSB + item;
+        assert(part->pcom() == pspecial);
+    } else {
+        PLANETARY *pplanetary = rgplanetary + item;
+        assert(part->pcom() == pplanetary);
+    }
     extraTrace[extraCalls][0] = mask;
     extraTrace[extraCalls][1] = item;
     extraTrace[extraCalls][2] = status;
@@ -182,7 +189,7 @@ int main(int argc, char **argv) {
         else if (cfg[0] == 1)
             result = StargateRangeFromLppl(app, capcfg[54] ? NULL : &planet, (int16_t)cfg[4], (int16_t)capcfg[56]);
         else if (cfg[0] == 2) {
-            ProductionIO().pfnScanner(app, &part);
+            part = ProductionIO().pfnScanner(app, part);
             result = part.hs.iItem;
             CHECK(part.hs.grhst == hstPlanetary && part.hs.cItem == capcfg[61] && part.pplanetary() == rgplanetary + part.hs.iItem);
         } else

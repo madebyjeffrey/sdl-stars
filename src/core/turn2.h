@@ -3,11 +3,13 @@
 
 #include "common.h"
 #include <cstdint>
+#include <span>
 #include <string>
+#include <span>
 
 void    Produce(APPSESSION &app);
-std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *pprodPartial, std::int32_t *rgRes, std::int16_t fAlchemy, std::int16_t *pmdStatus, std::int16_t fCalcOnly);
-std::int16_t FBuildObject(APPSESSION &app, PLANET *lppl, GrobjClass grobj, std::int16_t iItem, std::int16_t cBuilt, std::int32_t *rgMinerals);
+std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *pprodPartial, std::span<std::int32_t, 4> rgRes, std::int16_t fAlchemy, std::int16_t *pmdStatus, std::int16_t fCalcOnly);
+std::int16_t FBuildObject(APPSESSION &app, PLANET *lppl, GrobjClass grobj, std::int16_t iItem, std::int16_t cBuilt, std::span<std::int32_t, 4> rgMinerals);
 void    CreateShip(APPSESSION &app, std::int16_t iPlr, FLEET *lpfl, std::int16_t ishdef, std::int16_t cShip);
 void    RandomEvents(APPSESSION &app);
 void    TransferToOthers(APPSESSION &app);

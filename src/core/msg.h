@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include <cstdint>
+#include <optional>
 #include <string_view>
 
 extern char    rgcMsgArgs[];
@@ -20,7 +21,7 @@ std::int16_t PackageUpMsg(APPSESSION &app, std::span<std::uint8_t> rgb, std::int
                      std::int16_t p7);
 std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2);
 std::int16_t IdmGetMessageN(APPSESSION &app, std::int16_t iMsg);
-std::int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb);
+std::optional<MSGBIG> FGetNMsgbig(APPSESSION &app, MessageId iMsg);
 struct MESSAGETEXTRESULT {
     std::array<char, 256> sz{};
     std::int16_t cch = 0;

@@ -153,7 +153,7 @@ static int CatalogChecks(APPSESSION &app) {
     const unsigned counts[] = {iengineCount, iscannerCount,   ishieldCount, iarmorCount,    ibeamCount,     itorpCount,  ibombCount,         iminingCount,
                                iminesCount,  ispecialSBCount, isbhullCount, ispecialECount, ispecialMCount, iterraCount, ihuldefOrbitalFort, iplanetaryCount};
     unsigned long  checks = 0;
-    PART           part;
+    PART           part{};
     memset(app.state.rgplr, 0, sizeof(app.state.rgplr));
     for (unsigned k = 0; k < 16; k++) {
         assert(counts[k] < 256);
@@ -162,7 +162,7 @@ static int CatalogChecks(APPSESSION &app) {
         checks++;
         app.state.idPlayer = iplrNone;
         for (unsigned item = 0; item < 256; item++) {
-            memset(&part, 0, sizeof(part));
+            part = PART{};
             part.hs.grhst = (HullSlotType)(std::uint32_t{1} << k);
             part.hs.iItem = item;
             int available = FLookupPart(app, &part);
@@ -180,7 +180,7 @@ static int CatalogChecks(APPSESSION &app) {
         for (int trait = -128; trait < 128; trait++) {
             app.state.rgplr[0].rgAttr[rsMajorAdv] = (int8_t)trait;
             for (unsigned item = counts[k]; item < 256; item++) {
-                memset(&part, 0, sizeof(part));
+                part = PART{};
                 part.hs.grhst = (HullSlotType)(std::uint32_t{1} << k);
                 part.hs.iItem = item;
                 assert(FLookupPart(app, &part) == mdPartAvailInvalid);

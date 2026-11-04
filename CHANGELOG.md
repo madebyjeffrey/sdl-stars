@@ -6,6 +6,20 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Runtime object-target access keeps `OBJ` and `PART` pointer storage compatible
+  with the active Win16 packing while dispatching `PART` snapshots through an
+  aligned typed view. The first variant-storage attempt triggered Linux
+  alignment errors; current native and host regression runs still match all
+  519 checkpoints. `FCanTerraformLppl` now represents unavailable terraform
+  output with `std::optional` and preserves unwritten cost entries, matching the
+  old output-parameter behavior.
+
+- `CchSprintfFields` now links from the shared formatter library. Standalone
+  SDL compatibility tests previously failed to link because its definition
+  was only in the core object target. The formatter implementation and game
+  output are unchanged; native and host regressions each match all 519
+  checkpoints.
+
 - `NewGameWizard` now uses the bounded filename copy length to remove the
   `.xy` extension. If the copy does not contain that suffix, it cancels safely
   instead of indexing before the basename. Valid filenames and saved records

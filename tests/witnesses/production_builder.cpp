@@ -61,11 +61,10 @@ static int16_t TestPctPlanetDesirability(APPSESSION &, PLANET *p, int16_t player
     calls = calls * 10 + 6;
     return (int16_t)limits[4];
 }
-static int16_t TestIWarpMAFromLppl(APPSESSION &, PLANET *p, int16_t *flag) {
+static WARPRESULT TestIWarpMAFromLppl(APPSESSION &, PLANET *p) {
     (void)p;
-    assert(!flag);
     calls = calls * 10 + 7;
-    return (int16_t)limits[5];
+    return {(int16_t)limits[5], 0};
 }
 static int16_t TestGetRaceGrbit(PLAYER *p, RaceGrbit bit) {
     APPSESSION &app = AppCompatCallbackContext();

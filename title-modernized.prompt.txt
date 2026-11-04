@@ -1,0 +1,13 @@
+Generated with the built-in image generation tool.
+Reference: res/bitmaps/iddib_splash.bmp (PNG preview supplied to the tool).
+
+Use case: style-transfer
+Asset type: standalone high-resolution title-screen artwork concept for the classic space strategy game Stars!
+Input image: the supplied image is the original title-screen artwork, used as the composition, ship-design and color reference.
+Primary request: create a faithful modern remaster of this artwork, replacing the rounded inflated title lettering with classic science-fiction typography. Render the exact title "STARS!" in wide, angular uppercase letters with restrained custom details, excellent legibility, shallow bevels and a subtle brushed silver metal finish. Keep a distinctive exclamation mark. Completely remove the little circular "2" badge; do not replace it with any number, badge, version, subtitle or other text.
+Scene and composition: wide landscape, preferably 16:9, with the large silver title occupying the upper portion, a richly structured purple and blue galactic nebula below and behind it, a teal angular spacecraft in the lower left based closely on the original silhouette, a smaller ring-shaped craft in the lower right based on the original, and the warm curved planet horizon along the bottom. Preserve these recognizable elements and their visual hierarchy. Keep the essential composition within the central 4:3 safe area where practical, with dark peripheral breathing room suitable for a future title screen. Do not render any interface controls.
+Style: polished 1990s space-game cover art remastered with contemporary rendering quality; colorful, theatrical, atmospheric, precise and coherent. Clean silhouettes, smooth gradients, detailed restrained ship materials, refined planet surface texture, delicate atmospheric rim, natural variation in the starfield.
+Lighting: unify the ships and planet with reflected violet nebula light, preserve teal ship and warm planet colors, soften the central white hotspot so nebula structure remains visible. Silver title should be clear and strong without blown-out glitter.
+Text (verbatim): "STARS!" — S T A R S followed by exclamation mark, once only.
+Avoid: the original rounded bubble font, inflated chrome lettering, circular 2 badge, any other numbers or text, watermark, UI, new spacecraft or planets, excessive lens flares, overwhelming bloom, dithering, pixelation, jagged edges.
+Output: one finished opaque landscape image at high resolution.

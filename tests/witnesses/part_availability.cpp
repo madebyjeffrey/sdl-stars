@@ -59,9 +59,7 @@ int main(int argc, char **argv) {
         memcpy(rgBefore, app.state.rgplr, sizeof(rgBefore));
         memcpy(&gameBefore, &app.state.game, sizeof(app.state.game));
         int16_t idBefore = app.state.idPlayer;
-        PART    part, expected;
-        auto    rgbPart = std::as_writable_bytes(std::span(&part, 1));
-        std::fill(rgbPart.begin(), rgbPart.end(), std::byte{0xa5});
+        PART    part{}, expected;
         part.hs.grhst = static_cast<HullSlotType>((uint16_t)mask);
         part.hs.iItem = item;
         part.hs.cItem = rgIn[8];

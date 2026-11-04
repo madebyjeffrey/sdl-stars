@@ -116,17 +116,20 @@ static int      TestFCopyNativeFileExclusive(std::string_view source, std::strin
     event("copy", s, t, ok, residue);
     return ok;
 }
-static int TestFInspectImportFile(std::string_view path, int type, int player, int32_t &id, uint16_t *turn, void *gen, int16_t &multi) {
+static LIBRARYFILEINSPECTRESULT TestFInspectImportFile(std::string_view path, DtFileType type, int player,
+                                                       LIBRARYFILEINSPECTREQUEST request) {
     (void)type;
     (void)player;
-    assert(!gen);
+    LIBRARYFILEINSPECTRESULT result;
     int p = role(path), inspected = decision() && objects[p] > 0 && objects[p] < 100;
     // Probe 2 includes inspection and the two subsequent source comparisons.
-    id = variant == 22 ? 999 : 123;
-    *turn = variant == 23 ? 12 : 11;
-    multi = variant == 24;
+    result.fComplete = inspected;
+    result.info.lidGame = variant == 22 ? 999 : 123;
+    if (request.fTurn) result.info.turn = variant == 23 ? 12 : 11;
+    if (request.fGeneration) result.info.wGen = 7;
+    result.info.fMulti = variant == 24;
     event("probe", 2, p, inspected && variant != 22 && variant != 23, 0);
-    return inspected;
+    return result;
 }
 static std::optional<std::int64_t> TestFNativeFileSize(std::string_view path) {
     const std::string szPath{path};

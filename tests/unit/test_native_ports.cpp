@@ -364,11 +364,11 @@ static void TestBattleRollover(void) {
 
     /* Win16: data starts at offset 18, leaving 65462 bytes to the limit. */
     app.state.lpbBattleCur = lpbStart + 65448;
-    TEST_ASSERT(FDoCoolBattle(app, &fl, 0, grfAttack, 0, 0) == 1);
+    TEST_ASSERT(FDoCoolBattle(app, &fl, 0, std::span<const std::uint16_t, 16>{grfAttack}, 0, 0) == 1);
     TEST_ASSERT(app.state.lpbBattleT == lpbScratch);
     TEST_ASSERT(app.state.lpbBattleCur == lpbStart + 65462);
     TEST_ASSERT(BdvFromLp(app, lpbStart + 65448).cbData() == 14);
-    TEST_ASSERT(FDoCoolBattle(app, &fl, 0, grfAttack, 0, 0) == 1);
+    TEST_ASSERT(FDoCoolBattle(app, &fl, 0, std::span<const std::uint16_t, 16>{grfAttack}, 0, 0) == 1);
     TEST_ASSERT(app.state.lpbBattleT == NULL);
     TEST_ASSERT(RawLoad16(std::as_bytes(std::span{lpbStart + 65462, std::size_t{2}})) == 0xffff);
     TEST_ASSERT(app.state.lpbBattleCur == lpbScratch + 14);
@@ -474,16 +474,18 @@ static void TestPackedMessageParameters(void) {
     const uint8_t expected[] = {0x46, 0x78, 0xf9, 0xff, 0, 0xff, 0, 1, 0xff, 0xff, 0, 0x80, 0xff, 0x7f, 1,
                                 5, 4, 5, 0x80, 0xff, 0xff, 0xff};
     const int16_t params[] = {0, 255, 256, -1, -32768, 32767, 1};
-    MSGBIG mb;
+    std::optional<MSGBIG> mb;
     int16_t i;
 
     TEST_ASSERT(FStarsTestInit(app));
     TEST_ASSERT(rgcMsgArgs[idmMultitudeEnemiesHaveMountedProngAttackResulting] == 2 && rgcMsgArgs[idmAttemptedTransferSuccessfullyReceived] == 7);
     ResetMessages(app);
+    TEST_CHECK(!FGetNMsgbig(app, static_cast<MessageId>(0)));
     TEST_ASSERT(FSendPlrMsg(app, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, static_cast<MsgGoto>(-32763), 255, -1, 0, 0, 0, 0, 0));
     TEST_ASSERT(FSendPrependedPlrMsg(app, 1, idmAttemptedTransferSuccessfullyReceived, gotoBattleReport, 0, 255, 256, -1, -32768, 32767, 1));
     TEST_ASSERT(FSendPlrMsg(app, 2, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, -32768, 7, 0, 0, 0, 0, 0));
     TEST_CHECK(app.state.cMsg == 3 && app.state.imemMsgCur == 32 && app.state.lpMsg[0] == 0xb1 && app.state.lpMsg[16] == 0x31);
+    TEST_CHECK(!FGetNMsgbig(app, static_cast<MessageId>(app.state.cMsg)));
     cRecord = 0;
     WritePlayerMessages(app, 1);
     TEST_ASSERT(cRecord == 1 && rgrtRecord[0] == rtMsg && rgcbRecord[0] == sizeof(expected));
@@ -491,19 +493,19 @@ static void TestPackedMessageParameters(void) {
     ResetMessages(app); fLogRead = 0; iRead = 0; StarsTest_ReadRt(app);
     ReadPlayerMessages(app);
     TEST_CHECK(app.state.cMsg == 2 && app.state.imemMsgCur == sizeof(expected) && memcmp(app.state.lpMsg, expected, sizeof(expected)) == 0);
-    TEST_ASSERT(FGetNMsgbig(app, static_cast<MessageId>(0), &mb));
-    TEST_CHECK(mb.iMsg == idmAttemptedTransferSuccessfullyReceived && mb.wGoto == gotoBattleReport);
-    for (i = 0; i < 7; i++) TEST_CHECK(mb.rgParam[i] == params[i]);
-    TEST_ASSERT(FGetNMsgbig(app, static_cast<MessageId>(1), &mb));
-    TEST_CHECK(mb.iMsg == idmMultitudeEnemiesHaveMountedProngAttackResulting && mb.wGoto == static_cast<MsgGoto>(-32763));
-    TEST_CHECK(mb.rgParam[0] == 255 && mb.rgParam[1] == -1);
+    TEST_ASSERT((mb = FGetNMsgbig(app, static_cast<MessageId>(0))));
+    TEST_CHECK(mb->iMsg == idmAttemptedTransferSuccessfullyReceived && mb->wGoto == gotoBattleReport);
+    for (i = 0; i < 7; i++) TEST_CHECK(mb->rgParam[i] == params[i]);
+    TEST_ASSERT((mb = FGetNMsgbig(app, static_cast<MessageId>(1))));
+    TEST_CHECK(mb->iMsg == idmMultitudeEnemiesHaveMountedProngAttackResulting && mb->wGoto == static_cast<MsgGoto>(-32763));
+    TEST_CHECK(mb->rgParam[0] == 255 && mb->rgParam[1] == -1);
     // A one-byte record retains the rest of the previous physical backing;
     // the existing reader still admits the first complete stale message there.
     rgcbRecord[0] = 1;
     ResetMessages(app); iRead = 0; StarsTest_ReadRt(app); ReadPlayerMessages(app);
     TEST_CHECK(app.state.cMsg == 1 && app.state.imemMsgCur == 1);
-    TEST_ASSERT(FGetNMsgbig(app, static_cast<MessageId>(0), &mb));
-    TEST_CHECK(mb.iMsg == idmAttemptedTransferSuccessfullyReceived && mb.rgParam[4] == -32768 && mb.rgParam[6] == 1);
+    TEST_ASSERT((mb = FGetNMsgbig(app, static_cast<MessageId>(0))));
+    TEST_CHECK(mb->iMsg == idmAttemptedTransferSuccessfullyReceived && mb->rgParam[4] == -32768 && mb->rgParam[6] == 1);
 }
 
 static void TestMessagePackingAdmissionAndPrepend(void) {
@@ -518,7 +520,7 @@ static void TestMessagePackingAdmissionAndPrepend(void) {
     uint8_t rgb[40];
     int16_t cb;
     int32_t seed1, seed2;
-    MSGBIG mb;
+    std::optional<MSGBIG> mb;
 
     TEST_ASSERT(FStarsTestInit(app));
     ResetMessages(app); seed1 = app.state.lRandSeed1; seed2 = app.state.lRandSeed2;
@@ -543,8 +545,8 @@ static void TestMessagePackingAdmissionAndPrepend(void) {
     TEST_ASSERT(FSendPlrMsg2XGen(app, 1, idmMultitudeEnemiesHaveMountedProngAttackResulting, gotoNone, 256, 1));
     TEST_CHECK(app.state.imemMsgCur == sizeof(expected) && app.state.cMsg == 2 && memcmp(app.state.lpMsg, expected, sizeof(expected)) == 0);
     TEST_CHECK(app.state.bitfMsgSent[0] & (1 << 5));
-    TEST_ASSERT(FGetNMsgbig(app, static_cast<MessageId>(0), &mb));
-    TEST_CHECK(mb.wGoto == gotoNone && mb.rgParam[0] == 256 && mb.rgParam[1] == 1);
+    TEST_ASSERT((mb = FGetNMsgbig(app, static_cast<MessageId>(0))));
+    TEST_CHECK(mb->wGoto == gotoNone && mb->rgParam[0] == 256 && mb->rgParam[1] == 1);
 }
 
 

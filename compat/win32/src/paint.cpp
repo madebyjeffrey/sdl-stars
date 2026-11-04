@@ -1427,40 +1427,51 @@ static void PenPixel(HDC lpdc, const RECT *lprc, std::int64_t x, std::int64_t y,
 }
 
 // Liang-Barsky clipping bounds work by client size even with INT_MIN/MAX endpoints.
-static bool FLineBound(double p, double q, double *lpt0, double *lpt1) {
+struct LINECLIPINTERVAL { double t0, t1; };
+
+static std::optional<LINECLIPINTERVAL> FLineBound(double p, double q, LINECLIPINTERVAL interval) {
     double t;
 
-    if (p == 0)
-        return q >= 0;
+    if (p == 0) {
+        if (q < 0) return std::nullopt;
+        return interval;
+    }
     t = q / p;
     if (p < 0) {
-        if (t > *lpt1) return 0;
-        if (t > *lpt0) *lpt0 = t;
+        if (t > interval.t1) return std::nullopt;
+        if (t > interval.t0) interval.t0 = t;
     } else {
-        if (t < *lpt0) return 0;
-        if (t < *lpt1) *lpt1 = t;
+        if (t < interval.t0) return std::nullopt;
+        if (t < interval.t1) interval.t1 = t;
     }
-    return 1;
+    return interval;
 }
 
 static void Line(HDC lpdc, RECT rc, POINT pt0, POINT pt1, bool fExcludeEnd, std::uint64_t *lpiPhase) {
     double xStart = static_cast<double>(pt0.x) - lpdc->ptOrg.x, yStart = static_cast<double>(pt0.y) - lpdc->ptOrg.y;
     double xEnd = static_cast<double>(pt1.x) - lpdc->ptOrg.x, yEnd = static_cast<double>(pt1.y) - lpdc->ptOrg.y;
-    double dx = xEnd - xStart, dy = yEnd - yStart, t0 = 0, t1 = 1;
+    double dx = xEnd - xStart, dy = yEnd - yStart;
+    LINECLIPINTERVAL interval{0, 1};
+    const auto fBound = [&](double p, double q) {
+        const auto result = FLineBound(p, q, interval);
+        if (!result) return false;
+        interval = *result;
+        return true;
+    };
     std::int64_t x, y, x1, y1, cx, cy, sx, sy, err, e2;
     std::uint64_t iPixel, iPhase = lpiPhase ? *lpiPhase : 0;
     if (lpiPhase) *lpiPhase += static_cast<std::uint64_t>((((std::fabs(dx)) > (std::fabs(dy))) ? (std::fabs(dx)) : (std::fabs(dy)))) + !fExcludeEnd;
 
     if (rc.left >= rc.right || rc.top >= rc.bottom || lpdc->lppen->fNull ||
-        !FLineBound(-dx, xStart - rc.left, &t0, &t1) ||
-        !FLineBound(dx, static_cast<double>(rc.right) - 1 - xStart, &t0, &t1) ||
-        !FLineBound(-dy, yStart - rc.top, &t0, &t1) ||
-        !FLineBound(dy, static_cast<double>(rc.bottom) - 1 - yStart, &t0, &t1))
+        !fBound(-dx, xStart - rc.left) ||
+        !fBound(dx, static_cast<double>(rc.right) - 1 - xStart) ||
+        !fBound(-dy, yStart - rc.top) ||
+        !fBound(dy, static_cast<double>(rc.bottom) - 1 - yStart))
         return;
-    x = static_cast<std::int64_t>((xStart + t0 * dx));
-    y = static_cast<std::int64_t>((yStart + t0 * dy));
-    x1 = static_cast<std::int64_t>((xStart + t1 * dx));
-    y1 = static_cast<std::int64_t>((yStart + t1 * dy));
+    x = static_cast<std::int64_t>((xStart + interval.t0 * dx));
+    y = static_cast<std::int64_t>((yStart + interval.t0 * dy));
+    x1 = static_cast<std::int64_t>((xStart + interval.t1 * dx));
+    y1 = static_cast<std::int64_t>((yStart + interval.t1 * dy));
     cx = std::llabs(x1 - x); cy = -std::llabs(y1 - y);
     sx = x < x1 ? 1 : -1; sy = y < y1 ? 1 : -1;
     err = cx + cy;
@@ -1636,13 +1647,6 @@ int win32::SetBkMode(HDC hdc, int iMode) {
     return lOld;
 }
 
-struct COMPATTEXTDRAW {
-    HDC lpdc;
-    RECT rc;
-    std::int64_t x, y;
-    double cs, sn;
-};
-
 static std::optional<SIZE> RgTextSize(HDC lpdc, std::string_view sz) {
     return FCompatFontSizeUtf8(lpdc->lpfont->lpFont.get(), sz);
 }
@@ -1689,8 +1693,8 @@ int win32::GetDeviceCaps(HDC hdc, int index) {
     return lpMode ? index == win32::HORZRES ? lpMode->w : lpMode->h : 0;
 }
 
-static void DrawFontPixel(void *lpv, std::int64_t x, std::int64_t y, BYTE alpha) {
-    COMPATTEXTDRAW *lpdraw = static_cast<COMPATTEXTDRAW *>((lpv));
+static void DrawFontPixel(COMPATTEXTDRAW &draw, std::int64_t x, std::int64_t y, BYTE alpha) {
+    COMPATTEXTDRAW *lpdraw = &draw;
     int iScale = IDCScale(lpdraw->lpdc);
     std::int64_t px = static_cast<std::int64_t>(lpdraw->x) * iScale + std::llround(lpdraw->cs * x + lpdraw->sn * y);
     std::int64_t py = static_cast<std::int64_t>(lpdraw->y) * iScale + std::llround(-lpdraw->sn * x + lpdraw->cs * y);
@@ -1764,7 +1768,7 @@ static bool FDrawText(HDC lpdc, int x, int y, std::string_view sz, UINT options,
     if (!tm) return 0;
     if (lpdc->iBkMode == win32::OPAQUE) DrawFontRect(&draw, dx, 0, tm->tmHeight, lpdc->crBk);
     if (!FCompatFontDrawScaled(lpdc->lpfont->lpFont.get(), sz, rgdx, IDCScale(lpdc),
-                               DrawFontPixel, &draw)) return 0;
+                               DrawFontPixel, draw)) return 0;
     if (tm->tmUnderlined) DrawFontRect(&draw, dx, tm->tmAscent + 1, tm->tmAscent + 2, lpdc->crText);
     if (tm->tmStruckOut) DrawFontRect(&draw, dx, tm->tmAscent * 2 / 3, tm->tmAscent * 2 / 3 + 1, lpdc->crText);
     return 1;

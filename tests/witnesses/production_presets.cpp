@@ -141,7 +141,7 @@ static void     apply(APPSESSION &app, int cmd, int param) { ProdCommandHandler(
 static int      popupSlot(APPSESSION &app, int i) { return IProductionPresetSlot(app, (int16_t)i); }
 static void     edit(int cmd) { ZipProdDlg(HwndWitness(1), win32::WM_COMMAND, cmd, 0); }
 static void     customize(APPSESSION &app) { CustomizeProductionPresets(app, HwndWitness(1)); }
-static void     FailRecovery(APPSESSION &, PROD *) { StarsThrowError(starsErrorMemory, 0); }
+static void     FailRecovery(APPSESSION &, std::optional<std::span<PROD, 64>>) { StarsThrowError(starsErrorMemory, 0); }
 static int      recover(APPSESSION &app) {
     PRODUCTIONIO io = ProductionIO();
     io.pfnInitialize = FailRecovery;
