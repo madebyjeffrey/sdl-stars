@@ -31774,22 +31774,22 @@
       "baseline": "Unchanged."
     },
     {
-      "batch": "L06 runtime object targets use typed variants",
+      "batch": "L06 runtime object targets keep packed-safe storage and typed views",
       "base_source": "4ac98d09",
-      "status": "verified in working tree; uncommitted",
+      "status": "macOS reverified after packed-storage correction; Linux sanitizer and platform qualification pending",
       "interfaces": [
-        "OBJ stores PLANET*, FLEET*, or THING* as a tagged pointer alternative.",
-        "PART and NATIVEPARTCOMMONVIEW store and dispatch PARTTARGET typed pointer alternatives."
+        "OBJ retains its pointer-sized callback payload and exposes typed getters.",
+        "PART retains packed-safe pointer/tag storage; NATIVEPARTCOMMONVIEW snapshots and dispatches a PARTTARGET variant outside the pack(1) carrier."
       ],
       "provider_and_caller_migrations": [
-        "OBJ setters in planetui.cpp and typed getters in shipui.cpp/planetui.cpp use the new alternatives; no provider seam exists.",
-        "PART catalog setters, lookup callers, and common-view consumers use the variant; a failed lookup retains the previously selected borrow even when hs changes.",
+        "OBJ setters in planetui.cpp and typed getters in shipui.cpp/planetui.cpp use the private accessors; no provider seam exists.",
+        "PART catalog setters and lookup callers retain the selected pointer/tag; common-view consumers use the aligned typed snapshot, which survives failed lookup even when hs changes.",
         "The representations are runtime-only and do not cross serialization. PART remains trivially copyable."
       ],
-      "layout_contract": "The independent frozen C fixture remains unchanged. The runtime layout checker allows only OBJ, PART, and containing POPUPDATA sizes to grow for the tagged representation, while retaining byte alignment and exact checks for all other types.",
+      "layout_contract": "The independent frozen C fixture remains unchanged. OBJ retains its packed-safe pointer storage; PART and containing POPUPDATA retain the packed-safe pointer/tag fields. The std::variant is only in the aligned runtime view.",
       "macos_sdl_debug_build": "Pass.",
-      "desktop_unit_tests": "18/18 pass.",
-      "host_unit_tests": "29/29 pass.",
+      "desktop_unit_tests": "18/18 pass after the packed-storage correction.",
+      "host_unit_tests": "29/29 pass after the packed-storage correction.",
       "native_regression": {
         "matches": 519,
         "warnings": 25,
@@ -31803,7 +31803,7 @@
         "skipped": 0
       },
       "tutorial": "1/1 smoke checkpoint passed.",
-      "baseline": "Unchanged."
+      "baseline": "Unchanged. Linux sanitizer and native Windows chooser/client results are pending."
     },
     {
       "batch": "L06 optional decoded message result",

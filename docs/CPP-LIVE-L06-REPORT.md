@@ -124,9 +124,14 @@ The typed picker migration records eight UI callers and four backend paths: comp
 
 The broader `win32_client_fileworkflow_dummy` test timed out after 75 seconds in this run; it is not counted as passing evidence for these items. The focused tests above exercise each listed caller workflow independently.
 
-Then qualify the current source on both target platforms:
+Then qualify the current source on both target platforms. The first Linux Actions
+run exposed misaligned `std::variant` construction in the pack(1) `PART` carrier,
+along with related Linux regression and sanitizer failures. The current correction
+keeps packed-safe pointer/tag storage in `OBJ` and `PART`, and uses the typed
+variant snapshot only in `NATIVEPARTCOMMONVIEW`; the corrected source still needs
+fresh Linux CI evidence.
 
-- [ ] **Linux:** compile with DBus development headers; run the portal chooser suite under `dbus-run-session`; cover cancellation, selection, filters, and caller integration. The macOS checkout does not have the DBus development headers, so this needs Linux CI or a suitable Linux environment.
+- [ ] **Linux:** compile with DBus development headers; run the portal chooser suite under `dbus-run-session`; cover cancellation, selection, filters, and caller integration. Re-run the host and SDL regressions plus the sanitizer/resource-ownership suite to verify the packed-carrier correction. The macOS checkout does not have the DBus development headers or Linux sanitizer preset, so this needs Linux CI or a suitable Linux environment.
 - [ ] **Windows:** build the Windows SDL client and SDK chooser adapter with the strict compiler policy; run the relevant chooser/client tests on Windows.
 - [ ] Record exact commit SHA, test/workflow links, results, first diff on any regression mismatch, and whether the native baseline remained unchanged.
 

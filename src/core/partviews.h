@@ -53,8 +53,28 @@ public:
     std::int16_t ibmp() const noexcept { return Visit([](auto &item) { return item.ibmp; }); }
 };
 
-inline NATIVEPARTCOMMONVIEW PART::pcom() const noexcept { return NATIVEPARTCOMMONVIEW{lpv}; }
-inline void PART::SetPcom(NATIVEPARTCOMMONVIEW pcom) noexcept { lpv = pcom.lpv; }
+inline NATIVEPARTCOMMONVIEW PART::pcom() const noexcept { return NATIVEPARTCOMMONVIEW{Target()}; }
+inline void PART::SetPcom(NATIVEPARTCOMMONVIEW pcom) noexcept {
+    std::visit([this](auto *lpItem) {
+        using T = std::remove_pointer_t<decltype(lpItem)>;
+        lpv = lpItem;
+        if constexpr (std::is_same_v<T, COMPART>) ppk = ppkCommon;
+        else if constexpr (std::is_same_v<T, ARMOR>) ppk = ppkArmor;
+        else if constexpr (std::is_same_v<T, HUL>) ppk = ppkHull;
+        else if constexpr (std::is_same_v<T, ENGINE>) ppk = ppkEngine;
+        else if constexpr (std::is_same_v<T, SCANNER>) ppk = ppkScanner;
+        else if constexpr (std::is_same_v<T, BEAM>) ppk = ppkBeam;
+        else if constexpr (std::is_same_v<T, TORP>) ppk = ppkTorp;
+        else if constexpr (std::is_same_v<T, BOMB>) ppk = ppkBomb;
+        else if constexpr (std::is_same_v<T, SHIELD>) ppk = ppkShield;
+        else if constexpr (std::is_same_v<T, SPECIAL>) ppk = ppkSpecial;
+        else if constexpr (std::is_same_v<T, SPECIALSB>) ppk = ppkSpecialSB;
+        else if constexpr (std::is_same_v<T, MINES>) ppk = ppkMines;
+        else if constexpr (std::is_same_v<T, MINING>) ppk = ppkMining;
+        else if constexpr (std::is_same_v<T, PLANETARY>) ppk = ppkPlanetary;
+        else if constexpr (std::is_same_v<T, TERRA>) ppk = ppkTerra;
+    }, pcom.lpv);
+}
 
 static_assert(std::is_trivially_copyable_v<PART>);
 #endif
