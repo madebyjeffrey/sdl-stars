@@ -268,7 +268,7 @@ int main(void) {
     app.state.idPlayer = 0;
     shdef.hul = rghuldefSB[0].hul;
     for (i = 0; i < shdef.hul.chs; i++) shdef.hul.rghs[i].cItem = 0;
-    memset(&app.lpui->GlobalPD, 0, sizeof(app.lpui->GlobalPD));
+    app.lpui->GlobalPD = {};
     app.lpui->GlobalPD.grPopup = grPopupShdef;
     app.lpui->GlobalPD.lpshdef = &shdef;
     Popup(app, app.lpui->hwndFrame, 200, 180);
