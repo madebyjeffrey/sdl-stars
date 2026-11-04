@@ -1207,7 +1207,7 @@ MOVEMENTRANGECANDIDATE DzMoveRangeToConsider(APPSESSION &app, TOK *ptok, std::ui
                 dz++;
             }
             if (dz <= dzMax && (ptokTarget->dpShield > 0 || dzNonSapper == ptok->dxyLim || dz <= static_cast<std::uint16_t>((dzNonSapper + ptok->dMovesLeft)))) {
-                return {ptok->dMovesLeft, 0xff};
+                return {static_cast<std::int16_t>(ptok->dMovesLeft), 0xff};
             }
             if (static_cast<std::int16_t>(dz) < dzBest && DpFromPtokBrcToBrc(app, ptok, 0, 0, ptokTarget, 0) > 0) {
                 dzBest = dz;
