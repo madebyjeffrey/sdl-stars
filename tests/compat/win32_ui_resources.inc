@@ -78,7 +78,7 @@ int main(void) {
         }
 #ifndef _WIN32
         if ((UINT_PTR)rgUIManifest[i].pszType == 4) {
-            for (ib = 0; ib < cb; ib++) CHECK(!HmenuCompatTemplate(rgb, ib));
+            for (ib = 0; ib < cb; ib++) CHECK(!HmenuCompatTemplate(std::span{rgb, static_cast<std::size_t>(ib)}));
         } else if ((UINT_PTR)rgUIManifest[i].pszType == 5) {
             CHECK(FCompatDialogTemplate(std::span{rgb, cb}, dlg));
             CHECK(dlg.szTitle && dlg.szFont && dlg.cPoints == 8);
