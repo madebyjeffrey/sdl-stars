@@ -402,7 +402,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::span<s
             part.hs.grhst = hstPlanetary;
             part.hs.iItem = iplanetaryGenesisDevice;
             PartQueryIO().pfnLookup(app, &part);
-            PartQueryIO().pfnTrueCost(app, iplr, &part, rgCosts);
+            PartQueryIO().pfnTrueCost(app, iplr, &part, std::span<std::uint16_t, 4>{rgCosts});
             for (i = 0; i < 4; i++) {
                 rgCost[i] = static_cast<std::uint32_t>(rgCosts[i]);
             }
@@ -454,7 +454,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::span<s
             part.hs.grhst = hstPlanetary;
             part.hs.iItem = LOWORD(iItem) - 18;
             PartQueryIO().pfnLookup(app, &part);
-            PartQueryIO().pfnTrueCost(app, iplr, &part, rgCosts);
+            PartQueryIO().pfnTrueCost(app, iplr, &part, std::span<std::uint16_t, 4>{rgCosts});
             for (i = 0; i < 4; i++) {
                 rgCost[i] = static_cast<std::uint32_t>(rgCosts[i]);
             }
@@ -528,7 +528,7 @@ PRODUCTIONESTIMATE EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *
                     }
                     lpprod->cItem = 1020;
                 }
-                cBuilt = ProductionIO().pfnBuild(app, &pl, lpprod, i == -1 ? nullptr : &prodPartial, rgRes, fAlchemy, &mdStatusRaw, 0);
+                cBuilt = ProductionIO().pfnBuild(app, &pl, lpprod, i == -1 ? nullptr : &prodPartial, std::span<std::int32_t, 4>{rgRes}, fAlchemy, &mdStatusRaw, 0);
                 mdStatus = static_cast<mdProdStat>(mdStatusRaw);
                 if (iItem == i) {
                     if (cBuilt > 0 && estimate.iFirst == 0) {

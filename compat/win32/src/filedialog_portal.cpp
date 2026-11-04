@@ -62,7 +62,7 @@ static bool FFilter(DBusMessageIter *lpIter, const FILESELECTIONFILTER &filterVa
     std::string_view szSourcePattern, szPatternView;
     const char *pszName = filterValue.szName.c_str();
     char szPattern[16385];
-    std::size_t i, c, ichPattern, ichEnd;
+    std::size_t c, ichPattern, ichEnd;
     dbus_uint32_t kind = 0;
     BOOL fOk = 0;
     szSourcePattern = filterValue.szPattern;
