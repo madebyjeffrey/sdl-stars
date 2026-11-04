@@ -1,0 +1,10 @@
+Generated with the built-in image generation tool.
+Reference: title-modernized.png
+
+Use case: precise-object-edit
+Asset type: revised game title artwork.
+Input: the supplied image is the edit target.
+Change only the STARS! lettering. Replace the sharp, pointed, angular letterforms with an elegant classic science-fiction extended sans serif with clearly rounded corners and smooth curves. Use wide, confident uppercase proportions, moderate-to-bold consistent stroke weight, softly squared construction with generous radiused corners, smoothly curved S letters, rounded R bowl, softened A apex, and rounded terminals. Remove all spear-like points, blade-shaped ends and acute corners. The lettering should feel refined, futuristic and approachable, with flat brushed silver faces and a restrained shallow bevel, rather than puffy or inflated. Give the exclamation mark rounded corners and a softened dot too.
+Text verbatim: "STARS!" once only. Keep the title's position and approximate size across the upper portion.
+Preserve the background artwork as closely as possible: the purple-blue galactic glow, starfield, teal angular ship at lower left, ring craft at lower right, warm planet horizon, lighting, palette, framing and image proportions.
+No 2 badge, no additional text or numbers, no UI, no watermark. Output one opaque finished image.
