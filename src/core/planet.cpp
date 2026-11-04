@@ -248,7 +248,7 @@ std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp) {
     std::int16_t pctCur;
     std::int16_t rgpctBest[3];
     std::int16_t iPlrSav;
-    TERRAFORMRESULT terra;
+    std::optional<TERRAFORMRESULT> terra;
 
     iPlrSav = app.state.idPlayer;
     iPlr = lppl->iPlayer;
@@ -257,16 +257,16 @@ std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp) {
     }
     app.state.idPlayer = iPlr;
     terra = ColonyIO().pfnCanTerraform(app, lppl, fHelp);
-    if (!terra.fCan) {
+    if (!terra || !terra->fCan) {
         app.state.idPlayer = iPlrSav;
         return 0;
     }
     pctCur = PlanetQueryIO().pfnDesirability(app, lppl, iPlr);
     for (i = 0; i < 3; i++) {
-        if (terra.rgEnvMin[i] != envNone) {
-            iEnv = terra.rgEnvMin[i];
-        } else if (terra.rgEnvMax[i] != envNone) {
-            iEnv = terra.rgEnvMax[i];
+        if (terra->rgEnvMin[i] != envNone) {
+            iEnv = terra->rgEnvMin[i];
+        } else if (terra->rgEnvMax[i] != envNone) {
+            iEnv = terra->rgEnvMax[i];
         } else {
             rgpctBest[i] = 0;
             continue;
@@ -286,7 +286,7 @@ std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp) {
             iSave = i;
         }
     }
-    if (terra.rgEnvMin[iSave] != envNone) {
+    if (terra->rgEnvMin[iSave] != envNone) {
         iBest = -(iSave + 1);
     } else {
         iBest = iSave + 1;
@@ -350,10 +350,10 @@ std::int16_t PctPlanetOptValue(APPSESSION &app, PLANET *lppl, std::int16_t iPlr)
     std::int16_t pctDesire;
     std::int16_t rgiValSav[3];
     std::int16_t iNewVal;
-    TERRAFORMRESULT terra;
+    std::optional<TERRAFORMRESULT> terra;
 
     terra = ColonyIO().pfnCanTerraform(app, lppl, 1);
-    if (!terra.fCan) {
+    if (!terra || !terra->fCan) {
         return PlanetQueryIO().pfnDesirability(app, lppl, iPlr);
     }
     for (i = 0; i < 3; i++) {
@@ -361,11 +361,11 @@ std::int16_t PctPlanetOptValue(APPSESSION &app, PLANET *lppl, std::int16_t iPlr)
         if (app.state.rgplr[iPlr].rgEnvVarMin[i] != envImmune && lppl->rgEnvVar[i] != app.state.rgplr[iPlr].rgEnvVar[i]) {
             iNewVal = envNone;
             if (lppl->rgEnvVar[i] < app.state.rgplr[iPlr].rgEnvVar[i]) {
-                if (terra.rgEnvMax[i] > lppl->rgEnvVar[i]) {
-                    iNewVal = app.state.rgplr[iPlr].rgEnvVar[i] >= terra.rgEnvMax[i] ? terra.rgEnvMax[i] : app.state.rgplr[iPlr].rgEnvVar[i];
+                if (terra->rgEnvMax[i] > lppl->rgEnvVar[i]) {
+                    iNewVal = app.state.rgplr[iPlr].rgEnvVar[i] >= terra->rgEnvMax[i] ? terra->rgEnvMax[i] : app.state.rgplr[iPlr].rgEnvVar[i];
                 }
-            } else if (terra.rgEnvMin[i] != envNone && terra.rgEnvMin[i] < lppl->rgEnvVar[i]) {
-                iNewVal = app.state.rgplr[iPlr].rgEnvVar[i] <= terra.rgEnvMin[i] ? terra.rgEnvMin[i] : app.state.rgplr[iPlr].rgEnvVar[i];
+            } else if (terra->rgEnvMin[i] != envNone && terra->rgEnvMin[i] < lppl->rgEnvVar[i]) {
+                iNewVal = app.state.rgplr[iPlr].rgEnvVar[i] <= terra->rgEnvMin[i] ? terra->rgEnvMin[i] : app.state.rgplr[iPlr].rgEnvVar[i];
             }
             if (iNewVal != envNone) {
                 lppl->rgEnvVar[i] = iNewVal;
@@ -745,25 +745,25 @@ std::int16_t FProdIsTerra(PROD *lpprod) {
 std::int16_t IpctCanTerraformLppl(APPSESSION &app, PLANET *lppl) {
     std::int16_t i;
     std::int16_t ipct;
-    TERRAFORMRESULT terra;
+    std::optional<TERRAFORMRESULT> terra;
 
     terra = ColonyIO().pfnCanTerraform(app, lppl, 1);
-    if (!terra.fCan) {
+    if (!terra || !terra->fCan) {
         return 0;
     }
     ipct = 0;
     for (i = 0; i < 3; i++) {
-        if (terra.rgEnvMin[i] != envNone) {
-            ipct += lppl->rgEnvVar[i] - terra.rgEnvMin[i];
+        if (terra->rgEnvMin[i] != envNone) {
+            ipct += lppl->rgEnvVar[i] - terra->rgEnvMin[i];
         }
-        if (terra.rgEnvMax[i] != envNone) {
-            ipct += terra.rgEnvMax[i] - lppl->rgEnvVar[i];
+        if (terra->rgEnvMax[i] != envNone) {
+            ipct += terra->rgEnvMax[i] - lppl->rgEnvVar[i];
         }
     }
     return ipct;
 }
 
-TERRAFORMRESULT FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t fHelp) {
+std::optional<TERRAFORMRESULT> FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t fHelp) {
     std::int16_t fRet;
     std::int16_t i;
     std::int16_t rgMove[3];
@@ -776,7 +776,7 @@ TERRAFORMRESULT FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t fH
     TERRAFORMRESULT result{};
     std::span<std::int16_t, 3> rgEnvMin{result.rgEnvMin};
     std::span<std::int16_t, 3> rgEnvMax{result.rgEnvMax};
-    std::span<std::int16_t, 3> rgEnvCost{result.rgEnvCost};
+    std::span<std::optional<std::int16_t>, 3> rgEnvCost{result.rgEnvCost};
 
     iPlrSav = app.state.idPlayer;
     if (app.state.idPlayer == iplrNone) {
@@ -832,7 +832,7 @@ TERRAFORMRESULT FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t fH
     }
     if (!fRet) {
         app.state.idPlayer = iPlrSav;
-        return result;
+        return std::nullopt;
     }
     for (i = 0; i < 3; i++) {
         if (rgMove[i] == 0 || app.state.rgplr[app.state.idPlayer].rgEnvVarMin[i] == envImmune) {

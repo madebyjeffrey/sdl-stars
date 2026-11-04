@@ -31594,14 +31594,14 @@
     {
       "batch": "L06 terraform capability result",
       "base_source": "4ac98d09",
-      "status": "verified in working tree; uncommitted",
+      "status": "corrected after Linux witness failures; macOS linked vectors pass, Linux sanitizer and platform qualification pending",
       "interfaces": [
-        "FCanTerraformLppl and COLONYIO::pfnCanTerraform return TERRAFORMRESULT with capability, fixed three-entry minimum/maximum/cost values"
+        "FCanTerraformLppl and COLONYIO::pfnCanTerraform return optional TERRAFORMRESULT with capability and fixed three-entry bounds; each cost slot is optional to preserve partial writes"
       ],
       "provider_and_caller_migrations": [
-        "Core and UI callers now read the named result arrays and capability flag.",
-        "The Terraform witness provider returns and observes the named result.",
-        "The stored element widths remain int16_t and the fHelp behavior is unchanged."
+        "Core and UI callers consume an absent result as no terraform equipment and read bounds when present, including a present result whose fCan flag is false.",
+        "The Terraform witness provider preserves caller sentinels for an absent result and for cost slots the implementation does not write.",
+        "The stored element widths remain int16_t and the fHelp behavior is unchanged; no turn rules changed."
       ],
       "macos_sdl_debug_build": "Pass.",
       "desktop_unit_tests": "18/18 pass.",
@@ -31619,7 +31619,7 @@
         "skipped": 0
       },
       "tutorial": "1/1 smoke checkpoint passed.",
-      "baseline": "Unchanged."
+      "baseline": "Unchanged. Linux witness, sanitizer, and platform qualification reruns are pending."
     },
     {
       "batch": "L06 warp and two-driver result",

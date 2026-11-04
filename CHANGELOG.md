@@ -10,7 +10,9 @@ produce different results from a 2.6j host for the same turn.
   with the active Win16 packing while dispatching `PART` snapshots through an
   aligned typed view. The first variant-storage attempt triggered Linux
   alignment errors; current native and host regression runs still match all
-  519 checkpoints.
+  519 checkpoints. `FCanTerraformLppl` now represents unavailable terraform
+  output with `std::optional` and preserves unwritten cost entries, matching the
+  old output-parameter behavior.
 
 - `CchSprintfFields` now links from the shared formatter library. Standalone
   SDL compatibility tests previously failed to link because its definition

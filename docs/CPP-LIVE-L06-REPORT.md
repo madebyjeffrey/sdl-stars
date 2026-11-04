@@ -126,10 +126,20 @@ The broader `win32_client_fileworkflow_dummy` test timed out after 75 seconds in
 
 Then qualify the current source on both target platforms. The first Linux Actions
 run exposed misaligned `std::variant` construction in the pack(1) `PART` carrier,
-along with related Linux regression and sanitizer failures. The current correction
-keeps packed-safe pointer/tag storage in `OBJ` and `PART`, and uses the typed
-variant snapshot only in `NATIVEPARTCOMMONVIEW`; the corrected source still needs
-fresh Linux CI evidence.
+along with related Linux regression and sanitizer failures. Follow-up linked
+witnesses then found that the terraform result also needed to preserve an absent
+result and individually unwritten cost entries. The current correction keeps
+packed-safe pointer/tag storage in `OBJ` and `PART`, uses the typed variant
+snapshot only in `NATIVEPARTCOMMONVIEW`, and models terraform outputs with an
+optional result and optional cost entries. The corrected source still needs fresh
+Linux CI evidence.
+
+The latest macOS SDL Debug run passes after the terraform correction: desktop
+units 18/18, host units 29/29, native and host regressions each 519 matches with
+zero differences/errors/skips, tutorial smoke 1/1, and the linked terraform
+witnesses pass 1,423,925 cases / 303,296,026 assertions and 1,756,689 cases /
+497,240,245 assertions. This is local macOS evidence; it does not qualify Linux
+or Windows.
 
 - [ ] **Linux:** compile with DBus development headers; run the portal chooser suite under `dbus-run-session`; cover cancellation, selection, filters, and caller integration. Re-run the host and SDL regressions plus the sanitizer/resource-ownership suite to verify the packed-carrier correction. The macOS checkout does not have the DBus development headers or Linux sanitizer preset, so this needs Linux CI or a suitable Linux environment.
 - [ ] **Windows:** build the Windows SDL client and SDK chooser adapter with the strict compiler policy; run the relevant chooser/client tests on Windows.
@@ -137,7 +147,7 @@ fresh Linux CI evidence.
 
 ## Final verification and closure
 
-All forty-six conversion batches passed the macOS SDL Debug build, desktop and
+All fifty conversion batches passed the macOS SDL Debug build, desktop and
 host unit suites, native and host regressions, and tutorial smoke. The focused DIB
 resource check passed for 38 assets and the focused paint batch passed 1/1; its separate leak wrapper timed out because
 the macOS leaks tool could not obtain a task port, though the DIB subcheck printed PASS.

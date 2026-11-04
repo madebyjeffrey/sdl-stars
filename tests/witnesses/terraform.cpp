@@ -78,7 +78,10 @@ int main(int argc, char **argv) {
         memcpy(expectedPlayers, app.state.rgplr, sizeof(app.state.rgplr));
         int     result;
         if (cfg[0] == 0)
-            result = ColonyIO().pfnCanTerraform(app, &planet, (int16_t)cfg[6]).fCan;
+            {
+                const auto terra = ColonyIO().pfnCanTerraform(app, &planet, (int16_t)cfg[6]);
+                result = terra.has_value() && terra->fCan;
+            }
         else if (cfg[0] == 1)
             result = IBestTerraform(app, &planet, (int16_t)cfg[6]);
         else if (cfg[0] == 2)

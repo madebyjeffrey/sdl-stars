@@ -10,7 +10,7 @@ struct TERRAFORMRESULT {
     bool fCan;
     std::array<std::int16_t, 3> rgEnvMin;
     std::array<std::int16_t, 3> rgEnvMax;
-    std::array<std::int16_t, 3> rgEnvCost;
+    std::array<std::optional<std::int16_t>, 3> rgEnvCost;
 };
 
 struct WARPRESULT {
@@ -60,7 +60,7 @@ WARPRESULT IWarpMAFromLppl(APPSESSION &app, PLANET *lppl);
 std::int16_t StargateRangeFromLppl(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t ish);
 std::int16_t FProdIsTerra(PROD *lpprod);
 std::int16_t IpctCanTerraformLppl(APPSESSION &app, PLANET *lppl);
-TERRAFORMRESULT FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t fHelp);
+std::optional<TERRAFORMRESULT> FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t fHelp);
 void    UninhabitPlanet(APPSESSION &app, PLANET *lppl);
 std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr);
 

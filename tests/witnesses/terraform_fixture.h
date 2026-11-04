@@ -27,12 +27,16 @@ static int16_t TerraformLookup(APPSESSION &app, PART *part) {
     part->SetPterra(scripted + part->hs.iItem);
     return (cfg[2] & (1 << part->hs.iItem)) ? 1 : 0;
 }
-static TERRAFORMRESULT TerraformCan(APPSESSION &app, PLANET *p, int16_t help) {
-    TERRAFORMRESULT result = FCanTerraformLppl(app, p, help);
-    for (int i = 0; i < 3; i++) {
-        observedLow[i] = result.rgEnvMin[i];
-        observedHigh[i] = result.rgEnvMax[i];
-        observedCost[i] = result.rgEnvCost[i];
+static std::optional<TERRAFORMRESULT> TerraformCan(APPSESSION &app, PLANET *p, int16_t help) {
+    std::optional<TERRAFORMRESULT> result = FCanTerraformLppl(app, p, help);
+    if (result) {
+        for (int i = 0; i < 3; i++) {
+            observedLow[i] = result->rgEnvMin[i];
+            observedHigh[i] = result->rgEnvMax[i];
+            if (result->rgEnvCost[i]) {
+                observedCost[i] = *result->rgEnvCost[i];
+            }
+        }
     }
     return result;
 }

@@ -897,7 +897,7 @@ void DoOrders(APPSESSION &app, std::int16_t fPostMovement) {
 }
 
 void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
-    TERRAFORMRESULT terra;
+    std::optional<TERRAFORMRESULT> terra;
     WARPRESULT warp;
     std::int16_t   k;
     std::int16_t   dUni;
@@ -1144,7 +1144,7 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
                         }
                         if (cTerraTemp > 0) {
                             app.state.idPlayer = iplr;
-                            if (!(terra = ColonyIO().pfnCanTerraform(app, lppl, 1)).fCan) {
+                            if (!(terra = ColonyIO().pfnCanTerraform(app, lppl, 1)) || !terra->fCan) {
                                 app.state.idPlayer = iplrNone;
                             } else {
                                 app.state.idPlayer = iplrNone;
@@ -1155,16 +1155,16 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
                                     } else {
                                         cTerraTemp = cTerraTemp >= 99 - lppl->rgEnvVar[i] ? 99 - lppl->rgEnvVar[i] : cTerraTemp;
                                     }
-                                } else if (terra.rgEnvMin[i] != envNone) {
-                                    if (cTerraTemp > lppl->rgEnvVar[i] - terra.rgEnvMin[i]) {
-                                        cTerraTemp = terra.rgEnvMin[i] - lppl->rgEnvVar[i];
+                                } else if (terra->rgEnvMin[i] != envNone) {
+                                    if (cTerraTemp > lppl->rgEnvVar[i] - terra->rgEnvMin[i]) {
+                                        cTerraTemp = terra->rgEnvMin[i] - lppl->rgEnvVar[i];
                                     } else {
                                         cTerraTemp = -cTerraTemp;
                                     }
-                                } else if (terra.rgEnvMax[i] == envNone) {
+                                } else if (terra->rgEnvMax[i] == envNone) {
                                     cTerraTemp = 0;
-                                } else if (cTerraTemp > terra.rgEnvMax[i] - lppl->rgEnvVar[i]) {
-                                    cTerraTemp = terra.rgEnvMax[i] - lppl->rgEnvVar[i];
+                                } else if (cTerraTemp > terra->rgEnvMax[i] - lppl->rgEnvVar[i]) {
+                                    cTerraTemp = terra->rgEnvMax[i] - lppl->rgEnvVar[i];
                                 }
                                 if (cTerraTemp != 0) {
                                     lppl->rgEnvVar[i] += cTerraTemp;

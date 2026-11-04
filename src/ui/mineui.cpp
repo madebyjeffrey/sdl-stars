@@ -142,7 +142,7 @@ void InvalidateMineralBars(APPSESSION &app) {
 }
 
 void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
-    TERRAFORMRESULT terra;
+    std::optional<TERRAFORMRESULT> terra;
     PLANETTEXTRESULT szDisplayLabel{};
     std::array<char, 360> szObjectName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
@@ -663,16 +663,16 @@ void DrawMineSurvey(APPSESSION &app, HDC hdc, RECT *prc) {
                         xBeg--;
                         c += 2;
                     }
-                    if (terra.fCan) {
+                    if (terra && terra->fCan) {
                         yTop--;
-                        if (terra.rgEnvMin[i] != envNone) {
-                            dxBar = 0 <= iCur - terra.rgEnvMin[i] ? iCur - terra.rgEnvMin[i] : 0;
+                        if (terra->rgEnvMin[i] != envNone) {
+                            dxBar = 0 <= iCur - terra->rgEnvMin[i] ? iCur - terra->rgEnvMin[i] : 0;
                         } else {
                             dxBar = 0;
                         }
                         xBeg = xL + 2 + win32::MulDiv(iCur - dxBar, dx, 100);
-                        if (terra.rgEnvMax[i] != envNone) {
-                            dxBar = 0 <= terra.rgEnvMax[i] - iCur ? terra.rgEnvMax[i] - iCur : 0;
+                        if (terra->rgEnvMax[i] != envNone) {
+                            dxBar = 0 <= terra->rgEnvMax[i] - iCur ? terra->rgEnvMax[i] - iCur : 0;
                         } else {
                             dxBar = 0;
                         }
@@ -877,7 +877,7 @@ HtMineType HtMineWindow(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t
 }
 
 void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg, std::int16_t sks) {
-    TERRAFORMRESULT terra;
+    std::optional<TERRAFORMRESULT> terra;
     PLANET    *lppl;
     HtMineType ht;
     PART       part;
@@ -987,9 +987,9 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                 app.lpui->GlobalPD.iPlanVal = envNone;
             }
             terra = ColonyIO().pfnCanTerraform(app, &pl, 1);
-            if (pl.det >= detSome && terra.fCan) {
-                app.lpui->GlobalPD.iPlanMin = terra.rgEnvMin[app.lpui->GlobalPD.iPlanetVar];
-                app.lpui->GlobalPD.SetIPlanMax(terra.rgEnvMax[app.lpui->GlobalPD.iPlanetVar]);
+            if (pl.det >= detSome && terra && terra->fCan) {
+                app.lpui->GlobalPD.iPlanMin = terra->rgEnvMin[app.lpui->GlobalPD.iPlanetVar];
+                app.lpui->GlobalPD.SetIPlanMax(terra->rgEnvMax[app.lpui->GlobalPD.iPlanetVar]);
                 if (app.lpui->GlobalPD.iPlanMin == envNone) {
                     app.lpui->GlobalPD.iPlanMin = app.lpui->GlobalPD.iPlanVal;
                 }

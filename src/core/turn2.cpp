@@ -1106,7 +1106,7 @@ void HealShips(APPSESSION &app) {
 }
 
 void AutoTerraform(APPSESSION &app) {
-    TERRAFORMRESULT terra;
+    std::optional<TERRAFORMRESULT> terra;
     std::int16_t rgp[16];
     PLANET *lppl;
     std::int16_t i;
@@ -1139,12 +1139,12 @@ void AutoTerraform(APPSESSION &app) {
                         TurnIO().pfnMessage2(app, lppl->iPlayer, idmEngineersHaveManagedImproveUnderlying1, static_cast<MsgGoto>(lppl->id), lppl->id, i);
                     }
                 }
-                if ((terra = ColonyIO().pfnCanTerraform(app, lppl, 1)).fCan) {
+                if ((terra = ColonyIO().pfnCanTerraform(app, lppl, 1)) && terra->fCan) {
                     for (i = 0; i < 3; i++) {
-                        if (terra.rgEnvMin[i] != envNone) {
-                            lppl->rgEnvVar[i] = terra.rgEnvMin[i];
-                        } else if (terra.rgEnvMax[i] != envNone) {
-                            lppl->rgEnvVar[i] = terra.rgEnvMax[i];
+                        if (terra->rgEnvMin[i] != envNone) {
+                            lppl->rgEnvVar[i] = terra->rgEnvMin[i];
+                        } else if (terra->rgEnvMax[i] != envNone) {
+                            lppl->rgEnvVar[i] = terra->rgEnvMax[i];
                         }
                     }
                     i = PlanetQueryIO().pfnDesirability(app, lppl, lppl->iPlayer);
