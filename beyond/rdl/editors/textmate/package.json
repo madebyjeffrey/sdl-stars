@@ -1,0 +1,31 @@
+{
+  "name": "rdl-syntax",
+  "displayName": "RDL Syntax",
+  "description": "Syntax highlighting for the RDL typed fact language",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "rdl",
+        "aliases": ["RDL", "rdl"],
+        "extensions": [".rdl"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "rdl",
+        "scopeName": "source.rdl",
+        "path": "./syntaxes/rdl.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": { "test": "node --test test/highlighting.test.cjs" },
+  "devDependencies": {
+    "vscode-textmate": "9.3.0",
+    "vscode-oniguruma": "2.0.1"
+  }
+}

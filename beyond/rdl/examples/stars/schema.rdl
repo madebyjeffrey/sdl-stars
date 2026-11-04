@@ -1,0 +1,5 @@
+trait type primary_racial_trait = {
+  name : string;
+  description: string;
+  base_points: integer;
+}

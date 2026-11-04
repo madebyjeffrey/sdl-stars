@@ -1,0 +1,19 @@
+[package]
+name = "rdl"
+version = "0.1.0"
+edition = "2024"
+description = "A typed fact language, validator, and query REPL"
+publish = false
+
+[dependencies]
+serde_json = { version = "1.0", optional = true }
+url = { version = "2.5", optional = true }
+
+[features]
+default = ["lsp"]
+lsp = ["dep:serde_json", "dep:url"]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[workspace]
