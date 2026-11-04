@@ -187,7 +187,7 @@ INT_PTR  ProductionDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         rgszZip[cMax++] = sz255;
         szCatalogMenuText = TextIO().pfnCompressed(app, idsCustomize);
         rgszZip[cMax++] = szCatalogMenuText.data();
-        i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, {}, rgszZip, -1, 1);
+        i = ControlIO().pfnPopupMenu(app, hwnd, pt.x, pt.y, cMax, {}, std::span{rgszZip}.first(static_cast<std::size_t>(cMax)), -1, 1);
         if (i == cMax - 1) {
             CustomizeProductionPresets(app, hwnd);
             break;

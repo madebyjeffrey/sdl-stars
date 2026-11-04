@@ -1165,7 +1165,7 @@ std::int16_t PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16
     if (c == 0) {
         return -1;
     }
-    iSel = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, {}, rgsz, iChecked, 1);
+    iSel = ControlIO().pfnPopupMenu(app, hwnd, x, y, c, {}, std::span{rgsz}.first(static_cast<std::size_t>(c)), iChecked, 1);
     if (iSel == -1) {
         return -1;
     }

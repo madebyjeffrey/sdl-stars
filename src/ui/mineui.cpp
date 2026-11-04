@@ -939,7 +939,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                     }
                 }
                 if (c > 1) {
-                    c = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, c, {}, rgpsz, -1, 1);
+                    c = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, c, {}, std::span{rgpsz}.first(static_cast<std::size_t>(c)), -1, 1);
                     if (c == -1)
                         break;
                 } else {
@@ -1111,7 +1111,7 @@ void MineClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t msg
                     iChecked = i;
                 }
             }
-            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, 9, {}, psz, iChecked, 1);
+            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndMine, x, y, 9, {}, std::span{psz}.first(9), iChecked, 1);
             if (i == -1 || rgi[i] == app.lpui->cMinGrafMax)
                 break;
             app.lpui->cMinGrafMax = rgi[i];

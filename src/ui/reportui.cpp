@@ -2452,7 +2452,7 @@ void ReportColumnPopup(APPSESSION &app, POINT16 pt, std::int16_t icol, std::int1
             psz[i] = std::nullopt;
         }
     }
-    iRet = ControlIO().pfnPopupMenu(app, app.lpui->hwndReportDlg, pt.x, pt.y, cItems, {}, psz, -1, fRightBtn);
+    iRet = ControlIO().pfnPopupMenu(app, app.lpui->hwndReportDlg, pt.x, pt.y, cItems, {}, std::span{psz}.first(static_cast<std::size_t>(cItems)), -1, fRightBtn);
     if (iRet >= 0) {
         app.state.gd.fChgReports = 1;
         if (iRet < iSortLast) {

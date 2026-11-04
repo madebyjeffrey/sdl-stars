@@ -2617,7 +2617,7 @@ void ApplyTransportPresetPopup(APPSESSION &app, POINT16 pt) {
             }
             szCatalogMenuText = TextIO().pfnCompressed(app, idsCustomize);
             rgszZip[cMax++] = szCatalogMenuText.data();
-            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, {}, rgszZip, -1, 1);
+            i = ControlIO().pfnPopupMenu(app, app.lpui->hwndPlanet, pt.x, pt.y, cMax, {}, std::span{rgszZip}.first(static_cast<std::size_t>(cMax)), -1, 1);
             if (i == cMax - 1) {
                 std::copy_n(app.state.vrgZip, std::size(rgzo), rgzo);
                 fRet = ControlIO().pfnDialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_ZIP_PROD), app.lpui->hwndFrame, ZipOrderDlg, 0);
