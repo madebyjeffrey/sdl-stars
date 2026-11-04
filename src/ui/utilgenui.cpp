@@ -340,9 +340,9 @@ void StickyDlgPos(HWND hwnd, POINT16 *ppt, std::int16_t fInit) {
     return;
 }
 
-std::int32_t LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t cSegs, std::int32_t *rgSize, HBRUSH *rghbr, std::int32_t cTot) {
+std::int32_t LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, std::span<const std::int32_t> rgSize, std::span<HBRUSH> rghbr, std::int32_t cTot) {
     std::int16_t fHuge;
-    std::int16_t i;
+    std::size_t i;
     std::int32_t lSum;
     std::int32_t dx;
     RECT    rc;
@@ -359,7 +359,7 @@ std::int32_t LDrawGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t cSegs,
         cTot = static_cast<std::int32_t>((cTot / 1000));
     }
     dx = static_cast<std::int16_t>((rc.right - rc.left));
-    for (i = 0; i < cSegs; i++) {
+    for (i = 0; i < rgSize.size(); i++) {
         if (!fHuge) {
             lSum += rgSize[i];
         } else {
@@ -452,7 +452,9 @@ std::int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
     pt.x = pbtnt->rc.left;
     pt.y = pbtnt->rc.top;
     std::memcpy(&rc, &pbtnt->rc, sizeof(rc));
-    while (FGetMouseMove(&pt)) {
+    for (MOUSEMOVERESULT mouseMove = FGetMouseMove(); ; mouseMove = FGetMouseMove()) {
+        if (mouseMove.point) pt = *mouseMove.point;
+        if (!mouseMove.fContinue) break;
         fInBtn = win32::PtInRect(&rc, PointFrom16(pt));
         if (fInBtn != pbtnt->fDown) {
             pbtnt->fDown = fInBtn;
@@ -654,36 +656,28 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t 
     return;
 }
 
-std::int16_t FGetMouseMove(POINT16 *ppt) {
+MOUSEMOVERESULT FGetMouseMove() {
     win32::MSG msg;
 
     while (ui::PeekMessage(&msg, nullptr, 0, 0, 1)) {
         if (msg.message == win32::WM_MOUSEMOVE || msg.message == win32::WM_LBUTTONUP) {
-            ppt->x = LOWORD(msg.lParam);
-            ppt->y = HIWORD(msg.lParam);
-            if (msg.message != win32::WM_LBUTTONUP) {
-                return 1;
-            }
-            return 0;
+            return {msg.message != win32::WM_LBUTTONUP,
+                    POINT16{static_cast<std::int16_t>(LOWORD(msg.lParam)), static_cast<std::int16_t>(HIWORD(msg.lParam))}};
         }
     }
-    return 1;
+    return {true, std::nullopt};
 }
 
-std::int16_t FGetRMouseMove(POINT16 *ppt) {
+MOUSEMOVERESULT FGetRMouseMove() {
     win32::MSG msg;
 
     while (ui::PeekMessage(&msg, nullptr, 0, 0, 1)) {
         if (msg.message == win32::WM_MOUSEMOVE || msg.message == win32::WM_RBUTTONUP) {
-            ppt->x = LOWORD(msg.lParam);
-            ppt->y = HIWORD(msg.lParam);
-            if (msg.message != win32::WM_RBUTTONUP) {
-                return 1;
-            }
-            return 0;
+            return {msg.message != win32::WM_RBUTTONUP,
+                    POINT16{static_cast<std::int16_t>(LOWORD(msg.lParam)), static_cast<std::int16_t>(HIWORD(msg.lParam))}};
         }
     }
-    return 1;
+    return {true, std::nullopt};
 }
 
 void DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc) {
@@ -1317,12 +1311,13 @@ void DrawProgressGauge(APPSESSION &app, HDC hdcOrig, std::int16_t fFull, std::in
     return;
 }
 
-HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize, std::int16_t *pdyFont) {
+HFONTPRINTERRESULT HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize) {
     NATIVEOWNER<LOGFONT, win32::LocalFree> plfOwner;
     HFONT      hfontNew;
     LOGFONT   *plf;
     TEXTMETRIC tm;
     HFONT      hfontSav;
+    HFONTPRINTERRESULT result;
 
     plf = static_cast<LOGFONT *>(win32::LocalAlloc(64, sizeof(LOGFONT)));
     plfOwner.reset(plf);
@@ -1330,14 +1325,16 @@ HFONT HfontPrinterCreate(APPSESSION &app, HDC hdc, std::int16_t iSize, std::int1
     plf->lfHeight = -win32::MulDiv(iSize, win32::GetDeviceCaps(hdc, win32::LOGPIXELSY), 72);
     CchCopyUtf8Prefix(std::span{plf->lfFaceName}, app.lpui->rgszArial[1]);
     hfontNew = win32::CreateFontIndirectA(plf);
-    if (pdyFont && hfontNew) {
+    result.hfont = hfontNew;
+    result.dyFont = std::nullopt;
+    if (hfontNew) {
         hfontSav = static_cast<HFONT>(win32::SelectObject(hdc, hfontNew));
         win32::GetTextMetricsA(hdc, &tm);
-        *pdyFont = tm.tmHeight + tm.tmExternalLeading;
+        result.dyFont = static_cast<std::int16_t>(tm.tmHeight + tm.tmExternalLeading);
         win32::SelectObject(hdc, hfontSav);
     }
     plfOwner.reset();
-    return hfontNew;
+    return result;
 }
 
 // IdAlertBox shows an AlertSz message in a message box and returns the

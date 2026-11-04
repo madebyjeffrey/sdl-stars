@@ -643,7 +643,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             break;
         if (msg != win32::WM_TIMER || win32::IsWindowVisible(hwnd) == 0) {
             app.lpui->vtickTooltip1stVis = win32::GetTickCount();
-            GetCursorPos16(&pt);
+            pt = GetCursorPos16().pt;
             if (win32::PtInRect(&app.lpui->vrcTooltip, PointFrom16(pt)) == 0)
                 goto LKillTip;
             // Anchor to the hovered control, independently of the pointer's
@@ -667,7 +667,7 @@ LRESULT  TooltipWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             return 0;
         } else {
             app.lpui->vtickTooltipLast = win32::GetTickCount();
-            GetCursorPos16(&pt);
+            pt = GetCursorPos16().pt;
             if (win32::PtInRect(&app.lpui->vrcTooltip, PointFrom16(pt)) == 0 || app.lpui->vtickTooltip1stVis + 10000 < app.lpui->vtickTooltipLast) {
             LKillTip:
                 ControlIO().pfnDestroyWindow(hwnd);

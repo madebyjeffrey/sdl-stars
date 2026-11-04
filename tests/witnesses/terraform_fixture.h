@@ -27,15 +27,12 @@ static int16_t TerraformLookup(APPSESSION &app, PART *part) {
     part->SetPterra(scripted + part->hs.iItem);
     return (cfg[2] & (1 << part->hs.iItem)) ? 1 : 0;
 }
-static int16_t TerraformCan(APPSESSION &app, PLANET *p, int16_t *low, int16_t *high, int16_t *cost, int16_t help) {
-    // Initialize the supplied outputs for observation, as in the original domain.
-    for (int i = 0; i < 3; i++)
-        low[i] = high[i] = cost[i] = 9876;
-    int16_t result = FCanTerraformLppl(app, p, low, high, cost, help);
+static TERRAFORMRESULT TerraformCan(APPSESSION &app, PLANET *p, int16_t help) {
+    TERRAFORMRESULT result = FCanTerraformLppl(app, p, help);
     for (int i = 0; i < 3; i++) {
-        observedLow[i] = low[i];
-        observedHigh[i] = high[i];
-        observedCost[i] = cost[i];
+        observedLow[i] = result.rgEnvMin[i];
+        observedHigh[i] = result.rgEnvMax[i];
+        observedCost[i] = result.rgEnvCost[i];
     }
     return result;
 }

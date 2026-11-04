@@ -60,10 +60,7 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
     std::int16_t  cAdv;
     PLANET  *lppl;
     PLANET  *lpplMac;
-    std::int16_t  dPlanRange;
-    std::int16_t  dRange;
-    std::int16_t  iSteal;
-    std::int16_t  pctDetect;
+    SCANNERRANGERESULT scannerRange;
 
     idCur = app.state.idPlayer;
     fSuccess = 0;
@@ -292,17 +289,17 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
         for (i = 0; i < app.state.game.cPlayer; i++) {
             for (j = 0; j < 10; j++) {
                 if (!app.state.rglpshdefSB[i][j].fFree) {
-                    app.state.rglpshdefSB[i][j].SetLVisible(static_cast<std::int16_t>((100 - PctCloakFromHuldef(app, &app.state.rglpshdefSB[i][j].hul, i, nullptr))));
+                    app.state.rglpshdefSB[i][j].SetLVisible(static_cast<std::int16_t>((100 - PctCloakFromHuldef(app, &app.state.rglpshdefSB[i][j].hul, i))));
                     app.state.rglpshdefSB[i][j].SetLVisible(static_cast<std::uint32_t>((app.state.rglpshdefSB[i][j].lVisible() * app.state.rglpshdefSB[i][j].lVisible())));
                 }
             }
             for (j = 0; j < 16; j++) {
                 if (!app.state.rglpshdef[i][j].fFree) {
-                    dRange = GetShdefScannerRange(app, app.state.rglpshdef[i] + j, i, &dPlanRange, &pctDetect, &iSteal);
-                    app.state.rglpshdef[i][j].dScanRange = dRange;
-                    app.state.rglpshdef[i][j].dScanRange2 = dPlanRange;
-                    app.state.rglpshdef[i][j].pctDetect = pctDetect;
-                    app.state.rglpshdef[i][j].iSteal = iSteal;
+                    scannerRange = GetShdefScannerRange(app, app.state.rglpshdef[i] + j, i);
+                    app.state.rglpshdef[i][j].dScanRange = scannerRange.dRange;
+                    app.state.rglpshdef[i][j].dScanRange2 = scannerRange.dPlanRange;
+                    app.state.rglpshdef[i][j].pctDetect = scannerRange.pctDetect;
+                    app.state.rglpshdef[i][j].iSteal = scannerRange.iSteal;
                     if (!ProductionIO().pfnBuildable(app, app.state.rglpshdef[i] + j, i)) {
                         app.state.rglpshdef[i][j].fGift = 1;
                     }
@@ -900,6 +897,8 @@ void DoOrders(APPSESSION &app, std::int16_t fPostMovement) {
 }
 
 void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
+    TERRAFORMRESULT terra;
+    WARPRESULT warp;
     std::int16_t   k;
     std::int16_t   dUni;
     double    d;
@@ -939,11 +938,8 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
     THING    *lpth2Mac;
     std::int16_t   pctRate;
     std::int16_t   iplr;
-    std::int16_t   rgMin[3];
     std::int16_t   cTerraPerm;
     std::int16_t   cTerraTemp;
-    std::int16_t   rgMax[3];
-    std::int16_t   rgCost[3];
     double    dyRound;
     double    dxRound;
     double    r;
@@ -1066,7 +1062,9 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
                 }
                 lppl = app.state.lpPlanets + lpth->thp().idPlanet();
                 iWarpPacket = lpth->thp().iWarp() + 4;
-                iWarp = ColonyIO().pfnWarp(app, lppl, &fTwoMAs);
+                        warp = ColonyIO().pfnWarp(app, lppl);
+                        iWarp = warp.iWarp;
+                        fTwoMAs = warp.fTwo;
                 if (fTwoMAs) {
                     iWarp++;
                 }
@@ -1146,7 +1144,7 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
                         }
                         if (cTerraTemp > 0) {
                             app.state.idPlayer = iplr;
-                            if (!ColonyIO().pfnCanTerraform(app, lppl, rgMin, rgMax, rgCost, 1)) {
+                            if (!(terra = ColonyIO().pfnCanTerraform(app, lppl, 1)).fCan) {
                                 app.state.idPlayer = iplrNone;
                             } else {
                                 app.state.idPlayer = iplrNone;
@@ -1157,16 +1155,16 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
                                     } else {
                                         cTerraTemp = cTerraTemp >= 99 - lppl->rgEnvVar[i] ? 99 - lppl->rgEnvVar[i] : cTerraTemp;
                                     }
-                                } else if (rgMin[i] != envNone) {
-                                    if (cTerraTemp > lppl->rgEnvVar[i] - rgMin[i]) {
-                                        cTerraTemp = rgMin[i] - lppl->rgEnvVar[i];
+                                } else if (terra.rgEnvMin[i] != envNone) {
+                                    if (cTerraTemp > lppl->rgEnvVar[i] - terra.rgEnvMin[i]) {
+                                        cTerraTemp = terra.rgEnvMin[i] - lppl->rgEnvVar[i];
                                     } else {
                                         cTerraTemp = -cTerraTemp;
                                     }
-                                } else if (rgMax[i] == envNone) {
+                                } else if (terra.rgEnvMax[i] == envNone) {
                                     cTerraTemp = 0;
-                                } else if (cTerraTemp > rgMax[i] - lppl->rgEnvVar[i]) {
-                                    cTerraTemp = rgMax[i] - lppl->rgEnvVar[i];
+                                } else if (cTerraTemp > terra.rgEnvMax[i] - lppl->rgEnvVar[i]) {
+                                    cTerraTemp = terra.rgEnvMax[i] - lppl->rgEnvVar[i];
                                 }
                                 if (cTerraTemp != 0) {
                                     lppl->rgEnvVar[i] += cTerraTemp;
@@ -1181,7 +1179,7 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
                 }
                 if (lppl->iPlayer == iplrNone)
                     goto LFreeThePacket;
-                CalcPctSurvive(app, lppl, &pct, nullptr);
+                pct = CalcPctSurvive(app, lppl).pct;
                 dmgRaw = static_cast<std::int32_t>((static_cast<double>(pct) * dmgRaw));
                 if (dmgRaw == 0 || RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv) == raMacintosh) {
                 LAllSafe:
@@ -1320,6 +1318,7 @@ void MoveFleets(APPSESSION &app) {
     double  r;
     std::int32_t pct;
     std::int16_t dMineTravel;
+    MINEFIELDTRAVELRESULT mineTravel;
     std::int32_t dRange;
     POINT16 ptBeg;
     std::int32_t wtFuelUsed;
@@ -1626,7 +1625,8 @@ void MoveFleets(APPSESSION &app) {
                             }
                             dActTravel = static_cast<std::int32_t>((static_cast<double>(d) - 0.99999));
                             dMineTravel = dTravel < dActTravel ? LOWORD(dTravel) : LOWORD(dActTravel);
-                            if (lpord[1].iWarp < 11 && !FTravelThroughMineFields(app, lpfl, &dMineTravel, nullptr)) {
+                            if (lpord[1].iWarp < 11 && !(mineTravel = FTravelThroughMineFields(app, lpfl, dMineTravel, nullptr)).fSafe) {
+                                dMineTravel = *mineTravel.dTravel;
                                 lpfl->SetDMoveLeft(0);
                                 if (lpfl->fDead)
                                     continue;
@@ -1739,7 +1739,7 @@ void MoveFleets(APPSESSION &app) {
     return;
 }
 
-std::int16_t FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, std::int16_t *pdTravel, THING *lpthHit) {
+MINEFIELDTRAVELRESULT FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, std::optional<std::int16_t> dTravelInput, THING *lpthHit) {
     std::int32_t       d2Closest;
     std::int16_t       rgishInc[16];
     std::int16_t       dTravel;
@@ -1786,13 +1786,14 @@ std::int16_t FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, std::int16_t
     std::int16_t       cEngines;
     std::int32_t       dmgPerShip;
     std::uint16_t      ibit;
+    std::optional<LINEINTERVALRESULT> interval;
 
     lpthSalvage = nullptr;
     cshDead = 0;
     /* A detonation (lpthHit) passes no travel distance. The original read
        through the NULL near pointer anyway, from the start of its data
        segment. */
-    dTravel = lpthHit ? 0 : *pdTravel;
+    dTravel = lpthHit ? 0 : *dTravelInput;
     cishInc = 0;
     iPlayer = lpfl->iPlayer;
     raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(&app.state.rgplr[iPlayer], rsMajorAdv));
@@ -1806,7 +1807,7 @@ std::int16_t FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, std::int16_t
     for (iWarp = 3; iWarp < 10 && iWarp * iWarp < dTravel - 1; iWarp++) {
     }
     if (iWarp <= fMineExpert + 3 || (ptSrc.x == ptDst.x && ptSrc.y == ptDst.y)) {
-        return 1;
+        return {true, dTravelInput};
     }
     for (i = 0; i < 3; i++) {
         rgcField[i] = 0;
@@ -1815,7 +1816,9 @@ std::int16_t FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, std::int16_t
     lpthMac = app.state.lpThings + app.state.cThing;
     for (; lpth < lpthMac; lpth++) {
         if (lpth->iplr() != iPlayer && lpth->ith() == ithMinefield && app.state.rgplr[lpth->iplr()].rgmdRelation[iPlayer] != 1 &&
-            FIntersectCircleLine(ptSrc, ptDst, lpth->pt(), lpth->thm().cMines(), dTravel, &dStart, &dEnd)) {
+            (interval = FIntersectCircleLine(ptSrc, ptDst, lpth->pt(), lpth->thm().cMines(), dTravel)).has_value()) {
+            dStart = interval->dStart;
+            dEnd = interval->dEnd;
             iType = static_cast<MineFieldType>(lpth->thm().iType());
             for (i = 0; i < rgcField[iType] && rgFieldE[iType][i] < dStart; i++) {
             }
@@ -1859,7 +1862,7 @@ std::int16_t FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, std::int16_t
     }
     cFields = rgcField[0] + rgcField[1] + rgcField[2];
     if (cFields == 0) {
-        return 1;
+        return {true, dTravelInput};
     }
 LHitSkip1:
     fHasRamScoop = 0;
@@ -1951,7 +1954,7 @@ LHitSkip1:
            in its own field). TRUE leaves ThingDecay free to check the fleet
            against other detonating fields. */
         if (lpthHit && dmgTot == 0) {
-            return 1;
+            return {true, std::nullopt};
         }
         if (cshDead != csh) {
             FleetTransferCargoBalance(app, &flSrc, &flDead);
@@ -1977,7 +1980,7 @@ LHitSkip1:
                 if (lpthSalvage == lpthMac) {
                     lpthSalvage = nullptr;
                 }
-                DropSalvage(app, &lpthSalvage, lpfl->rgwtMin, flSrc.iplr(), &ptAct);
+                DropSalvage(app, lpthSalvage, std::span{lpfl->rgwtMin}.first<3>(), flSrc.iplr(), &ptAct);
             }
             d2Closest = 100000000;
             lpth = app.state.lpThings;
@@ -2068,13 +2071,13 @@ LHitSkip1:
                 lpthClosest->thm().SetGrbitPlrNow(lpthClosest->thm().grbitPlrNow() | (1 << iPlayer));
                 lpthClosest->thm().SetGrbitPlr(lpthClosest->thm().grbitPlr() | (1 << iPlayer));
             }
-            *pdTravel = dEnd;
+            dTravel = dEnd;
         }
         lpfl->fNoHeal = 1;
-        return 0;
+        return {false, lpthHit ? std::nullopt : std::optional<std::int16_t>{dTravel}};
     LDoNext:
         rgi[iType]++;
         cFields--;
     }
-    return 1;
+    return {true, dTravelInput};
 }

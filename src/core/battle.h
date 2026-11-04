@@ -2,6 +2,8 @@
 #define STARS_DECOMPILED_BATTLE_H
 
 #include "common.h"
+#include <array>
+#include <span>
 #include "battlecodec.h"
 #include <cstdint>
 
@@ -27,6 +29,18 @@ struct DAMAGERESULT {
     std::int32_t dpBeamRemaining;
 };
 
+struct TECHLEARNRESULT {
+    std::int16_t iResult;
+    std::optional<MsgGoto> gotoTarget;
+};
+
+struct BATTLEPARTICIPANTS {
+    std::int16_t cplr;
+    std::uint16_t grfPlayer;
+    std::uint16_t grfSpectator;
+    std::array<std::uint16_t, 16> rggrfAttack;
+};
+
 std::int16_t FDeleteBattlePlan(APPSESSION &app, std::int16_t iplan, std::int16_t fWarn);
 std::int16_t FFleetHasBombs(APPSESSION &app, FLEET *lpfl);
 std::int16_t FHullHasBombs(HUL *lphul);
@@ -35,8 +49,8 @@ std::int16_t FHullHasTeeth(HUL *lphul);
 std::int16_t FFuelTanker(SHDEF *lpshdef);
 void    CheckTarget(APPSESSION &app, TOK *ptok, FLEET *lpfl, std::int16_t ishdef);
 std::int16_t FDumpCargo(APPSESSION &app, FLEET *lpfl);
-void    DropSalvage(APPSESSION &app, THING **plpth, std::int32_t *rgwtMinerals, std::int16_t iplr, POINT16 *ppt);
-std::int16_t CplrBattle(APPSESSION &app, FLEET *lpfl, std::uint16_t *rggrfAttack, std::uint16_t *pgrfPlayer, std::uint16_t *pgrfSpectator);
+void    DropSalvage(APPSESSION &app, THING *&plpth, std::span<std::int32_t, 3> rgwtMinerals, std::int16_t iplr, POINT16 *ppt);
+BATTLEPARTICIPANTS CplrBattle(APPSESSION &app, FLEET *lpfl);
 std::int16_t SpdOfShip(APPSESSION &app, FLEET *lpfl, std::int16_t ishdef, TOK *ptok, std::int16_t fDumpCargo, SHDEF *lpshdef);
 SHDEF  *LpshdefFromTok(APPSESSION &app, TOK *ptok);
 std::int16_t FCanKillTok(APPSESSION &app, TOK *ptok1, TOK *ptok2);
@@ -44,7 +58,7 @@ void    DoBattles(APPSESSION &app, std::int16_t fPostMovement);
 void    RegenShield(APPSESSION &app, TOK *ptok);
 HULLINITIATIVERESULT InitFromHuldef(APPSESSION &app, HUL *lphul);
 void    CheckInitiative(APPSESSION &app, TOK *ptok);
-void    CheckWeapons(APPSESSION &app, TOK *ptok, std::int16_t *pfDampeningField, std::span<std::uint8_t, 64> rgfInit);
+bool CheckWeapons(APPSESSION &app, TOK *ptok, std::span<std::uint8_t, 64> rgfInit);
 void    RandomizeTokOrder(APPSESSION &app);
 INITIATIVERANGE InitializeBoard(APPSESSION &app, FLEET *lpfl, std::int16_t ibrc, std::uint16_t grfPlayer, std::span<std::uint8_t, 64> rgfInit);
 std::int16_t DzFromBrcBrc(std::uint8_t brc1, std::uint8_t brc2);
@@ -58,13 +72,13 @@ std::int16_t DxyMoveTokTo(APPSESSION &app, TOK *ptok, std::int16_t spdMove, std:
 std::int32_t CTorpHit(APPSESSION &app, std::int32_t cTorpBase, TOK *ptok, std::int16_t pctBase, std::int16_t pctBC);
 std::int16_t FAttack(APPSESSION &app, std::int16_t itokAttacker, std::int16_t init, std::span<std::uint8_t, cbWireBattleRecord> rgbBattleRecord, std::uint16_t grfAttack);
 void    KillShips(APPSESSION &app, TOK *ptok, std::int16_t cshKill, std::int16_t ishdef, FLEET *lpfl, std::int16_t fFallout);
-void    CreateSalvage(APPSESSION &app, FLEET *pfl, THING **plpth);
+void    CreateSalvage(APPSESSION &app, FLEET *pfl, THING *&plpth);
 DAMAGERESULT FDamageTok(APPSESSION &app, TOK *ptok, std::int16_t itok, std::int32_t dpBeam, std::int32_t dpTorp, GrfWeapon grfWeapon, std::int16_t fShieldsOnly,
                         std::optional<std::int32_t> cTorpKillLimit);
 std::int16_t DxyFromSpdRound(std::uint16_t spd, std::int16_t iRound);
-std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std::uint16_t *rggrfAttack, std::uint16_t grfPlayer, std::uint16_t grfSpectator);
-std::int16_t ITechLearnATech(APPSESSION &app, std::int16_t iplr, std::int16_t x, std::int16_t y, MessageId idm, std::uint16_t *piGoto);
-void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std::int16_t idBtl, std::uint16_t *rgPlrLosses, std::int16_t grfPlayer, std::int16_t cShipsInvolved, std::int16_t cShdefsInvolved,
+std::int16_t FDoCoolBattle(APPSESSION &app, FLEET *lpfl, std::int16_t cplr, std::span<const std::uint16_t, 16> rggrfAttack, std::uint16_t grfPlayer, std::uint16_t grfSpectator);
+TECHLEARNRESULT ITechLearnATech(APPSESSION &app, std::int16_t iplr, std::int16_t x, std::int16_t y, MessageId idm);
+void SendBattleMessages(APPSESSION &app, FLEET *lpflBtl, std::int16_t cplr, std::int16_t idBtl, std::span<std::uint16_t, 256> rgPlrLosses, std::int16_t grfPlayer, std::int16_t cShipsInvolved, std::int16_t cShdefsInvolved,
                         std::uint16_t grfSpectator);
 std::int16_t FAttackPlayer(APPSESSION &app, FLEET *lpfl, std::int16_t iplr);
 void    DoBombing(APPSESSION &app);

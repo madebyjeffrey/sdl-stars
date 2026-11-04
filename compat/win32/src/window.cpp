@@ -66,7 +66,7 @@ static bool FNativePositionable(SDL_Window *lpWindow) {
            (SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP));
 }
 
-static bool FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
+static std::optional<POINT> FNativePosition(SDL_Window *lpWindow) {
     int x, y;
     std::int64_t xWide = 0, yWide = 0;
 
@@ -74,14 +74,13 @@ static bool FNativePosition(SDL_Window *lpWindow, int *lpx, int *lpy) {
         // Wayland has no desktop origin for toplevels. Use an owner-local
         // origin; popup positions still come from the compositor.
         x = y = 0;
-        if (FNativePositionable(lpWindow) && !SDL_GetWindowPosition(lpWindow, &x, &y)) return 0;
+        if (FNativePositionable(lpWindow) && !SDL_GetWindowPosition(lpWindow, &x, &y)) return std::nullopt;
         xWide += x; yWide += y;
         if (!(SDL_GetWindowFlags(lpWindow) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP))) break;
         lpWindow = SDL_GetWindowParent(lpWindow);
     } while (lpWindow);
-    if (xWide < std::numeric_limits<std::int32_t>::min() || xWide > std::numeric_limits<std::int32_t>::max() || yWide < std::numeric_limits<std::int32_t>::min() || yWide > std::numeric_limits<std::int32_t>::max()) return 0;
-    *lpx = static_cast<int>(xWide); *lpy = static_cast<int>(yWide);
-    return 1;
+    if (xWide < std::numeric_limits<std::int32_t>::min() || xWide > std::numeric_limits<std::int32_t>::max() || yWide < std::numeric_limits<std::int32_t>::min() || yWide > std::numeric_limits<std::int32_t>::max()) return std::nullopt;
+    return POINT{static_cast<LONG>(xWide), static_cast<LONG>(yWide)};
 }
 
 void CompatRestoreOwnerFocus(HWND hwndOwner, HWND hwndSaved) {
@@ -172,7 +171,7 @@ static void UpdateCompatLiveResize(SDL_Event *lpevent) {
 
 static bool SDLCALL FWatchLiveResize(void *lpv, SDL_Event *lpevent) noexcept {
     static_cast<void>(lpv);
-    CompatInvokeCleanup([](void *lpvEvent) { UpdateCompatLiveResize(static_cast<SDL_Event *>(lpvEvent)); }, lpevent, nullptr);
+    CompatInvokeCleanup([lpevent] { UpdateCompatLiveResize(lpevent); }, nullptr);
     return true;
 }
 
@@ -963,7 +962,10 @@ static bool FCompatPosition(HWND hwnd, WINDOWPOS *lpwp) {
         lpwp->x = hwnd->rcChild.left; lpwp->y = hwnd->rcChild.top;
         return 1;
     }
-    return FNativePosition(hwnd->lpWindow.get(), &lpwp->x, &lpwp->y);
+    const auto pt = FNativePosition(hwnd->lpWindow.get());
+    if (!pt) return 0;
+    lpwp->x = pt->x; lpwp->y = pt->y;
+    return 1;
 }
 
 static void MarkCompatTopmost(HWND hwnd, bool fTopmost) {
@@ -1087,8 +1089,11 @@ BOOL win32::SetWindowPos(HWND hwnd, HWND hwndAfter, int x, int y, int dx, int dy
     else {
         if (!(wp.flags & win32::SWP_NOMOVE)) {
             xNative = yNative = 0;
-            if ((SDL_GetWindowFlags(lpwin->lpWindow.get()) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) &&
-                !FNativePosition(SDL_GetWindowParent(lpwin->lpWindow.get()), &xNative, &yNative)) return 0;
+            if (SDL_GetWindowFlags(lpwin->lpWindow.get()) & (SDL_WINDOW_POPUP_MENU | SDL_WINDOW_TOOLTIP)) {
+                const auto ptNative = FNativePosition(SDL_GetWindowParent(lpwin->lpWindow.get()));
+                if (!ptNative) return 0;
+                xNative = ptNative->x; yNative = ptNative->y;
+            }
             if (FNativePositionable(lpwin->lpWindow.get()) &&
                 !SDL_SetWindowPosition(lpwin->lpWindow.get(), wp.x - xNative, wp.y - yNative)) return 0;
         }
@@ -1206,24 +1211,26 @@ BOOL win32::GetClientRect(HWND hwnd, LPRECT lprc) {
     return 1;
 }
 
-static bool FClientOrigin(HWND hwnd, std::int64_t *lpx, std::int64_t *lpy) {
+static std::optional<std::pair<std::int64_t, std::int64_t>> FClientOrigin(HWND hwnd) {
     HWND lpwin = LpCompatWindow(hwnd);
-    int x, y;
-    if (!lpwin) return 0;
-    *lpx = *lpy = 0;
+    std::int64_t x = 0, y = 0;
+    if (!lpwin) return std::nullopt;
     while (lpwin->hwndParent) {
-        *lpx += lpwin->rcChild.left;
-        *lpy += lpwin->rcChild.top;
+        x += lpwin->rcChild.left;
+        y += lpwin->rcChild.top;
         lpwin = lpwin->hwndParent;
     }
-    if (!FNativePosition(lpwin->lpWindow.get(), &x, &y)) return 0;
-    *lpx += x; *lpy += y + CyCompatMenuBar(lpwin);
-    return 1;
+    const auto pt = FNativePosition(lpwin->lpWindow.get());
+    if (!pt) return std::nullopt;
+    x += pt->x; y += pt->y + CyCompatMenuBar(lpwin);
+    return std::pair{x, y};
 }
 
 static bool FConvertPoint(HWND hwnd, LPPOINT lppt, bool fToScreen) {
     std::int64_t x, y;
-    if (!lppt || !FClientOrigin(hwnd, &x, &y)) return 0;
+    const auto origin = FClientOrigin(hwnd);
+    if (!lppt || !origin) return 0;
+    x = origin->first; y = origin->second;
     x = static_cast<std::int64_t>(lppt->x) + (fToScreen ? x : -x);
     y = static_cast<std::int64_t>(lppt->y) + (fToScreen ? y : -y);
     if (x < std::numeric_limits<std::int32_t>::min() || x > std::numeric_limits<std::int32_t>::max() || y < std::numeric_limits<std::int32_t>::min() || y > std::numeric_limits<std::int32_t>::max()) return 0;
@@ -1236,14 +1243,17 @@ BOOL win32::ScreenToClient(HWND hwnd, LPPOINT lppt) { return FConvertPoint(hwnd,
 
 int win32::MapWindowPoints(HWND hwndFrom, HWND hwndTo, LPPOINT rgpt, UINT cpt) {
     std::int64_t xFrom = 0, yFrom = 0, xTo = 0, yTo = 0, dx, dy, x, y;
+    std::optional<std::pair<std::int64_t, std::int64_t>> originFrom, originTo;
     UINT i;
     if (!SDL_IsMainThread() || (cpt != 0 && !rgpt)) {
         win32::SetLastError(win32::ERROR_INVALID_PARAMETER); return 0;
     }
-    if ((hwndFrom && !FClientOrigin(hwndFrom, &xFrom, &yFrom)) ||
-        (hwndTo && !FClientOrigin(hwndTo, &xTo, &yTo))) {
+    if ((hwndFrom && !(originFrom = FClientOrigin(hwndFrom))) ||
+        (hwndTo && !(originTo = FClientOrigin(hwndTo)))) {
         win32::SetLastError(win32::ERROR_INVALID_WINDOW_HANDLE); return 0;
     }
+    if (originFrom) { xFrom = originFrom->first; yFrom = originFrom->second; }
+    if (originTo) { xTo = originTo->first; yTo = originTo->second; }
     dx = xFrom - xTo; dy = yFrom - yTo;
     /* Validate every coordinate before writing: a failed array mapping is atomic. */
     for (i = 0; i < cpt; i++) {
@@ -1259,7 +1269,9 @@ int win32::MapWindowPoints(HWND hwndFrom, HWND hwndTo, LPPOINT rgpt, UINT cpt) {
 BOOL win32::GetWindowRect(HWND hwnd, LPRECT lprc) {
     RECT rc;
     std::int64_t x, y;
-    if (!lprc || !CompatGetSurfaceRect(hwnd, &rc) || !FClientOrigin(hwnd, &x, &y)) return 0;
+    const auto origin = FClientOrigin(hwnd);
+    if (!lprc || !CompatGetSurfaceRect(hwnd, &rc) || !origin) return 0;
+    x = origin->first; y = origin->second;
     y -= CyCompatMenuBar(hwnd); rc.bottom += CyCompatMenuBar(hwnd);
     if (x < std::numeric_limits<std::int32_t>::min() || y < std::numeric_limits<std::int32_t>::min() || x + rc.right > std::numeric_limits<std::int32_t>::max() || y + rc.bottom > std::numeric_limits<std::int32_t>::max())
         return 0;
@@ -1338,26 +1350,26 @@ BOOL win32::EnableWindow(HWND hwnd, BOOL fEnable) {
     return fWasDisabled;
 }
 
-static HWND HwndCompatHit(HWND hwnd, int *lpx, int *lpy, bool fPoint) {
+static COMPATMOUSEHITRESULT HwndCompatHit(HWND hwnd, POINT pt, bool fPoint) {
     HWND lp;
     RECT rc, client;
-    if (!win32::IsWindowEnabled(hwnd)) return nullptr;
-    if (!CompatGetSurfaceRect(hwnd, &rc) || *lpx < 0 || *lpy < 0 || *lpx >= rc.right || *lpy >= rc.bottom)
-        return hwnd;
+    if (!win32::IsWindowEnabled(hwnd)) return {nullptr, pt};
+    if (!CompatGetSurfaceRect(hwnd, &rc) || pt.x < 0 || pt.y < 0 || pt.x >= rc.right || pt.y >= rc.bottom)
+        return {hwnd, pt};
     win32::GetClientRect(hwnd, &client);
     for (lp = win32::GetWindow(hwnd, win32::GW_CHILD); lp; lp = win32::GetWindow(lp, win32::GW_HWNDNEXT)) {
-        if ((!lp->fNcScroll && (*lpx >= client.right || *lpy >= client.bottom)) || !win32::IsWindowVisible(lp) || !win32::IsWindowEnabled(lp) ||
+        if ((!lp->fNcScroll && (pt.x >= client.right || pt.y >= client.bottom)) || !win32::IsWindowVisible(lp) || !win32::IsWindowEnabled(lp) ||
             (lp->iControl == 2 && (fPoint || !(lp->dwStyle & win32::SS_NOTIFY))) ||
             (lp->iControl == 1 && (lp->dwStyle & win32::BS_TYPEMASK) == win32::BS_GROUPBOX) ||
-            *lpx < lp->rcChild.left || *lpx >= lp->rcChild.right ||
-            *lpy < lp->rcChild.top || *lpy >= lp->rcChild.bottom) continue;
-        *lpx -= lp->rcChild.left; *lpy -= lp->rcChild.top;
-        return HwndCompatHit(lp, lpx, lpy, fPoint);
+            pt.x < lp->rcChild.left || pt.x >= lp->rcChild.right ||
+            pt.y < lp->rcChild.top || pt.y >= lp->rcChild.bottom) continue;
+        pt.x -= lp->rcChild.left; pt.y -= lp->rcChild.top;
+        return HwndCompatHit(lp, pt, fPoint);
     }
-    return hwnd;
+    return {hwnd, pt};
 }
 
-HWND HwndCompatMouse(HWND hwnd, int *lpx, int *lpy) { return HwndCompatHit(hwnd, lpx, lpy, false); }
+COMPATMOUSEHITRESULT HwndCompatMouse(HWND hwnd, POINT pt) { return HwndCompatHit(hwnd, pt, false); }
 
 HWND win32::WindowFromPoint(POINT pt) {
     HWND hwnd, hwndPointer = nullptr;
@@ -1377,7 +1389,7 @@ HWND win32::WindowFromPoint(POINT pt) {
         if (win32::ScreenToClient(hwnd, &ptClient)) {
             if (ptClient.y < 0 && ptClient.y >= -CyCompatMenuBar(hwnd) && ptClient.x >= 0 &&
                 ptClient.x < hwnd->cxMenu) return hwnd;
-            return HwndCompatHit(hwnd, &ptClient.x, &ptClient.y, true);
+            return HwndCompatHit(hwnd, ptClient, true).hwnd;
         }
     }
     return nullptr;

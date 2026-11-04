@@ -48,8 +48,11 @@ std::int16_t FCheckQueuedShip(APPSESSION &app, HWND hwnd, SHDEF *lpshdef, std::i
     std::int16_t  id;
     StringId ids;
     std::int16_t  cshQueued;
+    CSHQUEUEDRESULT queued;
 
-    cshQueued = CshQueued(app, lpshdef->ishdef, &fProgress, fEdit);
+    queued = CshQueued(app, lpshdef->ishdef, fEdit);
+    cshQueued = queued.cshQueued;
+    fProgress = queued.fProgress;
     if (lpshdef->cExist > 0 || cshQueued != 0) {
         if (fEdit) {
             ids = idsCurrentlyHaveDSSIfDelete2;
@@ -173,8 +176,8 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         }
         break;
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (win32::PtInRect(app.lpui->rgrcBuildSpin, PointFrom16(pt)) == 0 && win32::PtInRect(&app.lpui->rgrcBuildSpin[1], PointFrom16(pt)) == 0)
             break;
         win32::SetCursor(app.lpui->hcurHand);
@@ -297,7 +300,7 @@ INT_PTR  SlotDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                     if (app.lpui->mdBuild == mdBuildShdef) {
                         fProtoSB = app.state.fStarbaseMode != 0 && RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh;
                         app.lpui->lpshdefBuild = NthValidShdef(app, LOWORD(lSel));
-                        CshQueued(app, app.lpui->lpshdefBuild->ishdef, &fProgress, 0);
+                        fProgress = CshQueued(app, app.lpui->lpshdefBuild->ishdef, 0).fProgress;
                         ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_EDIT), app.lpui->lpshdefBuild->cExist == 0 && !fProgress && (!fProtoSB || lSel > 0));
                         if (!fProtoSB)
                             goto LClearSelection;
@@ -882,11 +885,11 @@ std::int16_t FTrackSlot(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t
         rcStart.bottom = rcStart.top + 64;
         win32::ClientToScreen(hwnd, reinterpret_cast<POINT *>(&rcStart));
         win32::ClientToScreen(hwnd, reinterpret_cast<POINT *>(&rcStart.right));
-        ClientToScreen16(hwnd, &pt);
+        pt = ClientToScreen16(hwnd, pt).pt;
         hwnd = app.lpui->hwndSlotDlg;
         win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcStart));
         win32::ScreenToClient(hwnd, reinterpret_cast<POINT *>(&rcStart.right));
-        ScreenToClient16(hwnd, &pt);
+        pt = ScreenToClient16(hwnd, pt).pt;
         x = pt.x;
         y = pt.y;
         if (hs.grhst == hstEngine && hs.iItem == iengineSettlersDelight && app.lpui->lpshdefBuild->hul.ihuldef != ihuldefMiniColonyShip) {
@@ -942,7 +945,9 @@ std::int16_t FTrackSlot(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t
     win32::SetCapture(hwnd);
     ptOld.y = -1;
     ptOld.x = -1;
-    while (FGetMouseMove(&pt)) {
+    for (MOUSEMOVERESULT mouseMove = FGetMouseMove(); ; mouseMove = FGetMouseMove()) {
+        if (mouseMove.point) pt = *mouseMove.point;
+        if (!mouseMove.fContinue) break;
         if (pt.x != ptOld.x || pt.y != ptOld.y) {
             if (fFirst) {
                 fUseMem = 0;
@@ -1178,6 +1183,7 @@ Restore:
 }
 
 void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, RECT *prc) {
+    SCANNERRANGERESULT scannerRange;
     char     rgch[20];
     DV       dv;
     std::uint16_t rgCosts[4];
@@ -1329,7 +1335,7 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
             } else {
                 i = -1;
             }
-            i = PctCloakFromHuldef(app, &app.lpui->lpshdefBuild->hul, i, nullptr);
+            i = PctCloakFromHuldef(app, &app.lpui->lpshdefBuild->hul, i);
             j = PctJammerFromHul(app, &app.lpui->lpshdefBuild->hul);
             cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDD4).data(), i, j);
             RightTextOut(app, hdc, rc.right - 8, rc.top, app.state.szWork, cch, app.lpui->dxMaxMineralQuan);
@@ -1353,7 +1359,10 @@ void DrawBuildSelHull(APPSESSION &app, HWND hwnd, HDC hdc, std::int16_t iDraw, R
                 } else {
                     i = -1;
                 }
-                dRange = GetShdefScannerRange(app, app.lpui->lpshdefBuild, i, &dPlanRange, &pctDetect, nullptr);
+                scannerRange = GetShdefScannerRange(app, app.lpui->lpshdefBuild, i);
+                dRange = scannerRange.dRange;
+                dPlanRange = scannerRange.dPlanRange;
+                pctDetect = scannerRange.pctDetect;
                 if (dRange > 0) {
                     if (pctDetect >= 100) {
                         cch = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsDD6).data(), dRange, dPlanRange);
@@ -1575,6 +1584,7 @@ void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
     SHDEF  *lpshdef;
     RECT    rc;
     PART    part;
+    CSHQUEUEDRESULT queued{};
 
     ControlIO().pfnSendMessage(hwndDD, win32::CB_RESETCONTENT, 0, 0);
     if (md != mdBuildShdef) {
@@ -1610,7 +1620,8 @@ void FillBuildDD(APPSESSION &app, HWND hwndDD, MdBuild md) {
         for (i = 0; i < ishdefMac; i++) {
             if (!lpshdef[i].fFree) {
                 if (!fAdded) {
-                    CshQueued(app, (!app.state.fStarbaseMode ? 0 : 16) + i, &fProgress, 0);
+                    queued = CshQueued(app, (!app.state.fStarbaseMode ? 0 : 16) + i, 0);
+                    fProgress = queued.fProgress;
                     ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_EDIT), lpshdef[i].cExist == 0 && !fProgress);
                     ControlIO().pfnEnableWindow(ControlIO().pfnGetDlgItem(app.lpui->hwndSlotDlg, IDC_DELETE), 1);
                     fAdded = (lpshdef[i].cExist != 0) + 1;
@@ -1718,8 +1729,8 @@ LRESULT  FakeListProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     switch (msg) {
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (pt.x < 64) {
             win32::SetCursor(app.lpui->hcurHand);
             return 1;

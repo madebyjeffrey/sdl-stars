@@ -5,12 +5,12 @@
 #endif
 #include "callbackcontext.h"
 #include <limits>
-static int16_t DriverWarp(APPSESSION &app, PLANET *p, int16_t *two) {
+static WARPRESULT DriverWarp(APPSESSION &app, PLANET *p) {
     assert(p == &planet);
     int at = warpCalls < 2 ? warpCalls : 1;
     warpBase[at] = p->isb;
     warpCalls++;
-    return IWarpMAFromLppl(app, p, two);
+    return IWarpMAFromLppl(app, p);
 }
 
 static void eligible(APPSESSION &app) {
@@ -77,10 +77,10 @@ int main(int argc, char **argv) {
         GAME   expectedGame = app.state.game;
         memcpy(expectedBases, bases, sizeof(bases));
         memcpy(expectedPlayers, app.state.rgplr, sizeof(app.state.rgplr));
-        int16_t two = 1234;
-        int     warp = IWarpMAFromLppl(app, &planet, data[7] ? &two : NULL);
-        if (warp != data[56] || two != data[57]) {
-            fprintf(stderr, "mass driver case %lu got %d/%d expected %d/%d\n", cases, warp, two, data[56], data[57]);
+        WARPRESULT result = IWarpMAFromLppl(app, &planet);
+        int two = data[7] ? result.fTwo : 1234;
+        if (result.iWarp != data[56] || two != data[57]) {
+            fprintf(stderr, "mass driver case %lu got %d/%d expected %d/%d\n", cases, result.iWarp, two, data[56], data[57]);
             return 1;
         }
         checks += 2;

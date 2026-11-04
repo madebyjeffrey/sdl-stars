@@ -42,7 +42,7 @@ extern std::uint8_t vrgSBMacAisb[6];
 extern AIPART  vrgAiParts[];
 
 std::int16_t  FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, std::span<const std::uint8_t> rgaip);
-std::int16_t  FGetAIPart(APPSESSION &app, AiPartPreference aip, PART *ppart);
+std::optional<PART> FGetAIPart(APPSESSION &app, AiPartPreference aip);
 void     PickANameAndBmp(APPSESSION &app, SHDEF *pshdef, StringId ids, std::int16_t cids, std::int16_t ibmpStart);
 std::int16_t  FChangeAiShdef(APPSESSION &app, SHDEF *pshdef, std::int16_t ishdef);
 std::int16_t  XferAiSupply(APPSESSION &app, GrobjClass grobjSrc, std::int16_t idSrc, GrobjClass grobjDst, std::int16_t idDst, MineralType iSupply, std::int16_t cQuan);
@@ -81,8 +81,8 @@ std::int16_t  FEnumOurStarbase(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTes
 std::int16_t  FFleetMightHaveTeeth(APPSESSION &app, FLEET *lpfl);
 std::int16_t  IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans);
 void     MarkPlanetsUnderAttack(APPSESSION &app);
-void     FixPlanetsUnderAttack(APPSESSION &app, PROD *rgprod);
-void     QuickBuildDefenses(APPSESSION &app, PLANET *lppl, PROD *rgprod);
+void     FixPlanetsUnderAttack(APPSESSION &app, std::span<PROD, 64> rgprod);
+void     QuickBuildDefenses(APPSESSION &app, PLANET *lppl, std::span<PROD, 64> rgprod);
 std::int16_t  IdplFindClosestStarbase(APPSESSION &app, FLEET *lpfl, std::int16_t fBigOnes);
 std::int16_t  FMoveToNearestStarbase(APPSESSION &app, FLEET *lpfl, std::int16_t fBigOnes);
 void     MoveToNearestPlanetOrEnemy(APPSESSION &app, FLEET *lpfl, std::int16_t dEnemyRange);
@@ -92,12 +92,12 @@ std::int16_t  FCreateAiStarbase(APPSESSION &app, std::int16_t ishdef, std::int16
 std::int16_t  FAIFling(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail);
 std::int16_t  IshdefAiSBLatestOF(APPSESSION &app);
 std::int16_t  IshdefAiSBLatest(APPSESSION &app);
-void     QueueAiStarbases(APPSESSION &app, PROD *rgprod, std::int16_t ishdefSBLatest);
+void     QueueAiStarbases(APPSESSION &app, std::span<PROD, 64> rgprod, std::int16_t ishdefSBLatest);
 std::int16_t  FUpgradeAiStarbase(APPSESSION &app, PLANET *lppl, std::int16_t ishdefSBLatest);
 std::int16_t  FQueueAiTerraforming(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
 std::int16_t  FQueueAiScanner(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
 std::int16_t  FQueueAiDefenses(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
-void     HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, PROD *rgprod, std::int16_t ishdefSBLatest, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
+void     HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, std::span<PROD, 64> rgprod, std::int16_t ishdefSBLatest, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost);
 void     SplitOutShdefs(APPSESSION &app, std::span<std::uint8_t, 16> rgbIsh);
 AISHDEFSTATUSRESULT CheckAiShdefStatus(APPSESSION &app, std::int16_t ishBeg, std::int16_t ishEnd, std::uint16_t cRecyclePeriod, std::span<std::uint8_t, 16> rgbOld);
 void     IncreaseAIMinefieldSizes(APPSESSION &app);

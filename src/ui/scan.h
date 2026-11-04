@@ -3,11 +3,17 @@
 
 #include "win.h"
 #include <cstdint>
+#include <span>
 #include <string_view>
 #include <windows.h>
 
 extern std::uint32_t rgcrScanMine[3];
 extern std::int16_t  vrgPopRad[19];
+
+struct SCANORIENTATIONRESULT {
+    POINT16 ptOrigin;
+    POINT16 ptSize;
+};
 
 LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 std::int16_t          DrawScanner(APPSESSION &app, HDC hdc, RECT *prc);
@@ -29,13 +35,13 @@ void             ScanToLogical(APPSESSION &app, POINT16 *ppt);
 std::int16_t          FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan);
 std::int16_t          FNearAWayPoint(APPSESSION &app, POINT16 pt, std::int16_t fLogical);
 std::int16_t          FHandleWayPointDrag(APPSESSION &app, POINT16 pt);
-void             DrawScanXorLines(APPSESSION &app, HDC hdc, POINT16 *rgpt, std::int16_t cpt);
+void             DrawScanXorLines(APPSESSION &app, HDC hdc, std::span<const POINT16> rgpt);
 std::int16_t          SetScanWp(APPSESSION &app, std::int16_t iNew);
 std::int16_t          FGetNextObjHere(APPSESSION &app, SCAN *pscan, std::int16_t fOnlyOurs);
 INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 std::int16_t          FSelectSz(APPSESSION &app, std::string_view szName);
-void             GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl, POINT16 *ppt, POINT16 *pptD);
-void             GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy, POINT16 *ppt, POINT16 *pptD);
+SCANORIENTATIONRESULT GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl);
+SCANORIENTATIONRESULT GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy);
 std::int16_t          FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt);
 
 #endif

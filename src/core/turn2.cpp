@@ -81,7 +81,7 @@ void Produce(APPSESSION &app) {
                                 goto RemoveFromQueue;
                             }
                         } else if (lpprod->iItem >= iobjPacketIron && lpprod->iItem <= iobjPacketMixed) {
-                            if (ColonyIO().pfnWarp(app, lppl, nullptr) == 0 || lppl->idFling == 0) {
+                            if (ColonyIO().pfnWarp(app, lppl).iWarp == 0 || lppl->idFling == 0) {
                                 TurnIO().pfnMessage2(app, lppl->iPlayer, idmHasOrdersBuildMineralPacketEitherDoesnt, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                                 goto RemoveFromQueue;
                             }
@@ -203,7 +203,7 @@ void Produce(APPSESSION &app) {
     return;
 }
 
-std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *pprodPartial, std::int32_t *rgRes, std::int16_t fAlchemy, std::int16_t *pmdStatus, std::int16_t fCalcOnly) {
+std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *pprodPartial, std::span<std::int32_t, 4> rgRes, std::int16_t fAlchemy, std::int16_t *pmdStatus, std::int16_t fCalcOnly) {
     std::int32_t  pctT;
     std::int16_t  cMax;
     std::uint32_t iobjOther;
@@ -258,7 +258,7 @@ std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *p
             break;
         case iobjPacket:
             iobjOther = iobjPacketMixed;
-            if (ColonyIO().pfnWarp(app, lppl, nullptr) == 0 || lppl->idFling == 0) {
+            if (ColonyIO().pfnWarp(app, lppl).iWarp == 0 || lppl->idFling == 0) {
                 cMax = 0;
             }
         }
@@ -383,7 +383,8 @@ std::int16_t CBuildProdItem(APPSESSION &app, PLANET *lppl, PROD *lpprod, PROD *p
     return cBuilt;
 }
 
-std::int16_t FBuildObject(APPSESSION &app, PLANET *lppl, GrobjClass grobj, std::int16_t iItem, std::int16_t cBuilt, std::int32_t *rgMinerals) {
+std::int16_t FBuildObject(APPSESSION &app, PLANET *lppl, GrobjClass grobj, std::int16_t iItem, std::int16_t cBuilt, std::span<std::int32_t, 4> rgMinerals) {
+    WARPRESULT warp;
     std::int16_t       iWarp;
     std::int16_t       i;
     FLEET        *lpfl;
@@ -425,7 +426,9 @@ std::int16_t FBuildObject(APPSESSION &app, PLANET *lppl, GrobjClass grobj, std::
             if (lppl->fStarbase && static_cast<std::int16_t>(app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.ihuldef) > static_cast<std::int16_t>(app.state.rglpshdefSB[lppl->iPlayer][iItem].hul.ihuldef)) {
                 ProductionIO().pfnKillShips(app, lppl);
             }
-            iWarp = ColonyIO().pfnWarp(app, lppl, &fTwoMAs);
+            warp = ColonyIO().pfnWarp(app, lppl);
+            iWarp = warp.iWarp;
+            fTwoMAs = warp.fTwo;
             if (lppl->fStarbase) {
                 app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].cExist = app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].cExist - 1;
             } else {
@@ -433,7 +436,9 @@ std::int16_t FBuildObject(APPSESSION &app, PLANET *lppl, GrobjClass grobj, std::
             }
             lppl->isb = iItem;
             if (iWarp <= 0) {
-                iWarp = ColonyIO().pfnWarp(app, lppl, &fTwoMAs);
+                warp = ColonyIO().pfnWarp(app, lppl);
+                iWarp = warp.iWarp;
+                fTwoMAs = warp.fTwo;
                 if (iWarp > 0) {
                     lppl->iWarpFling = iWarp + fTwoMAs - 4;
                 } else {
@@ -565,7 +570,9 @@ std::int16_t FBuildObject(APPSESSION &app, PLANET *lppl, GrobjClass grobj, std::
         case iobjPacketGerm:
         case iobjPacketMixed:
             raMajor = static_cast<RaceAttribute>(RaceQueryIO().pfnStat(&app.state.rgplr[lppl->iPlayer], rsMajorAdv));
-            iWarp = ColonyIO().pfnWarp(app, lppl, &fTwoMAs);
+            warp = ColonyIO().pfnWarp(app, lppl);
+            iWarp = warp.iWarp;
+            fTwoMAs = warp.fTwo;
             if (iWarp == 0) {
                 TurnIO().pfnMessage2(app, lppl->iPlayer, idmMineralPacketFormedHasDisintegratedBecausePlanet, static_cast<MsgGoto>(lppl->id), lppl->id, 0);
                 return 0;
@@ -676,7 +683,7 @@ std::int16_t FBuildObject(APPSESSION &app, PLANET *lppl, GrobjClass grobj, std::
             return 1;
         case iobjPlanetaryScanner:
             app.state.idPlayer = lppl->iPlayer;
-            ProductionIO().pfnScanner(app, &part);
+            part = ProductionIO().pfnScanner(app, part);
             app.state.idPlayer = iplrNone;
             iItem = part.hs.iItem + 18;
             /* fallthrough */
@@ -808,7 +815,7 @@ void DropColonists(APPSESSION &app) {
                 idPlanet = lpcdCur->idPlanetDst;
                 PlanetQueryIO().pfnLookup(app, idPlanet, &pl);
                 iplrOldOwner = pl.iPlayer;
-                CalcPctSurvive(app, &pl, &pctSurvive, nullptr);
+                pctSurvive = CalcPctSurvive(app, &pl).pct;
                 pctSurvive = static_cast<float>((pctSurvive + (static_cast<double>(1.0) - pctSurvive) / 4.0));
                 for (lpcdLook = lpcdCur; lpcdLook < lpcdMax; lpcdLook++) {
                     if (idPlanet == lpcdLook->idPlanetDst) {
@@ -918,7 +925,7 @@ void DropColonists(APPSESSION &app) {
                         for (i = 0; i < 6; i++) {
                             app.state.rgTechBattle[i] = app.state.rgplr[iplrOldOwner].rgTech[i];
                         }
-                        i = ITechLearnATech(app, iMax, -1, pl.id, idmWreckageDiscoveredBattleHasBoostedResearchResour, nullptr);
+                        static_cast<void>(ITechLearnATech(app, iMax, -1, pl.id, idmWreckageDiscoveredBattleHasBoostedResearchResour));
                         pl.iPlayer = iplrNone;
                     } else if (cSides > 1) {
                         for (i = 0; i < 16; i++) {
@@ -1099,12 +1106,10 @@ void HealShips(APPSESSION &app) {
 }
 
 void AutoTerraform(APPSESSION &app) {
-    std::int16_t rgMax[3];
+    TERRAFORMRESULT terra;
     std::int16_t rgp[16];
     PLANET *lppl;
     std::int16_t i;
-    std::int16_t rgMin[3];
-    std::int16_t rgCost[3];
     std::int16_t fTerra;
     PLANET *lpplMac;
 
@@ -1134,12 +1139,12 @@ void AutoTerraform(APPSESSION &app) {
                         TurnIO().pfnMessage2(app, lppl->iPlayer, idmEngineersHaveManagedImproveUnderlying1, static_cast<MsgGoto>(lppl->id), lppl->id, i);
                     }
                 }
-                if (ColonyIO().pfnCanTerraform(app, lppl, rgMin, rgMax, rgCost, 1)) {
+                if ((terra = ColonyIO().pfnCanTerraform(app, lppl, 1)).fCan) {
                     for (i = 0; i < 3; i++) {
-                        if (rgMin[i] != envNone) {
-                            lppl->rgEnvVar[i] = rgMin[i];
-                        } else if (rgMax[i] != envNone) {
-                            lppl->rgEnvVar[i] = rgMax[i];
+                        if (terra.rgEnvMin[i] != envNone) {
+                            lppl->rgEnvVar[i] = terra.rgEnvMin[i];
+                        } else if (terra.rgEnvMax[i] != envNone) {
+                            lppl->rgEnvVar[i] = terra.rgEnvMax[i];
                         }
                     }
                     i = PlanetQueryIO().pfnDesirability(app, lppl, lppl->iPlayer);
@@ -1293,7 +1298,7 @@ void UpdateGuesses(APPSESSION &app) {
             if (lppl->cDefenses == 0) {
                 lppl->uDefGuess = 0;
             } else {
-                CalcPctSurvive(app, lppl, &pct, nullptr);
+                pct = CalcPctSurvive(app, lppl).pct;
                 l = 100 - static_cast<std::int32_t>((static_cast<double>(pct) * 100.0 + 0.5)) + 4;
                 l = static_cast<std::int32_t>((l / 6));
                 if (l < 1) {
@@ -1318,7 +1323,7 @@ void MineMinerals(APPSESSION &app) {
     lppl = app.state.lpPlanets;
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {
-        ColonyIO().pfnEstimateMining(app, lppl, rglQuan, -1, 1);
+        ColonyIO().pfnEstimateMining(app, lppl, std::span{rglQuan}.first<3>(), -1, 1);
     }
     return;
 }
@@ -1604,7 +1609,8 @@ void UpdatePlayerScores(APPSESSION &app) {
     app.state.gd.fGameOverMan = 0;
     std::ranges::fill(rgcCond, 0);
     for (i = 0; i < app.state.game.cPlayer; i++) {
-        rglScore[i] = CalcPlayerScore(app, i, &score);
+        score = CalcPlayerScore(app, i);
+        rglScore[i] = score.lScore;
         app.state.vlprgScoreX[i].score = score;
         app.state.vlprgScoreX[i].iPlayer = i;
         app.state.vlprgScoreX[i].fValid = 1;
@@ -1881,7 +1887,7 @@ void ThingDecay(APPSESSION &app) {
                         /* The original set fBombed even when the fleet was
                            immune to this field, sparing it from every other
                            detonating field. */
-                        if (!lpfl->fBombed && static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy)) <= lDecay && !FTravelThroughMineFields(app, lpfl, nullptr, lpth)) {
+                        if (!lpfl->fBombed && static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy)) <= lDecay && !FTravelThroughMineFields(app, lpfl, std::nullopt, lpth).fSafe) {
                             lpfl->fBombed = 1;
                         }
                     }

@@ -4,8 +4,32 @@
 #include "uistate.h"
 #endif
 #include "callbackcontext.h"
+#include "battle.h"
+#include "thing.h"
 
 #include "stars_test.h"
+
+static void test_trader_and_technology_results_are_grouped(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    TRADERPARTRESULT traderPart;
+    TECHLEARNRESULT techLearn;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    traderPart = IdmGiveTraderPart(app, grbitTraderHull, 0);
+    TEST_CHECK(traderPart.idm == idmHasAbsorbedMysteryTraderReturnHaveGiven);
+    TEST_CHECK(traderPart.gotoTarget == static_cast<MsgGoto>(0xce1e));
+    TEST_CHECK(app.state.rgplr[0].grbitTrader & grbitTraderHull);
+
+    app.state.rgplr[0].fLearned = 1;
+    techLearn = ITechLearnATech(app, 0, 0, 0, static_cast<MessageId>(idmNone));
+    TEST_CHECK(techLearn.iResult == 0);
+    TEST_CHECK(!techLearn.gotoTarget);
+}
 
 #ifdef STARS_UI_SDL
 // The battle plans dialog needs the Windows or SDL client UI.
@@ -143,9 +167,7 @@ static void test_CplrBattle_starbase_attacks_only_its_target(void) {
     static const int16_t rgrgiplr[6][3] = {{0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}};
     PLANET              *lppl;
     FLEET               *lpfl;
-    uint16_t             rggrfAttack[16];
-    uint16_t             grfPlayer;
-    uint16_t             grfSpectator;
+    BATTLEPARTICIPANTS   result;
     int16_t              icase;
     int16_t              iplrSB;
     int16_t              iplrFriend;
@@ -181,16 +203,17 @@ static void test_CplrBattle_starbase_attacks_only_its_target(void) {
         }
         LinkFleets(app, 0);
         lpfl = LpflFromId(app, lpfl->id);
-        CplrBattle(app, lpfl, rggrfAttack, &grfPlayer, &grfSpectator);
-        TEST_CHECK_(rggrfAttack[iplrSB] == 1 << iplrTarget, "the starbase attacks %#x", rggrfAttack[iplrSB]);
+        result = CplrBattle(app, lpfl);
+        TEST_CHECK_(result.rggrfAttack[iplrSB] == 1 << iplrTarget, "the starbase attacks %#x", result.rggrfAttack[iplrSB]);
         for (i = 0; i < 3; i++) {
-            TEST_CHECK_(!(rggrfAttack[i] & (1 << iplrFriend)), "player %d attacks the friend", i);
+            TEST_CHECK_(!(result.rggrfAttack[i] & (1 << iplrFriend)), "player %d attacks the friend", i);
         }
-        TEST_CHECK_(!(rggrfAttack[iplrFriend] & (1 << iplrSB)), "the friend attacks the starbase");
+        TEST_CHECK_(!(result.rggrfAttack[iplrFriend] & (1 << iplrSB)), "the friend attacks the starbase");
     }
 }
 
-TEST_LIST = {{"CplrBattle starbase attacks only its target", test_CplrBattle_starbase_attacks_only_its_target},
+TEST_LIST = {{"trader and technology outcomes return grouped values", test_trader_and_technology_results_are_grouped},
+             {"CplrBattle starbase attacks only its target", test_CplrBattle_starbase_attacks_only_its_target},
 #ifdef STARS_UI_SDL
              {"battle replay reads exact wire bytes", test_battle_replay_bytes},
              {"BattlePlansDlg stores drop-down choices", test_BattlePlansDlg_stores_choices},

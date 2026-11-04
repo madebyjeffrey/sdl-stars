@@ -115,8 +115,8 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         break;
     case win32::WM_SETCURSOR:
         hcs = nullptr;
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         ControlIO().pfnGetClientRect(hwnd, &rc);
         if (win32::PtInRect(&rc, PointFrom16(pt)) == 0)
             goto Default;
@@ -203,15 +203,21 @@ LRESULT  PlanetWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
                 goto LRefocus;
             } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[0] && HIWORD(wParam) == 0) {
                 lSel = ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_GETCURSEL, 0, 0);
-                if (lSel == -1 || !FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), &xf, idflNone)) {
+                if (lSel == -1) {
                     return 0;
                 }
-                TransferStuff(app, app.state.sel.pl.id, grobjPlanet, xf.id, xf.grobj, mdXferCargo);
+                auto xfer = FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), idflNone);
+                if (!xfer) {
+                    return 0;
+                }
+                TransferStuff(app, app.state.sel.pl.id, grobjPlanet, xfer->id, xfer->grobj, mdXferCargo);
                 goto LRefocus;
             } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[1] && HIWORD(wParam) == 0) {
                 lSel = ControlIO().pfnSendMessage(app.lpui->hwndShipDD, win32::CB_GETCURSEL, 0, 0);
-                if (lSel != -1 && FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), &xf, idflNone) && xf.grobj == grobjFleet) {
-                    PresentationIO().pfnSelectFleet(app, 0, xf.id);
+                if (lSel != -1) {
+                    if (auto xfer = FLookupOrbitingXfer(app, app.state.sel.pl.id, LOWORD(lSel), idflNone); xfer && xfer->grobj == grobjFleet) {
+                        PresentationIO().pfnSelectFleet(app, 0, xfer->id);
+                    }
                 }
                 goto LRefocus;
             } else if (reinterpret_cast<HWND>(lParam) == app.lpui->rghwndBtn[2] && HIWORD(wParam) == 0) {
@@ -462,14 +468,18 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         win32::SetRect(&app.lpui->rgrcRef[11], xLeft, yTop, xRight, app.state.dyArial8 * 2 + yTop);
         if (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv) == raMacintosh) {
             TextIO().pfnCchGetString(app, idsOrganic, std::span{app.state.szWork});
-            dRange = GetPlanetScannerRange(app, &app.state.sel.pl, &dRangeP);
+            const auto scannerRange = GetPlanetScannerRange(app, &app.state.sel.pl);
+            dRange = scannerRange.dRange;
+            dRangeP = scannerRange.dDeep;
         } else if (app.state.sel.pl.iScanner == 31) {
             TextIO().pfnCchGetString(app, idsNone4, std::span{app.state.szWork});
             dRange = 0;
         } else {
-            ProductionIO().pfnScanner(app, &part);
+            part = ProductionIO().pfnScanner(app, part);
             CchCopyUtf8Prefix(std::span{app.state.szWork}, part.pcom().szName());
-            dRange = GetPlanetScannerRange(app, &app.state.sel.pl, &dRangeP);
+            const auto scannerRange = GetPlanetScannerRange(app, &app.state.sel.pl);
+            dRange = scannerRange.dRange;
+            dRangeP = scannerRange.dDeep;
         }
         RightTextOut(app, hdc, xRight, yTop, app.state.szWork, 0, dxRight);
         yTop += app.state.dyArial8;
@@ -533,7 +543,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SelectObject(hdc, app.lpui->rghfontArial8[0]);
         }
         if (dRange != 0) {
-            CalcPctSurvive(app, &app.state.sel.pl, &pct, nullptr);
+            pct = CalcPctSurvive(app, &app.state.sel.pl).pct;
             pct = static_cast<float>((static_cast<double>(1.0) - pct));
             c = CchSprintf(app.state.szWork, app.state.PCTDXPCTDPCTPCT, LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
                          LOWORD(static_cast<std::int32_t>(((pct - static_cast<double>(static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000))));
@@ -547,6 +557,7 @@ void DrawPlanetStats(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
 }
 
 void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
+    WARPRESULT warp;
     std::array<char, 19> szPlanetName{};
     std::array<char, cchCatalogText> szCatalogPsz{};
     std::int16_t  fTwo;
@@ -662,7 +673,9 @@ void DrawPlanetStarbase(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
             win32::SetRect(&app.lpui->rgrcRef[16], xLeft, yTop, xRight, yTop + app.state.dyArial8);
             c = TextIO().pfnCchGetString(app, idsMassDriver, std::span{app.state.szWork});
             win32::TextOutA(hdc, xLeft, yTop, app.state.szWork, c);
-            iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, &fTwo);
+            warp = ColonyIO().pfnWarp(app, &app.state.sel.pl);
+            iWarp = warp.iWarp;
+            fTwo = warp.fTwo;
             if (iWarp > 0) {
                 c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsWarpD).data(), iWarp);
                 if (fTwo) {
@@ -733,7 +746,7 @@ void DrawMassWarpGauge(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t iBest, 
         hbr = app.lpui->hbrRed;
     }
     lCur = static_cast<std::int16_t>((iCur - 4));
-    l = LDrawGauge(app, hdc, prc, 1, &lCur, &hbr, lMax);
+    l = LDrawGauge(app, hdc, prc, std::span{&lCur, 1}, std::span{&hbr, 1}, lMax);
     iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     c = CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, idsWarpLd).data(), l + 4);
     l = GetTextExtent(hdc, app.state.szWork, c);
@@ -992,8 +1005,9 @@ void DrawPlanetShipList(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj) {
         } else {
             idSkip = idflNone;
         }
-        if (!fDoneDrawing && !FLookupOrbitingXfer(app, idSkip == idflNone ? app.state.sel.pl.id : pfl->idPlanet, LOWORD(lSel), &xf, idSkip)) {
-            fDoneDrawing = 1;
+        if (!fDoneDrawing) {
+            if (auto xfer = FLookupOrbitingXfer(app, idSkip == idflNone ? app.state.sel.pl.id : pfl->idPlanet, LOWORD(lSel), idSkip)) xf = *xfer;
+            else fDoneDrawing = 1;
         }
         if (fDoneDrawing) {
             ControlIO().pfnEnableWindow(app.lpui->rghwndBtn[1], 0);
@@ -1139,7 +1153,9 @@ void PlanetClick(APPSESSION &app, std::int16_t x, std::int16_t y, std::int16_t s
                     DrawFuzzyBorder(app, hdc, &rcTitle);
                     win32::SetCapture(app.lpui->hwndPlanet);
                     ptNew = pt;
-                    while (FGetMouseMove(&ptNew)) {
+                    for (MOUSEMOVERESULT mouseMove = FGetMouseMove(); ; mouseMove = FGetMouseMove()) {
+                        if (mouseMove.point) ptNew = *mouseMove.point;
+                        if (!mouseMove.fContinue) break;
                         if (pt.x != ptNew.x || pt.y != ptNew.y) {
                             DrawFuzzyBorder(app, hdc, &rcTitle);
                             OffsetRc(&rcTitle, ptNew.x - pt.x, ptNew.y - pt.y);
@@ -1228,7 +1244,7 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::
         app.lpui->GlobalPD.SetRgi(0, i);
         app.lpui->GlobalPD.SetRgi(2, app.state.sel.pl.rgwtMin[i]);
         app.lpui->GlobalPD.SetRgi(3, static_cast<std::uint32_t>(app.state.sel.pl.rgMinConc[i]));
-        ColonyIO().pfnEstimateMining(app, &app.state.sel.pl, rglQuan, -1, 0);
+        ColonyIO().pfnEstimateMining(app, &app.state.sel.pl, std::span{rglQuan}.first<3>(), -1, 0);
         app.lpui->GlobalPD.SetRgi(4, rglQuan[i]);
         app.lpui->GlobalPD.SetRgi(1, app.state.sel.pl.fHomeworld);
         Popup(app, app.lpui->hwndPlanet, pt.x, pt.y);
@@ -1290,12 +1306,12 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::
             app.lpui->GlobalPD.psz = app.lpui->szPopupBuffer;
             TextIO().pfnCchGetString(app, idsRaceCannotBuildPlanetaryScannersStarbasesHave, std::span{app.lpui->szPopupBuffer});
         } else {
-            ProductionIO().pfnScanner(app, &app.lpui->GlobalPD.part);
+            app.lpui->GlobalPD.part = ProductionIO().pfnScanner(app, app.lpui->GlobalPD.part);
             app.lpui->GlobalPD.grPopup = grPopupComponent;
         }
         Popup(app, app.lpui->hwndPlanet, pt.x, pt.y);
     } else if (win32::PtInRect(&app.lpui->rgrcRef[13], PointFrom16(pt)) != 0) {
-        iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, nullptr);
+        iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl).iWarp;
         if (iWarp == 0) {
             return nullptr;
         }
@@ -1319,7 +1335,7 @@ HCURSOR ClickInPlanetOrders(APPSESSION &app, POINT16 pt, std::int16_t sks, std::
         app.lpui->GlobalPD.fSummary = 0;
         Popup(app, app.lpui->hwndPlanet, pt.x, pt.y);
     } else if (win32::PtInRect(&app.lpui->rgrcRef[16], PointFrom16(pt)) != 0) {
-        iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, nullptr);
+        iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl).iWarp;
         if (iWarp == 0) {
             return nullptr;
         }

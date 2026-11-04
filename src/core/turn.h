@@ -18,7 +18,11 @@ void    DoOrders(APPSESSION &app, std::int16_t fPostMovement);
 void    MoveThings(APPSESSION &app, std::int16_t fPostProd);
 void    FuelFleets(APPSESSION &app);
 void    MoveFleets(APPSESSION &app);
-std::int16_t FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, std::int16_t *pdTravel, THING *lpthHit);
+struct MINEFIELDTRAVELRESULT {
+    bool fSafe;
+    std::optional<std::int16_t> dTravel;
+};
+MINEFIELDTRAVELRESULT FTravelThroughMineFields(APPSESSION &app, FLEET *lpfl, std::optional<std::int16_t> dTravel, THING *lpthHit);
 void    VerifyTurns(APPSESSION &app);
 std::int16_t CTurnsOutSafe(APPSESSION &app);
 std::int16_t CFindTurnsOutstanding(APPSESSION &app);

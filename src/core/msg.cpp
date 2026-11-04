@@ -213,24 +213,26 @@ std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId 
 }
 
 std::int16_t IdmGetMessageN(APPSESSION &app, std::int16_t iMsg) {
-    MSGBIG mb;
+    std::optional<MSGBIG> mb;
 
-    if (!FGetNMsgbig(app, static_cast<MessageId>(iMsg), &mb)) {
+    mb = FGetNMsgbig(app, static_cast<MessageId>(iMsg));
+    if (!mb) {
         return -1;
     }
-    return mb.iMsg;
+    return mb->iMsg;
 }
 
-std::int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb) {
+std::optional<MSGBIG> FGetNMsgbig(APPSESSION &app, MessageId iMsg) {
     std::uint8_t *lpbMax;
     std::int16_t  iMax;
     std::uint8_t *lpmh;
     std::int16_t  i;
     std::uint8_t *lpb;
     std::uint16_t u;
+    MSGBIG mb{};
 
     if (static_cast<std::int16_t>(iMsg) < idmColonistsDroppedMassacredGroundTroops || static_cast<std::int16_t>(iMsg) >= app.state.cMsg) {
-        return 0;
+        return std::nullopt;
     }
     lpb = static_cast<std::uint8_t *>(app.state.lpMsg);
     lpbMax = lpb + app.state.imemMsgCur;
@@ -239,13 +241,13 @@ std::int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb) {
         u = MhvFromLp(app, lpmh).grWord();
         lpb += 4;
         if (iMsg == idmColonistsDroppedMassacredGroundTroops) {
-            pmb->iMsg = MhvFromLp(app, lpmh).iMsg();
-            pmb->wGoto = MhvFromLp(app, lpmh).wGoto();
+            mb.iMsg = MhvFromLp(app, lpmh).iMsg();
+            mb.wGoto = MhvFromLp(app, lpmh).wGoto();
         }
         iMax = rgcMsgArgs[MhvFromLp(app, lpmh).iMsg()];
         for (i = 0; i < iMax; i++) {
             if (iMsg == idmColonistsDroppedMassacredGroundTroops) {
-                pmb->rgParam[i] = !(u & 1) ? *lpb : WMsgParam(std::span<const std::uint8_t, 2>{lpb, 2});
+                mb.rgParam[i] = !(u & 1) ? *lpb : WMsgParam(std::span<const std::uint8_t, 2>{lpb, 2});
             }
             lpb += 1 + ((u & 1) == 1);
             u >>= 1;
@@ -254,7 +256,7 @@ std::int16_t FGetNMsgbig(APPSESSION &app, MessageId iMsg, MSGBIG *pmb) {
             break;
         iMsg = static_cast<MessageId>(iMsg - 1);
     }
-    return 1;
+    return mb;
 }
 
 // Keep current message/cache effects while callers retain independent text.
@@ -269,13 +271,14 @@ static std::array<char, 256> SzMessageLabel(std::string_view sz) {
 }
 
 MESSAGETEXTRESULT PszGetMessageN(APPSESSION &app, std::int16_t iMsg) {
-    MSGBIG mb;
+    std::optional<MSGBIG> mb;
 
-    if (!FGetNMsgbig(app, static_cast<MessageId>(iMsg), &mb)) {
+    mb = FGetNMsgbig(app, static_cast<MessageId>(iMsg));
+    if (!mb) {
         app.state.szMsgBuf[0] = 0;
         return SzMessageText(app.state.szMsgBuf);
     }
-    return PszFormatMessage(app, static_cast<MessageId>(mb.iMsg), std::span<const std::int16_t>{mb.rgParam}.first(static_cast<std::size_t>(rgcMsgArgs[mb.iMsg])));
+    return PszFormatMessage(app, static_cast<MessageId>(mb->iMsg), std::span<const std::int16_t>{mb->rgParam}.first(static_cast<std::size_t>(rgcMsgArgs[mb->iMsg])));
 }
 
 // Required readable values for one complete message expansion. Filename

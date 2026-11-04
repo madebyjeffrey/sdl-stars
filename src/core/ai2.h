@@ -8,11 +8,11 @@ extern std::uint8_t vrgISIshAip[];
 extern std::uint8_t vrgISAip[cvrgISAip];
 extern std::uint8_t vrgAiISResOrder[];
 
-void    DoMaidAiTurn(APPSESSION &app, PROD *rgprod);
+void    DoMaidAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
 std::int16_t FPotentISWarFleet(APPSESSION &app, FLEET *lpfl, std::int16_t iPotency);
-void    DoAutomitronAiTurn(APPSESSION &app, PROD *rgprod);
+void    DoAutomitronAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
 void    EnsureISShdefs(APPSESSION &app, std::int16_t iroCur);
-void    DoRototillAiTurn(APPSESSION &app, PROD *rgprod);
+void    DoRototillAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
 void    EnsureCAShdefs(std::int16_t iroCur);
 
 #endif

@@ -243,6 +243,7 @@ void DoThingInteractions(APPSESSION &app, std::int16_t fPostMove) {
     std::int16_t     cTry;
     std::int16_t     iOffset;
     std::int16_t     ish;
+    TRADERPARTRESULT traderPart;
     SHDEF       shdef;
     SHDEF      *lpshdefDest;
     FLEET      *lpflNew;
@@ -420,8 +421,8 @@ void DoThingInteractions(APPSESSION &app, std::int16_t fPostMove) {
                                         continue;
                                     }
                                 } else {
-                                    idm = static_cast<MessageId>(IdmGiveTraderPart(app, grbitTrader, iplr, reinterpret_cast<std::uint16_t *>(&iGoto)));
-                                    TurnIO().pfnMessage2(app, lpfl->iplr(), idm, static_cast<MsgGoto>(iGoto), WFromLpfl(app, lpfl), 0);
+                                    traderPart = IdmGiveTraderPart(app, grbitTrader, iplr);
+                                    TurnIO().pfnMessage2(app, lpfl->iplr(), traderPart.idm, traderPart.gotoTarget, WFromLpfl(app, lpfl), 0);
                                 }
                             }
                         }
@@ -491,7 +492,7 @@ void DoThingInteractions(APPSESSION &app, std::int16_t fPostMove) {
     return;
 }
 
-std::int16_t IdmGiveTraderPart(APPSESSION &app, GrbitTrader grbitTrader, std::int16_t iplr, std::uint16_t *piGoto) {
+TRADERPARTRESULT IdmGiveTraderPart(APPSESSION &app, GrbitTrader grbitTrader, std::int16_t iplr) {
     std::uint16_t  iGoto;
     MessageId idm;
 
@@ -537,6 +538,5 @@ std::int16_t IdmGiveTraderPart(APPSESSION &app, GrbitTrader grbitTrader, std::in
     case grbitTraderJumpgate:
         iGoto = 0xcc09;
     }
-    *piGoto = iGoto;
-    return idm;
+    return {idm, static_cast<MsgGoto>(iGoto)};
 }

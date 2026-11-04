@@ -238,12 +238,12 @@ bool CompatPostInput(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
         lpLast->msg.hwnd == hwnd && lpLast->msg.message == msg && lpLast->msg.wParam == w) {
         lpLast->msg.lParam = l;
         lpLast->msg.time = win32::GetTickCount();
-        CompatCopyInput(lpLast->rgbKey, &lpLast->msg.pt);
+        if (const auto pt = CompatCopyInput(std::span<BYTE, 256>{lpLast->rgbKey}); pt) lpLast->msg.pt = *pt;
         return 1;
     }
     if (!win32::PostMessageA(hwnd, msg, w, l)) return 0;
     lpLast->fInput = 1;
-    CompatCopyInput(lpLast->rgbKey, &lpLast->msg.pt);
+    if (const auto pt = CompatCopyInput(std::span<BYTE, 256>{lpLast->rgbKey}); pt) lpLast->msg.pt = *pt;
     return 1;
 }
 
@@ -305,7 +305,7 @@ static bool FQueuedMessage(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UIN
             continue;
         *lpOut = lpmsg->msg;
         if (flags & win32::PM_REMOVE) {
-            if (lpmsg->fInput) CompatReadInput(lpmsg->rgbKey);
+            if (lpmsg->fInput) CompatReadInput(std::span<const BYTE, 256>{lpmsg->rgbKey});
             if (lpPrev) lpPrev->lpNext = lpmsg->lpNext;
             else lpFirst = lpmsg->lpNext;
             if (lpLast == lpmsg) lpLast = lpPrev;

@@ -62,7 +62,7 @@ std::int16_t FOtherStuffAtScanSel(APPSESSION &app) {
     return 0;
 }
 
-void EstMineralsMined(APPSESSION &app, PLANET *lppl, std::int32_t *plQuan, std::int32_t cMines, std::int16_t fApply) {
+void EstMineralsMined(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 3> plQuan, std::int32_t cMines, std::int16_t fApply) {
     std::int32_t lQuanRem;
     std::int32_t lQuanAct;
     std::int16_t i;

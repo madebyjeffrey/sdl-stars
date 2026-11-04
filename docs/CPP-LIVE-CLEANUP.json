@@ -2495,7 +2495,7 @@
       },
       "help_path_page_and_stamp_views": {
         "status": "complete; locally verified",
-        "change": "FHelpAssets and PszHelpDocument accept string_view paths/page names; WinHelpA carries selected page and owned help directory as views. The stamp comparison uses CchGetNativeLine’s returned byte count.",
+        "change": "FHelpAssets and PszHelpDocument accept string_view paths/page names; WinHelpA carries selected page and owned help directory as views. The stamp comparison uses CchGetNativeLine\u2019s returned byte count.",
         "sdk_boundary": "WinHelpA retains its SDK signature; only private helpers and their internal values changed.",
         "verification": {
           "batch": "Bound help path, page, and stamp text",
@@ -2546,7 +2546,7 @@
           },
           "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
           "baseline": "Unchanged; native and host regressions each match all 519 checkpoints with zero differences/errors.",
-          "api_audit": "PszHelpDocument’s internal operation flag and WinHelpA’s local launch result use bool. WinHelpA retains its SDK BOOL return type; all success/failure values remain 0/1.",
+          "api_audit": "PszHelpDocument\u2019s internal operation flag and WinHelpA\u2019s local launch result use bool. WinHelpA retains its SDK BOOL return type; all success/failure values remain 0/1.",
           "platform": "Current-source Windows and Linux runtime qualification remains outstanding.",
           "diff_check": "Pass."
         }
@@ -2745,10 +2745,63 @@
         "bounded-dib-palette-header-spans",
         "fixed-four-entry-ai-starbase-status-span",
         "fixed-sixteen-entry-ai-design-split-span",
-        "log-replay-byte-payload-span"
+        "log-replay-byte-payload-span",
+        "initial-confirmed-pointer-count-batches",
+        "initial-confirmed-grouped-output-batches",
+        "fixed-construction-resource-and-salvage-head-interfaces",
+        "scanner-orientation-output-result",
+        "fixed-part-cost-span-and-provider",
+        "paired-survival-probability-result",
+        "retire-unconsumed-cloak-steal-output",
+        "fixed-production-resource-span-and-provider",
+        "stargate-damage-status-and-optional-percentage-result",
+        "warp-and-two-driver-result",
+        "private-callback-userdata-typed-contexts",
+        "candidate-by-candidate-interface-classification",
+        "scanner-range-named-result",
+        "library-file-inspection-named-result-and-provider",
+        "mouse-event-and-position-named-result",
+        "convert-confirmed-private-pointer-count-interfaces",
+        "convert-confirmed-grouped-output-results",
+        "candidate-by-candidate-interface-rescan",
+        "full-source-inventory-outside-reviewed-register",
+        "native-coordinate-and-SDL-input-point-results",
+        "fixed-keyboard-state-spans-and-optional-cursor-result",
+        "bounded-DIB-private-helper-spans",
+        "compat-mouse-hit-test-target-and-point-result",
+        "Liang-Barsky-clipping-interval-optional-result",
+        "fixed-battle-attack-and-loss-array-spans",
+        "optional-AI-part-and-orbiting-transfer-results",
+        "optional-message-decode-result",
+        "menu-location-and-accelerator-path-results-plus-toolbar-span",
+        "display-rectangle-and-virtual-display-named-results",
+        "profile-list-status-and-dialog-unit-results",
+        "primary-hull-planet-scanner-and-player-score-named-results",
+        "current-output-fixed-array-candidate-pass",
+        "optional-legacy-race-player-and-battle-plan-decode-results",
+        "supplemental-pointer-to-pointer-CreateSalvage-list-head-inventory",
+        "trader-and-technology-named-learning-results",
+        "ui-point-and-splitter-results-and-retire-unused-MapWindowPoints16",
+        "continued-current-tree-fixed-array-copy-site-inventory-and-FAddLibraryGameListItem-classification",
+        "FAddLibraryGameListItem-fixed-16-turn-span",
+        "LookupBestPlanetaryScanner-PART-value-result-through-production-provider",
+        "GetWindowRc-RECT-value-result",
+        "FReadLibraryHdr-FReadLibraryBof-optional-decoded-records",
+        "FReadManagedRace-optional-PLAYER-result",
+        "GetIniWinRc-WN-value-result",
+        "continue-full-source-inventory-outside-reviewed-register-2026-11-04",
+        "SaveRaceState-RACESTATE-value-snapshot",
+        "AI-production-queue-fixed-span-through-call-graph",
+        "InitProduction-PROD64-output-span-and-provider",
+        "StartPrint-title-pointer-count-optional-string-view",
+        "post-conversion-full-source-inventory-2026-11-04",
+        "candidate-by-candidate-rescan-StartPrint-2026-11-04",
+        "broader-current-tree-buffer-length-interface-scan",
+        "reconcile-l05-l06-l08-ledger-status"
       ],
       "pending_substeps": [
-        "remaining-buffer-and-length-interfaces"
+        "fleet-record-encoder-optional-written-count-result",
+        "popup-menu-count-derived-from-exact-spans"
       ],
       "user_string_codecs": {
         "status": "complete; verified",
@@ -4019,6 +4072,79 @@
           "api_audit": "IdNearestColonizablePlanet returns COLONIZABLEPLANETRESULT with the selected planet ID and borrowed wormhole pointer instead of a nullable pointer-to-pointer. The explicit fFindWorm argument preserves whether callers perform LpthWormFind and consume random values. No game state, AI target choices, or stored layouts changed.",
           "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
           "diff_check": "Pass."
+        },
+        {
+          "batch": "L06 coordinate and SDL-input point results",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "baseline": "Unchanged; this compatibility-only batch did not change game behavior or serialized layouts."
+        },
+        {
+          "batch": "L06 fixed keyboard-state spans",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "baseline": "Unchanged; fixed keyboard-state storage width and queued-message cursor-write behavior are preserved."
+        },
+        {
+          "batch": "L06 bounded DIB private helper spans",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "dib_resource_check": "pass; 38 assets",
+          "dib_leak_wrapper": "timeout at 60s; macOS leaks tool could not obtain task port; functional DIB subcheck printed PASS",
+          "baseline": "Unchanged; layout and wire widths remain fixed; native GDI pointers stay at the SDK boundary."
+        },
+        {
+          "batch": "L06 compat mouse hit-test target and point result",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "baseline": "Unchanged; recursive coordinate translation, capture routing, and target selection retain their behavior."
+        },
+        {
+          "batch": "L06 Liang-Barsky clipping interval result",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "focused_paint_batch": "1/1 pass",
+          "baseline": "Unchanged; bound ordering and binary64 operation boundaries are retained."
+        },
+        {
+          "batch": "L06 fixed battle attack and loss array spans",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "baseline": "Unchanged; fixed array extents and uint16 element widths are explicit."
+        },
+        {
+          "batch": "L06 optional AI-part and orbiting-transfer results",
+          "macos_sdl_debug_build": "pass; no new warnings",
+          "desktop_units": "18/18",
+          "host_units": "29/29",
+          "tutorial": "1/1 SDL tutorial smoke checkpoint passed",
+          "native_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "host_regression": "519 matches; 25 existing warnings; zero differences/errors or skipped reference inputs",
+          "baseline": "Unchanged; optional lookup results preserve the lookup ordering, failure status, and prior no-write behavior at callers."
         }
       ],
       "roman_output": {
@@ -4730,6 +4856,236 @@
           "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
           "diff_check": "Pass."
         }
+      },
+      "interface_audit": {
+        "source_commit": "4ac98d09",
+        "status": "The initial 70 replaceable candidates (29 original and 41 additional) are converted. The 2026-11-04 broader current-tree interface scan is complete and registers two further private conversions: FEncodeRtFleet status/written count and PopupMenu active count over exact spans. No unregistered candidate remains. L05 is complete; L06 has these two focused conversions pending; Windows/Linux qualification remains open.",
+        "evidence": "docs/CPP-LIVE-L06-INTERFACE-AUDIT.md",
+        "replaceable_private_candidate_families": [
+          "point-array-plus-count",
+          "fixed-tile-array-plus-count",
+          "terraform-capabilities-result",
+          "scan-orientation-result",
+          "conditional-travel-input-output",
+          "production-calculation-resource-span-and-independent-results",
+          "survival-probabilities-result",
+          "fleet-bomb-damage-result",
+          "scanner-range-result",
+          "circle-line-interval-result",
+          "file-seed-pair-result",
+          "warp-and-mass-driver-result",
+          "cloak-and-steal-result",
+          "stargate-damage-result",
+          "queued-ships-and-progress-result",
+          "fixed-four-entry-cost-results",
+          "mining-quantity-span",
+          "build-mineral-span",
+          "gauge-parallel-spans",
+          "transfer-dialog-rectangle-pair",
+          "runtime-object-pointer-representations",
+          "salvage-list-head-and-mineral-results",
+          "battle-participant-outputs",
+          "weapon-dampening-output-flag",
+          "import-inspection-metadata-result",
+          "mouse-event-and-position-result",
+          "printer-font-and-height-result",
+          "private-font-pixel-and-cleanup-callback-context",
+          "native-window-position-pair",
+          "compat-client-origin-pair",
+          "compat-hit-test-target-and-point-result",
+          "SDL-input-point-pair",
+          "line-clipping-interval",
+          "bounded-DIB-header-and-pixel-inputs",
+          "fixed-keyboard-snapshot-and-optional-cursor",
+          "fixed-keyboard-state-transfer",
+          "fixed-sixteen-entry-battle-attack-masks",
+          "fixed-256-entry-battle-losses",
+          "AI-part-optional-result",
+          "decoded-message-optional-result",
+          "orbiting-transfer-optional-result",
+          "private-menu-item-location-result",
+          "legacy-race-player-decode-result",
+          "battle-plan-decode-result",
+          "trader-message-navigation-result",
+          "tech-learning-result",
+          "AI-production-row-fixed-span",
+          "InitProduction-fixed-row-output-span",
+          "library-header-and-BOF-decoded-results",
+          "managed-race-optional-player-result",
+          "window-rectangle-value-result",
+          "INI-window-settings-value-result",
+          "race-state-snapshot-result",
+          "best-planetary-scanner-part-result",
+          "library-game-list-item-fixed-16-turn-span",
+          "private-startprint-title-pointer-count",
+          "optional-startprint-string-view",
+          "fleet-record-encoder-optional-written-count-result",
+          "popup-menu-active-count-derived-from-spans"
+        ],
+        "required_boundary_families": [
+          "raw-heap-allocation-and-address-lookup",
+          "heap-backed-physical-byte-window-and-wire-views",
+          "context-free-compat-callback-context",
+          "SDK-native-handle-and-third-party-opaque-pointers",
+          "CRT-percent-p-pointer",
+          "qsort16-comparator-input-pointers",
+          "third-party-callback-userdata",
+          "native-object-representation-byte-swap"
+        ],
+        "additional_candidates_added": [
+          "CalcPctSurvive",
+          "FCalcFleetBombDamage",
+          "GetCachedFleetScannerRange",
+          "GetFleetScannerRange",
+          "GetShdefScannerRange",
+          "FIntersectCircleLine",
+          "GetFileSeeds",
+          "IWarpMAFromLppl",
+          "PctCloakFromHuldef",
+          "MdCalcStargateDamage",
+          "CshQueued",
+          "GetTrueHullCost",
+          "GetTruePartCost",
+          "EstMineralsMined",
+          "FBuildObject",
+          "LDrawGauge",
+          "GetXferLeftRightRcs",
+          "OBJ",
+          "PART",
+          "NATIVEPARTCOMMONVIEW",
+          "DropSalvage",
+          "CplrBattle",
+          "CheckWeapons",
+          "FInspectImportFile",
+          "FGetMouseMove",
+          "FGetRMouseMove",
+          "HfontPrinterCreate",
+          "ICompReport-input-only-qsort-comparator",
+          "FCompatFontDrawScaled-private-callback-context",
+          "CompatInvokeCleanup-private-callback-context",
+          "CompatMessageAllocIO-raw-allocation-boundary",
+          "FWatchLiveResize-SDL-callback-context",
+          "FNativePosition",
+          "FClientOrigin",
+          "HwndCompatHit-HwndCompatMouse-HwndMouseTarget",
+          "FInputPoint",
+          "FLineBound",
+          "FCompatDibInfo",
+          "CompatCopyInput",
+          "CompatReadInput",
+          "FDoCoolBattle",
+          "SendBattleMessages",
+          "FGetAIPart",
+          "FGetNMsgbig",
+          "FLookupOrbitingXfer",
+          "FGetBestDefensePart-screened-independent-status-and-fallback",
+          "FCheckBuilderPart-screened-input-scalar-and-semantic-count",
+          "CompatEditComposition-screened-ignored-offset-and-length",
+          "GetScrollRange-and-MapWindowPoints-required-Win32-shapes",
+          "FCompatNativeDib-required-GDI-pointer-boundary",
+          "qsortSwap16-required-object-representation-boundary",
+          "AddButtons",
+          "FDisplayRect",
+          "FVirtualRect",
+          "CAccelPath",
+          "FLoadProfile",
+          "FDialogUnits",
+          "IshdefPrimaryFromLpfl",
+          "GetPlanetScannerRange",
+          "CalcPlayerScore",
+          "LpItem",
+          "FReadLegacyRacePlayer",
+          "UnpackBattlePlan",
+          "IdmGiveTraderPart",
+          "ITechLearnATech",
+          "AI-PROD64-fixed-array-span-family",
+          "InitProduction-PROD64-output-span-and-provider",
+          "FReadLibraryHdr-and-FReadLibraryBof-optional-wire-decoded-values",
+          "FReadManagedRace-optional-PLAYER-result",
+          "GetWindowRc-RECT-value-result",
+          "GetIniWinRc-WN-value-result",
+          "SaveRaceState-RACESTATE-value-snapshot",
+          "LookupBestPlanetaryScanner-PART-value-result",
+          "CreateSalvage-THING-pointer-reference-battle-list-head",
+          "FAddLibraryGameListItem-fixed-16-turn-array-input",
+          "StartPrint-title-pointer-count-optional-string-view",
+          "post-conversion-full-source-inventory-2026-11-04"
+        ],
+        "runtime_verification": "Batches 25\u201350 verified: macOS SDL Debug build, desktop units 18/18, host units 29/29, native and host regressions each 519 matches with 25 existing warnings and zero differences/errors/skips, tutorial smoke 1/1. The focused DIB resource check passed for 38 assets and the focused paint batch passed 1/1. The separate DIB leak wrapper timed out after the macOS leaks tool could not obtain a task port; its DIB subcheck printed PASS. All 41 candidates found outside the original register are converted. The broader buffer/length review and current-source Windows/Linux qualification remain open.",
+        "candidate_rescan": {
+          "status": "batch 50 verified; all 41 additional private candidates converted; post-conversion inventory complete with no further candidate",
+          "date": "2026-11-04",
+          "replaceable_private_candidate_rows": 70,
+          "original_converted_rows": 29,
+          "new_private_candidate_rows_pending_conversion": 0,
+          "required_boundary_rows": 6,
+          "input_only_callback_rows": 1,
+          "source_inventory_outside_register": "The 2026-11-04 post-conversion sweep rechecked 323 owned source/header files plus compat/win32/src/installed_data.h.in, excluding 60 upstream free-api files. It found StartPrint as one additional private title pointer/count helper behind the IEscapePrinter Win32 adapter; batch 50 converted the helper to an optional string_view. The output/fixed-array sweep found no further grouped results or unregistered private candidates.",
+          "method": "Re-scanned 324 application-owned files and raw void*/LPVOID occurrences, then performed a current-tree follow-up of changed compatibility helpers, candidate-shaped declarations, and pointer write sites; traced each candidate to definitions, production callers, and provider seams or documented their absence. Excluded 65 third-party compat/win32/upstream/free-api files. Classified required Win32/GDI, callback, wire-view, allocator/heap, and object-representation boundaries. The screening scans matched 640 pointer-bearing declaration/definition lines and 134 erased-pointer occurrences; these are lexical screening counts, not candidate counts. The continued scan found five additional private results/helpers and expanded the comparator review to qsort16 and standard-library bsearch input-only callbacks; FDialogUnits has two callers. The supplemental UI sweep found three more private candidates (`MapWindowPoints16`, `HcrsFromFrameWindowPt`, and the Win16 point conversion helpers); WrapTextOut maximum width remains an independent optional accumulator. A current-tree output/fixed-array continuation found eight additional private candidates in fixed 64-entry production buffers, decoded library records, managed-race reads, window/settings values, race-state snapshots, and planetary scanner lookup. Stateful in-place planet/fleet/thing lookups and nested-storage duplication helpers were screened out. A supplemental pointer-to-pointer sweep found CreateSalvage: its sole KillShips caller passes APPSESSION battle-list storage, and the helper delegates mutation to DropSalvage; other T** hits are local linked-list iterators or comparator inputs. The latest continued scan covered 309 files under src/core, src/ui, src/host, src/platform, and compat/win32/src, including fixed-array copy sites; it found FAddLibraryGameListItem's raw pointer to its fixed 16-entry rgturn input and traced its sole caller and absence of a provider seam. The same current-tree pass counted 123 erased-pointer occurrences (`void *`, `LPVOID`, `PVOID`), all accounted for by the registered SDK, callback, heap, wire-view, CRT, and object-representation boundaries. The earlier 2026-11-04 continuation re-scanned 323 current owned source/header files plus the template and excluded 60 upstream free-api source/header files. That pass found no additional unregistered private candidate before the post-conversion StartPrint discovery; its erased-pointer line count was a screening measure, not the token count reported by the later pass. The 2026-11-04 post-conversion scan found StartPrint, a private title pointer/count helper called only by the Win32 IEscapePrinter adapter; the adapter validates cb/pointer inputs, and batch 50 changed the helper to optional<string_view>. Output/fixed-array review found no further grouped outputs. A fresh token scan counted 112 void*/LPVOID/PVOID occurrences in owned source/header contents; the SDK, callback, allocator/heap, wire-view, CRT, and object-representation rows account for the retained forms. LpNewFontRaster cMax, ClosePopups cKeep, and HdcCompatPrinter dimensions were screened as independent semantic values, not pointer extents.",
+          "evidence": "docs/CPP-LIVE-L06-INTERFACE-AUDIT.md",
+          "open_scope": "Finish the broader buffer/length source audit and current-source Windows/Linux qualification.",
+          "new_private_candidates_converted": 41,
+          "current_tree_followup_candidates": 9,
+          "continued_scan_candidates": 5,
+          "screened_exclusions_documented": 13,
+          "output_fixed_array_continuation_candidates": 8,
+          "supplemental_pointer_to_pointer_candidates": 1,
+          "latest_continuation_files_scanned": 323,
+          "continued_fixed_array_copy_candidates": 1,
+          "latest_erased_pointer_occurrences": 112,
+          "latest_continuation_source_files": "323 C/C++/Objective-C++ source and header files plus compat/win32/src/installed_data.h.in",
+          "additional_unregistered_private_candidates": 0,
+          "latest_upstream_free_api_files_excluded": 60,
+          "post_conversion_rescan": "complete after batch 50; no further unregistered private candidate",
+          "latest_pointer_count_signature_matches": 55,
+          "latest_erased_pointer_source_lines": 216,
+          "latest_erased_pointer_token_occurrences": 112
+        },
+        "full_source_inventory": {
+          "status": "2026-11-04 post-conversion source inventory complete; StartPrint added and converted; no additional unregistered private candidates",
+          "date": "2026-11-04",
+          "owned_source_header_files_scanned": 323,
+          "third_party_upstream_files_excluded": 60,
+          "new_private_candidates": 41,
+          "new_required_object_representation_boundary_rows": 1,
+          "screened_exclusions_documented": 13,
+          "evidence": "docs/CPP-LIVE-L06-INTERFACE-AUDIT.md",
+          "post_conversion_rescan": "complete; no unregistered private candidates remain",
+          "lexical_pointer_signature_matches": 640,
+          "lexical_erased_pointer_occurrences": 134,
+          "current_tree_followup_candidates": 9,
+          "continued_scan_candidates": 5,
+          "supplemental_scan_candidates": 3,
+          "output_fixed_array_continuation_candidates": 8,
+          "supplemental_pointer_to_pointer_candidates": 1,
+          "latest_continuation_files_scanned": 323,
+          "continued_fixed_array_copy_candidates": 1,
+          "latest_erased_pointer_occurrences": 112,
+          "new_private_candidates_converted": 41,
+          "new_private_candidates_pending_conversion": 0,
+          "latest_continuation_source_files": "323 C/C++/Objective-C++ source and header files plus compat/win32/src/installed_data.h.in",
+          "latest_upstream_free_api_files_excluded": 60,
+          "additional_unregistered_private_candidates": 0,
+          "registered_open_candidates": 0,
+          "screening_note": "The post-conversion sweep added StartPrint (title pointer/count behind IEscapePrinter) and screened pointer/count-shaped semantic values, typed APIs, SDK/callback/allocator/wire-view boundaries, and independent outputs. No unregistered private candidate remains.",
+          "latest_pointer_count_signature_matches": 55,
+          "latest_erased_pointer_source_lines": 216,
+          "latest_erased_pointer_token_occurrences": 112
+        },
+        "broader_buffer_length_audit": {
+          "scope": "Owned C++ headers and implementations under src and compat/win32, plus owned compatibility headers; 323 source/header files and installed_data.h.in were included in the post-conversion inventory; 60 upstream free-api files excluded.",
+          "signature_review": "Reviewed pointer/count declarations and definitions, span/view plus separate count combinations, written-count outputs, and scalar output references alongside bounded buffers. Traced actionable matches through definitions, callers, and provider seams.",
+          "new_candidates": {
+            "FEncodeRtFleet": "Replaceable private result; one production caller, direct wire-codec tests, no provider; optional written count pending.",
+            "PopupMenu": "Replaceable private interface; 14 production callers, CONTROLIO provider seam and two test adapters; derive active count from exact optional spans pending."
+          },
+          "screened_matches": "Cairo/Win32/CRT callback forms, heap extents, logical wire-record lengths distinct from physical span extents, RightTextOut active text prefix and -1 request, style cursor/mask state, and game/battle/font/printer domain counts remain as documented independent or required shapes.",
+          "source_language_inventory": "0 production C translation units; 44 tracked C test/reference translation units; 0 owned application function-like API macros.",
+          "status": "Audit complete; two focused conversions pending."
+        },
+        "replaceable_candidate_rows": 72,
+        "converted_candidate_rows": 70,
+        "pending_candidate_rows": 2
       }
     },
     {
@@ -28014,7 +28370,7 @@
         "differences_errors": 0,
         "skipped": 0
       },
-      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5–31 byte acceptance range.",
+      "baseline": "Unchanged; the font setting receives the same bounded profile text and applies the same 5\u201331 byte acceptance range.",
       "api_audit": "Removed the strlen rescan after ProfileTextIO::ReadString by using its returned byte count.",
       "platform": "Current-source Windows SDL and Linux desktop qualification remains pending.",
       "diff_check": "Pass."
@@ -28860,7 +29216,7 @@
         "skipped": 0
       },
       "baseline": "Unchanged; native and host regressions both match all 519 checkpoints with zero differences or errors.",
-      "api_audit": "IdNearestUnknownPlanet returns UNKNOWNPLANETRESULT with the selected planet and optional wormhole pointer. IdTargetScout owns that result internally; its wormhole output pointer and all callers’ now-unused pointer arguments are removed. The random wormhole check remains in the same search point and is still reached by every existing scout caller; game state and choices are unchanged.",
+      "api_audit": "IdNearestUnknownPlanet returns UNKNOWNPLANETRESULT with the selected planet and optional wormhole pointer. IdTargetScout owns that result internally; its wormhole output pointer and all callers\u2019 now-unused pointer arguments are removed. The random wormhole check remains in the same search point and is still reached by every existing scout caller; game state and choices are unchanged.",
       "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
       "diff_check": "Pass."
     },
@@ -29402,7 +29758,7 @@
       "PszGetTaskName carries REPORTTEXTRESULT with an exact byte count; fleet task drawing and dump serialization use that count or its bounded view.",
       "Replaced two std::strlen scans of the fixed \"-- \" placeholder in report drawing with its compile-time byte length; rendered bytes are unchanged.",
       "APPGAMESTATE now has compile-time string_view sources for its mineral and planet attribute labels. Existing C-string pointer arrays retain their layout and point to those literals; UI sizing, drawing, and text-out calls now use the exact byte lengths.",
-      "Fleet order labels copied into fixed buffers now use CchGetString’s returned byte count for drawing; the composed mine-laying message uses CchSprintf’s returned count. Six std::strlen rescans were removed without changing displayed text.",
+      "Fleet order labels copied into fixed buffers now use CchGetString\u2019s returned byte count for drawing; the composed mine-laying message uses CchSprintf\u2019s returned count. Six std::strlen rescans were removed without changing displayed text.",
       "The C++ text service now returns PLANETNAMERESULT for planet names, carrying owned fixed storage and the exact UTF-8 byte count. The legacy array-returning PszGetPlanetName wrapper remains for the archived C observer. Report drawing uses result or formatter counts in seven former std::strlen sites."
     ],
     "current_source_audits": {
@@ -29868,12 +30224,17 @@
       "Windows SDK"
     ],
     "implementation": "All current src/ui picker callers use the typed SelectFile path. Obsolete UI OPENFILENAME wrappers and DesktopChoiceIO hooks are removed.",
-    "verification": "macOS Debug build and focused tests pass; new-game, race-library, host-games, main-open and race-save workflows pass with typed chooser providers. ZIP export, orders import and active game/race import-source chooser compile but lack independent end-to-end chooser coverage.",
-    "next": "D06 qualify native Windows/Linux adapters and complete remaining platform/full-suite checks; then assess expansion beyond current eight UI callers."
+    "verification": "macOS Debug focused caller workflows passed: game export (including ZIP), host orders import, external game import, and external race import. The broader win32_client_fileworkflow_dummy test timed out after 75 seconds in the 2026-11-04 run and is not counted as passing coverage. Linux portal and Windows SDK backend qualification remain pending.",
+    "next": "D06 qualify native Windows/Linux adapters and complete remaining platform/full-suite checks; then assess expansion beyond current eight UI callers.",
+    "caller_workflow_coverage": {
+      "zip_export": "win32_client_game_export_dummy passed; ZIP destination callback and archive contents, cancel, and blocked destination checked.",
+      "orders_import": "win32_client_host_library_dummy passed; the typed chooser selects the incoming orders file and the managed orders update is verified.",
+      "active_game_race_import_source": "win32_client_newgame_dummy and win32_client_race_library_dummy passed; external game/race source selection and import are verified, including cancellation of the race edit modal."
+    }
   },
   "remaining_work": [
-    "L06: finish the remaining general buffer/length interface audit and chooser Milestone D Windows/Linux qualification, including missing end-to-end chooser coverage.",
-    "L08: run current-source Windows and Linux qualification, resolve failures and record the final inventory outcome."
+    "L06: convert FEncodeRtFleet to an optional written-count result and remove PopupMenu\u2019s duplicate active count by passing exact spans through its 14 callers, CONTROLIO seam, and two test providers.",
+    "L08: run current-source Windows and Linux qualification, resolve failures, and record final chooser plus C/macro inventory results."
   ],
   "working_tree_checkpoint": {
     "date": "2026-11-03",
@@ -30367,24 +30728,24 @@
     "latest_published_head": "4155e4b0"
   },
   "latest_source_commit": "d9ce84ab",
-  "latest_batch_status": "L05 is complete and locally verified after the CchSprintfFields formatter-library link repair. macOS SDL Debug builds; desktop units 18/18, host units 29/29, native and host regressions 519 matches each with zero differences/errors/skips, tutorial smoke 1/1, and focused compatibility callback test pass. Baseline unchanged; Windows/Linux current-source qualification remains in L08.",
+  "latest_batch_status": "The 2026-11-04 broad current-tree interface scan is complete. It classified the remaining signature-shaped matches and registered two private conversions: FEncodeRtFleet status plus written count, and PopupMenu active count repeated alongside spans. The 323-file post-conversion source inventory and C/macro inventory are recorded. L05 is complete; L06 has these two focused conversions pending; L08 Windows/Linux qualification remains open.",
   "latest_source_audits": {
     "tracked_c_translation_units": 44,
     "production_c_translation_units": 0,
     "application_api_function_like_macros": 0,
     "current_remaining_inventory": {
-      "source_commit": "29a731f9",
+      "source_commit": "4ac98d09",
       "production_c_translation_units": 0,
       "tracked_c_test_and_reference_translation_units": 44,
       "owned_function_like_api_macros": 0,
       "replaceable_legacy_string_and_numeric_calls": 0,
       "replaceable_memcpy_calls": 0,
       "remaining_code_audit_substeps": [
-        "L05 bounded-text-destinations",
-        "L06 remaining-buffer-and-length-interfaces"
+        "L06 fleet-record-encoder-optional-written-count-result",
+        "L06 popup-menu-count-derived-from-exact-spans"
       ],
-      "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser coverage.",
-      "interpretation": "Two broad code audit substeps remain open: L05 bounded text destinations and L06 remaining buffer/length interfaces. They are not a known count of edits. Current maintained and lexical scans show zero confirmed replaceable production C files, owned application function-like macros, raw C copy spellings, legacy string/numeric calls, mechanically replaceable memcpy calls, private BOOL helper results and private UI/list BOOL flags. Current-source Windows/Linux qualification and chooser coverage are also pending.",
+      "remaining_platform_qualification": "L08 current-source Windows and Linux qualification, including chooser backend coverage.",
+      "interpretation": "L05 bounded-text, formatter-return, const-text and scratch/borrowed-return reviews are complete (217 L05 substeps, none pending). The L06 registered candidate scan and broader current-tree interface audit are complete; two additional private conversions remain registered. The 2026-11-04 working-tree inventory finds 0 production C translation units, 44 tracked C test/reference units, and 0 owned application function-like API macros. Current-source Windows/Linux qualification remains open.",
       "production_cost_output_api": "GetProductionCosts uses std::span<std::int32_t, 4>; callers no longer reinterpret signed int32 arrays as uint32_t output pointers. Fixed extent, storage widths, and legacy 32-bit wrap behavior are preserved.",
       "posix_getcwd_and_mkdir_compatibility_shims": 0,
       "redundant_ai_recipe_byte_pointer_casts": 0,
@@ -30428,7 +30789,7 @@
         "owned_function_like_macros": 0,
         "legacy_string_and_numeric_call_spellings": 0,
         "src_BOOL_spellings": [
-          "src/ui/nativeui.h:24 — Win32 BOOL callback signature for win32::GetCursorPos; retained to match that SDK boundary."
+          "src/ui/nativeui.h:24 \u2014 Win32 BOOL callback signature for win32::GetCursorPos; retained to match that SDK boundary."
         ],
         "result": "Fresh lexical scan of src and compat/win32/include/src; comments/literals not parsed separately by this quick check. Maintained cleanup manifests remain authoritative for full audits."
       },
@@ -30451,7 +30812,8 @@
       "fixed_sixteen_entry_ai_design_status_pointer_interfaces": 0,
       "log_replay_record_byte_pointer_interfaces": 0,
       "log_replay_payload_interface": "FRunLogRecord receives its physical payload extent as a span; the signed record length remains separate because replay preserves legacy declared-length and adjacent-buffer semantics.",
-      "message_format_result_interface": "PszFormatString, PszFormatIds, and TEXTIO::pfnFormat return MESSAGETEXTRESULT with exact UTF-8 byte count."
+      "message_format_result_interface": "PszFormatString, PszFormatIds, and TEXTIO::pfnFormat return MESSAGETEXTRESULT with exact UTF-8 byte count.",
+      "source_basis": "Working tree based on develop at 4ac98d09; current L06 source changes are uncommitted."
     },
     "c_macro_inventory": "Refreshed 2026-11-03 at 669556108047393bda163824d1c1be10cbcb0ba7: git tracks 44 .c translation units, all under tests; zero under src or compat/win32. No function-like macro definitions under src, compat/win32/include or compat/win32/src; remaining definitions are header guards, NOMINMAX and the FSHIFT undef. Third-party upstream headers are excluded.",
     "raw_scalar_accessors": "RawLoad16/32 and RawStore16/32 take byte spans rather than void pointers.",
@@ -30508,10 +30870,10 @@
     "library_export_path_length": "FExportLibraryOrders builds one bounded view of the selected path and reuses its size and separator/extension indices; path truncation at the first NUL and suffix replacement semantics are unchanged.",
     "compat_list_search_length": "COMPATLIST owns cchSearch alongside szSearch; ResetList clears both and WM_CHAR updates the count on every append/restart, removing the repeated buffer scan.",
     "library_recent_key_length": "FDeleteLibraryGameRecentPaths uses the byte count returned by CchGetString for idsFile1 when replacing the numeric suffix.",
-    "game_file_path_length": "FOpenGame carries CchCopyUtf8’s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
-    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8’s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
+    "game_file_path_length": "FOpenGame carries CchCopyUtf8\u2019s exact copy count through startup/chooser handling and uses it to find the selected path end in the managed-race branch.",
+    "new_game_filename_length": "NewGameWizard uses CchCopyUtf8\u2019s returned byte count to remove the .xy suffix; a copy too short for that extension cancels safely. The guard is documented in CHANGELOG.md.",
     "strlen_inventory_method": "Individual call counts use rg -o and wc -l; rg -c counts matching lines and undercounts when a line has multiple calls.",
-    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8’s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
+    "print_name_lengths": "HglobPrintNames creates views for driver/device/port, sizes DEVNAMES from those views, and uses CchCopyUtf8\u2019s count to advance after the first two fields. Invalid UTF-8 still advances over the empty terminator written by the copy helper.",
     "compat_menu_label_lengths": "COMPATMENUITEM records the byte count when it owns its label; GetMenuStringA and popup sizing reuse that count.",
     "compat_list_item_lengths": "COMPATLISTITEM records the UTF-8 byte length at AddList ownership transfer; LB_GETTEXTLEN and LB_GETTEXT reuse it, removing the owned-item strlen scan and an implicit string_view length scan. Input search text remains a C-string ABI boundary.",
     "strlen_occurrence_inventory_method": "rg -o confirms 3 std::strlen calls in production C++ source/header files and 10 additional test/witness occurrences; no Objective-C++ std::strlen or SDL_strlen calls remain.",
@@ -30634,15 +30996,26 @@
     },
     "compatibility_resource_spans": "HiconCompatResource, HbmpCompatResource and HmenuCompatTemplate accept bounded byte spans; no private resource pointer-plus-size interfaces remain.",
     "legacy_race_player_span": "FReadLegacyRacePlayer takes a read-only uint8_t span; size checks and legacy wire decoding use the span bounds.",
-    "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format C-string arguments remain at null-check, %s/%p and CRT formatting boundaries."
+    "remaining_const_text_interfaces": "InitBtnTrack retains const char* because BTNT stores the borrowed pointer across events and its layout is fixed. Native printf/format C-string arguments remain at null-check, %s/%p and CRT formatting boundaries.",
+    "working_tree_inventory_2026_11_04": {
+      "working_tree_base": "develop at 4ac98d09; source modifications are uncommitted in the shared checkout",
+      "owned_source_header_scope": "323 C/C++/Objective-C++ files plus compat/win32/src/installed_data.h.in; 60 third-party upstream free-api files excluded",
+      "tracked_c_translation_units": 44,
+      "production_c_translation_units": 0,
+      "owned_application_function_like_macros": 0,
+      "L05_status": "complete; 217 completed substeps, no pending work",
+      "L06_status": "broader interface scan complete; two confirmed private conversions pending; no unregistered candidates",
+      "L08_status": "current-source Windows/Linux qualification pending"
+    }
   },
-  "latest_change": "All 148 remaining snprintf-style production callsites check their formatter result before use; display destinations use complete-prefix CchSprintf formatting.",
+  "latest_change": "2026-11-04 broad L06 interface audit: registered FEncodeRtFleet optional written-count result and PopupMenu exact-span active count as two confirmed private conversions. L05 is complete; the broader L06 scan found no unregistered candidates. Windows/Linux qualification remains open.",
   "latest_batch_verification": {
-    "batch": "Return formatted message byte counts",
-    "parent": "26f1d628",
-    "source_commit": "29a731f9",
-    "macos_sdl_debug_build": "make test-unit rebuilt strict SDL Debug targets and passed all 18 desktop unit tests.",
-    "host_build_and_unit_tests": "make test-host rebuilt strict host targets and passed all 29 host unit tests.",
+    "batch": "L06 StartPrint optional title view",
+    "parent": "L06 source inventory continuation",
+    "source_commit": "4ac98d09",
+    "macos_sdl_debug_build": "make compile passed; no new warnings.",
+    "host_build_and_unit_tests": "make test-host passed all 29 host unit tests.",
+    "desktop_unit_tests": "make test-unit passed all 18 desktop unit tests.",
     "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
     "native_regression": {
       "matches": 519,
@@ -30657,8 +31030,8 @@
       "skipped": 0
     },
     "baseline": "Unchanged; native and host regressions both match all 519 checkpoints.",
-    "api_audit": "PszFormatString, PszFormatIds and TEXTIO::pfnFormat preserve MESSAGETEXTRESULT, including its exact UTF-8 byte count. Formatting output and buffer capacity remain unchanged.",
-    "platform": "Current-source Windows and Linux qualification, including chooser coverage, remains open.",
+    "api_audit": "StartPrint now takes an optional string_view. IEscapePrinter retains the Win32 pointer/count shape and validates before creating the view.",
+    "platform": "Current-source Windows and Linux qualification remains open.",
     "diff_check": "Pass."
   },
   "latest_progress_batch": {
@@ -30712,5 +31085,1357 @@
     "baseline": "unchanged",
     "diff_check": "pass",
     "remaining_platform_qualification": "L08: Windows SDL and Linux desktop current-source qualification"
+  },
+  "l06_conversion_batches": [
+    {
+      "batch": "L06 pointer-count interfaces 1",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "BoundPoints: point span",
+        "DrawScanXorLines: point span",
+        "ReadIniTileSettings: tile span"
+      ],
+      "provider_and_witness_migrations": [
+        "Callers pass bounded active waypoint/tile ranges.",
+        "tests/witnesses/s02_layout.cpp uses the new tile span interface."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 fixed and paired span interfaces",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "EstMineralsMined: fixed three-mineral span",
+        "GetTrueHullCost: fixed four-cost span",
+        "LDrawGauge: paired bounded segment spans"
+      ],
+      "provider_and_witness_migrations": [
+        "Colony estimate-mining provider follows the fixed span type.",
+        "Four-entry scratch buffers pass an explicit three-entry prefix where only mineral outputs are written."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 grouped result interfaces 1",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "GetFileSeeds returns FILESEEDSRESULT",
+        "CshQueued returns CSHQUEUEDRESULT",
+        "GetXferLeftRightRcs returns XFERRECTSRESULT"
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 grouped result interfaces 2",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FIntersectCircleLine returns std::optional<LINEINTERVALRESULT>"
+      ],
+      "callers_and_checks": [
+        "FTravelThroughMineFields consumes interval endpoints only when the optional result is present.",
+        "test_utilgen checks present intervals and misses."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 fixed resources and salvage list head",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FBuildObject takes a fixed four-mineral span",
+        "DropSalvage takes its list head by reference and a fixed three-mineral span"
+      ],
+      "provider_and_witness_migrations": [
+        "Construction fixture and host production witness pass the fixed resource span.",
+        "Battle and turn-generation callers pass their live list heads and fixed mineral prefixes."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 scanner orientation result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "GetScanFleetOrientation returns SCANORIENTATIONRESULT",
+        "GetDxDyOrientation returns SCANORIENTATIONRESULT"
+      ],
+      "callers_and_checks": [
+        "All three scanner drawing call sites consume the paired origin and size from the result.",
+        "Strict header and desktop UI compilation exercises the changed declaration and implementation."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 fixed part-cost span",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "GetTruePartCost takes a fixed four-entry uint16_t span",
+        "PARTQUERYIO::pfnTrueCost and its production-cost test adapter use the fixed span"
+      ],
+      "provider_and_caller_migrations": [
+        "Core production, ship-cost, and UI callers pass their four-cost arrays as fixed spans.",
+        "Existing int32_t scratch arrays retain their prior uint16_t reinterpretation and element-width behavior when passed to the callback.",
+        "The production-cost witness copies through the span with std::copy_n."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 paired survival probability result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "CalcPctSurvive returns SURVIVALRESULT with pct and pctSmart"
+      ],
+      "caller_migrations": [
+        "Battle reads both probabilities from the result.",
+        "Core, report, and UI callers that need only normal survival read pct.",
+        "The smart probability retains its prior 1.0 default when no defense calculation supplies another value."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 retire unused cloak-steal output",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "PctCloakFromHuldef no longer has an unused optional steal-percentage output"
+      ],
+      "provider_and_caller_migrations": [
+        "Both callers were confirmed to pass null and now call the cloak-only interface.",
+        "The conditional scanner-steal calculation was removed; cloak scoring and the returned cloak percentage remain unchanged."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 fixed production-resource span",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "CBuildProdItem takes a fixed four-entry int32_t resource span",
+        "PRODUCTIONIO::pfnBuild and both test adapters use the fixed span"
+      ],
+      "provider_and_caller_migrations": [
+        "Core production callers pass their four-resource arrays to the fixed-span interface.",
+        "Forecast and host production test adapters use span indexing; the forecast witness copies through the bounded view.",
+        "Optional partial-item and status outputs remain independent, and resource element widths are unchanged."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 stargate damage status and optional percentage",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "MdCalcStargateDamage returns STARGATEDAMAGERESULT"
+      ],
+      "caller_migrations": [
+        "FStargateJump and AutoRouteFleet consume the status and percentage result.",
+        "The utility routing caller uses the status and reads the percentage on the successful status path.",
+        "Distance and weight failures carry no percentage; success and total death carry the computed percentage."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 dampening-field result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "CheckWeapons returns the dampening-field flag"
+      ],
+      "provider_and_caller_migrations": [
+        "Both InitializeBoard callers set their existing dampening-field state from the returned Boolean.",
+        "The fixed 64-byte initiative span remains mutable combat state; state flag width and behavior are unchanged."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 printer font and height result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "HfontPrinterCreate returns HFONTPRINTERRESULT"
+      ],
+      "caller_migrations": [
+        "The MDI printer setup consumes the font and optional measured height from each result.",
+        "When font creation fails, the caller leaves its prior height storage untouched, matching the former optional pointer write."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 fixed terraform output spans",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FCanTerraformLppl and COLONYIO::pfnCanTerraform take three fixed three-entry environment spans"
+      ],
+      "provider_and_caller_migrations": [
+        "The Terraform witness now supplies the fixed spans; existing caller arrays bind as exact three-entry views.",
+        "Return-value grouping of min, max, and cost remains open for a later batch."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 battle participant result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "CplrBattle returns BATTLEPARTICIPANTS with the count, player/spectator masks, and fixed sixteen attack masks"
+      ],
+      "provider_and_caller_migrations": [
+        "DoBattles and the focused CplrBattle unit check now consume the grouped result.",
+        "FDoCoolBattle still receives the fixed attack-mask storage at its established internal boundary."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 fleet bombing damage result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FCalcFleetBombDamage returns BOMBDAMAGERESULT with damage presence, five damage/terraform values, and multi-fleet state"
+      ],
+      "caller_migrations": [
+        "DoBombing consumes the named result while retaining all existing calculations and message choices.",
+        "Damage amount element widths remain int32_t and the existing multi-fleet flag remains int16_t."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 minefield travel result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FTravelThroughMineFields accepts an optional input distance and returns MINEFIELDTRAVELRESULT with safe state and optional updated distance"
+      ],
+      "provider_and_caller_migrations": [
+        "MoveFleets consumes the returned distance when the fleet is stopped by a field.",
+        "ThingDecay passes no distance for detonation handling and consumes only the safe state.",
+        "The focused speed-bump unit case verifies the returned stop distance."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 terraform capability result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FCanTerraformLppl and COLONYIO::pfnCanTerraform return TERRAFORMRESULT with capability, fixed three-entry minimum/maximum/cost values"
+      ],
+      "provider_and_caller_migrations": [
+        "Core and UI callers now read the named result arrays and capability flag.",
+        "The Terraform witness provider returns and observes the named result.",
+        "The stored element widths remain int16_t and the fHelp behavior is unchanged."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 warp and two-driver result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "IWarpMAFromLppl and COLONYIO::pfnWarp return WARPRESULT with warp and two-driver values"
+      ],
+      "provider_and_caller_migrations": [
+        "Core and UI callers consume the named warp result.",
+        "Colony provider witnesses and the mass-driver characterization harness use the result type.",
+        "Warp values, two-driver behavior, stored widths, and serialized layouts remain unchanged."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 typed private callback contexts",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FCompatFontDrawScaled passes COMPATTEXTDRAW by reference to the pixel callback.",
+        "CompatInvokeCleanup is now a typed callable template; cleanup closures and the live-resize caller no longer erase a function and context through void pointers."
+      ],
+      "provider_and_caller_migrations": [
+        "The production font drawing caller and font ownership witness use the typed draw context.",
+        "COMPATCLEANUPSCOPE and the live-resize watcher pass synchronous typed callables.",
+        "The SDL event watcher userdata parameter remains at the required third-party callback ABI boundary."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 scanner range result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "GetCachedFleetScannerRange, GetFleetScannerRange, and GetShdefScannerRange return SCANNERRANGERESULT with range, plan range, detect percentage, and steal permission."
+      ],
+      "provider_and_caller_migrations": [
+        "Core callers in turn.cpp, turn3.cpp, save.cpp, and report.cpp and UI callers in scan.cpp and buildui.cpp consume the named result; no provider seam exists.",
+        "turn3.cpp retains accumulated steal permission across transfers; cached and fresh calculation paths remain distinct."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 library file inspection result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FInspectImportFile returns LIBRARYFILEINSPECTRESULT with LIBRARYFILEINFO metadata.",
+        "LibraryPublicationIO::pfnFInspectImportFile uses the named result signature."
+      ],
+      "provider_and_caller_migrations": [
+        "All 13 production call sites in libraryui.cpp consume status and metadata from the result; the linked library publication witness returns the same type.",
+        "LIBRARYFILEINSPECTREQUEST preserves whether turn and generation are requested; callers without a turn request still skip the legacy final-turn trailer read and validation.",
+        "Short-circuit order is retained for failed host inspection, failed source copy, and failed staging copy paths."
+      ],
+      "focused_witness": "Library publication source checker: 61,975 linked-controller cases passed; linked-copy checker: 48 cases passed.",
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 mouse event and position result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FGetMouseMove and FGetRMouseMove return MOUSEMOVERESULT with continuation state and an optional point."
+      ],
+      "provider_and_caller_migrations": [
+        "All nine application loops in utilgenui.cpp, scan.cpp, shipui.cpp, planetui.cpp, buildui.cpp, mdi.cpp, and raceui.cpp apply returned points before checking continuation.",
+        "The Win32-compatible MSG remains local to utilgenui.cpp at the message-queue boundary; there is no injected mouse-provider seam.",
+        "No-message, move, and button-up behavior\u2014including the final point update before loop exit\u2014is preserved."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 runtime object targets use typed variants",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "OBJ stores PLANET*, FLEET*, or THING* as a tagged pointer alternative.",
+        "PART and NATIVEPARTCOMMONVIEW store and dispatch PARTTARGET typed pointer alternatives."
+      ],
+      "provider_and_caller_migrations": [
+        "OBJ setters in planetui.cpp and typed getters in shipui.cpp/planetui.cpp use the new alternatives; no provider seam exists.",
+        "PART catalog setters, lookup callers, and common-view consumers use the variant; a failed lookup retains the previously selected borrow even when hs changes.",
+        "The representations are runtime-only and do not cross serialization. PART remains trivially copyable."
+      ],
+      "layout_contract": "The independent frozen C fixture remains unchanged. The runtime layout checker allows only OBJ, PART, and containing POPUPDATA sizes to grow for the tagged representation, while retaining byte alignment and exact checks for all other types.",
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 optional decoded message result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FGetNMsgbig returns std::optional<MSGBIG>; all callers consume the optional result."
+      ],
+      "provider_and_caller_migrations": [
+        "IdmGetMessageN, PszGetMessageN, msgui.cpp, and test_native_ports.cpp use the optional decoded value.",
+        "Heap-backed message traversal remains behind the physical message byte-window/wire-view adapter; no provider seam."
+      ],
+      "macos_sdl_debug_build": "Pass.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 menu location/path results and toolbar button span",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "LpItem returns an optional menu item/owner/index result.",
+        "CAccelPath returns an optional bounded 64-entry path and enabled state.",
+        "AddButtons accepts a TBBUTTON span; the Win32 message adapter validates the pointer/count before constructing it."
+      ],
+      "provider_and_caller_migrations": [
+        "All private menu lookup callers use the named location result; owner callbacks still trigger path re-resolution.",
+        "TB_ADDBUTTONSA and TB_INSERTBUTTONA message cases preserve their Win32 message shapes at the facade.",
+        "No provider seams exist for these helpers."
+      ],
+      "compatibility_contract_tests": "Toolbar, menu, and menubar focused contract tests pass 3/3.",
+      "focused_leak_wrappers": "The toolbar, menu, and menubar leaks wrappers each timed out because macOS leaks could not obtain a task port; each functional subcheck printed PASS.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 display rectangle and virtual display results",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FDisplayRect returns an optional RECT.",
+        "FVirtualRect returns an optional VIRTUALDISPLAYRESULT containing RECT and display count."
+      ],
+      "provider_and_caller_migrations": [
+        "GetSystemMetrics and SystemParametersInfoA consume the returned values.",
+        "COMPATDISPLAYIO SDL callback signatures remain unchanged; SystemParametersInfoA retains its Win32 pointer facade."
+      ],
+      "focused_compatibility_test": "win32_services passes.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 profile load and dialog unit results",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FLoadProfile returns PROFILELOADRESULT containing the profile list and success status.",
+        "FDialogUnits returns DIALOGUNITSRESULT containing the font, dialog units, and readiness state."
+      ],
+      "provider_and_caller_migrations": [
+        "Both profile API callers consume the named load result; missing-file success remains an empty list, failures still discard partial lists, and PROFILEIO is unchanged.",
+        "Both dialog callers consume the font/metrics result. Partial font creation remains available to caller cleanup; the Win32 WM_NCCREATE transfer remains unchanged."
+      ],
+      "focused_compatibility_tests": "win32_profile_save, win32_sdl_resource_modal, win32_sdl_resource_profile, and win32_utf8_profile pass 4/4.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 primary-hull, planet-scanner, and player-score results",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "IshdefPrimaryFromLpfl returns PRIMARYHULLRESULT with hull index and distinct-design count.",
+        "GetPlanetScannerRange returns PLANETSCANNERRANGERESULT with normal and deep ranges.",
+        "CalcPlayerScore returns the complete SCORE record; its caller reads lScore from the value."
+      ],
+      "provider_and_caller_migrations": [
+        "Fleet summary, scanner, report, save, and turn callers consume named values; no private helper provider seam exists.",
+        "ProductionIO and RaceQueryIO seams remain unchanged, as do SCORE storage layout and codecs."
+      ],
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 optional legacy race player and battle-plan decode results",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FReadLegacyRacePlayer returns std::optional<PLAYER> after bounded legacy-record decoding.",
+        "UnpackBattlePlan returns std::optional<BTLPLAN> after bounded record decoding."
+      ],
+      "provider_and_caller_migrations": [
+        "FWasRaceFile consumes the decoded legacy PLAYER only on success; no provider seam exists.",
+        "FLoadGame and FRunLogRecord consume the decoded BTLPLAN only on success; FileError and recovery behavior remain unchanged.",
+        "BTLPLAN/PLAYER layouts, wire sizes, and bounded input spans remain unchanged."
+      ],
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 SDL tutorial smoke passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 trader and technology learning results",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "IdmGiveTraderPart returns TRADERPARTRESULT with the message ID and typed MsgGoto target.",
+        "ITechLearnATech returns TECHLEARNRESULT with the signed learning result and an optional MsgGoto target for non-battle callers."
+      ],
+      "provider_and_caller_migrations": [
+        "Migrated the thing interaction and technology-learning callers; battle wreckage callers keep message delivery through TurnIO.",
+        "RandomIO, ResearchIO, and TurnIO seams are unchanged. Random draw order, research cost calculations, learned-state updates, and prior no-target outcomes are preserved."
+      ],
+      "focused_compatibility_tests": "test_battle grouped trader result and no-learning/no-target contract pass.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 UI point and splitter results; remove unused MapWindowPoints16",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "GetCursorPos16, ScreenToClient16, and ClientToScreen16 return POINT16CONVERSIONRESULT with Win32 success and the point value.",
+        "HcrsFromFrameWindowPt returns FRAMEWINDOWPOINTRESULT with cursor and splitter selection.",
+        "MapWindowPoints16 is removed after confirming there are no callers."
+      ],
+      "provider_and_caller_migrations": [
+        "All UI point-conversion callers consume the returned point while preserving the old point update on API failure; GetCursorPos16 retains its zero-point fallback and Win32 callback parameter.",
+        "FrameWndProc consumes the cursor and splitter result fields; win32::MapWindowPoints and other Win32 API signatures remain unchanged.",
+        "The nativeui_points compatibility witness was migrated on the application side and still tests success, failure, converted values, and fallback coordinates."
+      ],
+      "focused_compatibility_tests": "win32_nativeui_points passes 1/1.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 battle salvage list head reference",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "CreateSalvage takes the battle-list head as THING *&; the sole KillShips caller passes app.state.lpthBattle directly."
+      ],
+      "provider_and_caller_migrations": [
+        "DropSalvage still performs the battle-list update through the same reference; no provider or wire representation uses this private helper."
+      ],
+      "focused_compatibility_tests": "None required for this private list-head signature migration.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 library-game turn input fixed span",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FAddLibraryGameListItem accepts a fixed 16-entry readonly span for LIBRARYGAMELISTITEM::rgturn."
+      ],
+      "provider_and_caller_migrations": [
+        "The sole ListLibraryGame caller passes its existing uint16_t rgturn[16] as a span; the helper copies all 16 entries in the same order. No provider seam or wire record was changed."
+      ],
+      "focused_compatibility_tests": "None required for this private fixed-array signature migration.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 planetary-scanner helper returns PART",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "LookupBestPlanetaryScanner and PRODUCTIONIO::pfnScanner take and return PART by value."
+      ],
+      "provider_and_caller_migrations": [
+        "Migrated four production callers and the two witness providers. PARTQUERYIO::pfnLookup retains its mutation seam; the scanner fallback walk and lookup order are unchanged."
+      ],
+      "focused_compatibility_tests": "The existing colony-capabilities and construction witnesses exercise the migrated providers in the full unit/witness build.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 window placement rectangle value result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "GetWindowRc returns the converted normal-placement RECT by value."
+      ],
+      "provider_and_caller_migrations": [
+        "SetWindowIniString consumes the result. The Win32 GetWindowPlacement call and edge-to-origin/size conversions are unchanged."
+      ],
+      "focused_compatibility_tests": "None required for this private result-wrapper signature migration.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 library header and BOF readers return optional records",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FReadLibraryHdr and FReadLibraryBof return optional HDR and RTBOF values after exact-size read and decode."
+      ],
+      "provider_and_caller_migrations": [
+        "Migrated generated-file framing, managed-race inspection, generic import inspection, desktop import classification, and selected-player inspection. Header/BOF reads remain short-circuited in the original order; wire extents and FDecode* contracts are unchanged. No provider seam replaces these private readers."
+      ],
+      "focused_compatibility_tests": "Existing library/file workflows run in the full verification suite.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 managed-race loader returns optional PLAYER",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "FReadManagedRace returns std::optional<PLAYER> instead of a success flag plus PLAYER output pointer."
+      ],
+      "provider_and_caller_migrations": [
+        "FindRaceVersion and FSaveCurrentLibraryRace consume the result. The loader still restores race state, file-error silence, and version on both success and failure; no provider seam replaces the loader."
+      ],
+      "focused_compatibility_tests": "Existing race-library workflows run in the full verification suite.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 INI window settings return WN",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "GetIniWinRc returns the complete WN value, including rectangle, maximized/minimized state, and initialized flag."
+      ],
+      "provider_and_caller_migrations": [
+        "Migrated all five ReadIniSettings uses and the s02_layout witness. The ProfileTextIO provider seam, parsing order, and sentinel/default behavior are unchanged."
+      ],
+      "focused_compatibility_tests": "The existing s02_layout witness exercises default, valid, and malformed settings through the value result.",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 race-library state snapshot value result",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "SaveRaceState returns the captured RACESTATE snapshot by value."
+      ],
+      "provider_and_caller_migrations": [
+        "Migrated all nine snapshot sites to receive the returned value at the original operation boundary. RestoreRaceState and its selective restore flags remain unchanged; copied fixed-array bytes and snapshot timing are preserved."
+      ],
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "batch": "L06 AI production queue fixed span",
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "interfaces": [
+        "DoAiTurn, all seven AI turn implementations, FixPlanetsUnderAttack, QuickBuildDefenses, QueueAiStarbases, and HandleBasicAiTasks carry the fixed 64-entry AI production queue as std::span<PROD, 64>."
+      ],
+      "provider_and_caller_migrations": [
+        "The stack-owned 64-entry queue passes into typed AI helpers without changing active-count loops or queue ordering. ProductionIO::pfnInitialize remains at its separate raw-pointer seam for batch 49."
+      ],
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "baseline": "Unchanged."
+    },
+    {
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "baseline": "Unchanged.",
+      "batch": "L06 InitProduction fixed production-row span",
+      "interfaces": [
+        "InitProduction and ProductionIO::pfnInitialize take std::optional<std::span<PROD, 64>>."
+      ],
+      "provider_and_caller_migrations": [
+        "Typed fixed spans flow through local arrays and witnesses. std::nullopt retains the global app.state.pProdGlob fallback; row clearing, active counts, and ordering are preserved."
+      ]
+    },
+    {
+      "base_source": "4ac98d09",
+      "status": "verified in working tree; uncommitted",
+      "macos_sdl_debug_build": "Pass; no new warnings.",
+      "desktop_unit_tests": "18/18 pass.",
+      "host_unit_tests": "29/29 pass.",
+      "native_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "host_regression": {
+        "matches": 519,
+        "warnings": 25,
+        "differences_errors": 0,
+        "skipped": 0
+      },
+      "tutorial": "1/1 SDL tutorial smoke checkpoint passed.",
+      "baseline": "Unchanged.",
+      "batch": "L06 StartPrint optional title view",
+      "interfaces": [
+        "StartPrint takes std::optional<std::string_view> instead of the Win32 pointer/byte-count pair."
+      ],
+      "provider_and_caller_migrations": [
+        "IEscapePrinter retains its Win32 ABI and validates negative/oversized counts and null nonempty input before constructing the view. Empty-title behavior, UTF-8 validation, copied bytes, and error mapping are preserved."
+      ]
+    }
+  ],
+  "latest_l06_batch_verification": {
+    "macos_sdl_debug_build": "pass; no new warnings",
+    "desktop_unit_tests": "18/18 pass",
+    "host_unit_tests": "29/29 pass",
+    "native_regression": "519 matches; 25 existing warnings; zero differences/errors/skips",
+    "host_regression": "519 matches; 25 existing warnings; zero differences/errors/skips",
+    "tutorial": "1/1 SDL tutorial smoke passes",
+    "focused_compatibility_tests": "Not applicable; StartPrint is private behind the Win32 Escape adapter.",
+    "baseline": "unchanged",
+    "diff_check": "pass after batch 50 source and documentation changes",
+    "remaining_platform_qualification": "L08: Windows SDL and Linux desktop current-source qualification"
+  },
+  "latest_l06_candidate_rescan": {
+    "status": "2026-11-04 broad current-tree interface scan complete; 72 replaceable candidates classified (29 initial, 41 prior additions, 2 broad-scan findings); 70 converted and 2 pending focused conversion; no unregistered candidate.",
+    "date": "2026-11-04",
+    "replaceable_private_candidate_rows": 72,
+    "required_boundary_rows": 6,
+    "input_only_callback_rows": 1,
+    "source_inventory_outside_register": "The 2026-11-04 post-conversion sweep rechecked 323 owned source/header files plus compat/win32/src/installed_data.h.in, excluding 60 upstream free-api files. It found StartPrint as one additional private title pointer/count helper behind the IEscapePrinter Win32 adapter; batch 50 converted the helper to an optional string_view. The output/fixed-array sweep found no further grouped results or unregistered private candidates.",
+    "platform_qualification": "open",
+    "original_converted_rows": 29,
+    "new_private_candidate_rows_pending_conversion": 2,
+    "owned_source_header_files_scanned": 323,
+    "third_party_upstream_files_excluded": 60,
+    "lexical_pointer_signature_matches": 640,
+    "lexical_erased_pointer_occurrences": 134,
+    "new_private_candidates_converted": 41,
+    "current_tree_followup_candidates": 9,
+    "post_conversion_rescan": "complete after batch 50; no further unregistered private candidate",
+    "continued_scan_candidates": 5,
+    "supplemental_scan_candidates": 3,
+    "output_fixed_array_continuation_candidates": 8,
+    "supplemental_pointer_to_pointer_candidates": 1,
+    "latest_continuation_files_scanned": 323,
+    "latest_continuation_source_files": "323 C/C++/Objective-C++ source and header files plus compat/win32/src/installed_data.h.in",
+    "latest_erased_pointer_occurrences": 112,
+    "additional_unregistered_private_candidates": 0,
+    "latest_upstream_free_api_files_excluded": 60,
+    "latest_pointer_count_signature_matches": 55,
+    "latest_erased_pointer_source_lines": 216,
+    "latest_erased_pointer_token_occurrences": 112,
+    "broader_buffer_length_audit": {
+      "scope": "Owned C++ headers and implementations under src and compat/win32, plus owned compatibility headers; 323 source/header files and installed_data.h.in were included in the post-conversion inventory; 60 upstream free-api files excluded.",
+      "signature_review": "Reviewed pointer/count declarations and definitions, span/view plus separate count combinations, written-count outputs, and scalar output references alongside bounded buffers. Traced actionable matches through definitions, callers, and provider seams.",
+      "new_candidates": {
+        "FEncodeRtFleet": "Replaceable private result; one production caller, direct wire-codec tests, no provider; optional written count pending.",
+        "PopupMenu": "Replaceable private interface; 14 production callers, CONTROLIO provider seam and two test adapters; derive active count from exact optional spans pending."
+      },
+      "screened_matches": "Cairo/Win32/CRT callback forms, heap extents, logical wire-record lengths distinct from physical span extents, RightTextOut active text prefix and -1 request, style cursor/mask state, and game/battle/font/printer domain counts remain as documented independent or required shapes.",
+      "source_language_inventory": "0 production C translation units; 44 tracked C test/reference translation units; 0 owned application function-like API macros.",
+      "status": "Audit complete; two focused conversions pending."
+    }
+  },
+  "current_cpp_translation_status": {
+    "date": "2026-11-04",
+    "working_tree_base": "develop at 4ac98d09; source changes are present in the shared working tree",
+    "L05": "complete; 217 substeps complete and no pending substeps; formatter-return and scratch/borrowed-return reviews are closed.",
+    "L06_candidate_register": "The initial 29 candidates and 41 additional candidates are converted. The broader interface scan traced and registered two more private candidates: FEncodeRtFleet status plus written count, and PopupMenu active count alongside spans. No unregistered candidate remains.",
+    "L06_pending_substeps": [
+      "fleet-record-encoder-optional-written-count-result",
+      "popup-menu-count-derived-from-exact-spans"
+    ],
+    "L06_source_inventory": "323 owned C/C++/Objective-C++ source/header files plus compat/win32/src/installed_data.h.in reviewed; 60 upstream free-api files excluded; 112 erased-pointer tokens classified; no production C translation units; 44 tracked C test/reference translation units; zero owned application function-like API macros.",
+    "L08_pending": "Current-source Windows and Linux qualification, including native chooser qualification; final revision and verification record.",
+    "historical_snapshots_note": "restart_checkpoint, current_checkpoint, working_tree_checkpoint, and latest_progress_batch retain their recorded historical verification data. Use this object and the stage pending_substeps as the authoritative current status."
   }
 }

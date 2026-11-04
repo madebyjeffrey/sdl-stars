@@ -3,9 +3,15 @@
 
 #include "common.h"
 #include <cstdint>
+#include <optional>
+
+struct STARGATEDAMAGERESULT {
+    std::int16_t status;
+    std::optional<std::int16_t> pctDmg;
+};
 
 std::int16_t FStargateJump(APPSESSION &app, FLEET *lpfl, std::int16_t isbsSrc, std::int16_t isbsDst, std::int16_t dDist);
-std::int16_t MdCalcStargateDamage(APPSESSION &app, std::int16_t isbsSrc, std::int16_t isbsDst, std::int16_t dDist, std::int16_t wt, std::int16_t *ppctDmg);
+STARGATEDAMAGERESULT MdCalcStargateDamage(APPSESSION &app, std::int16_t isbsSrc, std::int16_t isbsDst, std::int16_t dDist, std::int16_t wt);
 void    KillUsedWaypoints(APPSESSION &app);
 void    NoAutoTrackFleet(APPSESSION &app, FLEET *lpflTarget);
 void    AutoRouteFleet(APPSESSION &app, FLEET *lpfl, PLANET *lppl);

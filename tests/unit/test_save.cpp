@@ -624,12 +624,14 @@ static void test_utf8_design_and_plan_bounds(void) {
     memcpy(rgb + 4, "\0\xc3\xa9\0", 4);
     app.state.idsFileError = 0;
     memset(&btlplan, 0x55, sizeof(btlplan));
-    TEST_CHECK(!UnpackBattlePlan(app, std::span<const uint8_t>(rgb, 7), &btlplan, 0));
+    const auto malformedPlan = UnpackBattlePlan(app, std::span<const uint8_t>(rgb, 7), 0);
+    TEST_CHECK(!malformedPlan);
     TEST_CHECK(btlplan.szName[0] == 0x55);
     TEST_CHECK(app.state.idsFileError == idsGameFileAppearsCorruptUnableLoadFile);
     app.state.idsFileError = 0;
-    TEST_CHECK(UnpackBattlePlan(app, std::span<const uint8_t>(rgb, 8), &btlplan, 0));
-    TEST_CHECK(app.state.idsFileError == 0 && !strcmp(btlplan.szName, "\xc3\xa9"));
+    const auto decodedPlan = UnpackBattlePlan(app, std::span<const uint8_t>(rgb, 8), 0);
+    TEST_CHECK(decodedPlan);
+    TEST_CHECK(app.state.idsFileError == 0 && !strcmp(decodedPlan->szName, "\xc3\xa9"));
 }
 
 static int cNameRecords;
@@ -765,7 +767,9 @@ static void test_utf8_raw_battle_plan(void) {
     WriteBattlePlan(app, &btlplan, 1);
     TEST_ASSERT(FGetPrevLogRtForTest(app, hdr, std::span{rgb}));
     TEST_CHECK(hdr.rt == rtBtlPlan && hdr.cb == sizeof(BTLPLAN) + 1 && rgb[4] == 0);
-    TEST_ASSERT(UnpackBattlePlan(app, std::span<const uint8_t>(rgb, hdr.cb), &btlplanRead, 0));
+    const auto decodedPlan = UnpackBattlePlan(app, std::span<const uint8_t>(rgb, hdr.cb), 0);
+    TEST_ASSERT(decodedPlan);
+    btlplanRead = *decodedPlan;
     TEST_CHECK(!strcmp(btlplanRead.szName, btlplan.szName));
 }
 
@@ -1016,13 +1020,21 @@ static void test_WriteRtScore_bytes(void) {
     StreamOpen(app, szFile, mdCreate);
     SetFileSeeds(app, 123456, 789012);
     WriteRtScore(app, &sx);
-    GetFileSeeds(app, &lSeed1, &lSeed2);
+    {
+        const FILESEEDSRESULT seeds = GetFileSeeds(app);
+        lSeed1 = seeds.lSeed1;
+        lSeed2 = seeds.lSeed2;
+    }
     TEST_CHECK(lSeed1 == 173304275 && lSeed2 == 470715282);
     StreamClose(app);
     StreamOpen(app, szFile, mdRead);
     SetFileSeeds(app, 123456, 789012);
     ReadRt(app);
-    GetFileSeeds(app, &lSeed1, &lSeed2);
+    {
+        const FILESEEDSRESULT seeds = GetFileSeeds(app);
+        lSeed1 = seeds.lSeed1;
+        lSeed2 = seeds.lSeed2;
+    }
     TEST_CHECK(app.state.hdrCur.rt == rtScore && app.state.hdrCur.cb == 24 && !memcmp(app.state.rgbCur, golden, sizeof(golden)));
     TEST_CHECK(lSeed1 == 173304275 && lSeed2 == 470715282);
     TEST_CHECK(FDecodeScoreX(std::as_bytes(std::span(app.state.rgbCur)), decoded) && decoded.wWord() == 0xa5d3 && decoded.turn == 65534 && decoded.iRank() == -2);
@@ -1050,7 +1062,11 @@ static void test_WritePlanet_minimal_history_bytes(void) {
     pl.isb = 9; pl.turn = -2;
     StreamOpen(app, szFile, mdCreate); SetFileSeeds(app, 123456, 789012);
     WritePlanet(app, &pl, rtPlanetB, 1);
-    GetFileSeeds(app, &lSeed1, &lSeed2);
+    {
+        const FILESEEDSRESULT seeds = GetFileSeeds(app);
+        lSeed1 = seeds.lSeed1;
+        lSeed2 = seeds.lSeed2;
+    }
     TEST_CHECK(lSeed1 == 622877478 && lSeed2 == 1520895743);
     StreamClose(app);
     StreamOpen(app, szFile, mdRead); SetFileSeeds(app, 123456, 789012); ReadRt(app);
@@ -1125,7 +1141,11 @@ static void test_WriteRtPlr_partial_bytes(void) {
     plr.det = detMinimal; plr.iPlrBmp = 17; plr.fInclude = 1; plr.fAi = 1; plr.lvlAi = 3; plr.idAi = 5;
     StreamOpen(app, szFile, mdCreate); SetFileSeeds(app, 123456, 789012);
     WriteRtPlr(app, &plr);
-    GetFileSeeds(app, &lSeed1, &lSeed2);
+    {
+        const FILESEEDSRESULT seeds = GetFileSeeds(app);
+        lSeed1 = seeds.lSeed1;
+        lSeed2 = seeds.lSeed2;
+    }
     TEST_CHECK(lSeed1 == 125172514 && lSeed2 == 2112981774);
     StreamClose(app);
     StreamOpen(app, szFile, mdRead); SetFileSeeds(app, 123456, 789012); ReadRt(app);
@@ -1154,7 +1174,11 @@ static void test_WriteRtThing_bytes(void) {
     snprintf(szFile, sizeof(szFile), "%s%sthing", szDir, szDirSep);
     TEST_ASSERT(FDecodeThing(std::as_bytes(std::span(golden)), th));
     StreamOpen(app, szFile, mdCreate); SetFileSeeds(app, 123456, 789012); WriteRtThing(app, &th);
-    GetFileSeeds(app, &lSeed1, &lSeed2);
+    {
+        const FILESEEDSRESULT seeds = GetFileSeeds(app);
+        lSeed1 = seeds.lSeed1;
+        lSeed2 = seeds.lSeed2;
+    }
     TEST_CHECK(lSeed1 == 170401200 && lSeed2 == 2097781771);
     TEST_CHECK(!memcmp(th.RgbRecord().data(), golden, sizeof(golden)));
     StreamClose(app);

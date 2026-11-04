@@ -4,6 +4,7 @@
 #include "common.h"
 #include <cstdint>
 #include <array>
+#include <optional>
 #include <string_view>
 
 extern std::uint32_t rgcrDrawStars2b[5];
@@ -13,11 +14,33 @@ extern std::int32_t  rgDSDivCnt2[5];
 extern std::int32_t  rgDSDivCnt[5];
 extern std::uint8_t  vrgbTachyon[18];
 
+struct SURVIVALRESULT {
+    float pct = 1.0F;
+    float pctSmart = 1.0F;
+};
+
+struct SCANNERRANGERESULT {
+    std::int16_t dRange;
+    std::int16_t dPlanRange;
+    std::int16_t pctDetect;
+    std::int16_t iSteal;
+};
+
+struct PRIMARYHULLRESULT {
+    std::int16_t ishdef;
+    std::int16_t cDiff;
+};
+
+struct PLANETSCANNERRANGERESULT {
+    std::int16_t dRange;
+    std::int16_t dDeep;
+};
+
 std::int16_t  FLookupSelPlanet(APPSESSION &app, PLANET *ppl);
 std::int16_t  FDupPlanet(APPSESSION &app, PLANET *lppl, PLANET *ppl);
 THING   *LpthFromId(APPSESSION &app, std::int16_t idth);
 PLANET  *LpplFromId(APPSESSION &app, std::int16_t idPlanet);
-void     CalcPctSurvive(APPSESSION &app, PLANET *lppl, float *ppct, float *ppctSmart);
+SURVIVALRESULT CalcPctSurvive(APPSESSION &app, PLANET *lppl);
 std::int16_t  FLookupPlanet(APPSESSION &app, std::int16_t iPlanet, PLANET *ppl);
 std::int32_t  DpOfLpflIshdef(APPSESSION &app, FLEET *lpfl, std::int16_t ishdef);
 std::int16_t  FLookupThing(APPSESSION &app, std::int16_t idth, THING *pth);
@@ -61,9 +84,18 @@ struct HULLNAMERESULT {
     std::size_t size() const noexcept { return cch; }
     std::string_view view() const noexcept { return {rgch.data(), cch}; }
 };
+struct BOMBDAMAGERESULT {
+    bool fDamage;
+    std::int32_t dmgPeople;
+    std::int32_t dmgPeopleMin;
+    std::int32_t dmgPeopleSmart;
+    std::int32_t dmgBldg;
+    std::int32_t pctTerra;
+    std::int16_t fMulti;
+};
+
 PLAYERNAMERESULT PszPlayerName(APPSESSION &app, std::int16_t iPlayer, std::int16_t fCapital, std::int16_t fPlural, std::int16_t fThe, std::int16_t grWord, PLAYER *pplr);
-std::int16_t  FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl, std::int32_t *pdmgPeople, std::int32_t *pdmgPeopleMin, std::int32_t *pdmgPeopleSmart, std::int32_t *pdmgBldg, std::int32_t *ppctTerra,
-                              std::int16_t *pfMulti);
+BOMBDAMAGERESULT FCalcFleetBombDamage(APPSESSION &app, FLEET *lpfl);
 void     LinkFleets(APPSESSION &app, std::int16_t fUnused);
 int      ICompFleetPoint(FLEET **ppfl1, FLEET **ppfl2);
 int      ICompFleetPoint2(std::int32_t *pl, FLEET **ppfl);
@@ -72,7 +104,7 @@ FLEET   *LpflFromId(APPSESSION &app, std::int16_t idFleet);
 std::int16_t  FLookupFleet(APPSESSION &app, std::int16_t idFleet, FLEET *pfl);
 std::int16_t  FDupFleet(APPSESSION &app, FLEET *lpfl, FLEET *pfl);
 std::int16_t  FLookupObject(APPSESSION &app, GrobjClass grobj, std::int16_t id, XFER::OBJECTTARGET objectTarget);
-std::int16_t  FLookupOrbitingXfer(APPSESSION &app, std::int16_t idPlanet, std::int16_t iNth, XFER *pxf, std::int16_t idSkip);
+std::optional<XFER> FLookupOrbitingXfer(APPSESSION &app, std::int16_t idPlanet, std::int16_t iNth, std::int16_t idSkip);
 std::array<char, 360> PszGetThingName(APPSESSION &app, std::int16_t id);
 std::array<char, 360> PszGetFleetName(APPSESSION &app, std::int16_t id);
 FLEETNAMERESULT PszGetFleetNameResult(APPSESSION &app, std::int16_t id);
@@ -87,19 +119,19 @@ FLEET   *LpflNewSplit(APPSESSION &app, FLEET *pfl);
 std::int16_t  FFleetMergeAll(APPSESSION &app, FLEET *pfl);
 std::int16_t  FFleetSplitAll(APPSESSION &app, FLEET *pfl);
 std::array<char, 360> PszGetLocName(APPSESSION &app, GrobjClass grobj, std::int16_t id, std::int16_t x, std::int16_t y);
-std::int16_t  IshdefPrimaryFromLpfl(APPSESSION &app, FLEET *lpfl, std::int16_t *pcDiff);
+PRIMARYHULLRESULT IshdefPrimaryFromLpfl(APPSESSION &app, FLEET *lpfl);
 std::array<char, 360> PszGetDistance(APPSESSION &app, std::int16_t x1, std::int16_t y1, std::int16_t x2, std::int16_t y2);
 double   DGetDistance(std::int16_t x1, std::int16_t y1, std::int16_t x2, std::int16_t y2);
 std::int16_t  FFindNearestObject(APPSESSION &app, POINT16 pt, GrobjClass grobj, SCAN *pscan);
 void     UpdateShdefCost(APPSESSION &app, SHDEF *lpshdef);
 std::uint16_t WPackLong(std::int32_t l);
-std::int16_t  GetPlanetScannerRange(APPSESSION &app, PLANET *lppl, std::int16_t *pDeep);
-std::int16_t  GetCachedFleetScannerRange(APPSESSION &app, FLEET *lpfl, std::int16_t *pdPlanRange, std::int16_t *ppctDetect, std::int16_t *piSteal);
-std::int16_t  GetFleetScannerRange(APPSESSION &app, FLEET *lpfl, std::int16_t *pdPlanRange, std::int16_t *ppctDetect, std::int16_t *piSteal);
-std::int16_t  GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, std::int16_t iplr, std::int16_t *pdPlanRange, std::int16_t *ppctDetect, std::int16_t *piSteal);
+PLANETSCANNERRANGERESULT GetPlanetScannerRange(APPSESSION &app, PLANET *lppl);
+SCANNERRANGERESULT GetCachedFleetScannerRange(APPSESSION &app, FLEET *lpfl);
+SCANNERRANGERESULT GetFleetScannerRange(APPSESSION &app, FLEET *lpfl);
+SCANNERRANGERESULT GetShdefScannerRange(APPSESSION &app, SHDEF *lpshdef, std::int16_t iplr);
 std::int32_t  LCalcFuelGainFromRamScoops(APPSESSION &app, FLEET *lpfl, std::int16_t iWarp, std::int32_t dTravel);
-std::int32_t  CalcPlayerScore(APPSESSION &app, std::int16_t iPlr, SCORE *pscore);
-void     GetTrueHullCost(std::int16_t iPlayer, HUL *lphul, std::uint16_t *rgCost);
+SCORE CalcPlayerScore(APPSESSION &app, std::int16_t iPlr);
+void     GetTrueHullCost(std::int16_t iPlayer, HUL *lphul, std::span<std::uint16_t, 4> rgCost);
 std::array<char, 40> DecorateHullName(APPSESSION &app, std::int16_t iplr, std::int16_t ish);
 HULLNAMERESULT DecorateHullNameResult(APPSESSION &app, std::int16_t iplr, std::int16_t ish);
 std::int16_t  FMatchTarget(APPSESSION &app, FLEET *lpflTarget, MdTarget mdTarget, std::int16_t fExact);

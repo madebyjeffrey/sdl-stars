@@ -84,7 +84,7 @@ Cleanup:
     return;
 }
 
-void DoRobotoidAiTurn(APPSESSION &app, PROD *rgprod) {
+void DoRobotoidAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod) {
     AISHDEFSTATUSRESULT shdefStatus;
     std::int32_t  rgResCost[4];
     FLEET   *lpflEnemy;
@@ -848,7 +848,7 @@ std::int16_t FEnumCalcArmadaHumanDest(APPSESSION &app, PLANET *lpplSrc, PLANET *
     return 0;
 }
 
-void DoTurinDroneAiTurn(APPSESSION &app, PROD *rgprod) {
+void DoTurinDroneAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod) {
     AISHDEFSTATUSRESULT shdefStatus;
     std::int32_t  rgResCost[4];
     std::int16_t  iLatestCruiser;

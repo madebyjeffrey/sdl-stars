@@ -33,7 +33,7 @@ void DrawThingGauge(APPSESSION &app, HDC hdc, RECT *prc, THING *lpth, std::int16
         rghbr[0] = app.lpui->rghbrMineral[md];
         rgSize[0] = lpth->thp().rgwtMin(md);
     }
-    l = LDrawGauge(app, hdc, prc, cSections, rgSize, rghbr, lMax);
+    l = LDrawGauge(app, hdc, prc, std::span{rgSize}.first(static_cast<std::size_t>(cSections)), std::span{rghbr}.first(static_cast<std::size_t>(cSections)), lMax);
     iMode = win32::SetBkMode(hdc, win32::TRANSPARENT);
     if (fDisabled) {
         l = 0;

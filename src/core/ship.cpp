@@ -1004,15 +1004,16 @@ void RemoveIshdefFromAllQueues(APPSESSION &app, std::int16_t ishdef, std::int16_
     return;
 }
 
-std::int16_t CshQueued(APPSESSION &app, std::int16_t ishdef, std::int16_t *pfProgress, std::int16_t fSpaceDocks) {
+CSHQUEUEDRESULT CshQueued(APPSESSION &app, std::int16_t ishdef, std::int16_t fSpaceDocks) {
     std::int16_t iprod;
     PLANET *lppl;
     std::int16_t csh;
+    std::int16_t fProgress;
     PLANET *lpplMac;
     PROD   *lpprod;
 
     csh = 0;
-    *pfProgress = 0;
+    fProgress = 0;
     lppl = app.state.lpPlanets;
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {
@@ -1024,7 +1025,7 @@ std::int16_t CshQueued(APPSESSION &app, std::int16_t ishdef, std::int16_t *pfPro
                 if (lpprod->grobj == grobjFleet && lpprod->iItem == static_cast<std::uint32_t>(ishdef)) {
                     csh += lpprod->cItem;
                     if (lpprod->pct != 0) {
-                        *pfProgress = 1;
+                        fProgress = 1;
                     }
                 }
                 iprod++;
@@ -1032,7 +1033,7 @@ std::int16_t CshQueued(APPSESSION &app, std::int16_t ishdef, std::int16_t *pfPro
             }
         }
     }
-    return csh;
+    return CSHQUEUEDRESULT{csh, fProgress};
 }
 
 void Merge2Fleets(APPSESSION &app, FLEET *lpflDst, FLEET *lpflDel, std::int16_t fNoDelete) {
@@ -1123,7 +1124,7 @@ void FleetOrdersChangeTarget(APPSESSION &app, FLEET *lpflOld) {
     return;
 }
 
-void GetTruePartCost(APPSESSION &app, std::int16_t iPlayer, PART *ppart, std::uint16_t *rgCost) {
+void GetTruePartCost(APPSESSION &app, std::int16_t iPlayer, PART *ppart, std::span<std::uint16_t, 4> rgCost) {
     std::int16_t  cExcess;
     std::int16_t  cCur;
     std::int16_t  i;

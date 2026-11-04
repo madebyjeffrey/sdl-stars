@@ -1,6 +1,7 @@
 #include "display_io.h"
 #include "cleanup.h"
 #include "ownership.h"
+#include <array>
 #include <limits>
 #include <new>
 #include <string_view>
@@ -15,6 +16,7 @@ struct COMPATMENUITEM {
     NATIVEOWNER<char, SDL_free> psz;
     HMENU hsub;
 };
+struct COMPATMENUITEMLOCATION { COMPATMENUITEM *lpitem; HMENU hmenu; int i; };
 struct win32::HMENU__ {
     BOOL fAlive;
     std::unique_ptr<COMPATMENUITEM[]> rgitem;
@@ -30,27 +32,25 @@ static HMENU LpMenu(HMENU hmenu) {
         if (lp == hmenu) return lp->fAlive ? lp : nullptr;
     return nullptr;
 }
-static COMPATMENUITEM *LpItem(HMENU hmenu, UINT id, UINT flags, HMENU *lphmenu, int *lpi) {
+static std::optional<COMPATMENUITEMLOCATION> LpItem(HMENU hmenu, UINT id, UINT flags) {
     HMENU lp = LpMenu(hmenu);
-    COMPATMENUITEM *lpitem;
+    std::optional<COMPATMENUITEMLOCATION> location;
     int i;
-    if (!lp) return nullptr;
+    if (!lp) return std::nullopt;
     if (flags & win32::MF_BYPOSITION) {
-        if (id >= static_cast<UINT>(lp->citem)) return nullptr;
-        *lphmenu = lp; *lpi = static_cast<int>(id);
-        return &lp->rgitem[id];
+        if (id >= static_cast<UINT>(lp->citem)) return std::nullopt;
+        return COMPATMENUITEMLOCATION{&lp->rgitem[id], lp, static_cast<int>(id)};
     }
     for (i = 0; i < lp->citem; i++) {
         if (!lp->rgitem[i].hsub && lp->rgitem[i].id == id) {
-            *lphmenu = lp; *lpi = i;
-            return &lp->rgitem[i];
+            return COMPATMENUITEMLOCATION{&lp->rgitem[i], lp, i};
         }
         if (lp->rgitem[i].hsub) {
-            lpitem = LpItem(lp->rgitem[i].hsub, id, flags, lphmenu, lpi);
-            if (lpitem) return lpitem;
+            location = LpItem(lp->rgitem[i].hsub, id, flags);
+            if (location) return location;
         }
     }
-    return nullptr;
+    return std::nullopt;
 }
 static bool FMenuDepth(HMENU hmenu, int cDepth) {
     HMENU lp = LpMenu(hmenu);
@@ -82,6 +82,7 @@ UINT win32::GetMenuItemID(HMENU hmenu, int i) {
 }
 BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR psz) {
     HMENU lp = LpMenu(hmenu), hsub = nullptr, hp;
+    std::optional<COMPATMENUITEMLOCATION> location;
     COMPATMENUITEM item = {};
     std::unique_ptr<COMPATMENUITEM[]> rg;
     int i, j, cDepth = 0;
@@ -89,7 +90,12 @@ BOOL win32::InsertMenuA(HMENU hmenu, UINT pos, UINT flags, UINT_PTR id, LPCSTR p
         return 0;
     if (pos == std::numeric_limits<unsigned int>::max()) i = lp->citem;
     else if (flags & win32::MF_BYPOSITION) i = pos > static_cast<UINT>(lp->citem) ? lp->citem : static_cast<int>(pos);
-    else if (!LpItem(lp, pos, 0, &lp, &i)) return 0;
+    else {
+        location = LpItem(lp, pos, 0);
+        if (!location) return 0;
+        lp = location->hmenu;
+        i = location->i;
+    }
     if (flags & win32::MF_SEPARATOR) flags = win32::MF_SEPARATOR | win32::MF_DISABLED | win32::MF_GRAYED;
     else {
         if (psz && !FUtf8Valid(psz)) return 0;
@@ -133,10 +139,14 @@ BOOL win32::DestroyMenu(HMENU hmenu) {
 }
 static bool FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
     HMENU lp;
+    std::optional<COMPATMENUITEMLOCATION> location;
     COMPATMENUITEM *lpitem;
     int i;
-    lpitem = LpItem(hmenu, pos, flags, &lp, &i);
-    if (!lpitem) return 0;
+    location = LpItem(hmenu, pos, flags);
+    if (!location) return 0;
+    lp = location->hmenu;
+    i = location->i;
+    lpitem = location->lpitem;
     if (lpitem->hsub) {
         if (fDestroy) win32::DestroyMenu(lpitem->hsub);
         else if (LpMenu(lpitem->hsub)) lpitem->hsub->hparent = nullptr;
@@ -149,41 +159,39 @@ static bool FRemoveMenu(HMENU hmenu, UINT pos, UINT flags, BOOL fDestroy) {
 BOOL win32::DeleteMenu(HMENU hmenu, UINT pos, UINT flags) { return FRemoveMenu(hmenu, pos, flags, 1); }
 BOOL win32::RemoveMenu(HMENU hmenu, UINT pos, UINT flags) { return FRemoveMenu(hmenu, pos, flags, 0); }
 DWORD win32::CheckMenuItem(HMENU hmenu, UINT id, UINT flags) {
-    HMENU lp;
+    std::optional<COMPATMENUITEMLOCATION> location;
     COMPATMENUITEM *lpitem;
-    int i;
     DWORD old;
-    lpitem = LpItem(hmenu, id, flags, &lp, &i);
-    if (!lpitem) return std::numeric_limits<unsigned int>::max();
+    location = LpItem(hmenu, id, flags);
+    if (!location) return std::numeric_limits<unsigned int>::max();
+    lpitem = location->lpitem;
     old = lpitem->flags & win32::MF_CHECKED;
     lpitem->flags = (lpitem->flags & ~win32::MF_CHECKED) | (flags & win32::MF_CHECKED);
     return old;
 }
 BOOL win32::EnableMenuItem(HMENU hmenu, UINT id, UINT flags) {
-    HMENU lp;
+    std::optional<COMPATMENUITEMLOCATION> location;
     COMPATMENUITEM *lpitem;
-    int i;
     UINT old;
-    lpitem = LpItem(hmenu, id, flags, &lp, &i);
-    if (!lpitem) return -1;
+    location = LpItem(hmenu, id, flags);
+    if (!location) return -1;
+    lpitem = location->lpitem;
     old = lpitem->flags & (win32::MF_DISABLED | win32::MF_GRAYED);
     lpitem->flags = (lpitem->flags & ~(win32::MF_DISABLED | win32::MF_GRAYED)) | (flags & (win32::MF_DISABLED | win32::MF_GRAYED));
     return static_cast<BOOL>(old);
 }
 UINT win32::GetMenuState(HMENU hmenu, UINT id, UINT flags) {
-    HMENU lp;
+    const auto location = LpItem(hmenu, id, flags);
     COMPATMENUITEM *lpitem;
-    int i;
-    lpitem = LpItem(hmenu, id, flags, &lp, &i);
-    if (!lpitem) return std::numeric_limits<unsigned int>::max();
+    if (!location) return std::numeric_limits<unsigned int>::max();
+    lpitem = location->lpitem;
     return lpitem->flags | (lpitem->hsub ? static_cast<UINT>((win32::GetMenuItemCount(lpitem->hsub) & 0xff)) << 8 : 0);
 }
 int win32::GetMenuStringA(HMENU hmenu, UINT id, LPSTR psz, int cch, UINT flags) {
-    HMENU lp;
+    const auto location = LpItem(hmenu, id, flags);
     COMPATMENUITEM *lpitem;
     std::size_t c;
-    int i;
-    lpitem = LpItem(hmenu, id, flags, &lp, &i);
+    lpitem = location ? location->lpitem : nullptr;
     if (!lpitem || !lpitem->psz) { if (psz && cch > 0) psz[0] = 0; return 0; }
     c = lpitem->cch;
     if (!psz || cch <= 0) return static_cast<int>((((c) < (static_cast<std::size_t>(std::numeric_limits<int>::max()))) ? (c) : (static_cast<std::size_t>(std::numeric_limits<int>::max()))));
@@ -813,48 +821,57 @@ bool FCompatMenuFocus(HWND hwnd, bool fGain) {
 }
 
 /* Return a copied ancestor path so owner callbacks may replace menu storage. */
-static int CAccelPath(HMENU hmenu, UINT cmd, HMENU *rgh, int *rgi, int depth, BOOL *lpfEnabled) {
+struct COMPATACCELPATHENTRY { HMENU hmenu; int i; };
+struct COMPATACCELPATH { std::array<COMPATACCELPATHENTRY, 64> rg; int c; BOOL fEnabled; };
+static std::optional<COMPATACCELPATH> OaccelPath(HMENU hmenu, UINT cmd, int depth) {
     HMENU lp = LpMenu(hmenu);
-    int i, c;
+    std::optional<COMPATACCELPATH> path;
+    int i;
     BOOL fEnabled;
-    if (!lp || depth >= 64) return 0;
+    if (!lp || depth >= 64) return std::nullopt;
     for (i = 0; i < lp->citem; i++) {
         fEnabled = !(lp->rgitem[i].flags & (win32::MF_DISABLED | win32::MF_GRAYED | win32::MF_SEPARATOR));
-        rgh[depth] = lp; rgi[depth] = i;
         if (!lp->rgitem[i].hsub && lp->rgitem[i].id == cmd) {
-            *lpfEnabled = fEnabled;
-            return depth + 1;
+            COMPATACCELPATH result{};
+            result.rg[static_cast<std::size_t>(depth)] = {lp, i};
+            result.c = depth + 1;
+            result.fEnabled = fEnabled;
+            return result;
         }
         if (lp->rgitem[i].hsub) {
-            c = CAccelPath(lp->rgitem[i].hsub, cmd, rgh, rgi, depth + 1, lpfEnabled);
-            if (c != 0) { *lpfEnabled = *lpfEnabled && fEnabled; return c; }
+            path = OaccelPath(lp->rgitem[i].hsub, cmd, depth + 1);
+            if (path) {
+                path->rg[static_cast<std::size_t>(depth)] = {lp, i};
+                path->fEnabled = path->fEnabled && fEnabled;
+                return path;
+            }
         }
     }
-    return 0;
+    return std::nullopt;
 }
 int ICompatAccelMenu(HWND hwnd, UINT cmd, bool fNotify) {
-    HMENU rgh[64], hmenu, hsub;
-    int rgi[64], c, i;
-    BOOL fEnabled;
+    HMENU hmenu, hsub;
+    int i;
+    std::optional<COMPATACCELPATH> path;
     HWND lpwin = LpCompatWindow(hwnd);
 
     if (!lpwin || !lpwin->hmenu) return 0;
     hmenu = lpwin->hmenu;
-    c = CAccelPath(hmenu, cmd, rgh, rgi, 0, &fEnabled);
-    if (c == 0) return 0;
-    if (!fNotify) return fEnabled ? 1 : 2;
+    path = OaccelPath(hmenu, cmd, 0);
+    if (!path) return 0;
+    if (!fNotify) return path->fEnabled ? 1 : 2;
     win32::SendMessageA(hwnd, win32::WM_INITMENU, reinterpret_cast<WPARAM>(hmenu), 0);
     for (i = 0; i < 63; i++) {
         lpwin = LpCompatWindow(hwnd);
         if (!lpwin) return 2;
-        c = CAccelPath(lpwin->hmenu, cmd, rgh, rgi, 0, &fEnabled);
-        if (c == 0) return 0;
-        if (i >= c - 1) return fEnabled ? 1 : 2;
-        hsub = win32::GetSubMenu(rgh[i], rgi[i]);
-        win32::SendMessageA(hwnd, win32::WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hsub), win32::MAKELPARAM(rgi[i], 0));
+        path = OaccelPath(lpwin->hmenu, cmd, 0);
+        if (!path) return 0;
+        if (i >= path->c - 1) return path->fEnabled ? 1 : 2;
+        hsub = win32::GetSubMenu(path->rg[static_cast<std::size_t>(i)].hmenu, path->rg[static_cast<std::size_t>(i)].i);
+        win32::SendMessageA(hwnd, win32::WM_INITMENUPOPUP, reinterpret_cast<WPARAM>(hsub), win32::MAKELPARAM(path->rg[static_cast<std::size_t>(i)].i, 0));
     }
     lpwin = LpCompatWindow(hwnd);
     if (!lpwin) return 2;
-    c = CAccelPath(lpwin->hmenu, cmd, rgh, rgi, 0, &fEnabled);
-    return c == 0 ? 0 : (fEnabled ? 1 : 2);
+    path = OaccelPath(lpwin->hmenu, cmd, 0);
+    return !path ? 0 : (path->fEnabled ? 1 : 2);
 }

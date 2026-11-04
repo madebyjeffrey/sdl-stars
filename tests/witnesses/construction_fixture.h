@@ -142,14 +142,12 @@ HULDEF *TestLphuldefFromId(int16_t hull) {
     catalogCalls++;
     return &catalogHull;
 }
-int16_t TestIWarpMAFromLppl(APPSESSION &, PLANET *p, int16_t *two) {
+WARPRESULT TestIWarpMAFromLppl(APPSESSION &, PLANET *p) {
     assert(p == &planet);
     int at = warpCalls < 2 ? warpCalls : 1;
     warpBase[at] = p->isb;
     warpCalls++;
-    if (two)
-        *two = twoValues[at];
-    return warpValues[at];
+    return {warpValues[at], twoValues[at]};
 }
 int16_t TestFLookupPlanet(APPSESSION &, int16_t id, PLANET *out) {
     assert(id == planet.id);
@@ -188,9 +186,10 @@ int16_t TestIBestTerraform(APPSESSION &, PLANET *p, int16_t help) {
         throw CONSTRUCTIONESCAPE{};
     return terraformChoice;
 }
-void TestLookupBestPlanetaryScanner(APPSESSION &app, PART *part) {
+PART TestLookupBestPlanetaryScanner(APPSESSION &app, PART part) {
     assert(app.state.idPlayer == planet.iPlayer);
-    part->hs.iItem = (uint8_t)partIndex;
+    part.hs.iItem = (uint8_t)partIndex;
+    return part;
 }
 
 int16_t TestRandom(APPSESSION &app, int16_t bound) {
@@ -367,4 +366,4 @@ static void reset(APPSESSION &app) {
     for (int i = 0; i < 4; i++)
         resources[i] = 10 * (i + 1);
 }
-static int16_t call(APPSESSION &app, unsigned kind, int item, int built) { return FBuildObject(app, &planet, (GrobjClass)kind, (int16_t)item, (int16_t)built, (int32_t *)resources); }
+static int16_t call(APPSESSION &app, unsigned kind, int item, int built) { return FBuildObject(app, &planet, (GrobjClass)kind, (int16_t)item, (int16_t)built, std::span<std::int32_t, 4>{resources}); }

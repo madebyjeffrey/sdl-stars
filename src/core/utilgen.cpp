@@ -88,10 +88,8 @@ std::int16_t Random(APPSESSION &app, std::int16_t c) {
     return LOWORD(static_cast<std::uint32_t>((static_cast<std::uint32_t>(z) % c)));
 }
 
-void GetFileSeeds(APPSESSION &app, std::int32_t *pl1, std::int32_t *pl2) {
-    *pl1 = app.state.lFileSeed1;
-    *pl2 = app.state.lFileSeed2;
-    return;
+FILESEEDSRESULT GetFileSeeds(APPSESSION &app) {
+    return FILESEEDSRESULT{app.state.lFileSeed1, app.state.lFileSeed2};
 }
 
 void SetFileSeeds(APPSESSION &app, std::int32_t l1, std::int32_t l2) {
@@ -386,18 +384,18 @@ std::array<char, 15> CommaFormatLong(APPSESSION &app, std::int32_t l) {
     return psz;
 }
 
-void BoundPoints(RECT *prc, POINT16 *rgpt, std::int16_t cpt) {
-    std::int16_t ipt;
+void BoundPoints(RECT *prc, std::span<const POINT16> rgpt) {
+    std::size_t ipt;
     std::int16_t xMax;
     std::int16_t yMax;
     std::int16_t xMin;
     std::int16_t yMin;
 
-    xMax = rgpt->x;
-    xMin = rgpt->x;
-    yMax = rgpt->y;
-    yMin = rgpt->y;
-    for (ipt = 1; ipt < cpt; ipt++) {
+    xMax = rgpt[0].x;
+    xMin = rgpt[0].x;
+    yMax = rgpt[0].y;
+    yMin = rgpt[0].y;
+    for (ipt = 1; ipt < rgpt.size(); ipt++) {
         xMin = xMin >= rgpt[ipt].x ? rgpt[ipt].x : xMin;
         xMax = xMax <= rgpt[ipt].x ? rgpt[ipt].x : xMax;
         yMin = yMin >= rgpt[ipt].y ? rgpt[ipt].y : yMin;
@@ -582,7 +580,7 @@ char ChFromNybble(APPSESSION &app, std::int16_t nyb) {
     return app.state.rgchcompstrlower[iVal - 25];
 }
 
-std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::int32_t r2, std::int16_t dMax, std::int16_t *pdStart, std::int16_t *pdEnd) {
+std::optional<LINEINTERVALRESULT> FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::int32_t r2, std::int16_t dMax) {
     std::int32_t dyT;
     std::int32_t dxdy;
     std::int16_t dCtr;
@@ -598,6 +596,8 @@ std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::
     std::int32_t dxI;
     std::int32_t xI;
     std::int32_t r2I;
+    std::int16_t dStart;
+    std::int16_t dEnd;
 
     dx = static_cast<std::int16_t>((ptL2.x - ptL1.x));
     dy = static_cast<std::int16_t>((ptL2.y - ptL1.y));
@@ -621,7 +621,7 @@ std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::
     dyI = yI - ptC.y;
     r2I = static_cast<std::uint32_t>((dxI * dxI)) + static_cast<std::uint32_t>((dyI * dyI));
     if (r2 <= r2I) {
-        return 0;
+        return std::nullopt;
     }
     dxT = xI - ptL1.x;
     dyT = yI - ptL1.y;
@@ -629,7 +629,7 @@ std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::
     dCtr = LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>(lT))));
     lT = r2 - r2I;
     if (lT <= 0) {
-        return 0;
+        return std::nullopt;
     }
     dOff = LOWORD(static_cast<std::int32_t>(std::sqrt(static_cast<double>(lT))));
     if (ptL1.x < ptL2.x) {
@@ -647,12 +647,12 @@ std::int16_t FIntersectCircleLine(POINT16 ptL1, POINT16 ptL2, POINT16 ptC, std::
     } else if (yI > ptL1.y) {
         dCtr = -dCtr;
     }
-    *pdStart = 0 <= dCtr - dOff ? dCtr - dOff : 0;
-    *pdEnd = dMax >= dCtr + dOff ? dCtr + dOff : dMax;
-    if (*pdEnd <= 0 || *pdStart >= dMax) {
-        return 0;
+    dStart = 0 <= dCtr - dOff ? dCtr - dOff : 0;
+    dEnd = dMax >= dCtr + dOff ? dCtr + dOff : dMax;
+    if (dEnd <= 0 || dStart >= dMax) {
+        return std::nullopt;
     }
-    return 1;
+    return LINEINTERVALRESULT{dStart, dEnd};
 }
 
 std::optional<std::size_t> IntToRoman(std::int16_t i, std::span<char> pszOut) {

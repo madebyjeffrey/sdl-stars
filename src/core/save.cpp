@@ -1030,7 +1030,11 @@ std::int16_t FMarkFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdM
             break;
         case mdMarkAi:
             do {
-                GetFileSeeds(app, &lSeedSav1, &lSeedSav2);
+                {
+                    const FILESEEDSRESULT seeds = GetFileSeeds(app);
+                    lSeedSav1 = seeds.lSeed1;
+                    lSeedSav2 = seeds.lSeed2;
+                }
                 RecordIO().pfnReadRt(app);
             } while (app.state.hdrCur.rt != rtPlr || PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).iPlayer() != iPlayer);
             if (PlvFromPrefix(std::as_writable_bytes(std::span(app.state.rgbCur))).fAi() != f) {
@@ -1150,6 +1154,7 @@ void SetVisiblePlanFleet(APPSESSION &app, std::int16_t iPlr) {
 }
 
 void SetVisPFInit(APPSESSION &app, std::int16_t iPlr) {
+    SCANNERRANGERESULT scannerRange;
     PLANET       *lpplMac;
     std::uint16_t      detNew;
     PLANET       *lppl;
@@ -1233,7 +1238,9 @@ void SetVisPFInit(APPSESSION &app, std::int16_t iPlr) {
             }
             if (iPlr != iplrNone && lpfl->idPlanet != idPlanetDeepSpace) {
                 lppl = app.state.lpPlanets + lpfl->idPlanet;
-                detNew = GetCachedFleetScannerRange(app, lpfl, nullptr, nullptr, &iSteal) < 0 ? 1 : 3;
+                scannerRange = GetCachedFleetScannerRange(app, lpfl);
+                iSteal = scannerRange.iSteal;
+                detNew = scannerRange.dRange < 0 ? 1 : 3;
                 if (iSteal >= 2) {
                     detNew = 4;
                 }
@@ -1278,6 +1285,7 @@ void SetVisPFInit(APPSESSION &app, std::int16_t iPlr) {
 }
 
 void SetVisPFFleets(APPSESSION &app, std::int16_t iPlr) {
+    SCANNERRANGERESULT scannerRange;
     PLANET  *lpplMac;
     POINT16  pt;
     std::int16_t  pctCloak;
@@ -1315,7 +1323,11 @@ void SetVisPFFleets(APPSESSION &app, std::int16_t iPlr) {
                 if (lpfl->fBombed && lpfl->idPlanet != idPlanetDeepSpace) {
                     MarkPlanet(app, app.state.lpPlanets + lpfl->idPlanet, iPlr, detSome);
                 }
-                iRadius = GetCachedFleetScannerRange(app, lpfl, &iRadPlanet, &pctDetect, &iSteal);
+                scannerRange = GetCachedFleetScannerRange(app, lpfl);
+                iRadius = scannerRange.dRange;
+                iRadPlanet = scannerRange.dPlanRange;
+                pctDetect = scannerRange.pctDetect;
+                iSteal = scannerRange.iSteal;
                 iRadius = 0 <= iRadius ? iRadius : 0;
                 lRadius2 = static_cast<std::uint32_t>((iRadius * iRadius));
                 lRadPlanet2 = static_cast<std::uint32_t>((iRadPlanet * iRadPlanet));
@@ -1481,7 +1493,9 @@ void SetVisPFPlanets(APPSESSION &app, std::int16_t iPlr) {
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iPlr) {
-            iRadius = GetPlanetScannerRange(app, lppl, &iRadPlanet);
+            const auto scannerRange = GetPlanetScannerRange(app, lppl);
+            iRadius = scannerRange.dRange;
+            iRadPlanet = scannerRange.dDeep;
             lRadius2 = static_cast<std::uint32_t>((iRadius * iRadius));
             lRadPlanet2 = static_cast<std::uint32_t>((iRadPlanet * iRadPlanet));
             pt = app.state.rgptPlan[lppl->id];
@@ -1518,7 +1532,9 @@ void SetVisPFPlanets(APPSESSION &app, std::int16_t iPlr) {
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iPlr) {
-            iRadius = GetPlanetScannerRange(app, lppl, &iRadPlanet);
+            const auto scannerRange = GetPlanetScannerRange(app, lppl);
+            iRadius = scannerRange.dRange;
+            iRadPlanet = scannerRange.dDeep;
             lRadius2 = static_cast<std::uint32_t>((iRadius * iRadius));
             lRadPlanet2 = static_cast<std::uint32_t>((iRadPlanet * iRadPlanet));
             pt = app.state.rgptPlan[lppl->id];
@@ -1578,7 +1594,9 @@ void SetVisPFPlanets(APPSESSION &app, std::int16_t iPlr) {
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iPlr) {
-            iRadius = GetPlanetScannerRange(app, lppl, &iRadPlanet);
+            const auto scannerRange = GetPlanetScannerRange(app, lppl);
+            iRadius = scannerRange.dRange;
+            iRadPlanet = scannerRange.dDeep;
             lRadius2 = static_cast<std::uint32_t>((iRadius * iRadius));
             lRadPlanet2 = static_cast<std::uint32_t>((iRadPlanet * iRadPlanet));
             pt = app.state.rgptPlan[lppl->id];
@@ -1619,7 +1637,9 @@ void SetVisPFPlanets(APPSESSION &app, std::int16_t iPlr) {
     lpplMac = app.state.lpPlanets + app.state.cPlanet;
     for (; lppl < lpplMac; lppl++) {
         if (lppl->iPlayer == iPlr) {
-            iRadius = GetPlanetScannerRange(app, lppl, &iRadPlanet);
+            const auto scannerRange = GetPlanetScannerRange(app, lppl);
+            iRadius = scannerRange.dRange;
+            iRadPlanet = scannerRange.dDeep;
             lRadius2 = static_cast<std::uint32_t>((iRadius * iRadius));
             lRadPlanet2 = static_cast<std::uint32_t>((iRadPlanet * iRadPlanet));
             pt = app.state.rgptPlan[lppl->id];

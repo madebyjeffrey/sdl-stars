@@ -23,6 +23,7 @@ std::int16_t FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, s
     std::int16_t  ihs;
     HUL     *lphul;
     PART     part;
+    std::optional<PART> partResult;
     SHDEF    shdef;
 
     shdef = {};
@@ -36,9 +37,11 @@ std::int16_t FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, s
     shdef.hul = *lphul;
     shdef.hul.ihuldef = lphul->ihuldef;
     for (ihs = 0; ihs < lphul->chs; ihs++) {
-        if (!FGetAIPart(app, static_cast<AiPartPreference>(rgaip[ihs]), &part)) {
+        partResult = FGetAIPart(app, static_cast<AiPartPreference>(rgaip[ihs]));
+        if (!partResult) {
             return 0;
         }
+        part = *partResult;
         part.hs.cItem = lphul->rghs[ihs].cItem;
         shdef.hul.rghs[ihs] = part.hs;
     }
@@ -83,7 +86,7 @@ std::int16_t FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, s
     return FChangeAiShdef(app, &shdef, ishdef);
 }
 
-std::int16_t FGetAIPart(APPSESSION &app, AiPartPreference aip, PART *ppart) {
+std::optional<PART> FGetAIPart(APPSESSION &app, AiPartPreference aip) {
     std::int16_t cTry;
     std::int16_t iOffset;
     std::int16_t i;
@@ -102,14 +105,13 @@ std::int16_t FGetAIPart(APPSESSION &app, AiPartPreference aip, PART *ppart) {
         cItem = vrgAiParts[iOffset].cItem;
         while (cItem-- > 0) {
             if (PartQueryIO().pfnLookup(app, &part) == mdPartAvailAvailable) {
-                *ppart = part;
-                return 1;
+                return part;
             }
             part.hs.iItem--;
         }
         iOffset++;
     }
-    return 0;
+    return std::nullopt;
 }
 
 void PickANameAndBmp(APPSESSION &app, SHDEF *pshdef, StringId ids, std::int16_t cids, std::int16_t ibmpStart) {
@@ -530,7 +532,7 @@ void AddMinesToBlockedQueues(APPSESSION &app) {
                     } else {
                         cBuild = static_cast<std::int32_t>((cRes / cResMine));
                     }
-                    ProductionIO().pfnInitialize(app, rgprod);
+                    ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
                     if (cBuild > 0) {
                         AddItemToQueue(app, mdIdleMine, LOWORD(cBuild), grobjPlanet, addItemFront);
                         FinishProduction(app, 1);
@@ -1144,7 +1146,7 @@ void AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, G
     if (!app.state.sel.pl.lpplprod || app.state.sel.pl.lpplprod->iprodMac <= 200) {
         if (!app.state.lpplProdGlob) {
             fSingle = 1;
-            ProductionIO().pfnInitialize(app, rgprod);
+            ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
             for (i = 0; i < app.state.cProdGlob && (rgprod[i].iItem != static_cast<std::uint32_t>(iItem) || rgprod[i].grobj != static_cast<std::uint32_t>(grobj)); i++) {
             }
             if (i >= app.state.cProdGlob) {
@@ -1560,7 +1562,7 @@ void GetResourcesAvailable(APPSESSION &app, PLANET *lppl, std::span<std::int32_t
     std::int16_t i;
     std::int32_t cRes;
 
-    ColonyIO().pfnEstimateMining(app, lppl, rgRes.data(), -1, 0);
+    ColonyIO().pfnEstimateMining(app, lppl, rgRes.first<3>(), -1, 0);
     for (i = 0; i < 3; i++) {
         rgRes[i] += lppl->rgwtMin[i];
     }
@@ -1966,7 +1968,7 @@ void MarkPlanetsUnderAttack(APPSESSION &app) {
     return;
 }
 
-void FixPlanetsUnderAttack(APPSESSION &app, PROD *rgprod) {
+void FixPlanetsUnderAttack(APPSESSION &app, std::span<PROD, 64> rgprod) {
     PLANET *lppl;
     std::int16_t ipl;
 
@@ -1981,7 +1983,7 @@ void FixPlanetsUnderAttack(APPSESSION &app, PROD *rgprod) {
     return;
 }
 
-void QuickBuildDefenses(APPSESSION &app, PLANET *lppl, PROD *rgprod) {
+void QuickBuildDefenses(APPSESSION &app, PLANET *lppl, std::span<PROD, 64> rgprod) {
     std::int16_t cMax;
     std::int16_t cAlch;
     std::int16_t cCur;
@@ -2006,7 +2008,7 @@ void QuickBuildDefenses(APPSESSION &app, PLANET *lppl, PROD *rgprod) {
     GetResourcesAvailable(app, lppl, rgRes);
     if (rgRes[3] >= 50) {
         ChangeMainObjSel(app, grobjPlanet, lppl->id);
-        ProductionIO().pfnInitialize(app, rgprod);
+        ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
         for (i = 0; i < app.state.cProdGlob && (app.state.pProdGlob[i].grobj != grobjPlanet || app.state.pProdGlob[i].iItem != mdIdleDefense || app.state.pProdGlob[i].cItem < 1); i++) {
         }
         if (i == app.state.cProdGlob) {
@@ -2330,6 +2332,7 @@ std::int16_t FCreateAiStarbase(APPSESSION &app, std::int16_t ishdef, std::int16_
 }
 
 std::int16_t FAIFling(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail) {
+    WARPRESULT warp;
     PLANET *lpplHit;
     POINT16 pt;
     std::int32_t dy;
@@ -2362,7 +2365,8 @@ std::int16_t FAIFling(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> 
         lpprod++;
     }
     if (app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard && rgResAvail[0] + rgResAvail[1] + rgResAvail[2] > 3000 && lppl->fStarbase &&
-        ColonyIO().pfnWarp(app, lppl, &fTwoMAs) >= 10 && RandomIO().pfnRandom(app, 4) == 0) {
+        (warp = ColonyIO().pfnWarp(app, lppl)).iWarp >= 10 && RandomIO().pfnRandom(app, 4) == 0) {
+        fTwoMAs = warp.fTwo;
         pt = app.state.rgptPlan[lppl->id];
         for (iT = 0; iT <= 2 && lppl->rgwtMin[iT] <= 12500; iT++) {
         }
@@ -2433,7 +2437,7 @@ std::int16_t IshdefAiSBLatest(APPSESSION &app) {
     return 0;
 }
 
-void QueueAiStarbases(APPSESSION &app, PROD *rgprod, std::int16_t ishdefSBLatest) {
+void QueueAiStarbases(APPSESSION &app, std::span<PROD, 64> rgprod, std::int16_t ishdefSBLatest) {
     PLANET *lpplMac;
     PLANET *lppl;
     std::int16_t i;
@@ -2459,7 +2463,7 @@ void QueueAiStarbases(APPSESSION &app, PROD *rgprod, std::int16_t ishdefSBLatest
                     continue;
             }
             ChangeMainObjSel(app, grobjPlanet, lppl->id);
-            ProductionIO().pfnInitialize(app, rgprod);
+            ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
             i = 0;
             for (lpprod = app.state.lpplProdGlob->rgprod(); i < app.state.lpplProdGlob->iprodMac && (lpprod->grobj != grobjFleet || lpprod->iItem < iobjPacketGerm); lpprod++) {
                 i++;
@@ -2691,7 +2695,7 @@ std::int16_t FQueueAiDefenses(APPSESSION &app, PLANET *lppl, std::span<std::int3
     return 0;
 }
 
-void HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, PROD *rgprod, std::int16_t ishdefSBLatest, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
+void HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, std::span<PROD, 64> rgprod, std::int16_t ishdefSBLatest, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
     PLANET *lppl;
     std::int16_t i;
     std::int16_t ipl;
@@ -2718,7 +2722,7 @@ void HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, PROD *rgprod, std:
                 continue;
         }
         ChangeMainObjSel(app, grobjPlanet, lppl->id);
-        ProductionIO().pfnInitialize(app, rgprod);
+        ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
         fWrite = 0;
         if (app.state.rgplr[app.state.idPlayer].idAi == idAiRobotoid || app.state.vlpbAiPlanet[lppl->id * 16 + 2] == 0) {
             if (FUpgradeAiStarbase(app, lppl, ishdefSBLatest) || FAIFling(app, lppl, rgResAvail) || FQueueAiScanner(app, lppl, rgResAvail, rgResCost) ||

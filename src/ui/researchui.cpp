@@ -136,8 +136,8 @@ INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::EndPaint(hwnd, &ps);
         return 1;
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         if (pt.x > 12 && pt.x < app.lpui->dxResLeft - 12 && pt.y >= app.lpui->yTopFutureTech && pt.y < app.lpui->cFutureTech * app.state.dyArial8 + app.lpui->yTopFutureTech) {
             win32::SetCursor(app.lpui->hcurArrowHelp);
             return 1;
@@ -770,8 +770,8 @@ LRESULT  BrowserWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         win32::EndPaint(hwnd, &ps);
         return 0;
     case win32::WM_SETCURSOR:
-        GetCursorPos16(&pt);
-        ScreenToClient16(hwnd, &pt);
+        pt = GetCursorPos16().pt;
+        pt = ScreenToClient16(hwnd, pt).pt;
         goto Validate;
     case win32::WM_ERASEBKGND:
         ControlIO().pfnGetClientRect(hwnd, &rc);

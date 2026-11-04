@@ -498,6 +498,7 @@ static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
     int16_t              ish;
     int16_t              idir;
     int16_t              dTravel;
+    MINEFIELDTRAVELRESULT travel;
 
     for (idir = 0; idir < 4; idir++) {
         TEST_CASE_("direction %d,%d", rgdxy[idir][0], rgdxy[idir][1]);
@@ -523,7 +524,9 @@ static void test_FTravelThroughMineFields_speed_bump_any_direction(void) {
         lpth->thm().SetGrbitPlr(1 << 1);
 
         dTravel = 81;
-        TEST_CHECK_(!FTravelThroughMineFields(app, lpfl, &dTravel, NULL), "the fleet crossed the field");
+        travel = FTravelThroughMineFields(app, lpfl, dTravel, NULL);
+        TEST_CHECK_(!travel.fSafe, "the fleet crossed the field");
+        dTravel = *travel.dTravel;
         TEST_CHECK_(dTravel < 81, "the fleet travelled %d ly", dTravel);
     }
 }

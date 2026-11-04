@@ -2,8 +2,17 @@
 #define STARS_COMPAT_CLEANUP_H
 
 #include "internal.h"
+#include <new>
 #include <type_traits>
 #include <utility>
+
+template<class F> void CompatInvokeCleanup(F &&fnCleanup, HWND hwnd) noexcept {
+    try { fnCleanup(); }
+    catch (const std::bad_alloc &) {
+        try { StarsThrowError(starsErrorMemory, 0); }
+        catch (...) { CompatCaptureCallbackError(hwnd); }
+    } catch (...) { CompatCaptureCallbackError(hwnd); }
+}
 
 // Unlike a resource deleter, modal cleanup may notify application code. Keep
 // its failure contained, preserving an earlier pending or unwinding exception.
@@ -19,7 +28,7 @@ public:
     COMPATCLEANUPSCOPE &operator=(const COMPATCLEANUPSCOPE &) = delete;
     void Close() noexcept {
         if (!std::exchange(fActive, false)) return;
-        CompatInvokeCleanup([](void *lpv) { (*static_cast<F *>(lpv))(); }, &fnCleanup, hwndAbort);
+        CompatInvokeCleanup([this] { fnCleanup(); }, hwndAbort);
     }
     void Release() noexcept { fActive = false; }
 };

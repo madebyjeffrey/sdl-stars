@@ -18,7 +18,11 @@ static BOOL FTestGetCursorPos(LPPOINT lppt) {
 
 #ifdef STARS_UI_SDL
 #include "../../src/ui/nativeui.h"
-static BOOL FReadCursor16(POINT16 *lppt) { return GetCursorPos16(lppt, FTestGetCursorPos); }
+static BOOL FReadCursor16(POINT16 *lppt) {
+    auto result = GetCursorPos16(FTestGetCursorPos);
+    *lppt = result.pt;
+    return result.fSuccess;
+}
 #else
 // The independent frozen C adapter retains its historical injection boundary.
 #define GetCursorPos FTestGetCursorPos

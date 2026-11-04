@@ -11,7 +11,7 @@
 #include "race_query_io.h"
 #include "text_io.h"
 
-void InitProduction(APPSESSION &app, PROD *rgprod) {
+void InitProduction(APPSESSION &app, std::optional<std::span<PROD, 64>> rgprodInput) {
     std::int16_t  iWarp;
     std::int16_t  iSrc;
     std::uint16_t u;
@@ -20,11 +20,9 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     std::size_t   cprod;
     PART     part;
     PROD    *lpprod;
+    std::span<PROD, 64> rgprod = rgprodInput ? *rgprodInput : std::span<PROD, 64>{app.state.pProdGlob, 64};
 
     app.state.gd.fNoResearchSav = app.state.sel.pl.fNoResearch;
-    if (!rgprod) {
-        rgprod = app.state.pProdGlob;
-    }
     if (app.state.sel.pl.lpplprod) {
         i = app.state.sel.pl.lpplprod->iprodMac;
     } else {
@@ -38,8 +36,8 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
     }
     app.state.lpplProdGlob->iprodMac = i;
     app.state.cProdGlob = 0;
-    app.state.pProdGlob = rgprod;
-    std::fill_n(rgprod, 64, PROD{});
+    app.state.pProdGlob = rgprod.data();
+    std::fill(rgprod.begin(), rgprod.end(), PROD{});
     if (app.state.sel.pl.fStarbase && PartQueryIO().pfnHull(app.state.rglpshdefSB[app.state.idPlayer][app.state.sel.pl.isb].hul.ihuldef)->hul.wtCargoMax != 0) {
         for (i = 0; i < 16; i++) {
             if (!app.state.rgshdef[i].fFree && !app.state.rgshdef[i].fGift) {
@@ -68,7 +66,7 @@ void InitProduction(APPSESSION &app, PROD *rgprod) {
         rgprod[app.state.cProdGlob].grobj = grobjPlanet;
         app.state.cProdGlob++;
     }
-    iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl, nullptr);
+    iWarp = ColonyIO().pfnWarp(app, &app.state.sel.pl).iWarp;
     if (iWarp > 0) {
         for (i = 0; i < 4; i++) {
             rgprod[app.state.cProdGlob].cItem = 0x3ff;
@@ -298,7 +296,7 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::span<s
                 lphulT = &PartQueryIO().pfnHull(lphulCur->ihuldef)->hul;
                 part.hs.grhst = hstNone;
                 part.SetPhul(lphulT);
-                PartQueryIO().pfnTrueCost(app, iplr, &part, reinterpret_cast<std::uint16_t *>(rgCostsPartCur));
+                PartQueryIO().pfnTrueCost(app, iplr, &part, std::span<std::uint16_t, 4>{reinterpret_cast<std::uint16_t *>(rgCostsPartCur), 4});
                 for (i = 0; i < 4; i++) {
                     rgCosts[i] -= rgCostsPartCur[i];
                 }
@@ -307,10 +305,10 @@ void GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::span<s
                     if (lphulCur->rghs[i].cItem != 0 && lphulNew->rghs[i].cItem != 0) {
                         part.hs = lphulCur->rghs[i];
                         PartQueryIO().pfnLookup(app, &part);
-                        PartQueryIO().pfnTrueCost(app, iplr, &part, reinterpret_cast<std::uint16_t *>(rgCostsPartCur));
+                        PartQueryIO().pfnTrueCost(app, iplr, &part, std::span<std::uint16_t, 4>{reinterpret_cast<std::uint16_t *>(rgCostsPartCur), 4});
                         part.hs = lphulNew->rghs[i];
                         PartQueryIO().pfnLookup(app, &part);
-                        PartQueryIO().pfnTrueCost(app, iplr, &part, reinterpret_cast<std::uint16_t *>(rgCostsPartNew));
+                        PartQueryIO().pfnTrueCost(app, iplr, &part, std::span<std::uint16_t, 4>{reinterpret_cast<std::uint16_t *>(rgCostsPartNew), 4});
                         if (lphulCur->rghs[i].grhst != lphulNew->rghs[i].grhst) {
                             for (j = 0; j < 4; j++) {
                                 rgCostsPartCur[j] *= lphulCur->rghs[i].cItem;
@@ -499,7 +497,7 @@ PRODUCTIONESTIMATE EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *
     estimate.iLast = 0;
     estimate.iFirst = 0;
     for (iPass = 1; iPass < 100; iPass++) {
-        ColonyIO().pfnEstimateMining(app, &pl, rglQuan, -1, 1);
+        ColonyIO().pfnEstimateMining(app, &pl, std::span{rglQuan}.first<3>(), -1, 1);
         for (j = 0; j < 3; j++) {
             rgRes[j] = pl.rgwtMin[j];
         }

@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 #include <bit>
 #include <limits>
 #include "common.h"
@@ -31,12 +32,12 @@ static HULDEF *HullQuote(int16_t id) {
     lastHull = id;
     return &hull;
 }
-static void PartQuote(APPSESSION &, int16_t player, PART *part, uint16_t *out) {
+static void PartQuote(APPSESSION &, int16_t player, PART *part, std::span<uint16_t, 4> out) {
     assert(cursor < 33);
     quoteKind[cursor] = part->hs.grhst;
     quoteItem[cursor] = (cursor == 0 && part->hs.grhst == hstNone) ? 0 : part->hs.iItem;
     quotePlayer[cursor] = player;
-    memcpy(out, quotes[cursor++], 8);
+    std::copy_n(quotes[cursor++], out.size(), out.begin());
 }
 #define CHECK(x)                                                                                                                                               \
     do {                                                                                                                                                       \

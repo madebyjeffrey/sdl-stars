@@ -309,7 +309,7 @@ std::int16_t FHandleKey(APPSESSION &app, HWND hwnd, std::int16_t iMsg, std::int1
         }
     }
     if (iKey == win32::VK_SHIFT && app.lpui->hwndScanner) {
-        GetCursorPos16(&pt);
+        pt = GetCursorPos16().pt;
         hwndOver = win32::WindowFromPoint(PointFrom16(pt));
         if (hwndOver == app.lpui->hwndScanner) {
             ControlIO().pfnSendMessage(hwndOver, win32::WM_SETCURSOR, reinterpret_cast<WPARAM>(hwndOver), 0);

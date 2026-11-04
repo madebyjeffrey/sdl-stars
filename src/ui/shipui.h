@@ -5,6 +5,11 @@
 #include <cstdint>
 #include <windows.h>
 
+struct XFERRECTSRESULT {
+    RECT rcLeft;
+    RECT rcRight;
+};
+
 void DrawShipOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
 void DrawShipWayPtOrders(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
 void DrawShipPlanet(APPSESSION &app, HDC hdc, TILE *ptile, OBJ obj);
@@ -18,7 +23,7 @@ INT_PTR  TransferDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 std::int16_t          FTrackXfer(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t fkb);
 void             UpdateXferBtns(APPSESSION &app);
 void             DrawXferDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, MineralType iSupply);
-void             GetXferLeftRightRcs(APPSESSION &app, RECT *prcWhole, RECT *prcLeft, RECT *prcRight);
+XFERRECTSRESULT GetXferLeftRightRcs(APPSESSION &app, RECT *prcWhole);
 std::int16_t          FSetupXferBtns(APPSESSION &app, RECT *prc);
 void             DrawThingXferSide(APPSESSION &app, HDC hdc, RECT *prc, THING *pth, MineralType iSupply);
 void             DrawFleetCargoXferSide(APPSESSION &app, HDC hdc, RECT *prc, FLEET *pfl, MineralType iSupply);
