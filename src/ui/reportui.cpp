@@ -516,7 +516,7 @@ INT_PTR  ScoreXDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
             rgszScan[c++] = &app.state.szWork[i * 40];
         }
         iSel = ControlIO().pfnPopupMenu(app, hwnd, LOWORD(lParam), HIWORD(lParam), c,
-                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, std::span{rgszScan}.first(static_cast<std::size_t>(c)), -2, 0);
         if (iSel == -1) {
             return 0;
         }
