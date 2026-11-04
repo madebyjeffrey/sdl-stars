@@ -380,7 +380,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         }
         pt = PtToolbarMenu(app, itb);
         iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c,
-                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, std::span{rgszScan}.first(static_cast<std::size_t>(c)), -2, 0);
         if (iSel == -1)
             return;
         if (iSel >= 3) {
@@ -421,7 +421,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         }
         pt = PtToolbarMenu(app, itb);
         iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c,
-                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, std::span{rgszScan}.first(static_cast<std::size_t>(c)), -2, 0);
         if (iSel == -1)
             return;
         if (iSel < 4) {
@@ -472,7 +472,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         }
         pt = PtToolbarMenu(app, itb);
         iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c,
-                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, std::span{rgszScan}.first(static_cast<std::size_t>(c)), -2, 0);
         if (iSel == -1)
             return;
         if (iSel < 4) {
@@ -506,7 +506,7 @@ void ExecuteButton(APPSESSION &app, ToolbarButton itb, std::int16_t fDown) {
         }
         pt = PtToolbarMenu(app, itb);
         iSel = ControlIO().pfnPopupMenu(app, app.lpui->hwndTb, pt.x, pt.y, c,
-                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, rgszScan, -2, 0);
+                                        std::span<const std::int32_t>{rgid, static_cast<std::size_t>(c)}, std::span{rgszScan}.first(static_cast<std::size_t>(c)), -2, 0);
         if (iSel != -1) {
             CommandHandler(app, app.lpui->hwndFrame, iSel + 3901);
         }
