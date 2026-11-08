@@ -18,7 +18,7 @@ fn check_and_query_commands_use_real_source_files() {
     );
     assert_eq!(
         String::from_utf8_lossy(&output.stdout),
-        "valid: 3 objects, 11 traits\n"
+        "valid: 3 objects, 14 traits\n"
     );
     let output = command()
         .args(["query", &example(), "--", "terrans.habitability_points"])
@@ -37,12 +37,12 @@ fn piped_repl_accepts_multiline_queries_and_reports_write_attempts() {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    child.stdin.take().unwrap().write_all(b"query {\nfrom r : race\nwhere r.primary != none\nselect r.name\n}\nlet bad = 1\n:world\n:quit\n").unwrap();
+    child.stdin.take().unwrap().write_all(b"query {\nfrom r : race\nwhere Set.contains hyper_expansion r.traits\nselect r.name\n}\nlet bad = 1\n:world\n:quit\n").unwrap();
     let output = child.wait_with_output().unwrap();
     assert!(!output.status.success());
     assert_eq!(
         String::from_utf8_lossy(&output.stdout),
-        "[\"Terrans\"]\n3 objects, 11 traits\n"
+        "[\"Terrans\"]\n3 objects, 14 traits\n"
     );
     assert!(String::from_utf8_lossy(&output.stderr).contains("query-only"));
 }
@@ -250,6 +250,54 @@ fn repl_reload_rereads_dependencies_and_keeps_the_world_after_a_failed_import() 
     line.clear();
     output.read_line(&mut line).unwrap();
     assert_eq!(line, "43\n");
+    drop(input);
+    assert!(!child.wait().unwrap().success());
+}
+
+#[test]
+fn repl_reload_replaces_cached_derived_values_and_failed_reload_preserves_them() {
+    let f = ImportFixture::new();
+    let source = |n| {
+        format!(
+            "object type Item={{n:integer;require self.n>=0;derive points:integer=self.n*2;}} Item a={{n={n};}}"
+        )
+    };
+    f.write("main.rdl", &source(2));
+    let mut child = command()
+        .arg("repl")
+        .arg(f.path("main.rdl"))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let mut input = child.stdin.take().unwrap();
+    let mut output = BufReader::new(child.stdout.take().unwrap());
+    let mut errors = BufReader::new(child.stderr.take().unwrap());
+    let mut line = String::new();
+    input.write_all(b"a.points\na.points\n").unwrap();
+    for _ in 0..2 {
+        line.clear();
+        output.read_line(&mut line).unwrap();
+        assert_eq!(line, "4\n");
+    }
+    f.write("main.rdl", &source(3));
+    input.write_all(b":reload\na.points\n").unwrap();
+    line.clear();
+    output.read_line(&mut line).unwrap();
+    assert_eq!(line, "reloaded\n");
+    line.clear();
+    output.read_line(&mut line).unwrap();
+    assert_eq!(line, "6\n");
+    f.write("main.rdl", &source(-1));
+    input.write_all(b":reload\n").unwrap();
+    line.clear();
+    errors.read_line(&mut line).unwrap();
+    assert!(line.contains("require failed"), "{line}");
+    input.write_all(b"a.points\n:quit\n").unwrap();
+    line.clear();
+    output.read_line(&mut line).unwrap();
+    assert_eq!(line, "6\n");
     drop(input);
     assert!(!child.wait().unwrap().success());
 }

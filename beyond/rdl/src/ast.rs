@@ -1,6 +1,6 @@
 use crate::diagnostic::Span;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Type {
     Int,
     Real,
@@ -54,15 +54,18 @@ pub enum ExprKind {
     None,
     Name(String),
     Record(Vec<(String, Expr)>),
+    ObjectRecord(Vec<(String, Expr)>, Vec<Expr>),
     Set(Vec<Expr>),
     Field(Box<Expr>, String),
     Call(Box<Expr>, Box<Expr>),
+    CallArgs(Box<Expr>, Vec<Expr>),
     Unary(String, Box<Expr>),
     Binary(String, Box<Expr>, Box<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     Let(String, Box<Expr>, Box<Expr>),
     Match(Box<Expr>, Vec<(Pattern, Expr)>),
     Query(Query),
+    Compose(Type),
 }
 
 #[derive(Clone, Debug)]
@@ -117,6 +120,31 @@ pub struct Definition {
     pub derives: Vec<Field>,
     pub requires: Vec<Expr>,
     pub span: Span,
+    pub component: Option<Box<ComponentDefinition>>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct ComponentDefinition {
+    pub abstract_: bool,
+    pub scalar: Option<Type>,
+    pub parents: Vec<String>,
+    pub values: Vec<(String, Expr)>,
+    pub compose: Option<Expr>,
+    pub expanded: bool,
+}
+
+#[derive(Clone, Debug)]
+pub enum Effect {
+    Provides {
+        component: String,
+        value: Expr,
+    },
+    Modifies {
+        component: String,
+        field: Option<String>,
+        operation: String,
+        value: Expr,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -126,6 +154,9 @@ pub struct Binding {
     pub kind: TypeKind,
     pub expr: Expr,
     pub span: Span,
+    pub effects: Vec<Effect>,
+    pub parameters: Option<Vec<Field>>,
+    pub requires: Vec<Expr>,
 }
 
 #[derive(Clone, Debug)]

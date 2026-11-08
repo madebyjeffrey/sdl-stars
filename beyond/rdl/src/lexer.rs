@@ -116,12 +116,18 @@ impl Lexer<'_> {
                 TokenKind::Word(self.word())
             } else if ch.is_ascii_digit() {
                 let mut number = String::new();
-                while self.peek(0).is_some_and(|ch| ch.is_ascii_digit()) {
+                while self
+                    .peek(0)
+                    .is_some_and(|ch| ch.is_ascii_digit() || ch == '_')
+                {
                     number.push(self.advance().unwrap());
                 }
                 if self.peek(0) == Some('.') && self.peek(1).is_some_and(|ch| ch.is_ascii_digit()) {
                     number.push(self.advance().unwrap());
-                    while self.peek(0).is_some_and(|ch| ch.is_ascii_digit()) {
+                    while self
+                        .peek(0)
+                        .is_some_and(|ch| ch.is_ascii_digit() || ch == '_')
+                    {
                         number.push(self.advance().unwrap());
                     }
                 }
@@ -133,7 +139,10 @@ impl Lexer<'_> {
                     if !self.peek(0).is_some_and(|ch| ch.is_ascii_digit()) {
                         return Err(Error::new(&span, "expected exponent digits"));
                     }
-                    while self.peek(0).is_some_and(|ch| ch.is_ascii_digit()) {
+                    while self
+                        .peek(0)
+                        .is_some_and(|ch| ch.is_ascii_digit() || ch == '_')
+                    {
                         number.push(self.advance().unwrap());
                     }
                 }

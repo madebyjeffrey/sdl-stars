@@ -1,0 +1,29 @@
+(* Generated from data/races/predefined.yaml by tools/generate_stars_presets.py. *)
+import stars.settings
+
+RandomRaceTemplate random = {
+  name = "Random";
+  plural_name = "Randoms";
+  source_index = 6;
+  portrait(31)
+  gravity(17, 83)
+  temperature(17, 83)
+  radiation(17, 83)
+  growth(15)
+  population_efficiency(1000)
+  factory_output(10)
+  factory_cost(10)
+  factory_operation(10)
+  mine_output(10)
+  mine_cost(3)
+  mine_operation(10)
+  energy_research(standard)
+  weapons_research(standard)
+  propulsion_research(standard)
+  construction_research(standard)
+  electronics_research(standard)
+  biotechnology_research(standard)
+  research_allocation(15)
+  leftover_points(surface_minerals)
+  standard_capacity
+}

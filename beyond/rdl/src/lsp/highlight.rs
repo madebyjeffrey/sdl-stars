@@ -189,7 +189,20 @@ pub(super) fn full(uri: &str, text: &str, index: &Index, legend: &Legend) -> Val
                 role
             } else if matches!(
                 word,
-                "int" | "integer" | "real" | "string" | "bool" | "option" | "set" | "range"
+                "int"
+                    | "integer"
+                    | "real"
+                    | "string"
+                    | "bool"
+                    | "Int"
+                    | "Integer"
+                    | "Real"
+                    | "String"
+                    | "Bool"
+                    | "Trait"
+                    | "option"
+                    | "set"
+                    | "range"
             ) {
                 ("type", 4)
             } else if word == "self" {
@@ -205,14 +218,20 @@ pub(super) fn full(uri: &str, text: &str, index: &Index, legend: &Legend) -> Val
             }
         } else if ch.is_ascii_digit() {
             cursor += 1;
-            while bytes.get(cursor).is_some_and(u8::is_ascii_digit) {
+            while bytes
+                .get(cursor)
+                .is_some_and(|ch| ch.is_ascii_digit() || *ch == b'_')
+            {
                 cursor += 1;
             }
             if bytes.get(cursor) == Some(&b'.')
                 && bytes.get(cursor + 1).is_some_and(u8::is_ascii_digit)
             {
                 cursor += 2;
-                while bytes.get(cursor).is_some_and(u8::is_ascii_digit) {
+                while bytes
+                    .get(cursor)
+                    .is_some_and(|ch| ch.is_ascii_digit() || *ch == b'_')
+                {
                     cursor += 1;
                 }
             }
@@ -221,7 +240,10 @@ pub(super) fn full(uri: &str, text: &str, index: &Index, legend: &Legend) -> Val
                 if matches!(bytes.get(cursor), Some(b'+' | b'-')) {
                     cursor += 1;
                 }
-                while bytes.get(cursor).is_some_and(u8::is_ascii_digit) {
+                while bytes
+                    .get(cursor)
+                    .is_some_and(|ch| ch.is_ascii_digit() || *ch == b'_')
+                {
                     cursor += 1;
                 }
             }

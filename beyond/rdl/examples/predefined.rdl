@@ -1,0 +1,15 @@
+import stars.predefined
+import stars.rules
+
+query {
+  from r: Race
+  order by r.DesignSettings.source_index ascending
+  select {
+    name = r.name;
+    primary = r.PrimaryRacialTrait.name;
+    selected_growth = r.DesignSettings.selected_growth;
+    effective_growth = r.effective_growth_percent;
+    reference_capacity = r.CarryingCapacity;
+    lesser_traits = r.lrt_count;
+  }
+}

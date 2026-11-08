@@ -1288,3 +1288,310 @@ fn malformed_imports_produce_one_syntax_diagnostic() {
         1
     );
 }
+
+#[test]
+fn components_inherit_fields_and_trait_contributions_have_editor_support() {
+    let schema = r#"
+abstract component Primary { name: string }
+component Hyper : Primary { name = "Hyper" }
+component Capacity { value: integer }
+trait Baseline { provides Capacity { value: 1_000_000 } }
+trait HyperPRT { provides Hyper modifies Capacity.value { multiply 0.5 } }
+object type Race = {
+  traits: Trait set;
+  component primary: Primary;
+  component capacity: Capacity;
+}
+"#;
+    let facts = "Race r = { traits = { Baseline; HyperPRT }; }\nquery { from x : Race select { name = x.primary.name; capacity = x.capacity.value; } }";
+    let messages = session(vec![
+        open("components.rdl", schema),
+        open("component-facts.rdl", facts),
+        request(
+            json!(1),
+            "textDocument/hover",
+            at("component-facts.rdl", facts, "value"),
+        ),
+        request(
+            json!(2),
+            "textDocument/definition",
+            at("component-facts.rdl", facts, "name;"),
+        ),
+        request(
+            json!(3),
+            "textDocument/hover",
+            at("components.rdl", schema, "Hyper modifies"),
+        ),
+        request(
+            json!(4),
+            "textDocument/definition",
+            at("components.rdl", schema, "value { multiply"),
+        ),
+    ]);
+    assert!(
+        latest_diagnostics(&messages, "component-facts.rdl")["diagnostics"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(
+        response(&messages, json!(1))["result"]["contents"]["value"],
+        "value : int"
+    );
+    assert_eq!(
+        response(&messages, json!(2))["result"]["uri"],
+        uri("components.rdl")
+    );
+    assert_eq!(
+        response(&messages, json!(2))["result"]["range"]["start"],
+        position(schema, schema.find("name:").unwrap())
+    );
+    assert_eq!(
+        response(&messages, json!(3))["result"]["contents"]["value"],
+        "component Hyper : Primary"
+    );
+    assert_eq!(
+        response(&messages, json!(4))["result"]["range"]["start"],
+        position(schema, schema.find("value: integer").unwrap())
+    );
+}
+
+#[test]
+fn component_syntax_and_grouped_numbers_receive_semantic_tokens() {
+    let source = "abstract component Base { value: Integer }\ncomponent C : Base { value = 1_000_000 }\ntrait T { provides C modifies C.value { multiply 0.5 } }";
+    let messages = session(vec![
+        open("components.rdl", source),
+        semantic_request(1, "components.rdl"),
+    ]);
+    let tokens = colors(&messages, json!(1), source);
+    for word in ["abstract", "component", "provides", "modifies", "multiply"] {
+        assert!(
+            tokens
+                .iter()
+                .any(|token| token.text == word && token.kind == "keyword"),
+            "{word}"
+        );
+    }
+    assert!(
+        tokens
+            .iter()
+            .any(|token| token.text == "1_000_000" && token.kind == "number")
+    );
+    assert!(
+        tokens
+            .iter()
+            .any(|token| token.text == "C" && token.kind == "class")
+    );
+}
+
+#[test]
+fn scalar_components_and_cardinality_declarations_work_in_the_editor() {
+    let schema = "component Capacity : integer { require self >= 0 }\ntrait T { provides Capacity = 100 }\nobject type O = { requires one Capacity traits: Trait set; }\n";
+    let facts = "O o = { traits = { T }; }\nquery { from x: O select x.Capacity + 1 }";
+    let messages = session(vec![
+        open("scalar-schema.rdl", schema),
+        open("scalar-facts.rdl", facts),
+        request(
+            json!(1),
+            "textDocument/hover",
+            at("scalar-schema.rdl", schema, "Capacity :"),
+        ),
+        request(
+            json!(2),
+            "textDocument/definition",
+            at("scalar-facts.rdl", facts, "Capacity"),
+        ),
+        semantic_request(3, "scalar-schema.rdl"),
+        full_change(
+            "scalar-schema.rdl",
+            2,
+            &schema.replace("provides Capacity = 100", "provides Capacity = -1"),
+        ),
+    ]);
+    assert_eq!(
+        response(&messages, json!(1))["result"]["contents"]["value"],
+        "component Capacity : int"
+    );
+    assert_eq!(
+        response(&messages, json!(2))["result"]["uri"],
+        uri("scalar-schema.rdl")
+    );
+    assert_eq!(
+        response(&messages, json!(2))["result"]["range"]["start"],
+        position(schema, schema.find("Capacity traits").unwrap())
+    );
+    let tokens = colors(&messages, json!(3), schema);
+    for word in ["requires", "one"] {
+        assert!(
+            tokens
+                .iter()
+                .any(|token| token.text == word && token.kind == "keyword"),
+            "{word}"
+        );
+    }
+    let all: Vec<_> = messages
+        .iter()
+        .filter(|message| message["method"] == "textDocument/publishDiagnostics")
+        .collect();
+    assert!(all.iter().any(|message| {
+        message["params"]["diagnostics"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|diagnostic| {
+                diagnostic["message"]
+                    .as_str()
+                    .unwrap()
+                    .contains("require failed")
+            })
+    }));
+}
+
+#[test]
+fn parameterized_traits_navigate_and_expose_parameters_to_completion() {
+    let schema = "component Band {lower:integer;upper:integer;} trait band(lower:integer,upper:integer) { provides Band {lower=lower;upper=upper;} } object type Example={requires one Band}";
+    let facts = "Example a={band(15,85)} a.traits";
+    let messages = session(vec![
+        open("schema.rdl", schema),
+        open("facts.rdl", facts),
+        request(
+            json!(1),
+            "textDocument/definition",
+            at("facts.rdl", facts, "band"),
+        ),
+        request(
+            json!(2),
+            "textDocument/definition",
+            at("schema.rdl", schema, "lower;"),
+        ),
+        request(
+            json!(3),
+            "textDocument/hover",
+            at("facts.rdl", facts, "band"),
+        ),
+        request(
+            json!(4),
+            "textDocument/hover",
+            at("facts.rdl", facts, "traits"),
+        ),
+        request(
+            json!(5),
+            "textDocument/completion",
+            at("schema.rdl", schema, "lower;"),
+        ),
+    ]);
+    assert_eq!(
+        response(&messages, json!(1))["result"]["range"]["start"],
+        position(schema, schema.find("band").unwrap())
+    );
+    assert_eq!(
+        response(&messages, json!(2))["result"]["range"]["start"],
+        position(schema, schema.find("lower:integer,upper").unwrap())
+    );
+    assert!(
+        response(&messages, json!(3))["result"]["contents"]["value"]
+            .as_str()
+            .unwrap()
+            .contains("band(lower: int, upper: int)")
+    );
+    assert!(
+        response(&messages, json!(4))["result"]["contents"]["value"]
+            .as_str()
+            .unwrap()
+            .contains("Trait set")
+    );
+    assert!(
+        response(&messages, json!(5))["result"]["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["label"] == "lower")
+    );
+}
+
+#[test]
+fn overloaded_traits_navigate_to_the_selected_arity_and_keep_parameter_scopes() {
+    let unary = "type Immunity=|immune\ntrait type Label={label:string;}\ntrait habitat(mode:Immunity):Label {label=\"immune\";}";
+    let binary = "trait type Bounds={lower:integer;}\ntrait habitat(lower:integer,upper:integer):Bounds {lower=lower;}";
+    let facts = "let a=habitat(immune);\nlet b=habitat(15,85);\na.label;\nb.lower";
+    let call = |needle: &str| json!({"textDocument":{"uri":uri("overload-facts.rdl")},"position":position(facts,facts.find(needle).unwrap())});
+    let messages = session(vec![
+        open("overload-unary.rdl", unary),
+        open("overload-binary.rdl", binary),
+        open("overload-facts.rdl", facts),
+        request(json!(1), "textDocument/definition", call("habitat(immune)")),
+        request(json!(2), "textDocument/definition", call("habitat(15,85)")),
+        request(json!(3), "textDocument/hover", call("habitat(immune)")),
+        request(json!(4), "textDocument/hover", call("habitat(15,85)")),
+        request(
+            json!(5),
+            "textDocument/definition",
+            at("overload-binary.rdl", binary, "lower;}"),
+        ),
+        request(
+            json!(6),
+            "textDocument/documentSymbol",
+            json!({"textDocument":{"uri":uri("overload-unary.rdl")}}),
+        ),
+        request(json!(7), "textDocument/completion", call("habitat(15,85)")),
+    ]);
+    assert_eq!(
+        latest_diagnostics(&messages, "overload-facts.rdl")["diagnostics"]
+            .as_array()
+            .unwrap()
+            .len(),
+        0
+    );
+    for (id, name, text) in [
+        (1, "overload-unary.rdl", unary),
+        (2, "overload-binary.rdl", binary),
+    ] {
+        let result = &response(&messages, json!(id))["result"];
+        assert_eq!(result["uri"], uri(name));
+        assert_eq!(
+            result["range"]["start"],
+            position(text, text.find("habitat").unwrap())
+        );
+    }
+    assert!(
+        response(&messages, json!(3))["result"]["contents"]["value"]
+            .as_str()
+            .unwrap()
+            .contains("habitat(mode: Immunity) : Label")
+    );
+    assert!(
+        response(&messages, json!(4))["result"]["contents"]["value"]
+            .as_str()
+            .unwrap()
+            .contains("habitat(lower: int, upper: int) : Bounds")
+    );
+    assert_eq!(
+        response(&messages, json!(5))["result"]["range"]["start"],
+        position(binary, binary.find("lower:integer,upper").unwrap())
+    );
+    assert!(
+        response(&messages, json!(6))["result"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|s| s["name"] == "habitat")
+    );
+    let completion = response(&messages, json!(7))["result"]["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["label"] == "habitat")
+        .unwrap();
+    assert!(
+        completion["detail"]
+            .as_str()
+            .unwrap()
+            .contains("mode: Immunity")
+    );
+    assert!(
+        completion["detail"]
+            .as_str()
+            .unwrap()
+            .contains("upper: int")
+    );
+}

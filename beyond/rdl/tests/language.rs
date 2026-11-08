@@ -2,8 +2,7 @@ use rdl::{World, imports::SourceLoader, parser};
 
 fn example() -> World {
     let mut world = World::new();
-    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("examples/races.rdl");
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples/races.rdl");
     SourceLoader::default()
         .load_files(&[path])
         .load_into(&mut world)
@@ -25,7 +24,7 @@ fn reject(source: &str, expected: &str) {
 fn example_derives_points_from_owner_properties_and_traits() {
     let world = example();
     assert_eq!(world.object_count(), 3);
-    assert_eq!(world.trait_count(), 11);
+    assert_eq!(world.trait_count(), 14);
     assert_eq!(
         world
             .query("q", "terrans.habitability_points")
@@ -62,7 +61,7 @@ fn queries_filter_sort_and_project_without_semicolons() {
         query {
           from r : race
           where r.population >= 18000
-          where r.primary != none
+          where Set.contains hyper_expansion r.traits
           order by r.population descending
           select { name = r.name; points = r.habitability_points; }
         }
@@ -77,19 +76,16 @@ fn queries_filter_sort_and_project_without_semicolons() {
 
 #[test]
 fn optional_values_need_no_some_constructor() {
-    let world = example();
+    let mut world = example();
+    world
+        .load("optional.rdl", r#"planet empty = { name = "Empty"; }"#)
+        .unwrap();
     assert_eq!(
-        world
-            .query("q", "terrans.primary = hyper_expansion")
-            .unwrap()
-            .as_bool(),
+        world.query("q", "earth.owner = terrans").unwrap().as_bool(),
         Some(true)
     );
     assert_eq!(
-        world
-            .query("q", "settlers.primary = none")
-            .unwrap()
-            .as_bool(),
+        world.query("q", "empty.owner = none").unwrap().as_bool(),
         Some(true)
     );
     assert_eq!(
@@ -347,9 +343,19 @@ fn detached_contextual_calculations_need_an_owner() {
 
 #[test]
 fn derived_cycles_report_dependencies() {
-    reject(
-        "object type race = { derive a : int = self.b; derive b : int = self.a; } race r = {}",
-        "cyclic dependency",
+    let mut world = World::new();
+    world
+        .load(
+            "cycles",
+            "object type race = { derive a : int = self.b; derive b : int = self.a; } race r = {}",
+        )
+        .unwrap();
+    assert!(
+        world
+            .query("q", "r.a")
+            .unwrap_err()
+            .message
+            .contains("cyclic dependency")
     );
 }
 
@@ -654,5 +660,54 @@ fn empty_numeric_queries_sum_to_their_typed_zero() {
         world
             .query("q", "List.sum (query { from r : reading select \"bad\" })")
             .is_err()
+    );
+}
+
+#[test]
+fn field_defaults_are_checked_and_can_be_overridden() {
+    let mut world = World::new();
+    world.load("defaults", "type Input = { value: real = 9.0; derive root: real = sqrt self.value; } object type Result = { input: Input; } Result a={input={};} Result b={input={value=16.0;};}").unwrap();
+    assert_eq!(
+        world.query("q", "a.input.root").unwrap().as_real(),
+        Some(3.0)
+    );
+    assert_eq!(
+        world.query("q", "b.input.root").unwrap().as_real(),
+        Some(4.0)
+    );
+    reject("type Input = { value: integer = true; }", "expected");
+    reject("type Input = { value: integer = self.value; }", "unknown");
+    assert!(
+        world
+            .query("q", "sqrt (-1)")
+            .unwrap_err()
+            .message
+            .contains("non-finite")
+    );
+}
+
+#[test]
+fn derived_cache_distinguishes_nominal_types_and_anonymous_values() {
+    let mut world = World::new();
+    world.load("cache", "type A={x:integer;derive y:integer=self.x+1;} type B={x:integer;derive y:integer=self.x+2;}").unwrap();
+    assert_eq!(
+        world
+            .query("q", "(A{x=2;}).y+(B{x=2;}).y+(A{x=3;}).y")
+            .unwrap()
+            .as_int(),
+        Some(11)
+    );
+    world
+        .load(
+            "cyclic",
+            "type Cycle={derive x:integer=self.x;} let bad=Cycle{};",
+        )
+        .unwrap();
+    assert!(
+        world
+            .query("q", "bad.x")
+            .unwrap_err()
+            .message
+            .contains("cyclic")
     );
 }

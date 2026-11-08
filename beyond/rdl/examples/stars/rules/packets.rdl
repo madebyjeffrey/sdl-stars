@@ -1,0 +1,86 @@
+import stars.design
+
+(* produce.cpp:409; turn2.cpp:588,603,1775. Mixed packets use each mineral. *)
+type PacketProduction = {
+  sender: Race;
+  mixed: bool = false;
+  driver_warp: integer;
+  twin_drivers: bool = false;
+  requested_warp: integer;
+  require self.driver_warp >= 5 && self.driver_warp <= 13;
+  derive input_each_mineral: integer = if self.mixed then
+    (if self.sender.prt_id = 6 then 25 else if self.sender.prt_id = 7 then 48 else 44)
+    else (if self.sender.prt_id = 6 then 70 else if self.sender.prt_id = 7 then 120 else 110);
+  derive output_each_mineral: integer = if self.mixed then (if self.sender.prt_id = 6 then 25 else 40)
+    else if self.sender.prt_id = 6 then 70 else 100;
+  derive resources: integer = if self.sender.prt_id = 6 then 5 else 10;
+  derive safe_warp: integer = self.driver_warp + (if self.twin_drivers then 1 else 0);
+  derive launch_valid: bool = self.requested_warp >= 5 && self.requested_warp <= self.driver_warp + 3;
+  derive tier: integer = let n = self.requested_warp - self.safe_warp in
+    if n <= 0 then 0 else min 3 (n + (if self.sender.prt_id = 7 then 1 else 0));
+}
+type PacketDecay = {
+  sender: Race;
+  mass: integer;
+  tier: integer;
+  percent_of_year: integer = 100;
+  stationary_salvage: bool = false;
+  require self.mass >= 0 && self.tier >= 0 && self.tier <= 3 && self.percent_of_year >= 0 && self.percent_of_year <= 100;
+  derive rate: integer = if self.stationary_salvage then 10 else
+    (if self.tier = 0 then 0 else if self.tier = 1 then 10 else if self.tier = 2 then 25 else 50) / (if self.sender.prt_id = 6 then 2 else 1);
+  derive lost: integer = if self.mass = 0 || self.rate = 0 then 0 else min self.mass
+    (max (if self.sender.prt_id = 6 && not self.stationary_salvage then 5 else 10)
+      (self.mass * self.rate * self.percent_of_year / 10000));
+  derive remaining: integer = self.mass - self.lost;
+}
+(* turn.cpp:1064. Apply separately to each mineral. Caught capacity is squared
+   before IT divides by two. Surface minerals use the ORIGINAL packet mass. *)
+type PacketImpact = {
+  sender: Race;
+  receiver: Race;
+  packet_warp: integer;
+  driver_warp: integer = 0;
+  twin_drivers: bool = false;
+  mineral_mass: integer;
+  require self.packet_warp > 0 && self.driver_warp >= 0 && self.mineral_mass >= 0;
+  derive effective_driver: integer = self.driver_warp + (if self.twin_drivers then 1 else 0);
+  derive driver_square: integer = self.effective_driver * self.effective_driver / (if self.receiver.prt_id = 7 then 2 else 1);
+  derive caught_thousandths: integer = if self.driver_warp = 0 then 0 else min 1000 (1000 * self.driver_square / (self.packet_warp * self.packet_warp));
+  derive uncaught: integer = self.mineral_mass * (1000 - self.caught_thousandths) / 1000;
+  derive surface_kept: integer = self.mineral_mass * (self.caught_thousandths + (1000 - self.caught_thousandths) / 9) / 1000;
+  derive colony_damage_applies: bool = self.receiver.prt_id != 8;
+  derive reveals_base_to_sender: bool = self.sender.prt_id = 6 && self.driver_warp > 0;
+}
+(* turn.cpp:1104. One uncaught chunk per call (<=100kt). Temporary success and
+   permanent success are correlated: the second draw is nested in the first. *)
+type PacketTerraformChunk = {
+  sender: Race;
+  uncaught_chunk: integer;
+  draw_200: integer;
+  draw_10: integer;
+  require self.uncaught_chunk > 0 && self.uncaught_chunk <= 100 && self.draw_200 >= 0 && self.draw_200 < 200 && self.draw_10 >= 0 && self.draw_10 < 10;
+  derive temporary_points: integer = if self.sender.prt_id = 6 && self.draw_200 < self.uncaught_chunk then 1 else 0;
+  derive permanent_points: integer = if self.temporary_points > 0 && self.draw_10 = 0 then 1 else 0;
+}
+type PacketTerraformAxis = {
+  tolerance: HabitatAxis;
+  original: integer;
+  current: integer;
+  temporary_points: integer;
+  permanent_points: integer;
+  can_terraform: bool;
+  available_lower: integer;
+  available_upper: integer;
+  require self.original >= 0 && self.original <= 100 && self.current >= 0 && self.current <= 100;
+  require self.temporary_points >= 0 && self.permanent_points >= 0;
+  derive target: integer = if not self.tolerance.immune then self.tolerance.preferred else if self.original < 50 then 1 else 99;
+  derive permanent_environment: integer = if self.original > self.target then max self.target (self.original - self.permanent_points)
+    else min self.target (self.original + self.permanent_points);
+  derive temporary_count: integer = self.temporary_points / (if self.tolerance.immune then 2 else 1);
+  derive temporary_environment: integer = if not self.can_terraform then self.current
+    else if self.tolerance.immune then
+      (if self.permanent_environment < 50 then max 1 (self.current - self.temporary_count) else min 99 (self.current + self.temporary_count))
+    else if self.available_lower = -100 && self.available_upper = -100 then self.current else
+    if self.current > self.target then max (max self.target (if self.available_lower = -100 then self.current else self.available_lower)) (self.current - self.temporary_count)
+    else min (min self.target (if self.available_upper = -100 then self.current else self.available_upper)) (self.current + self.temporary_count);
+}

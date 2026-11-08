@@ -120,7 +120,9 @@ impl Parser {
             } else {
                 None
             };
-            if self.take("import") {
+            if self.at("abstract") || self.at("component") {
+                statements.push(Statement::Definition(self.component(span)?));
+            } else if self.take("import") {
                 statements.push(Statement::Import(self.import(span)?));
             } else if self.at("type") || kind.is_some_and(|_| self.at_offset(1, "type")) {
                 if kind.is_some() {
@@ -132,16 +134,108 @@ impl Parser {
                 ));
             } else if self.take("trait") {
                 let name = self.word()?;
-                self.expect(":")?;
-                let ty = self.ty()?;
-                self.expect("=")?;
-                let expr = self.expression(0)?;
+                let parameters = if self.take("(") {
+                    let mut parameters = Vec::new();
+                    if !self.take(")") {
+                        loop {
+                            let span = self.current().span.clone();
+                            let name = self.word()?;
+                            self.expect(":")?;
+                            let ty = self.ty()?;
+                            parameters.push(Field {
+                                name,
+                                ty,
+                                expr: None,
+                                span,
+                            });
+                            if self.take(")") {
+                                break;
+                            }
+                            self.expect(",")?;
+                        }
+                    }
+                    Some(parameters)
+                } else {
+                    None
+                };
+                let ty = if self.take(":") {
+                    self.ty()?
+                } else {
+                    Type::Named("Trait".into(), Vec::new())
+                };
+                let mut requires = Vec::new();
+                let (expr, effects) = if self.take("=") {
+                    (self.expression(0)?, Vec::new())
+                } else {
+                    self.expect("{")?;
+                    let mut effects = Vec::new();
+                    let mut metadata = Vec::new();
+                    while !self.take("}") {
+                        if self.take("require") {
+                            requires.push(self.expression(0)?);
+                        } else if self.take("provides") {
+                            let provision_span = self.current().span.clone();
+                            let component = self.word()?;
+                            let value = if self.take("=") {
+                                self.expression(0)?
+                            } else if self.at("{") {
+                                self.prefix()?
+                            } else {
+                                Expr {
+                                    kind: ExprKind::Record(Vec::new()),
+                                    span: provision_span,
+                                }
+                            };
+                            effects.push(Effect::Provides { component, value });
+                        } else if self.take("modifies") {
+                            let component = self.word()?;
+                            let field = if self.take(".") {
+                                Some(self.word()?)
+                            } else {
+                                None
+                            };
+                            self.expect("{")?;
+                            while !self.take("}") {
+                                let operation = if self.take("multiply") {
+                                    "multiply"
+                                } else if self.take("add") {
+                                    "add"
+                                } else {
+                                    return Err(self.error("expected add or multiply"));
+                                };
+                                let value = self.expression(0)?;
+                                effects.push(Effect::Modifies {
+                                    component: component.clone(),
+                                    field: field.clone(),
+                                    operation: operation.into(),
+                                    value,
+                                });
+                                self.take(";");
+                            }
+                        } else {
+                            let field = self.word()?;
+                            self.expect("=")?;
+                            metadata.push((field, self.expression(0)?));
+                        }
+                        self.take(";");
+                    }
+                    (
+                        Expr {
+                            kind: ExprKind::Record(metadata),
+                            span: span.clone(),
+                        },
+                        effects,
+                    )
+                };
                 statements.push(Statement::Binding(Binding {
                     name,
                     ty: Some(ty),
                     kind: TypeKind::Trait,
                     expr,
                     span,
+                    effects,
+                    parameters,
+                    requires,
                 }));
             } else if self.take("let") {
                 let name = self.word()?;
@@ -158,6 +252,9 @@ impl Parser {
                     kind: TypeKind::Value,
                     expr,
                     span,
+                    effects: Vec::new(),
+                    parameters: None,
+                    requires: Vec::new(),
                 }));
             } else if matches!(self.current().kind, TokenKind::Word(_))
                 && matches!(
@@ -169,13 +266,49 @@ impl Parser {
                 let ty = Type::Named(self.word()?, Vec::new());
                 let name = self.word()?;
                 self.expect("=")?;
-                let expr = self.expression(0)?;
+                let expr = if self.take("{") {
+                    let mut fields = Vec::new();
+                    let mut traits = Vec::new();
+                    while !self.take("}") {
+                        let span = self.current().span.clone();
+                        let name = self.word()?;
+                        if self.take("=") || self.take(":") {
+                            fields.push((name, self.expression(0)?));
+                            self.take(";");
+                        } else {
+                            let mut selection = Expr {
+                                kind: ExprKind::Name(name),
+                                span: span.clone(),
+                            };
+                            if self.take("(") {
+                                selection = Expr {
+                                    kind: ExprKind::CallArgs(
+                                        Box::new(selection),
+                                        self.call_arguments()?,
+                                    ),
+                                    span,
+                                };
+                            }
+                            traits.push(selection);
+                        }
+                        self.take(";");
+                    }
+                    Expr {
+                        kind: ExprKind::ObjectRecord(fields, traits),
+                        span: span.clone(),
+                    }
+                } else {
+                    self.expression(0)?
+                };
                 statements.push(Statement::Binding(Binding {
                     name,
                     ty: Some(ty),
                     kind: TypeKind::Object,
                     expr,
                     span,
+                    effects: Vec::new(),
+                    parameters: None,
+                    requires: Vec::new(),
                 }));
             } else {
                 statements.push(Statement::Expression(self.expression(0)?));
@@ -272,6 +405,112 @@ impl Parser {
             derives,
             requires,
             span,
+            component: None,
+        })
+    }
+
+    fn component(&mut self, span: crate::diagnostic::Span) -> Result<Definition> {
+        let abstract_ = self.take("abstract");
+        self.expect("component")?;
+        let name = self.word()?;
+        let mut parents = Vec::new();
+        let mut scalar = None;
+        if self.take(":") {
+            loop {
+                let ty = self.ty()?;
+                match ty {
+                    Type::Int | Type::Real | Type::String | Type::Bool if scalar.is_none() => {
+                        scalar = Some(ty)
+                    }
+                    Type::Named(name, args) if args.is_empty() => parents.push(name),
+                    _ => {
+                        return Err(
+                            self.error("expected a scalar primitive type or component base")
+                        );
+                    }
+                }
+                if !self.take(",") {
+                    break;
+                }
+            }
+        }
+        self.expect("{")?;
+        let mut fields = Vec::new();
+        let mut values = Vec::new();
+        let mut derives = Vec::new();
+        let mut requires = Vec::new();
+        let mut compose = None;
+        while !self.take("}") {
+            if self.take("require") {
+                requires.push(self.expression(0)?);
+            } else if self.take("compose") {
+                if compose.is_some() {
+                    return Err(self.error("duplicate composition rule"));
+                }
+                self.expect("=")?;
+                compose = Some(self.expression(0)?);
+            } else {
+                let derived = self.take("derive");
+                let field_span = self.current().span.clone();
+                let field = self.word()?;
+                if self.take(":") {
+                    let ty = self.ty()?;
+                    let expr = if self.take("=") {
+                        Some(self.expression(0)?)
+                    } else {
+                        None
+                    };
+                    if derived && expr.is_none() {
+                        return Err(self.error("derived fields need an expression"));
+                    }
+                    let field = Field {
+                        name: field,
+                        ty,
+                        expr,
+                        span: field_span,
+                    };
+                    if derived {
+                        derives.push(field);
+                    } else {
+                        fields.push(field);
+                    }
+                } else {
+                    if derived {
+                        return Err(self.error("derived fields need a type"));
+                    }
+                    self.expect("=")?;
+                    values.push((field, self.expression(0)?));
+                }
+            }
+            self.take(";");
+        }
+        let context = if self.take("with") {
+            self.expect("(")?;
+            let owner = self.word()?;
+            self.expect(":")?;
+            let ty = self.ty()?;
+            self.expect(")")?;
+            Some((owner, ty))
+        } else {
+            None
+        };
+        Ok(Definition {
+            name,
+            params: Vec::new(),
+            kind: TypeKind::Value,
+            body: Body::Record(fields),
+            context,
+            derives,
+            requires,
+            span,
+            component: Some(Box::new(ComponentDefinition {
+                abstract_,
+                scalar,
+                parents,
+                values,
+                compose,
+                expanded: false,
+            })),
         })
     }
 
@@ -304,16 +543,53 @@ impl Parser {
     ) -> Result<Vec<Field>> {
         let mut fields = Vec::new();
         while !self.take("}") {
-            if self.take("require") {
+            let mut separated = false;
+            if self.at("requires") || self.at("allows") {
+                let required = self.take("requires");
+                if !required {
+                    self.expect("allows")?;
+                }
+                let cardinality = self.word()?;
+                let span = self.current().span.clone();
+                let name = self.word()?;
+                let inner = Type::Named(name.clone(), Vec::new());
+                let ty = match (required, cardinality.as_str()) {
+                    (true, "one") => inner,
+                    (false, "one" | "optional") => Type::Option(Box::new(inner)),
+                    (false, "many") => Type::Set(Box::new(inner), 0, None),
+                    (true, "some") => Type::Set(Box::new(inner), 1, None),
+                    _ => {
+                        return Err(self.error("use requires one/some or allows one/optional/many"));
+                    }
+                };
+                derives.push(Field {
+                    name,
+                    ty: ty.clone(),
+                    expr: Some(Expr {
+                        kind: ExprKind::Compose(ty),
+                        span: span.clone(),
+                    }),
+                    span,
+                });
+                separated = true;
+            } else if self.take("require") {
                 requires.push(self.expression(0)?);
             } else {
-                let derived = self.take("derive");
+                let component = self.take("component");
+                let derived = component || self.take("derive");
                 let span = self.current().span.clone();
                 let name = self.word()?;
                 self.expect(":")?;
                 let ty = self.ty()?;
-                let expr = if derived {
+                let expr = if component {
+                    Some(Expr {
+                        kind: ExprKind::Compose(ty.clone()),
+                        span: span.clone(),
+                    })
+                } else if derived {
                     self.expect("=")?;
+                    Some(self.expression(0)?)
+                } else if self.take("=") {
                     Some(self.expression(0)?)
                 } else {
                     None
@@ -330,7 +606,9 @@ impl Parser {
                     fields.push(field);
                 }
             }
-            if !self.at("}") {
+            if separated {
+                self.take(";");
+            } else if !self.at("}") {
                 self.expect(";")?;
             } else {
                 self.take(";");
@@ -363,10 +641,10 @@ impl Parser {
                 TokenKind::Word(name) if !reserved(&name) => {
                     self.pos += 1;
                     match name.as_str() {
-                        "int" | "integer" => Type::Int,
-                        "real" => Type::Real,
-                        "string" => Type::String,
-                        "bool" => Type::Bool,
+                        "int" | "integer" | "Int" | "Integer" => Type::Int,
+                        "real" | "Real" => Type::Real,
+                        "string" | "String" => Type::String,
+                        "bool" | "Bool" => Type::Bool,
                         _ => Type::Named(name, Vec::new()),
                     }
                 }
@@ -473,6 +751,12 @@ impl Parser {
                     kind: ExprKind::Binary(operator, Box::new(left), Box::new(right)),
                     span,
                 };
+            } else if min <= 80 && self.at_call_arguments() {
+                self.expect("(")?;
+                left = Expr {
+                    kind: ExprKind::CallArgs(Box::new(left), self.call_arguments()?),
+                    span,
+                };
             } else if min <= 80 && self.argument_start() {
                 let right = self.expression(81)?;
                 left = Expr {
@@ -486,8 +770,65 @@ impl Parser {
         Ok(left)
     }
 
+    fn at_call_arguments(&self) -> bool {
+        if !self.at("(") {
+            return false;
+        }
+        if let Some(previous) = self.pos.checked_sub(1).and_then(|i| self.tokens.get(i)) {
+            let length = match &previous.kind {
+                TokenKind::Word(s) | TokenKind::Symbol(s) => s.len(),
+                _ => 0,
+            };
+            if length > 0
+                && previous.span.line == self.current().span.line
+                && previous.span.column + length == self.current().span.column
+            {
+                return true;
+            }
+        }
+        // A comma (or empty list) is unambiguously the new argument-list form.
+        // Keep spaced ML calls such as `real (C {...}).field` unchanged.
+        if self.at_offset(1, ")") {
+            return true;
+        }
+        let mut depth = 0;
+        for token in &self.tokens[self.pos..] {
+            if let TokenKind::Symbol(symbol) = &token.kind {
+                if matches!(symbol.as_str(), "(" | "{" | "[") {
+                    depth += 1;
+                }
+                if symbol == "," && depth == 1 {
+                    return true;
+                }
+                if matches!(symbol.as_str(), ")" | "}" | "]") {
+                    depth -= 1;
+                    if depth == 0 {
+                        break;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    fn call_arguments(&mut self) -> Result<Vec<Expr>> {
+        let mut arguments = Vec::new();
+        if !self.take(")") {
+            loop {
+                arguments.push(self.expression(0)?);
+                if self.take(")") {
+                    break;
+                }
+                self.expect(",")?;
+            }
+        }
+        Ok(arguments)
+    }
+
     fn argument_start(&self) -> bool {
-        if self.at_offset(1, "=") && matches!(self.current().kind, TokenKind::Word(_)) {
+        if (self.at_offset(1, "=") || self.at_offset(1, ":"))
+            && matches!(self.current().kind, TokenKind::Word(_))
+        {
             return false;
         }
         if self.at_offset(2, "=")
@@ -570,10 +911,13 @@ impl Parser {
             TokenKind::Symbol(symbol) if symbol == "{" => self.collection()?,
             TokenKind::Symbol(symbol) if symbol == "-" || symbol == "+" => {
                 if symbol == "-"
-                    && matches!(&self.current().kind, TokenKind::Number(text) if text == "9223372036854775808")
+                    && matches!(&self.current().kind, TokenKind::Number(text) if text.replace('_', "") == "9223372036854775808")
                 {
+                    let TokenKind::Number(text) = self.current().kind.clone() else {
+                        unreachable!()
+                    };
                     self.pos += 1;
-                    ExprKind::Int(i64::MIN)
+                    number(&format!("-{text}"), &token.span)?
                 } else {
                     ExprKind::Unary(symbol, Box::new(self.expression(60)?))
                 }
@@ -590,16 +934,20 @@ impl Parser {
         if self.take("}") {
             return Ok(ExprKind::Set(Vec::new()));
         }
-        if matches!(self.current().kind, TokenKind::Word(_)) && self.at_offset(1, "=") {
+        if matches!(self.current().kind, TokenKind::Word(_))
+            && (self.at_offset(1, "=") || self.at_offset(1, ":"))
+        {
             let mut fields = Vec::new();
             loop {
                 let name = self.word()?;
-                self.expect("=")?;
+                if !self.take(":") {
+                    self.expect("=")?;
+                }
                 fields.push((name, self.expression(0)?));
                 if self.take("}") {
                     break;
                 }
-                self.expect(";")?;
+                self.take(";");
                 if self.take("}") {
                     break;
                 }
@@ -700,6 +1048,21 @@ impl Parser {
 }
 
 fn number(text: &str, span: &crate::diagnostic::Span) -> Result<ExprKind> {
+    let chars: Vec<_> = text.chars().collect();
+    if chars.iter().enumerate().any(|(i, ch)| {
+        *ch == '_'
+            && (i == 0
+                || i + 1 == chars.len()
+                || !chars[i - 1].is_ascii_digit()
+                || !chars[i + 1].is_ascii_digit())
+    }) {
+        return Err(Error::new(
+            span,
+            "numeric separators must occur between digits",
+        ));
+    }
+    let clean = text.replace('_', "");
+    let text = clean.as_str();
     if text.contains(['.', 'e', 'E']) {
         let value: f64 = text
             .parse()
@@ -719,6 +1082,15 @@ pub(crate) fn reserved(name: &str) -> bool {
     matches!(
         name,
         "type"
+            | "abstract"
+            | "component"
+            | "requires"
+            | "allows"
+            | "provides"
+            | "modifies"
+            | "multiply"
+            | "add"
+            | "compose"
             | "trait"
             | "object"
             | "let"

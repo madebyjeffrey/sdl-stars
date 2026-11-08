@@ -1,0 +1,8 @@
+(* Six fixed designs plus the Random generation template. *)
+import predefined.humanoid
+import predefined.rabbitoid
+import predefined.insectoid
+import predefined.nucleotid
+import predefined.silicanoid
+import predefined.antetheral
+import predefined.random

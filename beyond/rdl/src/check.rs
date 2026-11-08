@@ -34,6 +34,64 @@ pub(crate) fn check_world(world: &World) -> Result<()> {
         if let Some((name, ty)) = &definition.context {
             locals.insert(name.clone(), Shape::Known(ty.clone()));
         }
+        if let Body::Record(fields) = &definition.body {
+            for field in fields {
+                if let Some(expr) = &field.expr {
+                    let shape = checker.infer(expr, &Locals::new())?;
+                    checker.accepts(&shape, &field.ty, &expr.span, 0)?;
+                }
+            }
+            if let Some(expr) = definition
+                .component
+                .as_ref()
+                .and_then(|c| c.compose.as_ref())
+            {
+                let mut compose_locals = locals.clone();
+                compose_locals.insert(
+                    "base".into(),
+                    Shape::Known(Type::Named(definition.name.clone(), Vec::new())),
+                );
+                let modifiers: BTreeMap<_, _> = fields
+                    .iter()
+                    .filter(|f| matches!(f.ty, Type::Int | Type::Real))
+                    .map(|f| {
+                        (
+                            f.name.clone(),
+                            Shape::List(Box::new(Shape::Known(Type::Real))),
+                        )
+                    })
+                    .collect();
+                compose_locals.insert("additions".into(), Shape::Record(modifiers.clone()));
+                compose_locals.insert("multipliers".into(), Shape::Record(modifiers));
+                let shape = checker.infer(expr, &compose_locals)?;
+                // Abstract bases can define composition before their required
+                // values are supplied by a concrete descendant.
+                if let Shape::Record(shapes) = &shape {
+                    checker.accept_fields(shapes, fields, &BTreeMap::new(), &expr.span, 0)?;
+                } else {
+                    checker.accepts(
+                        &shape,
+                        &Type::Named(definition.name.clone(), Vec::new()),
+                        &expr.span,
+                        0,
+                    )?;
+                }
+            }
+        }
+        if let Some(component) = &definition.component
+            && let (Some(ty), Some(expr)) = (&component.scalar, &component.compose)
+        {
+            let mut context = locals.clone();
+            context.insert(
+                "base".into(),
+                Shape::Known(Type::Named(definition.name.clone(), Vec::new())),
+            );
+            let contributions = Shape::List(Box::new(Shape::Known(Type::Real)));
+            context.insert("additions".into(), contributions.clone());
+            context.insert("multipliers".into(), contributions);
+            let shape = checker.infer(expr, &context)?;
+            checker.accepts(&shape, ty, &expr.span, 0)?;
+        }
         for field in &definition.derives {
             let shape = checker.infer(field.expr.as_ref().unwrap(), &locals)?;
             checker.accepts(&shape, &field.ty, &field.span, 0)?;
@@ -43,8 +101,42 @@ pub(crate) fn check_world(world: &World) -> Result<()> {
             checker.accepts(&shape, &Type::Bool, &requirement.span, 0)?;
         }
     }
-    for binding in world.bindings.values() {
-        checker.binding(&binding.name, &binding.span)?;
+    for binding in world.all_bindings() {
+        let mut parameter_names = BTreeSet::new();
+        let mut parameter_locals = Locals::new();
+        for parameter in binding.parameters.iter().flatten() {
+            if !parameter_names.insert(&parameter.name) || parameter.name == "self" {
+                return Err(Error::new(
+                    &parameter.span,
+                    "duplicate or reserved trait parameter",
+                ));
+            }
+            world.check_type(&parameter.ty, &[], &parameter.span)?;
+            parameter_locals.insert(parameter.name.clone(), Shape::Known(parameter.ty.clone()));
+        }
+        checker.check_binding(binding, &binding.span)?;
+        for requirement in &binding.requires {
+            let shape = checker.infer(requirement, &parameter_locals)?;
+            checker.accepts(&shape, &Type::Bool, &requirement.span, 0)?;
+        }
+        for effect in &binding.effects {
+            match effect {
+                Effect::Provides { component, value } => {
+                    let shape = checker.infer(value, &parameter_locals)?;
+                    checker.check_component_input(component, &shape, &value.span)?;
+                    checker.accepts(
+                        &shape,
+                        &Type::Named(component.clone(), Vec::new()),
+                        &value.span,
+                        0,
+                    )?;
+                }
+                Effect::Modifies { value, .. } => {
+                    let shape = checker.infer(value, &parameter_locals)?;
+                    checker.number(&shape, &value.span)?;
+                }
+            }
+        }
     }
     Ok(())
 }
@@ -71,6 +163,7 @@ pub(crate) fn query_item_type(
             Data::String(_) => Shape::Known(Type::String),
             Data::Bool(_) => Shape::Known(Type::Bool),
             Data::Ref(name) => Shape::Known(world.bindings[name].ty.clone().unwrap()),
+            Data::TraitInstance(_, _, metadata) => shape(world, metadata),
             Data::None => Shape::None,
             Data::Tag(name) => Shape::Tag(name.clone()),
             Data::Record(fields) => Shape::Record(
@@ -126,14 +219,28 @@ impl<'a> Checker<'a> {
     }
 
     fn binding(&mut self, name: &str, span: &Span) -> Result<Shape> {
+        self.check_binding(&self.world.bindings[name], span)
+    }
+
+    fn check_binding(&mut self, binding: &Binding, span: &Span) -> Result<Shape> {
+        let key = match &binding.parameters {
+            Some(parameters) => format!("{}/{}", binding.name, parameters.len()),
+            None => binding.name.clone(),
+        };
+        let name = key.as_str();
         if let Some(shape) = self.cache.get(name) {
             return Ok(shape.clone());
         }
-        let binding = &self.world.bindings[name];
         if !self.active.insert(name.into()) {
             return Err(Error::new(span, format!("cyclic value binding '{name}'")));
         }
-        let shape = self.infer(&binding.expr, &Locals::new())?;
+        let locals = binding
+            .parameters
+            .iter()
+            .flatten()
+            .map(|p| (p.name.clone(), Shape::Known(p.ty.clone())))
+            .collect();
+        let shape = self.infer(&binding.expr, &locals)?;
         let result = if let Some(ty) = &binding.ty {
             self.accepts(&shape, ty, &binding.expr.span, 0)?;
             Shape::Known(ty.clone())
@@ -161,6 +268,7 @@ impl<'a> Checker<'a> {
     fn infer_inner(&mut self, expression: &Expr, locals: &Locals) -> Result<Shape> {
         let span = &expression.span;
         Ok(match &expression.kind {
+            ExprKind::Compose(ty) => Shape::Known(ty.clone()),
             ExprKind::Int(_) => Shape::Known(Type::Int),
             ExprKind::Real(_) => Shape::Known(Type::Real),
             ExprKind::String(_) => Shape::Known(Type::String),
@@ -170,11 +278,15 @@ impl<'a> Checker<'a> {
                 if let Some(shape) = locals.get(name) {
                     shape.clone()
                 } else if let Some(binding) = self.world.bindings.get(name) {
-                    if binding.kind == TypeKind::Value {
+                    if binding.parameters.is_some() {
+                        Shape::Function(name.clone(), Vec::new())
+                    } else if binding.kind == TypeKind::Value {
                         self.binding(name, span)?
                     } else {
                         Shape::Known(binding.ty.clone().unwrap())
                     }
+                } else if self.world.has_templates(name) {
+                    Shape::Function(name.clone(), Vec::new())
                 } else if let Some(fields) = self.world.constructors.get(name) {
                     if fields.is_empty() {
                         Shape::Tag(name.clone())
@@ -189,6 +301,24 @@ impl<'a> Checker<'a> {
                 } else {
                     return Err(Error::new(span, format!("unknown name '{name}'")));
                 }
+            }
+            ExprKind::ObjectRecord(fields, traits) => {
+                for selection in traits {
+                    let shape = self.infer(selection, locals)?;
+                    self.accepts(
+                        &shape,
+                        &Type::Named("Trait".into(), Vec::new()),
+                        &selection.span,
+                        0,
+                    )?;
+                }
+                self.infer(
+                    &Expr {
+                        kind: ExprKind::Record(fields.clone()),
+                        span: span.clone(),
+                    },
+                    locals,
+                )?
             }
             ExprKind::Record(fields) => {
                 let mut shapes = BTreeMap::new();
@@ -212,6 +342,37 @@ impl<'a> Checker<'a> {
                 let receiver = self.infer(receiver, locals)?;
                 self.field(&receiver, name, span, 0)?
             }
+            ExprKind::CallArgs(function, arguments) => {
+                let mut function = self.infer(function, locals)?;
+                if let Shape::Function(name, previous) = &function
+                    && self.world.has_templates(name)
+                {
+                    let binding = self
+                        .world
+                        .template(name, previous.len() + arguments.len())
+                        .ok_or_else(|| {
+                            self.world.trait_arity_error(
+                                name,
+                                previous.len() + arguments.len(),
+                                span,
+                            )
+                        })?;
+                    let parameters = binding.parameters.as_ref().unwrap();
+                    let mut args = previous.clone();
+                    for argument in arguments {
+                        args.push(self.infer(argument, locals)?);
+                    }
+                    for (shape, parameter) in args.iter().zip(parameters) {
+                        self.accepts(shape, &parameter.ty, span, 0)?;
+                    }
+                    return Ok(Shape::Known(binding.ty.clone().unwrap()));
+                }
+                for argument in arguments {
+                    let argument = self.infer(argument, locals)?;
+                    function = self.apply(function, argument, span)?;
+                }
+                function
+            }
             ExprKind::Call(function, argument) => {
                 let function = self.infer(function, locals)?;
                 let argument = self.infer(argument, locals)?;
@@ -219,6 +380,7 @@ impl<'a> Checker<'a> {
             }
             ExprKind::Unary(operator, value) => {
                 let shape = self.infer(value, locals)?;
+                let shape = self.scalar_shape(&shape);
                 if operator == "not" {
                     self.accepts(&shape, &Type::Bool, span, 0)?;
                     Shape::Known(Type::Bool)
@@ -230,6 +392,8 @@ impl<'a> Checker<'a> {
             ExprKind::Binary(operator, left, right) => {
                 let left = self.infer(left, locals)?;
                 let right = self.infer(right, locals)?;
+                let left = self.scalar_shape(&left);
+                let right = self.scalar_shape(&right);
                 match operator.as_str() {
                     "=" | "==" | "!=" | "<>" => {
                         self.compatible(&left, &right, span)?;
@@ -398,6 +562,17 @@ impl<'a> Checker<'a> {
                     {
                         return Ok(Shape::Known(substitute(&field.ty, &substitutions)));
                     }
+                    if definition.kind == TypeKind::Object
+                        && name == "traits"
+                        && let Body::Record(fields) = &definition.body
+                        && !fields.iter().any(|f| f.name == "traits")
+                    {
+                        return Ok(Shape::Known(Type::Set(
+                            Box::new(Type::Named("Trait".into(), Vec::new())),
+                            0,
+                            None,
+                        )));
+                    }
                     match &definition.body {
                         Body::Record(fields) => {
                             if let Some(field) = fields.iter().find(|field| field.name == name) {
@@ -441,9 +616,15 @@ impl<'a> Checker<'a> {
             ));
         }
         if let Shape::Known(actual) = shape
-            && (actual == ty || matches!((actual, ty), (Type::Int, Type::Real)))
+            && (self.world.subtype(actual, ty) || matches!((actual, ty), (Type::Int, Type::Real)))
         {
             return Ok(());
+        }
+        if matches!(ty, Type::Int | Type::Real | Type::String | Type::Bool) {
+            let primitive = self.scalar_shape(shape);
+            if &primitive != shape {
+                return self.accepts(&primitive, ty, span, depth + 1);
+            }
         }
         match ty {
             Type::Var(_) => return Ok(()),
@@ -463,6 +644,23 @@ impl<'a> Checker<'a> {
             }
             Type::Named(name, args) => {
                 if let Some(definition) = self.world.definitions.get(name) {
+                    if definition.component.as_ref().is_some_and(|c| c.abstract_) {
+                        return Err(Error::new(
+                            span,
+                            format!("cannot instantiate abstract component '{name}'"),
+                        ));
+                    }
+                    if definition
+                        .component
+                        .as_ref()
+                        .is_some_and(|c| c.scalar.is_some())
+                        && matches!(shape, Shape::Known(actual) if self.world.scalar_type(actual).is_some())
+                    {
+                        return Err(Error::new(span, format!("expected nominal component {ty}")));
+                    }
+                    if definition.component.is_some() {
+                        self.check_component_input(name, shape, span)?;
+                    }
                     let substitutions = substitutions(definition, args);
                     match &definition.body {
                         Body::Record(fields) => {
@@ -562,7 +760,7 @@ impl<'a> Checker<'a> {
                     error.message = format!("field '{}': {}", field.name, error.message);
                     error
                 })?;
-            } else if !matches!(ty, Type::Option(_) | Type::Set(_, 0, _)) {
+            } else if field.expr.is_none() && !matches!(ty, Type::Option(_) | Type::Set(_, 0, _)) {
                 return Err(Error::new(
                     span,
                     format!("missing required field '{}'", field.name),
@@ -606,6 +804,23 @@ impl<'a> Checker<'a> {
         if right == &Shape::Empty || left == right {
             return Ok(left.clone());
         }
+        if let (Shape::Known(a), Shape::Known(b)) = (left, right) {
+            let traits = Type::Named("Trait".into(), Vec::new());
+            if self.world.subtype(a, &traits) && self.world.subtype(b, &traits) {
+                return Ok(Shape::Known(traits));
+            }
+            if self.world.subtype(a, b) {
+                return Ok(right.clone());
+            }
+            if self.world.subtype(b, a) {
+                return Ok(left.clone());
+            }
+        }
+        let l = self.scalar_shape(left);
+        let r = self.scalar_shape(right);
+        if (l != *left) != (r != *right) {
+            return self.unify(&l, &r, span);
+        }
         match (left, right) {
             (Shape::Known(Type::Var(_)), Shape::Known(Type::Int | Type::Real)) => Ok(right.clone()),
             (Shape::Known(Type::Int | Type::Real), Shape::Known(Type::Var(_))) => Ok(left.clone()),
@@ -623,8 +838,20 @@ impl<'a> Checker<'a> {
         }
     }
 
+    fn scalar_shape(&self, shape: &Shape) -> Shape {
+        if let Shape::Known(ty) = shape
+            && let Some(primitive) = self.world.scalar_type(ty)
+        {
+            return Shape::Known(primitive);
+        }
+        shape.clone()
+    }
+
     fn number(&self, shape: &Shape, span: &Span) -> Result<()> {
-        if matches!(shape, Shape::Known(Type::Int | Type::Real | Type::Var(_))) {
+        if matches!(
+            self.scalar_shape(shape),
+            Shape::Known(Type::Int | Type::Real | Type::Var(_))
+        ) {
             Ok(())
         } else {
             Err(Error::new(span, "expected a numeric expression"))
@@ -633,7 +860,7 @@ impl<'a> Checker<'a> {
 
     fn ordered(&self, shape: &Shape, span: &Span) -> Result<()> {
         if matches!(
-            shape,
+            self.scalar_shape(shape),
             Shape::Known(Type::Int | Type::Real | Type::String | Type::Bool | Type::Var(_))
         ) {
             Ok(())
@@ -729,6 +956,30 @@ impl<'a> Checker<'a> {
         Ok(cases)
     }
 
+    fn check_component_input(&self, name: &str, shape: &Shape, span: &Span) -> Result<()> {
+        let definition = self.world.component_definition(name, span)?;
+        if definition.component.as_ref().unwrap().abstract_ {
+            return Err(Error::new(
+                span,
+                format!("cannot instantiate abstract component '{name}'"),
+            ));
+        }
+        if let (Body::Record(fields), Shape::Record(shapes)) = (&definition.body, shape) {
+            for field in fields {
+                if field.expr.is_some() && shapes.contains_key(&field.name) {
+                    return Err(Error::new(
+                        span,
+                        format!(
+                            "cannot override fixed component value '{name}.{}'",
+                            field.name
+                        ),
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn apply(&self, function: Shape, argument: Shape, span: &Span) -> Result<Shape> {
         let Shape::Function(name, mut args) = function else {
             return Err(Error::new(
@@ -737,6 +988,21 @@ impl<'a> Checker<'a> {
             ));
         };
         args.push(argument);
+        if let Some(binding) = self.world.curried_template(&name, span)?
+            && let Some(parameters) = &binding.parameters
+        {
+            if args.len() > parameters.len() {
+                return Err(Error::new(span, "too many trait arguments"));
+            }
+            for (shape, parameter) in args.iter().zip(parameters) {
+                self.accepts(shape, &parameter.ty, span, 0)?;
+            }
+            return if args.len() < parameters.len() {
+                Ok(Shape::Function(name, args))
+            } else {
+                Ok(Shape::Known(binding.ty.clone().unwrap()))
+            };
+        }
         if let Some(arity) = builtin(&name) {
             if args.len() < arity {
                 return Ok(Shape::Function(name, args));
@@ -756,6 +1022,9 @@ impl<'a> Checker<'a> {
         }
         let mut inferred = BTreeMap::new();
         let params = if let Some(definition) = self.world.definitions.get(&name) {
+            if definition.component.is_some() {
+                self.check_component_input(&name, shape, span)?;
+            }
             if definition.kind != TypeKind::Value {
                 return Err(Error::new(
                     span,
@@ -804,17 +1073,21 @@ impl<'a> Checker<'a> {
                 self.number(&args[0], span)?;
                 Ok(Shape::Known(Type::Int))
             }
-            "real" => {
+            "real" | "sqrt" => {
                 self.number(&args[0], span)?;
                 Ok(Shape::Known(Type::Real))
             }
             "abs" => {
                 self.number(&args[0], span)?;
-                Ok(args[0].clone())
+                Ok(self.scalar_shape(&args[0]))
             }
             "min" | "max" => {
                 self.ordered(&args[0], span)?;
-                self.unify(&args[0], &args[1], span)
+                self.unify(
+                    &self.scalar_shape(&args[0]),
+                    &self.scalar_shape(&args[1]),
+                    span,
+                )
             }
             "Set.size" => {
                 if !matches!(args[0], Shape::Set(_) | Shape::Known(Type::Set(_, _, _))) {
@@ -828,12 +1101,15 @@ impl<'a> Checker<'a> {
                 }
                 Ok(Shape::Known(Type::Int))
             }
-            "List.sum" => {
+            "List.sum" | "List.product" => {
                 let Shape::List(inner) = &args[0] else {
-                    return Err(Error::new(span, "List.sum expects a numeric query result"));
+                    return Err(Error::new(
+                        span,
+                        format!("{name} expects a numeric query result"),
+                    ));
                 };
                 self.number(inner, span)?;
-                Ok(*inner.clone())
+                Ok(self.scalar_shape(inner))
             }
             "Set.contains" => {
                 match &args[1] {

@@ -1,5 +1,6 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt;
+use std::sync::Arc;
 
 use crate::ast::Type;
 
@@ -10,6 +11,25 @@ pub struct Value {
     pub(crate) owner: Option<String>,
     pub(crate) path: Option<String>,
     pub(crate) item_type: Option<Type>,
+    pub(crate) component: Option<String>,
+    pub(crate) evaluation_id: Option<usize>,
+    pub(crate) inline_traits: Vec<Value>,
+}
+
+// An evaluation ID belongs to one normalized value revision. Type and owner
+// metadata remain part of the key when a value is reused in a different context.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub(crate) struct ValueKey {
+    id: usize,
+    types: Vec<Type>,
+    owner: Option<String>,
+    component: Option<String>,
+}
+
+impl ValueKey {
+    pub(crate) fn revision(&self) -> usize {
+        self.id
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -21,7 +41,8 @@ pub(crate) enum Data {
     None,
     Tag(String),
     Ref(String),
-    Record(BTreeMap<String, Value>),
+    TraitInstance(String, Vec<Value>, Arc<Value>),
+    Record(Arc<BTreeMap<String, Value>>),
     Set(Vec<Value>),
     List(Vec<Value>),
     Function(String, Vec<Value>),
@@ -35,8 +56,17 @@ impl Value {
             owner: None,
             path: None,
             item_type: None,
+            component: None,
+            evaluation_id: None,
+            inline_traits: Vec::new(),
         }
     }
+    // Cloning a record shares its immutable payload. Mutation sites use
+    // Arc::make_mut so normalizing or attaching one copy cannot alter another.
+    pub(crate) fn record(fields: BTreeMap<String, Value>) -> Self {
+        Self::new(Data::Record(Arc::new(fields)))
+    }
+
     pub fn as_int(&self) -> Option<i64> {
         if let Data::Int(value) = self.data {
             Some(value)
@@ -72,10 +102,10 @@ impl Value {
         }
     }
     pub fn fields(&self) -> Option<&BTreeMap<String, Value>> {
-        if let Data::Record(fields) = &self.data {
-            Some(fields)
-        } else {
-            None
+        match &self.data {
+            Data::Record(fields) => Some(fields),
+            Data::TraitInstance(_, _, metadata) => metadata.fields(),
+            _ => None,
         }
     }
     pub fn reference(&self) -> Option<&str> {
@@ -86,7 +116,92 @@ impl Value {
         }
     }
 
+    pub(crate) fn retain_ids(&self, retained: &mut HashSet<usize>) {
+        if let Some(id) = self.evaluation_id
+            && !retained.insert(id)
+        {
+            return;
+        }
+        for selection in &self.inline_traits {
+            selection.retain_ids(retained);
+        }
+        match &self.data {
+            Data::Record(fields) => {
+                for value in fields.values() {
+                    value.retain_ids(retained);
+                }
+            }
+            Data::TraitInstance(_, args, metadata) => {
+                metadata.retain_ids(retained);
+                for value in args {
+                    value.retain_ids(retained);
+                }
+            }
+            Data::Set(values) | Data::List(values) | Data::Function(_, values) => {
+                for value in values {
+                    value.retain_ids(retained);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    pub(crate) fn cache_key(&self) -> Option<ValueKey> {
+        self.evaluation_id.map(|id| ValueKey {
+            id,
+            types: self.types.clone(),
+            owner: self.owner.clone(),
+            component: self.component.clone(),
+        })
+    }
+
+    pub(crate) fn identity_key(&self) -> String {
+        let data = match &self.data {
+            Data::Ref(name) => return format!("reference:{name:?}"),
+            Data::TraitInstance(name, args, _) => {
+                return format!(
+                    "trait:{name:?}:{:?}",
+                    args.iter().map(Self::identity_key).collect::<Vec<_>>()
+                );
+            }
+            Data::Record(fields) => format!(
+                "record:{:?}",
+                fields
+                    .iter()
+                    .map(|(name, value)| (name, value.identity_key()))
+                    .collect::<Vec<_>>()
+            ),
+            Data::Set(values) => {
+                let mut keys: Vec<_> = values.iter().map(Self::identity_key).collect();
+                keys.sort();
+                format!("set:{keys:?}")
+            }
+            Data::List(values) => format!(
+                "list:{:?}",
+                values.iter().map(Self::identity_key).collect::<Vec<_>>()
+            ),
+            Data::Real(value) if *value == 0.0 => "0.0".into(),
+            _ => self.to_string(),
+        };
+        let nominal = self.types.iter().any(|ty| matches!(ty, Type::Named(_, _)));
+        if !nominal && self.component.is_none() {
+            return format!("primitive:{data}");
+        }
+        format!(
+            "{:?}:{:?}:{:?}:{data}",
+            self.component,
+            self.types,
+            if nominal { self.owner.as_ref() } else { None }
+        )
+    }
+
     pub(crate) fn equal(&self, other: &Self) -> bool {
+        if self.component.is_some()
+            && other.component.is_some()
+            && self.component != other.component
+        {
+            return false;
+        }
         match (&self.data, &other.data) {
             (Data::Int(a), Data::Int(b)) => a == b,
             (Data::Real(a), Data::Real(b)) => a == b,
@@ -94,8 +209,22 @@ impl Value {
             (Data::Bool(a), Data::Bool(b)) => a == b,
             (Data::None, Data::None) => true,
             (Data::Tag(a), Data::Tag(b)) | (Data::Ref(a), Data::Ref(b)) => a == b,
+            (Data::TraitInstance(a, xs, _), Data::TraitInstance(b, ys, _)) => {
+                a == b
+                    && xs.len() == ys.len()
+                    && xs
+                        .iter()
+                        .zip(ys)
+                        .all(|(x, y)| x.identity_key() == y.identity_key())
+            }
             (Data::Record(a), Data::Record(b)) => {
-                a.len() == b.len()
+                self.component == other.component
+                    && self.inline_traits.len() == other.inline_traits.len()
+                    && self
+                        .inline_traits
+                        .iter()
+                        .all(|x| other.inline_traits.iter().any(|y| x.equal(y)))
+                    && a.len() == b.len()
                     && a.iter()
                         .all(|(key, value)| b.get(key).is_some_and(|other| value.equal(other)))
             }
@@ -121,6 +250,16 @@ impl fmt::Display for Value {
             Data::Bool(value) => write!(f, "{value}"),
             Data::None => write!(f, "none"),
             Data::Tag(name) | Data::Ref(name) => write!(f, "{name}"),
+            Data::TraitInstance(name, args, _) => {
+                write!(f, "{name}(")?;
+                for (i, value) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{value}")?;
+                }
+                write!(f, ")")
+            }
             Data::Record(fields) => {
                 write!(f, "{{")?;
                 for (i, (name, value)) in fields.iter().enumerate() {

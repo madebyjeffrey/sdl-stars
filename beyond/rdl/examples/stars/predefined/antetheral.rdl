@@ -1,0 +1,35 @@
+(* Generated from data/races/predefined.yaml by tools/generate_stars_presets.py. *)
+import stars.settings
+
+Race antetheral = {
+  name = "Antetheral";
+  plural_name = "Antetherals";
+  source_index = 5;
+  portrait(18)
+  gravity(0, 30)
+  temperature(0, 100)
+  radiation(70, 100)
+  growth(7)
+  population_efficiency(700)
+  factory_output(11)
+  factory_cost(10)
+  factory_operation(18)
+  mine_output(10)
+  mine_cost(10)
+  mine_operation(10)
+  energy_research(cheap)
+  weapons_research(expensive)
+  propulsion_research(cheap)
+  construction_research(cheap)
+  electronics_research(cheap)
+  biotechnology_research(cheap)
+  research_allocation(15)
+  leftover_points(surface_minerals)
+  standard_capacity
+  space_demolition
+  lrt_arm
+  lrt_ma
+  lrt_nrse
+  lrt_ce
+  lrt_nas
+}

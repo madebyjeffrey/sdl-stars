@@ -1,0 +1,33 @@
+(* Generated from data/races/predefined.yaml by tools/generate_stars_presets.py. *)
+import stars.settings
+
+Race insectoid = {
+  name = "Insectoid";
+  plural_name = "Insectoids";
+  source_index = 2;
+  portrait(4)
+  gravity(immune)
+  temperature(0, 100)
+  radiation(70, 100)
+  growth(10)
+  population_efficiency(1000)
+  factory_output(10)
+  factory_cost(10)
+  factory_operation(10)
+  mine_output(9)
+  mine_cost(10)
+  mine_operation(6)
+  energy_research(cheap)
+  weapons_research(cheap)
+  propulsion_research(cheap)
+  construction_research(cheap)
+  electronics_research(standard)
+  biotechnology_research(expensive)
+  research_allocation(15)
+  leftover_points(concentrations)
+  standard_capacity
+  war_monger
+  lrt_isb
+  lrt_ce
+  lrt_rs
+}

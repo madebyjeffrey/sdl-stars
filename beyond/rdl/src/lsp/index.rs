@@ -63,6 +63,7 @@ pub(super) struct Index {
     globals: BTreeMap<String, Symbol>,
     definitions: BTreeMap<String, (Definition, Symbol)>,
     constructors: BTreeMap<String, (Vec<Field>, Symbol)>,
+    trait_overloads: BTreeMap<(String, usize), (Vec<Field>, Symbol)>,
 }
 
 impl Index {
@@ -98,7 +99,13 @@ impl Index {
     }
 
     pub fn semantic_role(&self, uri: &str, byte: usize) -> Option<(&'static str, u32)> {
-        let occurrence = self.sources.get(uri)?.at(byte)?;
+        let source = self.sources.get(uri)?;
+        let i = source.tokens.partition_point(|token| token.start < byte);
+        if source.tokens.get(i).is_some_and(|token| token.start == byte && matches!(&token.kind, TokenKind::Word(word) if matches!(word.as_str(), "one" | "optional" | "many" | "some")))
+            && i > 0 && matches!(&source.tokens[i - 1].kind, TokenKind::Word(word) if matches!(word.as_str(), "requires" | "allows")) {
+            return Some(("keyword", 0));
+        }
+        let occurrence = source.at(byte)?;
         if occurrence.start != byte {
             return None;
         }
@@ -162,6 +169,24 @@ impl Index {
                                 .collect::<String>(),
                             definition.name
                         );
+                        if let Some(component) = &definition.component {
+                            symbol.kind = 5;
+                            symbol.detail = format!(
+                                "{}component {}{}",
+                                if component.abstract_ { "abstract " } else { "" },
+                                definition.name,
+                                {
+                                    let mut bases: Vec<String> =
+                                        component.scalar.iter().map(ToString::to_string).collect();
+                                    bases.extend(component.parents.clone());
+                                    if bases.is_empty() {
+                                        String::new()
+                                    } else {
+                                        format!(" : {}", bases.join(", "))
+                                    }
+                                }
+                            );
+                        }
                         symbol.ty = Some(definition_type(definition));
                         index
                             .definitions
@@ -189,6 +214,23 @@ impl Index {
                             (_, Some(ty)) => format!("let {} : {ty}", binding.name),
                             _ => format!("let {}", binding.name),
                         };
+                        if let Some(parameters) = &binding.parameters {
+                            symbol.kind = 12;
+                            symbol.detail = format!(
+                                "trait {}({}) : {}",
+                                binding.name,
+                                parameters
+                                    .iter()
+                                    .map(|p| format!("{}: {}", p.name, p.ty))
+                                    .collect::<Vec<_>>()
+                                    .join(", "),
+                                binding.ty.as_ref().unwrap()
+                            );
+                            index.trait_overloads.insert(
+                                (binding.name.clone(), parameters.len()),
+                                (parameters.clone(), symbol.clone()),
+                            );
+                        }
                         index.globals.insert(binding.name.clone(), symbol);
                     }
                     _ => {}
@@ -196,6 +238,17 @@ impl Index {
             }
             source.occurrences.clear();
             index.sources.insert(uri.clone(), source);
+        }
+        for symbol in index.globals.values_mut() {
+            let overloads: Vec<_> = index
+                .trait_overloads
+                .iter()
+                .filter(|((name, _), _)| name == &symbol.name)
+                .map(|(_, (_, symbol))| symbol.detail.clone())
+                .collect();
+            if !overloads.is_empty() {
+                symbol.detail = overloads.join("\n");
+            }
         }
         for (definition, symbol) in index.definitions.values() {
             if let Body::Union(alternatives) = &definition.body {
@@ -324,6 +377,20 @@ impl Index {
                     .or_insert_with(|| builtin_symbol(name, detail, 3));
             }
             for name in [
+                "abstract",
+                "component",
+                "requires",
+                "allows",
+                "one",
+                "optional",
+                "many",
+                "some",
+                "provides",
+                "modifies",
+                "multiply",
+                "add",
+                "compose",
+                "Trait",
                 "type",
                 "trait",
                 "object",
@@ -395,6 +462,8 @@ impl Index {
             };
             let symbol = if definition.is_some() {
                 self.definitions.get(name).map(|(_, symbol)| symbol)
+            } else if let Statement::Binding(binding) = statement {
+                self.binding_symbol(binding)
             } else {
                 self.globals.get(name)
             };
@@ -430,6 +499,18 @@ impl Index {
         let mut fields = Vec::new();
         if let Some((definition, parent)) = self.definitions.get(name) {
             let replacements = substitutions(definition, args);
+            if let Some(component) = &definition.component {
+                for base in &component.parents {
+                    for field in self.fields(&Type::Named(base.clone(), Vec::new()), depth + 1) {
+                        if !fields
+                            .iter()
+                            .any(|existing: &Symbol| existing.name == field.name)
+                        {
+                            fields.push(field);
+                        }
+                    }
+                }
+            }
             let stored = match &definition.body {
                 Body::Record(fields) => fields.as_slice(),
                 _ => &[],
@@ -454,6 +535,16 @@ impl Index {
                     end: start + field.name.len(),
                     ty: Some(ty),
                 });
+            }
+            if definition.kind == TypeKind::Object && !fields.iter().any(|f| f.name == "traits") {
+                let mut symbol =
+                    builtin_symbol("traits", "traits : Trait set (inline selections)", 7);
+                symbol.ty = Some(Type::Set(
+                    Box::new(Type::Named("Trait".into(), Vec::new())),
+                    0,
+                    None,
+                ));
+                fields.push(symbol);
             }
         } else if name == "range" && args.len() == 1 {
             for name in ["lower", "upper"] {
@@ -550,6 +641,62 @@ impl Index {
                             source.record_symbol(field);
                         }
                     }
+                    if let Body::Record(fields) = &definition.body {
+                        for field in fields {
+                            if let Some(expr) = &field.expr {
+                                self.walk(expr, &Locals::new(), Some(&field.ty), source, uri);
+                            }
+                        }
+                    }
+                    if let Some(component) = &definition.component {
+                        for (name, expr) in &component.values {
+                            let field = self
+                                .fields(&ty, 0)
+                                .into_iter()
+                                .find(|field| field.name == *name);
+                            let finish = span_offset(&source.text, &expr.span);
+                            let label = source.tokens.windows(2).rev().find(|tokens| {
+                                tokens[0].start >= symbol.end && tokens[1].end <= finish
+                                    && matches!(&tokens[0].kind, TokenKind::Word(word) if word == name)
+                                    && matches!(&tokens[1].kind, TokenKind::Symbol(symbol) if symbol == "=")
+                            }).map(|tokens| tokens[0].clone());
+                            if let (Some(label), Some(field)) = (label, &field) {
+                                source.record(
+                                    label.start,
+                                    label.end,
+                                    Resolution {
+                                        ty: field.ty.clone(),
+                                        symbol: Some(field.clone()),
+                                    },
+                                );
+                            }
+                            self.walk(
+                                expr,
+                                &Locals::new(),
+                                field.as_ref().and_then(|f| f.ty.as_ref()),
+                                source,
+                                uri,
+                            );
+                        }
+                        if let Some(expr) = &component.compose {
+                            let mut compose_locals = locals.clone();
+                            compose_locals.insert(
+                                "base".into(),
+                                local_symbol("base", Some(ty.clone()), symbol),
+                            );
+                            for name in ["additions", "multipliers"] {
+                                compose_locals
+                                    .insert(name.into(), local_symbol(name, None, symbol));
+                            }
+                            let (_, compose_end) =
+                                self.walk(expr, &compose_locals, Some(&ty), source, uri);
+                            source.scopes.push(Scope {
+                                start: span_offset(&source.text, &expr.span),
+                                end: compose_end,
+                                locals: compose_locals,
+                            });
+                        }
+                    }
                     for field in &definition.derives {
                         if let Some(expr) = &field.expr {
                             self.walk(expr, &locals, Some(&field.ty), source, uri);
@@ -560,18 +707,105 @@ impl Index {
                     }
                 }
                 Statement::Binding(binding) => {
-                    if let Some(symbol) = self.globals.get(&binding.name)
+                    if let Some(symbol) = self.binding_symbol(binding)
                         && symbol.uri == uri
                     {
                         source.record_symbol(symbol.clone());
                     }
+                    let mut parameter_locals = Locals::new();
+                    for parameter in binding.parameters.iter().flatten() {
+                        let start = span_offset(&source.text, &parameter.span);
+                        if let Some(token) = source.tokens.iter().find(|t| t.start == start) {
+                            let symbol = source.local(
+                                uri,
+                                &parameter.name,
+                                Some(parameter.ty.clone()),
+                                token,
+                            );
+                            source.record_symbol(symbol.clone());
+                            parameter_locals.insert(
+                                parameter.name.clone(),
+                                Resolution {
+                                    ty: Some(parameter.ty.clone()),
+                                    symbol: Some(symbol),
+                                },
+                            );
+                        }
+                    }
+                    if !parameter_locals.is_empty() {
+                        let start = span_offset(&source.text, &binding.span);
+                        let body = source.tokens.iter().find(|t| {
+                            t.start >= start && matches!(&t.kind, TokenKind::Symbol(s) if s == "{")
+                        });
+                        let end = body
+                            .and_then(|t| source.delimiter_end(t.start))
+                            .unwrap_or(source.text.len());
+                        source.scopes.push(Scope {
+                            start,
+                            end,
+                            locals: parameter_locals.clone(),
+                        });
+                    }
                     self.walk(
                         &binding.expr,
-                        &Locals::new(),
+                        &parameter_locals,
                         binding.ty.as_ref(),
                         source,
                         uri,
                     );
+                    for requirement in &binding.requires {
+                        self.walk(
+                            requirement,
+                            &parameter_locals,
+                            Some(&Type::Bool),
+                            source,
+                            uri,
+                        );
+                    }
+                    for effect in &binding.effects {
+                        match effect {
+                            Effect::Provides { component, value } => {
+                                self.walk(
+                                    value,
+                                    &parameter_locals,
+                                    Some(&Type::Named(component.clone(), Vec::new())),
+                                    source,
+                                    uri,
+                                );
+                            }
+                            Effect::Modifies {
+                                component,
+                                field,
+                                value,
+                                ..
+                            } => {
+                                self.walk(value, &parameter_locals, None, source, uri);
+                                if let Some(name) = field
+                                    && let Some(field_symbol) = self
+                                        .fields(&Type::Named(component.clone(), Vec::new()), 0)
+                                        .into_iter()
+                                        .find(|f| f.name == *name)
+                                {
+                                    let start = span_offset(&source.text, &binding.span);
+                                    let finish = span_offset(&source.text, &value.span);
+                                    let tokens: Vec<_> = source.tokens.windows(3).filter(|tokens| tokens[0].start >= start && tokens[2].end <= finish
+                                            && matches!(&tokens[0].kind, TokenKind::Word(word) if word == component)
+                                            && matches!(&tokens[1].kind, TokenKind::Symbol(symbol) if symbol == ".")
+                                            && matches!(&tokens[2].kind, TokenKind::Word(word) if word == name)).map(|tokens| tokens[2].clone()).collect();
+                                    for token in tokens {
+                                        source.record(
+                                            token.start,
+                                            token.end,
+                                            Resolution {
+                                                ty: field_symbol.ty.clone(),
+                                                symbol: Some(field_symbol.clone()),
+                                            },
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 Statement::Expression(expr) => {
                     self.walk(expr, &Locals::new(), None, source, uri);
@@ -611,6 +845,16 @@ impl Index {
                     );
                 }
             }
+        }
+    }
+
+    fn binding_symbol(&self, binding: &Binding) -> Option<&Symbol> {
+        if let Some(parameters) = &binding.parameters {
+            self.trait_overloads
+                .get(&(binding.name.clone(), parameters.len()))
+                .map(|(_, symbol)| symbol)
+        } else {
+            self.globals.get(&binding.name)
         }
     }
 
@@ -696,6 +940,23 @@ impl Index {
                     (ty, end)
                 }
             }
+            ExprKind::ObjectRecord(fields, selections) => {
+                let record = Expr {
+                    kind: ExprKind::Record(fields.clone()),
+                    span: expr.span.clone(),
+                };
+                let result = self.walk(&record, locals, expected, source, uri);
+                for selection in selections {
+                    self.walk(
+                        selection,
+                        locals,
+                        Some(&Type::Named("Trait".into(), Vec::new())),
+                        source,
+                        uri,
+                    );
+                }
+                result
+            }
             ExprKind::Record(fields) => {
                 let available = expected.map(|ty| self.fields(ty, 0)).unwrap_or_default();
                 let mut end = token_end;
@@ -747,6 +1008,44 @@ impl Index {
                     source.delimiter_end(start).unwrap_or(token_end),
                 )
             }
+            ExprKind::CallArgs(function, arguments) => {
+                let mut call = function.as_ref().clone();
+                if let ExprKind::Name(name) = &function.kind
+                    && !locals.contains_key(name)
+                    && let Some((parameters, symbol)) =
+                        self.trait_overloads.get(&(name.clone(), arguments.len()))
+                {
+                    let call_start = span_offset(&source.text, &function.span);
+                    source.record(
+                        call_start,
+                        call_start + name.len(),
+                        Resolution {
+                            ty: symbol.ty.clone(),
+                            symbol: Some(symbol.clone()),
+                        },
+                    );
+                    let mut end = token_end;
+                    for (index, argument) in arguments.iter().enumerate() {
+                        end = self
+                            .walk(
+                                argument,
+                                locals,
+                                parameters.get(index).map(|p| &p.ty),
+                                source,
+                                uri,
+                            )
+                            .1;
+                    }
+                    return (symbol.ty.clone(), end);
+                }
+                for argument in arguments {
+                    call = Expr {
+                        kind: ExprKind::Call(Box::new(call), Box::new(argument.clone())),
+                        span: expr.span.clone(),
+                    };
+                }
+                self.walk(&call, locals, expected, source, uri)
+            }
             ExprKind::Call(function, argument) => {
                 self.walk(function, locals, None, source, uri);
                 let name = match &function.kind {
@@ -765,7 +1064,7 @@ impl Index {
                 let (_, end) = self.walk(argument, locals, argument_type.as_ref(), source, uri);
                 let ty = match name {
                     Some("round" | "floor" | "ceil" | "int" | "integer") => Some(Type::Int),
-                    Some("real") => Some(Type::Real),
+                    Some("real" | "sqrt") => Some(Type::Real),
                     Some(name) if self.definitions.contains_key(name) => argument_type,
                     _ => None,
                 };
@@ -1260,6 +1559,7 @@ fn builtins() -> Vec<(&'static str, &'static str)> {
         ("integer", "integer : number -> int"),
         ("real", "real : number -> real"),
         ("abs", "abs : number -> number"),
+        ("sqrt", "sqrt : number -> real"),
         ("min", "min : ordered -> ordered -> ordered"),
         ("max", "max : ordered -> ordered -> ordered"),
         ("Set", "Set: set operations"),
@@ -1268,5 +1568,9 @@ fn builtins() -> Vec<(&'static str, &'static str)> {
         ("List", "List: query result operations"),
         ("List.length", "List.length : query result -> int"),
         ("List.sum", "List.sum : numeric query result -> number"),
+        (
+            "List.product",
+            "List.product : numeric query result -> number",
+        ),
     ]
 }

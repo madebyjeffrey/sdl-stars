@@ -26,8 +26,10 @@ TextMate bundle supply the file type. To keep the language server connected,
 use the `*.rdl` file-name mapping and language ID `rdl` in
 [LSP4IJ](../jetbrains/README.md).
 
-The grammar colors named imports, declarations, fields, keywords, primitive types, type
-variables, literals, numbers and exponents, operators, builtin functions,
+The grammar colors named imports, abstract/concrete components, trait provisions
+and modifiers, scalar components, cardinalities (`requires one`, `allows many`),
+declarations, fields, keywords, primitive types, type
+variables, literals, numbers (including `1_000_000`) and exponents, operators, builtin functions,
 ordinary strings with escapes, raw triple-quoted strings, line comments, and
 nested `(* ... *)` comments. An unfinished ordinary string ends at the line;
 unfinished raw strings and block comments retain their scopes on following

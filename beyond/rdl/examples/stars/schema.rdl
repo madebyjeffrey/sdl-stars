@@ -1,5 +1,79 @@
-trait type primary_racial_trait = {
+(* Concrete PRT components must supply this inherited contract. *)
+abstract component PrimaryRacialTrait {
+  source_id: integer
+  require self.source_id >= 0 && self.source_id <= 9
+  name: string
+  description: string
+  base_points: integer
+}
+
+abstract component SecondaryRacialTrait {
+    name: string
+    description: string
+}
+
+component CarryingCapacity : integer  {
+  require self > 0
+}
+
+component GrowthRate : real {
+  require self > 0.0
+}
+
+component RaceIdentity {
+    singularName: string
+    pluralName: string
+    sigil: integer // index
+}
+
+(* Legacy typed trait metadata remains supported alongside component bundles. *)
+trait type secondary_racial_trait = {
   name : string;
-  description: string;
-  base_points: integer;
+  point_cost : integer;
+}
+
+(* Illustrative point rules, not Stars! race-pricing formulas. *)
+type 'a habitability =
+  | immune
+  | 'a range
+with (owner : race) {
+  derive points : int =
+    let modifier =
+      if owner.PrimaryRacialTrait.name = "Hyper-Expansion" then 20 else 0
+    in
+    let trait_cost = owner.secondary_points in
+    match self with
+    | immune -> -100 + modifier + trait_cost
+    | range { lower; upper } ->
+        round (100.0 - (real upper - real lower)) + modifier + trait_cost;
+}
+
+object type race = {
+  requires one RaceIdentity
+  requires one PrimaryRacialTrait
+  allows many SecondaryRacialTrait
+  requires one CarryingCapacity
+  requires one GrowthRate
+
+  description : string;
+  population : int;
+  traits : Trait set;
+  secondary : secondary_racial_trait set;
+  gravity : real habitability;
+  temperature : int habitability;
+  radiation : integer habitability;
+
+  require self.population >= 0;
+
+  derive name : string = self.RaceIdentity.singularName;
+
+  derive habitability_points : int =
+    self.gravity.points + self.temperature.points + self.radiation.points;
+
+  derive secondary_points : int =
+    List.sum (query {
+      from t : secondary_racial_trait
+      where Set.contains t self.secondary
+      select t.point_cost
+    });
 }

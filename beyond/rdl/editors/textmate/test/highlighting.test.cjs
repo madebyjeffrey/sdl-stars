@@ -139,3 +139,38 @@ test('the shipped race example finishes in normal code with no invalid escape sc
   scoped(result, 'terrans', 'entity.name.variable');
   scoped(result, 'habitability_points', 'variable.other.property');
 });
+
+test('components, inheritance, contributions and grouped numbers are highlighted', () => {
+  const result = tokenize('abstract component Primary { name: String }\ncomponent Hyper : Primary { name = "Hyper" }\ntrait T { provides Hyper modifies Capacity.value { multiply 0.5 add 1_000_000 } }\ncompose = List.product multipliers.value');
+  scoped(result, 'abstract', 'storage.modifier');
+  scoped(result, 'Primary', 'entity.name.type');
+  scoped(result, 'Hyper', 'entity.name.type');
+  for (const keyword of ['provides', 'modifies', 'multiply', 'add', 'compose']) {
+    assert(result.tokens.some(token => token.text === keyword && token.scopes.some(scope => scope.startsWith('keyword.'))), keyword);
+  }
+  scoped(result, '1_000_000', 'constant.numeric');
+  scoped(result, 'product', 'support.function');
+});
+
+test('scalar component declarations and cardinalities have scopes', () => {
+  const result = tokenize('component Capacity : integer { require self >= 0 }\ntrait T { provides Capacity = 1_000_000 }\nobject type O = { requires one Capacity allows many Extras allows optional Flag requires some Tags }');
+  scoped(result, 'Capacity', 'entity.name.type');
+  scoped(result, 'integer', 'support.type');
+  for (const word of ['requires', 'allows']) scoped(result, word, 'keyword.control');
+  for (const word of ['one', 'many', 'optional', 'some']) scoped(result, word, 'storage.modifier');
+});
+
+test('parameterized traits and inline applications are highlighted', () => {
+  const result = tokenize('trait gravity(lower:integer,upper:integer) { provides Band {lower=lower;upper=upper;} }\nRace humanoid = { gravity(15,85) jack_of_all_trades }');
+  scoped(result, 'gravity', 'entity.name.function');
+  scoped(result, 'integer', 'support.type');
+  scoped(result, '15', 'constant.numeric');
+  scoped(result, 'humanoid', 'entity.name.variable');
+});
+
+
+test('arity overloads and immunity applications are highlighted', () => {
+  const result = tokenize('type Immunity = | immune\ntrait gravity(mode:Immunity) {}\ntrait gravity(lower:integer,upper:integer) {}\nRace silicanoid={gravity(immune) temperature(immune) radiation(immune)}');
+  for (const word of ['gravity', 'temperature', 'radiation']) scoped(result, word, 'entity.name.function');
+  scoped(result, 'integer', 'support.type');
+});

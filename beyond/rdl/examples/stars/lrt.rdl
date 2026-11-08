@@ -1,0 +1,166 @@
+import schema
+
+(* The sign is the adjustment ADDED to the internal wizard balance.
+   Source: race.cpp rgRaceAdvDisPts; enum bit order in enums.h. *)
+trait type LesserTrait = {
+  name: string;
+  abbreviation: string;
+  bit: integer;
+  mask: integer;
+  point_adjustment: integer;
+}
+
+component LrtImprovedFuelEfficiency : SecondaryRacialTrait {
+  name = "Improved Fuel Efficiency";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_ife : LesserTrait {
+  name = "Improved Fuel Efficiency";
+  abbreviation = "IFE";
+  bit = 0; mask = 1; point_adjustment = -235;
+  provides LrtImprovedFuelEfficiency
+}
+
+component LrtTotalTerraforming : SecondaryRacialTrait {
+  name = "Total Terraforming";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_tt : LesserTrait {
+  name = "Total Terraforming";
+  abbreviation = "TT";
+  bit = 1; mask = 2; point_adjustment = -25;
+  provides LrtTotalTerraforming
+}
+
+component LrtAdvancedRemoteMining : SecondaryRacialTrait {
+  name = "Advanced Remote Mining";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_arm : LesserTrait {
+  name = "Advanced Remote Mining";
+  abbreviation = "ARM";
+  bit = 2; mask = 4; point_adjustment = -159;
+  provides LrtAdvancedRemoteMining
+}
+
+component LrtImprovedStarbases : SecondaryRacialTrait {
+  name = "Improved Starbases";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_isb : LesserTrait {
+  name = "Improved Starbases";
+  abbreviation = "ISB";
+  bit = 3; mask = 8; point_adjustment = -201;
+  provides LrtImprovedStarbases
+}
+
+component LrtGeneralizedResearch : SecondaryRacialTrait {
+  name = "Generalized Research";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_gr : LesserTrait {
+  name = "Generalized Research";
+  abbreviation = "GR";
+  bit = 4; mask = 16; point_adjustment = 40;
+  provides LrtGeneralizedResearch
+}
+
+component LrtUltimateRecycling : SecondaryRacialTrait {
+  name = "Ultimate Recycling";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_ur : LesserTrait {
+  name = "Ultimate Recycling";
+  abbreviation = "UR";
+  bit = 5; mask = 32; point_adjustment = -240;
+  provides LrtUltimateRecycling
+}
+
+component LrtMineralAlchemy : SecondaryRacialTrait {
+  name = "Mineral Alchemy";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_ma : LesserTrait {
+  name = "Mineral Alchemy";
+  abbreviation = "MA";
+  bit = 6; mask = 64; point_adjustment = -155;
+  provides LrtMineralAlchemy
+}
+
+component LrtNoRamScoopEngines : SecondaryRacialTrait {
+  name = "No Ram Scoop Engines";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_nrse : LesserTrait {
+  name = "No Ram Scoop Engines";
+  abbreviation = "NRSE";
+  bit = 7; mask = 128; point_adjustment = 160;
+  provides LrtNoRamScoopEngines
+}
+
+component LrtCheapEngines : SecondaryRacialTrait {
+  name = "Cheap Engines";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_ce : LesserTrait {
+  name = "Cheap Engines";
+  abbreviation = "CE";
+  bit = 8; mask = 256; point_adjustment = 240;
+  provides LrtCheapEngines
+}
+
+component LrtOnlyBasicRemoteMining : SecondaryRacialTrait {
+  name = "Only Basic Remote Mining";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_obrm : LesserTrait {
+  name = "Only Basic Remote Mining";
+  abbreviation = "OBRM";
+  bit = 9; mask = 512; point_adjustment = 255;
+  provides LrtOnlyBasicRemoteMining
+  modifies CarryingCapacity { multiply 1.1 }
+}
+
+component LrtNoAdvancedScanners : SecondaryRacialTrait {
+  name = "No Advanced Scanners";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_nas : LesserTrait {
+  name = "No Advanced Scanners";
+  abbreviation = "NAS";
+  bit = 10; mask = 1024; point_adjustment = 325;
+  provides LrtNoAdvancedScanners
+}
+
+component LrtLowStartingPopulation : SecondaryRacialTrait {
+  name = "Low Starting Population";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_lsp : LesserTrait {
+  name = "Low Starting Population";
+  abbreviation = "LSP";
+  bit = 11; mask = 2048; point_adjustment = 180;
+  provides LrtLowStartingPopulation
+}
+
+component LrtBleedingEdgeTechnology : SecondaryRacialTrait {
+  name = "Bleeding Edge Technology";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_bet : LesserTrait {
+  name = "Bleeding Edge Technology";
+  abbreviation = "BET";
+  bit = 12; mask = 4096; point_adjustment = 70;
+  provides LrtBleedingEdgeTechnology
+}
+
+component LrtRegeneratingShields : SecondaryRacialTrait {
+  name = "Regenerating Shields";
+  description = "See stars/rules and docs/RACE-PROPERTIES-AND-TRAIT-EFFECTS.md for executable rules and source references.";
+}
+trait lrt_rs : LesserTrait {
+  name = "Regenerating Shields";
+  abbreviation = "RS";
+  bit = 13; mask = 8192; point_adjustment = 30;
+  provides LrtRegeneratingShields
+}

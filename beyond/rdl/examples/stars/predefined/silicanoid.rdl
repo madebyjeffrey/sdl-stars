@@ -1,0 +1,34 @@
+(* Generated from data/races/predefined.yaml by tools/generate_stars_presets.py. *)
+import stars.settings
+
+Race silicanoid = {
+  name = "Silicanoid";
+  plural_name = "Silicanoids";
+  source_index = 4;
+  portrait(5)
+  gravity(immune)
+  temperature(immune)
+  radiation(immune)
+  growth(6)
+  population_efficiency(800)
+  factory_output(12)
+  factory_cost(12)
+  factory_operation(15)
+  mine_output(10)
+  mine_cost(9)
+  mine_operation(10)
+  energy_research(standard)
+  weapons_research(standard)
+  propulsion_research(cheap)
+  construction_research(cheap)
+  electronics_research(standard)
+  biotechnology_research(expensive)
+  research_allocation(15)
+  leftover_points(factories)
+  standard_capacity
+  hyper_expansion
+  lrt_ife
+  lrt_ur
+  lrt_obrm
+  lrt_bet
+}

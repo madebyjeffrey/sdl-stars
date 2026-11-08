@@ -8,7 +8,8 @@ import schema;
    separately when calculating the race's total advantage points.
 *)
 
-trait hyper_expansion : primary_racial_trait = {
+component HyperExpansion : PrimaryRacialTrait {
+  source_id = 0;
   name = "Hyper-Expansion";
   description = """
     You must expand to survive. You are given a small and cheap colony hull and an
@@ -20,7 +21,8 @@ trait hyper_expansion : primary_racial_trait = {
   base_points = 40;
 }
 
-trait super_stealth : primary_racial_trait = {
+component SuperStealth : PrimaryRacialTrait {
+  source_id = 1;
   name = "Super Stealth";
   description = """
     You can sneak through enemy territory and execute stunning surprise attacks. You are
@@ -33,7 +35,8 @@ trait super_stealth : primary_racial_trait = {
   base_points = 95;
 }
 
-trait war_monger : primary_racial_trait = {
+component WarMonger : PrimaryRacialTrait {
+  source_id = 2;
   name = "War Monger";
   description = """
     You rule the battle field. Your colonists attack better, your ships are faster in
@@ -45,7 +48,8 @@ trait war_monger : primary_racial_trait = {
   base_points = 45;
 }
 
-trait claim_adjuster : primary_racial_trait = {
+component ClaimAdjuster : PrimaryRacialTrait {
+  source_id = 3;
   name = "Claim Adjuster";
   description = """
     You are an expert at fiddling with planetary environments. You start the game with
@@ -58,7 +62,8 @@ trait claim_adjuster : primary_racial_trait = {
   base_points = 10;
 }
 
-trait inner_strength : primary_racial_trait = {
+component InnerStrength : PrimaryRacialTrait {
+  source_id = 4;
   name = "Inner-Strength";
   description = """
     You are strong and hard to defeat. Your colonists repel attacks better, your ships
@@ -71,7 +76,8 @@ trait inner_strength : primary_racial_trait = {
   base_points = -100;
 }
 
-trait space_demolition : primary_racial_trait = {
+component SpaceDemolition : PrimaryRacialTrait {
+  source_id = 5;
   name = "Space Demolition";
   description = """
     You are an expert in laying mine fields. You have a vast array of mine types at your
@@ -84,7 +90,8 @@ trait space_demolition : primary_racial_trait = {
   base_points = -150;
 }
 
-trait packet_physics : primary_racial_trait = {
+component PacketPhysics : PrimaryRacialTrait {
+  source_id = 6;
   name = "Packet Physics";
   description = """
     Your race excels at accelerating mineral packets to distant planets. You start with
@@ -98,7 +105,8 @@ trait packet_physics : primary_racial_trait = {
   base_points = 120;
 }
 
-trait interstellar_traveler : primary_racial_trait = {
+component InterstellarTraveler : PrimaryRacialTrait {
+  source_id = 7;
   name = "Interstellar Traveler";
   description = """
     Your race excels in building stargates. You start with Tech 5 in Propulsion and
@@ -112,7 +120,8 @@ trait interstellar_traveler : primary_racial_trait = {
   base_points = 180;
 }
 
-trait alternate_reality : primary_racial_trait = {
+component AlternateReality : PrimaryRacialTrait {
+  source_id = 8;
   name = "Alternate Reality";
   description = """
     Your race developed in an alternate plane. Your people cannot survive on planets and
@@ -126,7 +135,8 @@ trait alternate_reality : primary_racial_trait = {
   base_points = 90;
 }
 
-trait jack_of_all_trades : primary_racial_trait = {
+component JackOfAllTrades : PrimaryRacialTrait {
+  source_id = 9;
   name = "Jack of All Trades";
   description = """
     Your race does not specialize in a single area. You start the game with Tech 3 in
@@ -135,4 +145,53 @@ trait jack_of_all_trades : primary_racial_trait = {
     increases. Your maximum planetary population is 20% greater than other races.
   """;
   base_points = -66;
+}
+
+(* Direct scalar composition supplies reference growth/capacity. Contextual
+   effects are implemented in stars/rules/*.rdl; these baseline values alone
+   do not describe every planet, fleet, or game setting.
+   Sources: PctTrueMaxGrowth (race.cpp), CalcPlanetMaxPop (planet.cpp).
+*)
+
+trait hyper_expansion {
+  provides HyperExpansion
+  modifies CarryingCapacity { multiply 0.5 }
+  modifies GrowthRate { multiply 2.0 }
+}
+
+trait super_stealth {
+  provides SuperStealth
+}
+
+trait war_monger {
+  provides WarMonger
+}
+
+trait claim_adjuster {
+  provides ClaimAdjuster
+}
+
+trait inner_strength {
+  provides InnerStrength
+}
+
+trait space_demolition {
+  provides SpaceDemolition
+}
+
+trait packet_physics {
+  provides PacketPhysics
+}
+
+trait interstellar_traveler {
+  provides InterstellarTraveler
+}
+
+trait alternate_reality {
+  provides AlternateReality
+}
+
+trait jack_of_all_trades {
+  provides JackOfAllTrades
+  modifies CarryingCapacity { multiply 1.2 }
 }

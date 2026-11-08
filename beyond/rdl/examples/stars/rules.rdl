@@ -1,0 +1,10 @@
+import rules.population
+import rules.terraforming
+import rules.economy
+import rules.combat
+import rules.fleets
+import rules.packets
+import rules.information
+import rules.pricing
+import rules.starting
+import rules.upgrades

@@ -8,17 +8,57 @@
     { "include": "#strings" },
     { "include": "#imports" },
     { "include": "#type-declarations" },
+    { "include": "#component-slots" },
+    { "include": "#components" },
     { "include": "#declarations" },
     { "include": "#literals" },
     { "include": "#type-variables" },
     { "include": "#keywords" },
     { "include": "#types" },
     { "include": "#builtins" },
+    { "include": "#trait-applications" },
     { "include": "#properties" },
     { "include": "#operators" },
     { "include": "#identifiers" }
   ],
   "repository": {
+    "component-slots": {
+      "match": "\\b(requires|allows)\\s+(one|optional|many|some)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.control.rdl" },
+        "2": { "name": "storage.modifier.rdl" },
+        "3": { "name": "entity.name.type.rdl" }
+      }
+    },
+    "components": {
+      "patterns": [
+        {
+          "match": "\\b(?:(abstract)\\s+)?(component)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "storage.modifier.rdl"
+            },
+            "2": {
+              "name": "storage.type.rdl"
+            },
+            "3": {
+              "name": "entity.name.type.rdl"
+            }
+          }
+        },
+        {
+          "match": "\\b(provides|modifies)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.control.rdl"
+            },
+            "2": {
+              "name": "entity.name.type.rdl"
+            }
+          }
+        }
+      ]
+    },
     "imports": {
       "match": "\\b(import)\\s+([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*)",
       "captures": {
@@ -111,30 +151,30 @@
     "literals": {
       "patterns": [
         { "name": "constant.language.rdl", "match": "\\b(?:true|false|none|immune)\\b" },
-        { "name": "constant.numeric.rdl", "match": "\\b[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b" }
+        { "name": "constant.numeric.rdl", "match": "\\b[0-9]+(?:_[0-9]+)*(?:\\.[0-9]+(?:_[0-9]+)*)?(?:[eE][+-]?[0-9]+(?:_[0-9]+)*)?\\b" }
       ]
     },
     "type-variables": { "name": "entity.name.type.parameter.rdl", "match": "'[A-Za-z_][A-Za-z0-9_]*\\b" },
     "keywords": {
       "patterns": [
-        { "name": "storage.type.rdl", "match": "\\b(?:type|trait|object|let|derive)\\b" },
-        { "name": "keyword.control.rdl", "match": "\\b(?:in|if|then|else|match|with|of|require|query|from|where|select|order|by|ascending|descending|import)\\b" },
+        { "name": "storage.type.rdl", "match": "\\b(?:abstract|component|type|trait|object|let|derive)\\b" },
+        { "name": "keyword.control.rdl", "match": "\\b(?:requires|allows|provides|modifies|compose|multiply|add|in|if|then|else|match|with|of|require|query|from|where|select|order|by|ascending|descending|import)\\b" },
         { "name": "keyword.operator.logical.rdl", "match": "\\b(?:and|or|not)\\b" },
         { "name": "variable.language.rdl", "match": "\\bself\\b" }
       ]
     },
-    "types": { "name": "support.type.rdl", "match": "\\b(?:int|integer|real|string|bool|option|set|range)\\b" },
+    "types": { "name": "support.type.rdl", "match": "\\b(?:Trait|Int|Integer|Real|String|Bool|int|integer|real|string|bool|option|set|range)\\b" },
     "builtins": {
       "patterns": [
         {
-          "match": "\\b(Set|List)(\\.)(contains|size|length|sum)\\b",
+          "match": "\\b(Set|List)(\\.)(contains|size|length|sum|product)\\b",
           "captures": {
             "1": { "name": "support.class.rdl" },
             "2": { "name": "punctuation.accessor.rdl" },
             "3": { "name": "support.function.rdl" }
           }
         },
-        { "name": "support.function.rdl", "match": "\\b(?:round|floor|ceil|abs|min|max)\\b" }
+        { "name": "support.function.rdl", "match": "\\b(?:round|floor|ceil|sqrt|abs|min|max)\\b" }
       ]
     },
     "properties": {
@@ -152,6 +192,7 @@
         { "name": "punctuation.separator.rdl", "match": "[;,]" }
       ]
     },
+    "trait-applications": { "name": "entity.name.function.rdl", "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\()" },
     "identifiers": { "name": "variable.other.rdl", "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b" }
   }
 }
