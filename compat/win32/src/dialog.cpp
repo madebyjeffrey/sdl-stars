@@ -7,6 +7,11 @@
 struct COMPATDLGCREATE { DLGPROC lpfn; HFONT hfont; int cxUnit, cyUnit; BOOL fModal; };
 struct DIALOGUNITSRESULT { HFONT hfont; int cxUnit, cyUnit; bool fReady; };
 
+bool FCompatDialogCreateModal(LPVOID lpParam) noexcept {
+    const COMPATDLGCREATE *lpcreate = static_cast<const COMPATDLGCREATE *>(lpParam);
+    return lpcreate && lpcreate->fModal;
+}
+
 void CompatDestroyDialog(HWND hwnd) {
     if (hwnd->hfontDialog) win32::DeleteObject(hwnd->hfontDialog);
     hwnd->hfontDialog = nullptr;

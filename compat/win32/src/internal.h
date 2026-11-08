@@ -210,6 +210,7 @@ struct COMPATDLGTEMPLATE {
     std::vector<COMPATDLGITEM> rgItems;
 };
 bool FCompatDialogTemplate(std::span<const BYTE> rgb, COMPATDLGTEMPLATE &dlg);
+bool FCompatDialogCreateModal(LPVOID lpParam) noexcept;
 void CompatFreeDialogTemplate(COMPATDLGTEMPLATE *lpdlg);
 LRESULT  CompatDialogProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l);
 void CompatDestroyDialog(HWND hwnd);

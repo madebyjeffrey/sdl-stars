@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- `CreateWindowExA` keeps modal `#32770` dialogs independent on Cocoa while
+  retaining their Win32 owner and modal behavior. Native SDL parent attachment
+  made the race wizard stutter while dragging; the same creation path is used by
+  the New Game wizard. Modeless dialogs and other platforms keep native parenting.
+
 - Runtime object-target access keeps `OBJ` and `PART` pointer storage compatible
   with the active Win16 packing while dispatching `PART` snapshots through an
   aligned typed view. The first variant-storage attempt triggered Linux

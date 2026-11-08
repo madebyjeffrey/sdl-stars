@@ -386,6 +386,7 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
     bool fChild = (dwStyle & win32::WS_CHILD) != 0;
     bool fReuse = false;
     bool fNativePopup = false;
+    bool fModalDialog = false;
     const char *pszNative;
     const std::string_view szTitle{pszTitle ? pszTitle : ""};
     int cxReuse, cyReuse;
@@ -420,6 +421,9 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
         return nullptr;
     }
     if (!FCompatVideo()) return nullptr;
+    fModalDialog = reinterpret_cast<UINT_PTR>(pszClass) > std::numeric_limits<std::uint16_t>::max() &&
+                   !std::strcmp(pszClass, "#32770") && FCompatDialogCreateModal(lpParam) &&
+                   !std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "cocoa");
     if (dx == win32::CW_USEDEFAULT) {
         // Default width selects both dimensions; Stars passes zero height
         // with its initial frame's CW_USEDEFAULT width.
@@ -524,6 +528,8 @@ HWND win32::CreateWindowExA(DWORD dwExStyle, LPCSTR pszClass, LPCSTR pszTitle, D
             (FFullscreenPopup(dwStyle, dwExStyle, hMenu, x, y, dx, dy) &&
              !SDL_SetWindowFullscreen(lpwin->lpWindow.get(), true)) ||
             (!fReuse && !fNativePopup && lpwin->hwndOwner && lpwin->hwndOwner->lpWindow.get() &&
+             // AppKit child-window drags stutter for modal dialogs; keep HWND ownership without native attachment.
+             !fModalDialog &&
              ((SDL_GetWindowFlags(lpwin->hwndOwner->lpWindow.get()) & SDL_WINDOW_FULLSCREEN) ||
               (reinterpret_cast<UINT_PTR>(pszClass) > std::numeric_limits<std::uint16_t>::max() && !std::strcmp(pszClass, "#32770"))) &&
              // Native dialogs need a transient parent even when the owner is windowed.
