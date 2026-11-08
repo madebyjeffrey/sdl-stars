@@ -728,7 +728,7 @@ static void test_RaceWizardDlg1_custom_clears_random(void) {
     TEST_CHECK_(GetRaceGrbit(&app.state.vplr, ibitRaceAIPlayer) == 0, "the custom race is still random");
 }
 
-static void test_RaceWizardDlg2_paints_habitat(void) {
+static void test_RaceWizardDlg2_paints_habitat_and_increases_growth(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
 #else
@@ -740,6 +740,8 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
     HWND hwnd;
     HDC hdc;
     int16_t i;
+    POINT16 ptGrowth;
+    std::int16_t pctGrowth;
 
     TEST_ASSERT(FStarsTestInit(app));
     hdc = win32::GetDC(NULL);
@@ -755,6 +757,12 @@ static void test_RaceWizardDlg2_paints_habitat(void) {
     TEST_CHECK(app.lpui->crcRCW == 17);
     ui::ShowWindow(hwnd, win32::SW_SHOW);
     TEST_CHECK(ui::UpdateWindow(hwnd));
+    ptGrowth = {static_cast<std::int16_t>((app.lpui->vrgrcRCW[15].left + app.lpui->vrgrcRCW[15].right) / 2),
+                static_cast<std::int16_t>((app.lpui->vrgrcRCW[15].top + app.lpui->vrgrcRCW[15].bottom) / 2)};
+    pctGrowth = app.state.vplr.pctIdealGrowth;
+    TEST_ASSERT(win32::PostMessageA(hwnd, win32::WM_LBUTTONUP, 0, win32::MAKELPARAM(ptGrowth.x, ptGrowth.y)));
+    TEST_CHECK(FTrackRaceDlg2(app, hwnd, ptGrowth, 0));
+    TEST_CHECK(app.state.vplr.pctIdealGrowth == pctGrowth + 1);
     for (i = 0; i < 3; i++) {
         win32::CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, win32::BST_CHECKED);
         ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, win32::BN_CLICKED),
@@ -796,7 +804,7 @@ TEST_LIST = {{"race file owns its filename across shared-buffer callbacks", test
              {"legacy password prompt returns owned text or cancellation", test_LegacyPassword_owned_result},
              {"NewPasswordDlg keeps Unicode passwords within the login limit", test_NewPasswordDlg_utf8_limit},
              {"RaceWizardDlg1 Custom clears the random-race bit", test_RaceWizardDlg1_custom_clears_random},
-             {"RaceWizardDlg2 paints habitat bars", test_RaceWizardDlg2_paints_habitat},
+             {"RaceWizardDlg2 paints habitat bars and increases growth", test_RaceWizardDlg2_paints_habitat_and_increases_growth},
 #endif
              {NULL, NULL}};
 

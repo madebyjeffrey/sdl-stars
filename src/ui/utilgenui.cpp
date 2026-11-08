@@ -441,10 +441,12 @@ std::int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
     std::int16_t fInBtn;
     std::int32_t ticksNew;
     RECT    rc;
+    std::optional<std::string_view> szText;
 
+    szText = pbtnt->szText ? std::optional<std::string_view>{pbtnt->szText} : std::nullopt;
     if (pbtnt->fFirst) {
         win32::SetCapture(pbtnt->hwnd);
-        DrawBtn(app, pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, pbtnt->szText);
+        DrawBtn(app, pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, szText);
         pbtnt->lTicks = win32::GetTickCount() + static_cast<std::int16_t>((3 * pbtnt->dTimer));
         pbtnt->fFirst = 0;
         return 1;
@@ -458,7 +460,7 @@ std::int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
         fInBtn = win32::PtInRect(&rc, PointFrom16(pt));
         if (fInBtn != pbtnt->fDown) {
             pbtnt->fDown = fInBtn;
-            DrawBtn(app, pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, pbtnt->szText);
+            DrawBtn(app, pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, szText);
         }
         ticksNew = win32::GetTickCount();
         if (ticksNew >= pbtnt->lTicks && pbtnt->fDown) {
@@ -468,7 +470,7 @@ std::int16_t FTrackBtn(APPSESSION &app, BTNT *pbtnt) {
     }
     if (pbtnt->fDown && !pbtnt->fNoEndRedraw) {
         pbtnt->fDown = 0;
-        DrawBtn(app, pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, pbtnt->szText);
+        DrawBtn(app, pbtnt->hdc, &pbtnt->rc, pbtnt->btf, pbtnt->fDown ^ pbtnt->fInitDown, szText);
         pbtnt->fDown = 1;
     }
     win32::ReleaseCapture();

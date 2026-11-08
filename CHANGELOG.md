@@ -11,6 +11,11 @@ produce different results from a 2.6j host for the same turn.
   made the race wizard stutter while dragging; the same creation path is used by
   the New Game wizard. Modeless dialogs and other platforms keep native parenting.
 
+- `FTrackBtn` now passes an empty optional label to `DrawBtn` for unlabeled
+  controls. The race wizard's growth-rate buttons previously passed `NULL`,
+  which was converted to `std::string_view` and crashed while drawing the
+  first press. Increasing or decreasing the ideal growth rate now works.
+
 - Runtime object-target access keeps `OBJ` and `PART` pointer storage compatible
   with the active Win16 packing while dispatching `PART` snapshots through an
   aligned typed view. The first variant-storage attempt triggered Linux
