@@ -21,6 +21,11 @@ Selected downstream economy and research formulas explain what the page labels
 mean. Combat, ship design, mining depletion, and the full turn-by-turn effects
 of every racial trait remain separate game systems.
 
+For a property-first inventory extending beyond wizard pricing—including
+carrying capacity, starting population, fleet abilities and equipment grants—see
+[Race properties and PRT/LRT effects](RACE-PROPERTIES-AND-TRAIT-EFFECTS.md).
+That report records its own inspected revision and coverage boundaries.
+
 ## Relationship to user stories
 
 Use [M04 stories and requirements](../spec/M04-race-design.md#user-stories-and-requirements)
