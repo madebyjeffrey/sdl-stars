@@ -11,6 +11,9 @@ produce different results from a 2.6j host for the same turn.
   made the race wizard stutter while dragging; the same creation path is used by
   the New Game wizard. Modeless dialogs and other platforms keep native parenting.
 
+- `DrawBtn` now draws the spinner arrows slightly smaller and keeps them centered
+  in their existing buttons. Button size and hit targets are unchanged.
+
 - `FTrackBtn` now passes an empty optional label to `DrawBtn` for unlabeled
   controls. The race wizard's growth-rate buttons previously passed `NULL`,
   which was converted to `std::string_view` and crashed while drawing the

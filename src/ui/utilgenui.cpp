@@ -539,8 +539,8 @@ void DrawBtn(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t bt, std::int16_t 
         if (fNoShaft) {
             cpt = 3;
             std::copy_n(app.lpui->rgptTriangle, cpt, rgptDraw);
-            dx = 8;
-            dy = 4;
+            dx = 6;
+            dy = 3;
         } else {
             cpt = 5;
             std::copy_n(app.lpui->rgptArrow, cpt, rgptDraw);

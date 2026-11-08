@@ -194,7 +194,7 @@ struct APPUISTATE {
     alignas(std::max_align_t) POINT16        ptStickyZipProdDlg = {.x = -1, .y = -1};
     alignas(std::max_align_t) POINT16        ptslotGlob = {};
     alignas(std::max_align_t) POINT16        rgptArrow[5] = {{.x = 3, .y = 0}, {.x = 0, .y = 3}, {.x = -1, .y = 3}, {.x = 2, .y = 3}, {.x = -3, .y = 6}};
-    alignas(std::max_align_t) POINT16        rgptTriangle[3] = {{.x = 4, .y = 0}, {.x = 0, .y = 4}, {.x = -1, .y = 4}};
+    alignas(std::max_align_t) POINT16        rgptTriangle[3] = {{.x = 3, .y = 0}, {.x = 0, .y = 3}, {.x = -1, .y = 3}};
     alignas(std::max_align_t) POINT16        vptMsg = {};
     alignas(std::max_align_t) POINT16        vptTbLast = {.x = -1, .y = -1};
     alignas(std::max_align_t) POPUPDATA      GlobalPD = {};
