@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL `query_item_type` now preserves captured argument types on partially
+  applied functions. Empty `List.sum` and `List.product` previously returned
+  integer identities for real projections. Regression tests cover empty,
+  filtered and populated queries for both numeric types; native checkpoints
+  are unaffected.
+
 - RDL `pattern` now obtains entity-reference types from their declarations.
   Direct and query references previously missed valid named cases or selected a
   wildcard instead. Object, optional and trait-reference regressions cover the

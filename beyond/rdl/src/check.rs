@@ -185,7 +185,10 @@ pub(crate) fn query_item_type(
                     .map(Shape::Known)
                     .unwrap_or(Shape::Empty),
             )),
-            Data::Function(name, _) => Shape::Function(name.clone(), Vec::new()),
+            Data::Function(name, args) => Shape::Function(
+                name.clone(),
+                args.iter().map(|arg| shape(world, arg)).collect(),
+            ),
         }
     }
     let mut locals: Locals = locals
