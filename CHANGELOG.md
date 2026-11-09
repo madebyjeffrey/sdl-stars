@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL `instantiate_trait` now uses owner-sensitive argument keys for evaluation,
+  separate from logical trait identity. Cached applications previously reused
+  another owner's metadata and skipped its requirements. Regressions cover
+  both evaluation orders, retained results and generic wrappers. Native game
+  behavior and checkpoints are unaffected.
+
 - RDL variant constructor registration and `apply` now retain and infer the
   enclosing type parameters. Generic payloads previously reached normalization
   with unresolved variables. Checking, field access and matching now substitute

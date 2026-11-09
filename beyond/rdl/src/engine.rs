@@ -1552,7 +1552,7 @@ impl<'a> Evaluator<'a> {
         );
         let key = format!(
             "{name}:{:?}",
-            args.iter().map(Value::identity_key).collect::<Vec<_>>()
+            args.iter().map(Value::argument_key).collect::<Vec<_>>()
         );
         if let Some(value) = self.cache.trait_instances.get(&key) {
             return Ok(value.clone());

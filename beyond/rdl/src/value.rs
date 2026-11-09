@@ -156,33 +156,54 @@ impl Value {
     }
 
     pub(crate) fn identity_key(&self) -> String {
+        self.key(false)
+    }
+
+    // Logical trait identity is independent of attachment. Evaluation must also
+    // distinguish owners, including contextual traits nested inside arguments.
+    pub(crate) fn argument_key(&self) -> String {
+        self.key(true)
+    }
+
+    fn key(&self, contextual: bool) -> String {
+        let key = |value: &Self| value.key(contextual);
         let data = match &self.data {
             Data::Ref(name) => return format!("reference:{name:?}"),
             Data::TraitInstance(name, args, _) => {
-                return format!(
+                let data = format!(
                     "trait:{name:?}:{:?}",
-                    args.iter().map(Self::identity_key).collect::<Vec<_>>()
+                    args.iter().map(key).collect::<Vec<_>>()
                 );
+                if !contextual {
+                    return data;
+                }
+                data
             }
             Data::Record(fields) => format!(
                 "record:{:?}",
                 fields
                     .iter()
-                    .map(|(name, value)| (name, value.identity_key()))
+                    .map(|(name, value)| (name, key(value)))
                     .collect::<Vec<_>>()
             ),
             Data::Set(values) => {
-                let mut keys: Vec<_> = values.iter().map(Self::identity_key).collect();
+                let mut keys: Vec<_> = values.iter().map(key).collect();
                 keys.sort();
                 format!("set:{keys:?}")
             }
-            Data::List(values) => format!(
-                "list:{:?}",
-                values.iter().map(Self::identity_key).collect::<Vec<_>>()
-            ),
+            Data::List(values) => format!("list:{:?}", values.iter().map(key).collect::<Vec<_>>()),
             Data::Real(value) if *value == 0.0 => "0.0".into(),
             _ => self.to_string(),
         };
+        if contextual {
+            return format!(
+                "{:?}:{:?}:{:?}:{:?}:{data}",
+                self.component,
+                self.types,
+                self.owner,
+                self.inline_traits.iter().map(key).collect::<Vec<_>>()
+            );
+        }
         let nominal = self.types.iter().any(|ty| matches!(ty, Type::Named(_, _)));
         if !nominal && self.component.is_none() {
             return format!("primitive:{data}");
