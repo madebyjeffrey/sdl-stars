@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL variant constructor registration and `apply` now retain and infer the
+  enclosing type parameters. Generic payloads previously reached normalization
+  with unresolved variables. Checking, field access and matching now substitute
+  those parameters and reject incompatible instantiations. Generic variant
+  regression tests pass; native game checkpoints are unaffected.
+
 - RDL `query_item_type` now preserves captured argument types on partially
   applied functions. Empty `List.sum` and `List.product` previously returned
   integer identities for real projections. Regression tests cover empty,

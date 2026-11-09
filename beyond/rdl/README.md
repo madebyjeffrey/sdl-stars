@@ -590,6 +590,17 @@ type habitability =
   | band of { lower : int; upper : int; }
 ```
 
+Record alternatives also retain their enclosing type parameter:
+
+```ocaml
+type 'a Box = | empty | box of { value : 'a; }
+let count : (int Box) = box { value = 7; };
+```
+
+Like generic record constructors, variant constructors infer the parameter from
+supplied fields whose declared type is that parameter. Field access and match
+bindings use the inferred type; incompatible instantiations are rejected.
+
 ## Validation and derivation
 
 Use `require` for predicates and `derive` for read-only properties:

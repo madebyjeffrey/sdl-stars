@@ -290,8 +290,8 @@ impl<'a> Checker<'a> {
                     }
                 } else if self.world.has_templates(name) {
                     Shape::Function(name.clone(), Vec::new())
-                } else if let Some(fields) = self.world.constructors.get(name) {
-                    if fields.is_empty() {
+                } else if let Some(constructor) = self.world.constructors.get(name) {
+                    if constructor.fields.is_empty() {
                         Shape::Tag(name.clone())
                     } else {
                         Shape::Function(name.clone(), Vec::new())
@@ -597,10 +597,13 @@ impl<'a> Checker<'a> {
                     && matches!(name, "lower" | "upper")
                 {
                     return Ok(Shape::Known(args[0].clone()));
-                } else if let Some(fields) = self.world.constructors.get(type_name)
-                    && let Some(field) = fields.iter().find(|field| field.name == name)
+                } else if let Some(constructor) = self.world.constructors.get(type_name)
+                    && let Some(field) = constructor.fields.iter().find(|field| field.name == name)
                 {
-                    return Ok(Shape::Known(field.ty.clone()));
+                    return Ok(Shape::Known(substitute(
+                        &field.ty,
+                        &constructor.substitutions(args),
+                    )));
                 }
             }
             _ => {}
@@ -704,7 +707,7 @@ impl<'a> Checker<'a> {
                                         matches!(shape, Shape::Tag(name) if name == tag)
                                     }
                                     Alternative::Constructor(name, _) => {
-                                        matches!(shape, Shape::Known(Type::Named(actual, _)) if actual == name)
+                                        matches!(shape, Shape::Known(Type::Named(actual, actual_args)) if actual == name && actual_args == args)
                                     }
                                     Alternative::Type(inner) => self
                                         .accepts(
@@ -1016,12 +1019,27 @@ impl<'a> Checker<'a> {
             return Err(Error::new(span, "constructor expects one field collection"));
         }
         let shape = &args[0];
-        if let Some(fields) = self.world.constructors.get(&name) {
+        if let Some(constructor) = self.world.constructors.get(&name) {
             let Shape::Record(shapes) = shape else {
                 return Err(Error::new(span, "constructor expects named fields"));
             };
-            self.accept_fields(shapes, fields, &BTreeMap::new(), span, 0)?;
-            return Ok(Shape::Known(Type::Named(name, Vec::new())));
+            let args = constructor.infer_arguments(
+                |name| {
+                    Ok(match shapes.get(name) {
+                        Some(Shape::Known(ty)) => Some(ty.clone()),
+                        _ => None,
+                    })
+                },
+                span,
+            )?;
+            self.accept_fields(
+                shapes,
+                &constructor.fields,
+                &constructor.substitutions(&args),
+                span,
+                0,
+            )?;
+            return Ok(Shape::Known(Type::Named(name, args)));
         }
         let mut inferred = BTreeMap::new();
         let params = if let Some(definition) = self.world.definitions.get(&name) {

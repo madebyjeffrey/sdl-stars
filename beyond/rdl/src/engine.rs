@@ -20,9 +20,50 @@ const MAX_ROWS: usize = 10_000;
 pub struct World {
     pub(crate) definitions: BTreeMap<String, Definition>,
     pub(crate) bindings: BTreeMap<String, Binding>,
-    pub(crate) constructors: BTreeMap<String, Vec<Field>>,
+    pub(crate) constructors: BTreeMap<String, Constructor>,
     pub(crate) templates: BTreeMap<(String, usize), Binding>,
     evaluation_cache: Arc<Mutex<EvaluationCache>>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct Constructor {
+    pub(crate) params: Vec<String>,
+    pub(crate) fields: Vec<Field>,
+}
+
+impl Constructor {
+    pub(crate) fn infer_arguments(
+        &self,
+        mut field_type: impl FnMut(&str) -> Result<Option<Type>>,
+        span: &Span,
+    ) -> Result<Vec<Type>> {
+        let mut inferred = BTreeMap::new();
+        for field in &self.fields {
+            if let Type::Var(param) = &field.ty
+                && let Some(ty) = field_type(&field.name)?
+                && let Some(previous) = inferred.insert(param.clone(), ty.clone())
+                && previous != ty
+            {
+                return Err(Error::new(span, "inconsistent constructor type arguments"));
+            }
+        }
+        self.params
+            .iter()
+            .map(|param| {
+                inferred.get(param).cloned().ok_or_else(|| {
+                    Error::new(span, format!("cannot infer type parameter '{param}"))
+                })
+            })
+            .collect()
+    }
+
+    pub(crate) fn substitutions(&self, args: &[Type]) -> BTreeMap<String, Type> {
+        self.params
+            .iter()
+            .cloned()
+            .zip(args.iter().cloned())
+            .collect()
+    }
 }
 
 impl Default for World {
@@ -274,9 +315,13 @@ impl World {
                                 format!("constructor '{name}' conflicts with another declaration"),
                             ));
                         }
+                        let constructor = Constructor {
+                            params: definition.params.clone(),
+                            fields,
+                        };
                         if let Some(previous) =
-                            self.constructors.insert(name.clone(), fields.clone())
-                            && (!previous.is_empty() || !fields.is_empty())
+                            self.constructors.insert(name.clone(), constructor.clone())
+                            && (!previous.fields.is_empty() || !constructor.fields.is_empty())
                         {
                             return Err(Error::new(
                                 &definition.span,
@@ -763,8 +808,8 @@ impl<'a> Evaluator<'a> {
                 }
             } else if self.world.has_templates(name) {
                 Value::new(Data::Function(name.to_owned(), Vec::new()))
-            } else if let Some(fields) = self.world.constructors.get(name) {
-                if fields.is_empty() {
+            } else if let Some(constructor) = self.world.constructors.get(name) {
+                if constructor.fields.is_empty() {
                     Value::new(Data::Tag(name.to_owned()))
                 } else {
                     Value::new(Data::Function(name.to_owned(), Vec::new()))
@@ -1156,7 +1201,7 @@ impl<'a> Evaluator<'a> {
                                     Alternative::Constructor(case, fields) => {
                                         if value
                                             .types
-                                            .contains(&Type::Named(case.clone(), Vec::new()))
+                                            .contains(&Type::Named(case.clone(), args.clone()))
                                         {
                                             let mut result = value.clone();
                                             self.normalize_fields(
@@ -1579,12 +1624,27 @@ impl<'a> Evaluator<'a> {
             ));
         }
         let mut value = args.remove(0);
-        if let Some(fields) = self.world.constructors.get(&name) {
+        if let Some(constructor) = self.world.constructors.get(&name) {
             if !matches!(value.data, Data::Record(_) | Data::Set(_)) {
                 return Err(Error::new(span, "constructor needs named fields"));
             }
-            self.normalize_fields(&mut value, fields, &BTreeMap::new(), span)?;
-            value.types.push(Type::Named(name, Vec::new()));
+            let args = constructor.infer_arguments(
+                |name| {
+                    value
+                        .fields()
+                        .and_then(|fields| fields.get(name))
+                        .map(|value| self.value_type(value, span))
+                        .transpose()
+                },
+                span,
+            )?;
+            self.normalize_fields(
+                &mut value,
+                &constructor.fields,
+                &constructor.substitutions(&args),
+                span,
+            )?;
+            value.types.push(Type::Named(name, args));
             self.validate_value(&value, span)?;
             return Ok(value);
         }
