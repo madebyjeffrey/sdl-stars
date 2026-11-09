@@ -1863,14 +1863,22 @@ impl<'a> Evaluator<'a> {
         match pattern {
             Pattern::Wildcard => Ok(Some(BTreeMap::new())),
             Pattern::Case(name, fields) => {
-                let matched = match &value.data {
-                    Data::Tag(tag) => tag == name,
-                    Data::None => name == "none",
-                    _ => value
-                        .types
-                        .iter()
-                        .any(|ty| matches!(ty, Type::Named(type_name, _) if type_name == name)),
-                };
+                let matched =
+                    match &value.data {
+                        Data::Tag(tag) => tag == name,
+                        Data::None => name == "none",
+                        Data::Ref(reference) => self.world.bindings[reference]
+                            .ty
+                            .as_ref()
+                            .is_some_and(|ty| {
+                                self.world
+                                    .subtype(ty, &Type::Named(name.clone(), Vec::new()))
+                            }),
+                        _ => value
+                            .types
+                            .iter()
+                            .any(|ty| matches!(ty, Type::Named(type_name, _) if type_name == name)),
+                    };
                 if !matched {
                     return Ok(None);
                 }

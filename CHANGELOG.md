@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL `pattern` now obtains entity-reference types from their declarations.
+  Direct and query references previously missed valid named cases or selected a
+  wildcard instead. Object, optional and trait-reference regressions cover the
+  fix; native game checkpoints are unaffected.
+
 - RDL `instantiate_trait` now defers provider constraints until component
   composition, matching named traits. Templates previously rejected base values
   that modifiers would make valid. Scalar and record regressions cover both
