@@ -639,6 +639,12 @@ switches to that entity's context. A detached reusable value has no owner;
 owner-dependent rules are deferred until attachment, and directly requesting an
 owner-dependent derived value without an owner is an error.
 
+Retained trait arguments are validated when the application is selected by an
+object. An ownerless argument uses that object's owner context for deferred
+checks; an argument read from another object retains its original context.
+Reusing an application checks ownerless arguments separately for each owner.
+Trait bodies and effects still evaluate in their application-time context.
+
 Loading parses all files, registers declarations, checks schemas and expressions,
 resolves facts, and evaluates applicable requirements and derived values. Checks
 include missing/extra fields, wrong types or trait categories, cardinality,

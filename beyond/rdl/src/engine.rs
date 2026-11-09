@@ -1418,7 +1418,26 @@ impl<'a> Evaluator<'a> {
             self.validate_value(selection, span)?;
         }
         match &value.data {
-            Data::TraitInstance(_, _, metadata) => self.validate_value(metadata, span)?,
+            Data::TraitInstance(_, args, metadata) => {
+                for (index, argument) in args.iter().enumerate() {
+                    let mut argument = argument.clone();
+                    // Arguments keep their application-time context. Only
+                    // ownerless inputs need a selection's owner to finish checks.
+                    // Validate a view so reuse in another object rechecks it there.
+                    if argument.owner.is_none() && value.owner.is_some() {
+                        attach(
+                            &mut argument,
+                            value.owner.clone(),
+                            value
+                                .path
+                                .as_ref()
+                                .map(|path| format!("{path}.argument[{index}]")),
+                        );
+                    }
+                    self.validate_value(&argument, span)?;
+                }
+                self.validate_value(metadata, span)?;
+            }
             Data::Record(fields) => {
                 for value in fields.values() {
                     self.validate_value(value, span)?;

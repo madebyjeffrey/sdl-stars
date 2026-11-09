@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL `validate_value` now finishes owner-dependent checks on retained trait
+  arguments when an application is selected. Ownerless arguments previously
+  stayed unchecked indefinitely. Validation uses each selection's owner while
+  preserving already-owned inputs; regressions cover reusable applications,
+  generic records/variants, cached checks and atomic failure. Native game
+  checkpoints are unaffected.
+
 - RDL `context` now distinguishes a named entity from a nested value with the
   same type. Nested requirements and derived properties previously read the
   containing object's `self`. Regression tests preserve nested `self`, outer

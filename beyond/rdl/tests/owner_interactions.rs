@@ -1,6 +1,47 @@
 use rdl::World;
 
 #[test]
+fn retained_trait_arguments_validate_in_each_selection_owner() {
+    let mut world = World::new();
+    world
+        .load(
+            "schema",
+            r#"
+        type Limit={n:int;} with(owner:O){require self.n<=owner.maximum;}
+        type 'a Box=|box of {value:'a;} with(owner:O){require owner.maximum>0;}
+        type 'a Holder={value:'a;}
+        trait keep(p:Limit) {}
+        trait boxed(p:(int Box)) {}
+        trait nested(p:(Limit Holder)) {}
+        object type O={maximum:int;p:Limit;}
+        let shared=keep({n=1;});
+        let generic=boxed(box {value=1;});
+        let wrapper=nested(Holder {value=Limit {n=1;};});
+        O a={maximum=10;p={n=5;};shared generic wrapper}
+        O b={maximum=0;p={n=0;};keep(a.p)}
+    "#,
+        )
+        .unwrap();
+    for _ in 0..2 {
+        for choices in ["shared", "generic", "wrapper", "keep({n=1;})"] {
+            let error = world
+                .load("bad", &format!("O bad={{maximum=0;p={{n=0;}};{choices}}}"))
+                .unwrap_err();
+            assert!(error.message.contains("require failed"), "{error}");
+            assert_eq!(world.object_count(), 2);
+        }
+        assert_eq!(
+            world.query("q", "Set.size a.traits").unwrap().as_int(),
+            Some(3)
+        );
+        assert_eq!(
+            world.query("q", "Set.size b.traits").unwrap().as_int(),
+            Some(1)
+        );
+    }
+}
+
+#[test]
 fn nested_objects_validate_their_own_self_and_keep_the_containing_owner() {
     let mut world = World::new();
     world
