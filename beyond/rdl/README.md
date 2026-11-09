@@ -313,7 +313,9 @@ This binds arguments to a declarative trait template. The body may provide
 components, modify numeric components, declare typed trait metadata, and use
 `require` to validate parameters. It adds no imperative statements, mutation or
 I/O. Parameter and effect types are checked even when a template is unused;
-argument requirements and component constraints are checked when applied.
+argument requirements are checked when applied. Provided component constraints
+are checked on the completed object composition, after modifiers, just as for
+named traits.
 Parameters use the existing concrete RDL types. A template is not a global
 trait fact and must receive its arguments before it can be selected.
 

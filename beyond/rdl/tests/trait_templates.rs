@@ -104,12 +104,19 @@ fn wrong_arity_and_types_fail_even_when_no_objects_are_present() {
 }
 
 #[test]
-fn requirements_validate_arguments_and_components_at_the_application() {
-    let world = world();
-    for expr in ["band(-1,85)", "band(80,20)", "capacity(0)"] {
-        let error = world.query("application", expr).unwrap_err();
-        assert_eq!(error.span.source, "application");
-        assert!(error.message.contains("require"));
+fn requirements_validate_parameters_at_application_and_components_on_selection() {
+    let mut world = world();
+    let error = world.query("application", "band(-1,85)").unwrap_err();
+    assert_eq!(error.span.source, "application");
+    assert!(error.message.contains("require"));
+    for choices in ["band(80,20) capacity(1)", "band(15,85) capacity(0)"] {
+        let error = world
+            .load(
+                "application",
+                &format!("Item bad={{name=\"Bad\";{choices}}}"),
+            )
+            .unwrap_err();
+        assert!(error.message.contains("require failed"), "{error}");
     }
 }
 

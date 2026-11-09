@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL `instantiate_trait` now defers provider constraints until component
+  composition, matching named traits. Templates previously rejected base values
+  that modifiers would make valid. Scalar and record regressions cover both
+  repaired and invalid final values; native game checkpoints are unaffected.
+
 - RDL `instantiate_trait` and variant `apply` now validate normalized arguments
   and payloads before use. Structural records previously bypassed their `require`
   constraints. Regression tests cover rejected queries, retries and atomic loads.

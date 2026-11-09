@@ -1526,13 +1526,9 @@ impl<'a> Evaluator<'a> {
                 match effect {
                     Effect::Provides { component, value } => {
                         let value = self.eval(value, &env)?;
-                        let mut value = self.normalize(
-                            value,
-                            &Type::Named(component.clone(), Vec::new()),
-                            span,
-                        )?;
-                        attach(&mut value, None, None);
-                        self.validate_value(&value, span)?;
+                        // Component requirements apply after all modifiers, as
+                        // they do for named trait providers.
+                        self.normalize(value, &Type::Named(component.clone(), Vec::new()), span)?;
                     }
                     Effect::Modifies { value, .. } => {
                         self.eval(value, &env)?;
