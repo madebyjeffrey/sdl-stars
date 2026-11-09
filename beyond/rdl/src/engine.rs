@@ -1486,6 +1486,7 @@ impl<'a> Evaluator<'a> {
         let mut env = Environment::default();
         for (value, parameter) in args.iter_mut().zip(parameters) {
             *value = self.normalize(value.clone(), &parameter.ty, span)?;
+            self.validate_value(value, span)?;
             if matches!(
                 parameter.ty,
                 Type::Int | Type::Real | Type::String | Type::Bool
@@ -1588,6 +1589,7 @@ impl<'a> Evaluator<'a> {
             }
             self.normalize_fields(&mut value, fields, &BTreeMap::new(), span)?;
             value.types.push(Type::Named(name, Vec::new()));
+            self.validate_value(&value, span)?;
             return Ok(value);
         }
         let args = if let Some(definition) = self.world.definitions.get(&name) {

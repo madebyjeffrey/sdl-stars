@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL `instantiate_trait` and variant `apply` now validate normalized arguments
+  and payloads before use. Structural records previously bypassed their `require`
+  constraints. Regression tests cover rejected queries, retries and atomic loads.
+  The experimental interpreter does not change native game checkpoints.
+
 - `CreateWindowExA` keeps modal `#32770` dialogs independent on Cocoa while
   retaining their Win32 owner and modal behavior. Native SDL parent attachment
   made the race wizard stutter while dragging; the same creation path is used by
