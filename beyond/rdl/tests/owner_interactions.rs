@@ -1,5 +1,49 @@
 use rdl::World;
 
+#[test]
+fn nested_objects_validate_their_own_self_and_keep_the_containing_owner() {
+    let mut world = World::new();
+    world
+        .load(
+            "schema",
+            r#"
+        type Limit={n:int;} with(owner:Node){require self.n<=owner.n;}
+        object type Node={
+            n:int;child:Node option;limit:Limit option;
+            require self.n>0;
+            derive twice:int=self.n*2;
+            derive identity:Node=self;
+        }
+        Node root={n=10;child={n=7;limit={n=9;};};}
+    "#,
+        )
+        .unwrap();
+    for _ in 0..2 {
+        assert_eq!(
+            world
+                .query(
+                    "q",
+                    "(let c=root.child in match c with |Node -> c.twice |none -> 0)"
+                )
+                .unwrap()
+                .as_int(),
+            Some(14)
+        );
+        assert_eq!(
+            world.query("q", "root.identity=root").unwrap().as_bool(),
+            Some(true)
+        );
+    }
+    for source in [
+        "Node bad={n=1;child={n=-1;};}",
+        "Node bad={n=1;child={n=7;limit={n=2;};};}",
+    ] {
+        let error = world.load("bad", source).unwrap_err();
+        assert!(error.message.contains("require failed"), "{error}");
+        assert_eq!(world.object_count(), 1);
+    }
+}
+
 const FEATURES: &str = r#"
 trait type Feature={n:int;} with (owner:O) {derive total:int=self.n+owner.bonus;}
 trait feature(n:int):Feature {n=n;}

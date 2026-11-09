@@ -9,6 +9,7 @@ pub struct Value {
     pub(crate) data: Data,
     pub(crate) types: Vec<Type>,
     pub(crate) owner: Option<String>,
+    pub(crate) entity: Option<String>,
     pub(crate) path: Option<String>,
     pub(crate) item_type: Option<Type>,
     pub(crate) component: Option<String>,
@@ -23,6 +24,7 @@ pub(crate) struct ValueKey {
     id: usize,
     types: Vec<Type>,
     owner: Option<String>,
+    entity: Option<String>,
     component: Option<String>,
 }
 
@@ -54,6 +56,7 @@ impl Value {
             data,
             types: Vec::new(),
             owner: None,
+            entity: None,
             path: None,
             item_type: None,
             component: None,
@@ -151,6 +154,7 @@ impl Value {
             id,
             types: self.types.clone(),
             owner: self.owner.clone(),
+            entity: self.entity.clone(),
             component: self.component.clone(),
         })
     }
@@ -197,10 +201,11 @@ impl Value {
         };
         if contextual {
             return format!(
-                "{:?}:{:?}:{:?}:{:?}:{data}",
+                "{:?}:{:?}:{:?}:{:?}:{:?}:{data}",
                 self.component,
                 self.types,
                 self.owner,
+                self.entity,
                 self.inline_traits.iter().map(key).collect::<Vec<_>>()
             );
         }

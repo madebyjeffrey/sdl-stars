@@ -706,6 +706,9 @@ impl<'a> Evaluator<'a> {
         if let Some(ty) = &binding.ty {
             value = self.normalize(value, ty, &binding.expr.span)?;
         }
+        if binding.kind != TypeKind::Value {
+            value.entity = Some(name.into());
+        }
         self.active.pop();
         value.retain_ids(&mut self.cache.retained_ids);
         self.cache.values.insert(name.into(), value.clone());
@@ -1331,11 +1334,10 @@ impl<'a> Evaluator<'a> {
         let mut env = Environment::default();
         // Named objects are world facts. Passing self to a calculation must
         // preserve that reference rather than embed and revalidate the object.
-        let receiver = match (&value.owner, definition.kind) {
-            (Some(name), TypeKind::Object)
-                if self.world.bindings.get(name).is_some_and(|binding| {
-                    matches!(&binding.ty, Some(Type::Named(ty, _)) if ty == &definition.name)
-                }) => Value::new(Data::Ref(name.clone())),
+        // A nested object can have the same type as its containing entity.
+        // Ownership alone does not make that nested value the named fact.
+        let receiver = match (&value.entity, definition.kind) {
+            (Some(name), TypeKind::Object) => Value::new(Data::Ref(name.clone())),
             _ => value.clone(),
         };
         env.locals.insert("self".into(), receiver);

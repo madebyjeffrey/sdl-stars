@@ -6,6 +6,11 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL `context` now distinguishes a named entity from a nested value with the
+  same type. Nested requirements and derived properties previously read the
+  containing object's `self`. Regression tests preserve nested `self`, outer
+  owner context and named-reference identity. Native checkpoints are unchanged.
+
 - RDL `instantiate_trait` now uses owner-sensitive argument keys for evaluation,
   separate from logical trait identity. Cached applications previously reused
   another owner's metadata and skipped its requirements. Regressions cover
