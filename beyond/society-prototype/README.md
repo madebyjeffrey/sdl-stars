@@ -8,11 +8,12 @@ only some of those choices.
 
 ## Run
 
-This package is a member of the sibling SCARS Cargo workspace at
-`cpp-demos/rust/Cargo.toml`. Reload that workspace in the IDE to see the
-`society-prototype` binary target. From `cpp-demos/rust`:
+This package is in the self-contained Cargo workspace at `beyond/Cargo.toml`.
+Open that manifest in the IDE to see the `society-prototype` binary target. From
+the `sdl-stars` checkout:
 
 ```sh
+cd beyond
 cargo run --locked --release -p society-prototype
 ```
 
@@ -22,13 +23,12 @@ From the `sdl-stars` checkout:
 ./beyond/society-prototype/run.sh
 ```
 
-Requires the sibling `cpp-demos/rust` checkout containing SCARS, Rust, the macOS
-SDK and the build tools required by SCARS. The current native SCARS window
-backend is macOS-only. This prototype follows its macOS 26 deployment target.
-The first build compiles Skia from source and can take several minutes; subsequent
-runs reuse the build. The launcher changes into the SCARS workspace so Cargo reads
-its configuration, including `FORCE_SKIA_BUILD`. Cargo uses the SCARS workspace's
-shared lockfile and target directory.
+Requires Rust, the macOS SDK and the build tools required by SCARS. The current
+native SCARS window backend is macOS-only. This prototype follows its macOS 26
+deployment target. The first build compiles Skia from source and can take several
+minutes; subsequent runs reuse the build. The launcher changes into the local
+`beyond` workspace so Cargo reads its configuration, including
+`FORCE_SKIA_BUILD`. Cargo uses the workspace lockfile and local target directory.
 
 IDE Debug builds also optimise the SCARS `scars-ui` package (`opt-level = 2`)
 while retaining debug symbols. The workspace already optimises Skia, the RDL
@@ -137,7 +137,7 @@ light → dark → light changes on the same mounted view.
 sixteen tiles in both themes and both artwork styles. Use `--sigils --render FILE`
 for a preview of the complete selector without the surrounding wizard.
 
-To compare scrolling in Debug and Release, run from `cpp-demos/rust`:
+To compare scrolling in Debug and Release, run from `beyond`:
 
 ```sh
 cargo run --locked -p society-prototype -- --profile-scroll

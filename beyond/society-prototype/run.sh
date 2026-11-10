@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
-cd "$(dirname "$0")/../../../cpp-demos/rust"
+cd "$(dirname "$0")/.."
 exec cargo run --locked --release -p society-prototype -- "$@"
