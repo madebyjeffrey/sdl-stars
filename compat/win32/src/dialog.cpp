@@ -253,6 +253,30 @@ BOOL win32::IsDialogMessageA(HWND hwnd, LPMSG lpmsg) {
     }
     return 0;
 }
+
+class COMPATMODALDIALOGSCOPE {
+public:
+    explicit COMPATMODALDIALOGSCOPE(HWND hwnd) noexcept : hwndPrevious(HwndCompatSetModalDialog(hwnd)) {
+#ifdef __APPLE__
+        pSession = PCompatBeginModalEventSession(hwnd->lpWindow.get());
+#endif
+    }
+    ~COMPATMODALDIALOGSCOPE() {
+        static_cast<void>(HwndCompatSetModalDialog(hwndPrevious));
+#ifdef __APPLE__
+        CompatEndModalEventSession(pSession);
+#endif
+    }
+    COMPATMODALDIALOGSCOPE(const COMPATMODALDIALOGSCOPE &) = delete;
+    COMPATMODALDIALOGSCOPE &operator=(const COMPATMODALDIALOGSCOPE &) = delete;
+
+private:
+    HWND hwndPrevious;
+#ifdef __APPLE__
+    void *pSession = nullptr;
+#endif
+};
+
 INT_PTR win32::DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGPROC lpfn, LPARAM param) {
     HWND hwnd = nullptr, hwndFocus = win32::GetFocus(), hwndRoot;
     BOOL fEnable;
@@ -275,6 +299,7 @@ INT_PTR win32::DialogBoxParamA(HINSTANCE hinst, LPCSTR psz, HWND hwndOwner, DLGP
     if (FStarsErrorPending()) return -1;
     hwnd = HwndCreateDialog(hinst, psz, hwndOwner, lpfn, param, 1);
     if (hwnd) {
+        COMPATMODALDIALOGSCOPE modalDialog(hwnd);
         while (win32::IsWindow(hwnd) && !hwnd->fEndDialog) {
             result = win32::GetMessageA(&msg, nullptr, 0, 0);
             if (result <= 0) { if (result == 0) win32::PostQuitMessage(static_cast<int>(msg.wParam)); break; }

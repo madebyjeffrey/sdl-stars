@@ -1,0 +1,13 @@
+[env]
+MACOSX_DEPLOYMENT_TARGET = "26.0"
+FORCE_SKIA_BUILD = { value = "1", force = true }
+
+# Match the workspace when Cargo is invoked from this external member directly.
+[profile.dev]
+strip = "none"
+
+[profile.test]
+strip = "none"
+
+[profile.release]
+strip = "none"

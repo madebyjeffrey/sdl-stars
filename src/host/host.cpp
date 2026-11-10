@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) try {
     argv = rgpszNative.data();
 #endif
     // ParseCmdLine reads each letter after a '-' as a switch.
-    if (argc == 2 && std::strcmp(argv[1], "--version") == 0) {
+    if (argc == 2 && std::string_view{argv[1]} == "--version") {
         std::printf("stars-host %s\n", STARS_VERSION_DISPLAY);
         return 0;
     }
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) try {
     // own; ParseCmdLine reads the rest.
     szIniPath = nullptr;
     for (i = 1; i + 1 < argc; i++) {
-        if (std::strcmp(argv[i], "--ini") == 0) {
+        if (std::string_view{argv[i]} == "--ini") {
             szIniPath = argv[i + 1];
             for (; i + 2 < argc; i++) {
                 argv[i] = argv[i + 2];

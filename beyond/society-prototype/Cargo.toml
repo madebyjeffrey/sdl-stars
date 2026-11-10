@@ -1,0 +1,11 @@
+[package]
+name = "society-prototype"
+version = "0.1.0"
+edition = "2024"
+publish = false
+workspace = "../../../cpp-demos/rust"
+
+[dependencies]
+rdl = { path = "../rdl", default-features = false }
+scars-window = { path = "../../../cpp-demos/rust/crates/scars-window" }
+

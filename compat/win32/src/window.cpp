@@ -15,7 +15,7 @@
 #include <string>
 
 static COMPATCLASS *lpClasses;
-static HWND lpWindows, hwndFocus, hwndActive, hwndFirstTop;
+static HWND lpWindows, hwndFocus, hwndActive, hwndFirstTop, hwndModalDialog;
 static unsigned int atomNext = 1;
 static std::uint64_t idInspectNext;
 static bool fVideoOwned, fShutdown, fResizeWatch, fLiveResize;
@@ -1164,6 +1164,14 @@ HWND HwndCompatRoot(HWND hwnd) {
     if (!lpwin) return nullptr;
     while (lpwin->hwndParent) lpwin = lpwin->hwndParent;
     return lpwin;
+}
+
+HWND HwndCompatModalDialog(void) { return LpCompatWindow(hwndModalDialog); }
+
+HWND HwndCompatSetModalDialog(HWND hwnd) {
+    HWND hwndPrevious = hwndModalDialog;
+    hwndModalDialog = hwnd;
+    return hwndPrevious;
 }
 
 BOOL win32::IsWindow(HWND hwnd) { return LpCompatWindow(hwnd) != nullptr; }

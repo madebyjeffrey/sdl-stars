@@ -67,7 +67,8 @@ produce different results from a 2.6j host for the same turn.
 - `CreateWindowExA` keeps modal `#32770` dialogs independent on Cocoa while
   retaining their Win32 owner and modal behavior. Native SDL parent attachment
   made the race wizard stutter while dragging; the same creation path is used by
-  the New Game wizard. Modeless dialogs and other platforms keep native parenting.
+  the New Game wizard. Cocoa modal sessions process input only for the active
+  dialog; modeless dialogs and other platforms keep native parenting.
 
 - `DrawBtn` now draws the spinner arrows slightly smaller and keeps them centered
   in their existing buttons. Button size and hit targets are unchanged.

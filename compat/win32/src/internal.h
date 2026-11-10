@@ -251,6 +251,13 @@ HWND LpCompatWindow(HWND hwnd);
 HWND LpCompatWindowFromId(SDL_WindowID id);
 void CompatFocusWindow(HWND hwnd);
 HWND HwndCompatRoot(HWND hwnd);
+HWND HwndCompatModalDialog(void);
+HWND HwndCompatSetModalDialog(HWND hwnd);
+#ifdef __APPLE__
+void *PCompatBeginModalEventSession(SDL_Window *lpWindow) noexcept;
+void CompatRunModalEventSession(void) noexcept;
+void CompatEndModalEventSession(void *pSession) noexcept;
+#endif
 COMPATMOUSEHITRESULT HwndCompatMouse(HWND hwnd, POINT pt);
 bool FCompatPresent(HWND hwnd);
 bool FCompatRefreshPresent(HWND hwnd);

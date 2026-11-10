@@ -100,7 +100,7 @@ static void NormalizeEditCase(HWND hwnd) {
 
 static void ReplaceEdit(HWND hwnd, LPCSTR psz, BOOL fUser, BOOL fUndo, UINT iUndoAction) {
     UINT ichFirst = StarsMin(hwnd->ichAnchor, hwnd->ichCaret), ichLast = StarsMax(hwnd->ichAnchor, hwnd->ichCaret);
-    std::size_t cchOld = CchEdit(hwnd), cch = std::strlen(psz), cchBase = cchOld - (ichLast - ichFirst), i;
+    std::size_t cchOld = CchEdit(hwnd), cch = std::string_view{psz}.size(), cchBase = cchOld - (ichLast - ichFirst), i;
     char *pszNew, *pszUndo = nullptr;
     NATIVEOWNER<char, SDL_free> newOwner, undoOwner;
     BOOL fLimit, fGroup;

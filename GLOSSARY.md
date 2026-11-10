@@ -13,6 +13,12 @@ A game kept in its own library folder under a unique name valid as a filename ac
 **Race design**:
 A reusable race definition used when creating a game, distinct from a player's turn in an existing game.
 
+**Society**:
+A people considered together with their biological needs, shared identity, technology and economic organization. The Society Designer prototype uses this term for the people being designed.
+
+**Society design**:
+A reusable definition of a society, including its identity, traits, environment, economy and research preferences. This is the prototype's player-facing term for a race design.
+
 **Race version**:
 A saved revision of a race design. Saving a new version retains earlier revisions; updating replaces the selected revision.
 

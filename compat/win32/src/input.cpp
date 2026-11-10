@@ -18,6 +18,17 @@ static POINT ptCursor;
 static HWND hwndCursor;
 static bool fCursor, fInputKeys;
 
+static bool FCompatModalInputTarget(HWND hwnd) {
+#ifdef __APPLE__
+    HWND hwndModal = HwndCompatModalDialog();
+    if (!hwndModal || (hwnd && HwndCompatRoot(hwnd) == hwndModal)) return 1;
+    return 0;
+#else
+    static_cast<void>(hwnd);
+    return 1;
+#endif
+}
+
 std::optional<POINT> CompatCopyInput(std::span<BYTE, 256> rgb) {
     std::copy(std::begin(rgbInput), std::end(rgbInput), rgb.begin());
     return fCursor ? std::optional<POINT>{ptCursor} : std::nullopt;
@@ -263,7 +274,11 @@ SHORT win32::GetAsyncKeyState(int vk) {
     SHORT w;
     if (!SDL_IsMainThread() || vk < 0 || vk > 255 ||
         !(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) return 0;
+#ifdef __APPLE__
+    if (!HwndCompatModalDialog()) SDL_PumpEvents();
+#else
     SDL_PumpEvents();
+#endif
     rgf = CompatInputIO().pfnGetKeyboardState(&cKeys);
     for (i = 0; rgf && i < cKeys; i++) {
         key = VkFromScancode(static_cast<SDL_Scancode>(i));
@@ -412,6 +427,9 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
     case SDL_EVENT_WINDOW_MAXIMIZED:
     case SDL_EVENT_WINDOW_RESTORED:
         hwnd = LpCompatWindowFromId(lpevent->window.windowID);
+        if (hwnd && (lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED ||
+                     lpevent->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) &&
+            !FCompatModalInputTarget(hwnd)) return;
         if ((lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED || lpevent->type == SDL_EVENT_WINDOW_FOCUS_LOST) &&
             FCompatMenuFocus(hwnd, lpevent->type == SDL_EVENT_WINDOW_FOCUS_GAINED)) return;
         if (!hwnd)
@@ -471,6 +489,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         hwnd = LpCompatWindowFromId(lpevent->key.windowID);
         hwndFocus = win32::GetFocus();
         if (hwndFocus && HwndCompatRoot(hwndFocus) == hwnd) hwnd = hwndFocus;
+        if (!FCompatModalInputTarget(hwnd)) return;
         if (hwnd && lpevent->key.scancode == SDL_SCANCODE_F12 &&
             (lpevent->key.mod & SDL_KMOD_CTRL) && (lpevent->key.mod & SDL_KMOD_SHIFT)) {
             if (lpevent->type == SDL_EVENT_KEY_DOWN && !lpevent->key.repeat) StarsCompatShowInspector();
@@ -510,6 +529,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         return;
     case SDL_EVENT_TEXT_EDITING:
         hwnd = LpCompatWindowFromId(lpevent->edit.windowID);
+        if (!FCompatModalInputTarget(hwnd)) return;
         hwndFocus = win32::GetFocus();
         if (hwndFocus && HwndCompatRoot(hwndFocus) == hwnd && win32::IsWindowEnabled(hwndFocus))
             CompatEditComposition(hwndFocus, lpevent->edit.text, lpevent->edit.start, lpevent->edit.length);
@@ -518,7 +538,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         hwnd = LpCompatWindowFromId(lpevent->text.windowID);
         hwndFocus = win32::GetFocus();
         if (hwndFocus && HwndCompatRoot(hwndFocus) == hwnd) hwnd = hwndFocus;
-        if (!win32::IsWindowEnabled(hwnd) || !lpevent->text.text)
+        if (!FCompatModalInputTarget(hwnd) || !win32::IsWindowEnabled(hwnd) || !lpevent->text.text)
             return;
         if (!fInputKeys) InputModifiers(CompatInputIO().pfnGetModState());
         if (hwnd && hwnd->iControl == 3) CompatEditComposition(hwnd, "", 0, 0);
@@ -530,7 +550,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         return;
     case SDL_EVENT_MOUSE_MOTION:
         hwnd = LpCompatWindowFromId(lpevent->motion.windowID);
-        if (!hwnd)
+        if (!hwnd || !FCompatModalInputTarget(hwnd))
             return;
         hwndRoot = hwnd;
         {
@@ -563,7 +583,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EVENT_MOUSE_BUTTON_UP:
         hwnd = LpCompatWindowFromId(lpevent->button.windowID);
-        if (!hwnd)
+        if (!hwnd || !FCompatModalInputTarget(hwnd))
             return;
         hwndRoot = hwnd;
         {
@@ -617,7 +637,7 @@ void CompatRouteEvent(const SDL_Event *lpevent) {
         return;
     case SDL_EVENT_MOUSE_WHEEL:
         hwndRoot = LpCompatWindowFromId(lpevent->wheel.windowID);
-        if (!hwndRoot) return;
+        if (!hwndRoot || !FCompatModalInputTarget(hwndRoot)) return;
         hwnd = win32::GetFocus();
         if (!win32::IsWindowEnabled(hwnd)) hwnd = hwndRoot;
         if (!win32::IsWindowEnabled(hwnd)) return;

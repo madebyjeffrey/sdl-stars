@@ -324,8 +324,15 @@ BOOL win32::PeekMessageA(LPMSG lpOut, HWND hwnd, UINT msgMin, UINT msgMax, UINT 
     SDL_Event event;
 
     if (!lpOut || !FValidFilter(hwnd, msgMin, msgMax)) return 0;
-    if (SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)
-        while (SDL_PollEvent(&event)) CompatRouteEvent(&event);
+    if (SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO) {
+#ifdef __APPLE__
+        if (HwndCompatModalDialog()) {
+            CompatRunModalEventSession();
+            while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST) > 0) CompatRouteEvent(&event);
+        } else
+#endif
+            while (SDL_PollEvent(&event)) CompatRouteEvent(&event);
+    }
     if (FQueuedMessage(lpOut, hwnd, msgMin, msgMax, flags, 0)) return 1;
     if (CompatPeekPaint(lpOut, hwnd, msgMin, msgMax)) return 1;
     // A caller may validate after drawing with GetDC instead of entering WM_PAINT.
@@ -352,6 +359,12 @@ BOOL win32::GetMessageA(LPMSG lpmsg, HWND hwnd, UINT msgMin, UINT msgMax) {
             return lpmsg->message == win32::WM_QUIT ? 0 : 1;
         cMillis = CMillisCompatTimerWait(hwnd, msgMin, msgMax);
         if (!(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS)) return -1;
+#ifdef __APPLE__
+        if (HwndCompatModalDialog()) {
+            SDL_Delay(cMillis < 0 ? 10u : static_cast<Uint32>(StarsMax(1, StarsMin(cMillis, 10))));
+            continue;
+        }
+#endif
         if (SDL_WaitEventTimeout(&event, cMillis)) CompatRouteEvent(&event);
         else if (cMillis == -1) return -1;
     }
@@ -367,6 +380,12 @@ BOOL win32::WaitMessage(void) {
     while (!win32::PeekMessageA(&msg, nullptr, 0, 0, win32::PM_NOREMOVE)) {
         cMillis = CMillisCompatTimerWait(nullptr, 0, 0);
         if (!(SDL_WasInit(SDL_INIT_EVENTS) & SDL_INIT_EVENTS)) return 0;
+#ifdef __APPLE__
+        if (HwndCompatModalDialog()) {
+            SDL_Delay(cMillis < 0 ? 10u : static_cast<Uint32>(StarsMax(1, StarsMin(cMillis, 10))));
+            continue;
+        }
+#endif
         if (SDL_WaitEventTimeout(&event, cMillis)) CompatRouteEvent(&event);
         else if (cMillis == -1) return 0;
     }

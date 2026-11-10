@@ -166,7 +166,7 @@ static PORTALRESPONSERESULT IResponse(DBusMessage *lpMessage, const std::vector<
     while (dbus_message_iter_get_arg_type(&results) == DBUS_TYPE_DICT_ENTRY) {
         dbus_message_iter_recurse(&results, &entry); dbus_message_iter_get_basic(&entry, &pszKey);
         dbus_message_iter_next(&entry); dbus_message_iter_recurse(&entry, &value);
-        if (std::strcmp(pszKey, "uris") == 0) {
+        if (std::string_view{pszKey} == "uris") {
             if (fUri || dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_ARRAY ||
                 dbus_message_iter_get_element_type(&value) != DBUS_TYPE_STRING) return {PORTALRESPONSEKIND::failed, iFilter};
             dbus_message_iter_recurse(&value, &uris);
@@ -174,7 +174,7 @@ static PORTALRESPONSERESULT IResponse(DBusMessage *lpMessage, const std::vector<
             dbus_message_iter_get_basic(&uris, &pszUri);
             if (!FUriPath(pszUri, szPath) || dbus_message_iter_next(&uris)) return {PORTALRESPONSEKIND::failed, iFilter};
             fUri = true;
-        } else if (std::strcmp(pszKey, "current_filter") == 0) {
+        } else if (std::string_view{pszKey} == "current_filter") {
             if (dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_STRUCT) return {PORTALRESPONSEKIND::failed, iFilter};
             dbus_message_iter_recurse(&value, &filter);
             if (dbus_message_iter_get_arg_type(&filter) != DBUS_TYPE_STRING) return {PORTALRESPONSEKIND::failed, iFilter};
@@ -182,7 +182,7 @@ static PORTALRESPONSERESULT IResponse(DBusMessage *lpMessage, const std::vector<
             for (i = 0; i < filters.size(); i++) {
                 pszLabel = filters[i].szName.c_str();
                 if (!FUtf8Valid(pszLabel)) return {PORTALRESPONSEKIND::failed, iFilter};
-                if (std::strcmp(pszName, pszLabel) == 0) { iFilter = i; break; }
+                if (std::string_view{pszName} == pszLabel) { iFilter = i; break; }
             }
         }
         dbus_message_iter_next(&results);
@@ -256,7 +256,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
         /* SDL exports xdg-foreign asynchronously. Copy the handle before the
            modal pump, which may destroy its window and property storage. */
         nsStart = CompatTimeIO().pfnGetTicks();
-        while (std::strcmp(CompatInputIO().pfnGetCurrentVideoDriver(), "wayland") == 0 &&
+        while (std::string_view{CompatInputIO().pfnGetCurrentVideoDriver()} == "wayland" &&
                !SDL_GetStringProperty(props, SDL_PROP_WINDOW_WAYLAND_XDG_TOPLEVEL_EXPORT_HANDLE_STRING, nullptr) &&
                CompatTimeIO().pfnGetTicks() - nsStart < 1000) {
             if (!FPumpChooser(hwndOwner)) { iResult = 0; goto done; }
@@ -292,7 +292,7 @@ FILESELECTIONRESULT ICompatChooseFile(HWND hwndOwner, const FILESELECTIONREQUEST
     }
     pszUnique = dbus_bus_get_unique_name(lpBus);
     if (!pszUnique) goto done;
-    cchUnique = std::strlen(pszUnique);
+    cchUnique = std::string_view{pszUnique}.size();
     if (cchUnique >= sizeof(szSender)) goto done;
     {
         const auto rgchSender = std::span{szSender}.first(cchUnique);
