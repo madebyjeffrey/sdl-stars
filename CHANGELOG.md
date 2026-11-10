@@ -6,6 +6,12 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL constructor checking now retains the enclosing generic definition's type
+  parameter scope. Valid record constructors in generic rules previously failed
+  with an unbound-variable error. Global bindings retain separate scopes; tests
+  cover several instantiations and trait calls forcing owner-validated generic
+  results. Native game checkpoints are unaffected.
+
 - RDL `validate_value` now finishes owner-dependent checks on retained trait
   arguments when an application is selected. Ownerless arguments previously
   stayed unchecked indefinitely. Validation uses each selection's owner while

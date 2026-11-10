@@ -22,6 +22,7 @@ type Locals = BTreeMap<String, Shape>;
 pub(crate) fn check_world(world: &World) -> Result<()> {
     let mut checker = Checker::new(world);
     for definition in world.definitions.values() {
+        checker.type_params = definition.params.clone();
         let ty = Type::Named(
             definition.name.clone(),
             definition
@@ -101,6 +102,7 @@ pub(crate) fn check_world(world: &World) -> Result<()> {
             checker.accepts(&shape, &Type::Bool, &requirement.span, 0)?;
         }
     }
+    checker.type_params.clear();
     for binding in world.all_bindings() {
         let mut parameter_names = BTreeSet::new();
         let mut parameter_locals = Locals::new();
@@ -209,6 +211,7 @@ struct Checker<'a> {
     cache: BTreeMap<String, Shape>,
     active: BTreeSet<String>,
     depth: usize,
+    type_params: Vec<String>,
 }
 
 impl<'a> Checker<'a> {
@@ -218,6 +221,7 @@ impl<'a> Checker<'a> {
             cache: BTreeMap::new(),
             active: BTreeSet::new(),
             depth: 0,
+            type_params: Vec::new(),
         }
     }
 
@@ -243,7 +247,11 @@ impl<'a> Checker<'a> {
             .flatten()
             .map(|p| (p.name.clone(), Shape::Known(p.ty.clone())))
             .collect();
-        let shape = self.infer(&binding.expr, &locals)?;
+        // Global bindings do not capture a referring generic definition's scope.
+        let type_params = std::mem::take(&mut self.type_params);
+        let shape = self.infer(&binding.expr, &locals);
+        self.type_params = type_params;
+        let shape = shape?;
         let result = if let Some(ty) = &binding.ty {
             self.accepts(&shape, ty, &binding.expr.span, 0)?;
             Shape::Known(ty.clone())
@@ -1083,7 +1091,7 @@ impl<'a> Checker<'a> {
             })
             .collect::<Result<Vec<_>>>()?;
         let ty = Type::Named(name, args);
-        self.world.check_type(&ty, &[], span)?;
+        self.world.check_type(&ty, &self.type_params, span)?;
         self.accepts(shape, &ty, span, 0)?;
         Ok(Shape::Known(ty))
     }
