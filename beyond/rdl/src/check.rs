@@ -156,6 +156,14 @@ pub(crate) fn query_item_type(
 ) -> Option<Type> {
     fn shape(world: &World, value: &crate::Value) -> Shape {
         use crate::value::Data;
+        // Preserve a known case for projections while generic inference uses
+        // its enclosing union as the actual type argument.
+        if let Some(case) = value.types.iter().find(|ty| {
+            matches!(ty, Type::Named(name, _) if world.constructors.contains_key(name))
+                && value.types.last() == Some(&world.inferred_type(ty))
+        }) {
+            return Shape::Known(case.clone());
+        }
         if let Some(ty) = value.types.last() {
             return Shape::Known(ty.clone());
         }
@@ -605,13 +613,20 @@ impl<'a> Checker<'a> {
                     && matches!(name, "lower" | "upper")
                 {
                     return Ok(Shape::Known(args[0].clone()));
-                } else if let Some(constructor) = self.world.constructors.get(type_name)
-                    && let Some(field) = constructor.fields.iter().find(|field| field.name == name)
-                {
-                    return Ok(Shape::Known(substitute(
-                        &field.ty,
-                        &constructor.substitutions(args),
-                    )));
+                } else if let Some(constructor) = self.world.constructors.get(type_name) {
+                    if let Some(field) = constructor.fields.iter().find(|field| field.name == name)
+                    {
+                        return Ok(Shape::Known(substitute(
+                            &field.ty,
+                            &constructor.substitutions(args),
+                        )));
+                    }
+                    return self.field(
+                        &Shape::Known(Type::Named(constructor.union.clone(), args.clone())),
+                        name,
+                        span,
+                        depth + 1,
+                    );
                 }
             }
             _ => {}
@@ -1034,7 +1049,7 @@ impl<'a> Checker<'a> {
             let args = constructor.infer_arguments(
                 |name| {
                     Ok(match shapes.get(name) {
-                        Some(Shape::Known(ty)) => Some(ty.clone()),
+                        Some(Shape::Known(ty)) => Some(self.world.inferred_type(ty)),
                         _ => None,
                     })
                 },
@@ -1064,10 +1079,16 @@ impl<'a> Checker<'a> {
                 for field in fields {
                     if let (Type::Var(param), Some(Shape::Known(ty))) =
                         (&field.ty, shapes.get(&field.name))
-                        && let Some(previous) = inferred.insert(param.clone(), ty.clone())
-                        && previous != *ty
                     {
-                        return Err(Error::new(span, "inconsistent constructor type arguments"));
+                        let ty = self.world.inferred_type(ty);
+                        if let Some(previous) = inferred.insert(param.clone(), ty.clone())
+                            && previous != ty
+                        {
+                            return Err(Error::new(
+                                span,
+                                "inconsistent constructor type arguments",
+                            ));
+                        }
                     }
                 }
             }

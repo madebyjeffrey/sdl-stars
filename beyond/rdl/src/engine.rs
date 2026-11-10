@@ -27,6 +27,7 @@ pub struct World {
 
 #[derive(Clone, Debug)]
 pub(crate) struct Constructor {
+    pub(crate) union: String,
     pub(crate) params: Vec<String>,
     pub(crate) fields: Vec<Field>,
 }
@@ -80,6 +81,15 @@ impl Default for World {
 }
 
 impl World {
+    pub(crate) fn inferred_type(&self, ty: &Type) -> Type {
+        if let Type::Named(name, args) = ty
+            && let Some(constructor) = self.constructors.get(name)
+        {
+            return Type::Named(constructor.union.clone(), args.clone());
+        }
+        ty.clone()
+    }
+
     pub fn new() -> Self {
         Self::default()
     }
@@ -316,6 +326,7 @@ impl World {
                             ));
                         }
                         let constructor = Constructor {
+                            union: definition.name.clone(),
                             params: definition.params.clone(),
                             fields,
                         };
@@ -1665,7 +1676,9 @@ impl<'a> Evaluator<'a> {
                 &constructor.substitutions(&args),
                 span,
             )?;
-            value.types.push(Type::Named(name, args));
+            value.types.push(Type::Named(name, args.clone()));
+            let value =
+                self.normalize(value, &Type::Named(constructor.union.clone(), args), span)?;
             self.validate_value(&value, span)?;
             return Ok(value);
         }

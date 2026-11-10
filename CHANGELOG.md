@@ -6,6 +6,13 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- RDL variant `apply` now retains and validates the enclosing union type before
+  returning a record constructor result. Direct projections previously bypassed
+  union requirements, and nested generic inference treated a case name as an
+  unknown type. Case projections remain available; regressions cover direct
+  validation, nested generics, typed empty aggregates and owner-dependent trait
+  arguments. Native regression matches all 519 checkpoints; no scenarios moved.
+
 - RDL constructor checking now retains the enclosing generic definition's type
   parameter scope. Valid record constructors in generic rules previously failed
   with an unbound-variable error. Global bindings retain separate scopes; tests

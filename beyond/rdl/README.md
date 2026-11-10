@@ -600,6 +600,11 @@ let count : (int Box) = box { value = 7; };
 Like generic record constructors, variant constructors infer the parameter from
 supplied fields whose declared type is that parameter. Field access and match
 bindings use the inferred type; incompatible instantiations are rejected.
+Record variant constructors also retain their enclosing union type and validate
+its requirements before returning. Generic wrappers infer that union type while
+direct projections retain the known case's fields. Owner-dependent requirements
+remain deferred until attachment. Shared nullary tags acquire their union type
+at a typed assignment boundary.
 
 ## Validation and derivation
 
