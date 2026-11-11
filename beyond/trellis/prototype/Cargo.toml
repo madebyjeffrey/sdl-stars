@@ -1,0 +1,14 @@
+[package]
+name = "trellis-prototype"
+version = "0.1.0"
+edition = "2024"
+description = "In-memory entity, part, validation, and explanation prototype"
+publish = false
+readme = "README.md"
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[workspace]
