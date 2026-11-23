@@ -328,8 +328,8 @@ std::int16_t FWriteDataFile(APPSESSION &app, std::string_view pszFileBase, std::
             // A hosted game may arrive without player turns. Opening a missing
             // turn for append would abort the enclosing generation transaction.
             if (IGetNativeFileInfo(app.state.szWork, NATIVELINKMODE::inspect)) {
-                if (FAppendFile(app, iPlayer))
-                    goto LAppend;
+                if (!FAppendFile(app, iPlayer)) goto LFail;
+                goto LAppend;
             } else if (errno != ENOENT) {
                 goto LFail;
             }
@@ -491,6 +491,7 @@ LAppend:
     }
     goto FreeUp;
 LFail:
+    RecordIO().pfnStreamClose(app);
     app.state.idPlayer = iPlayer;
     if (fAppend) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableUpdateTurnFile, {}).data(), win32::MB_ICONHAND);

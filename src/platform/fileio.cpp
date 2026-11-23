@@ -36,6 +36,7 @@
 #else
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <unistd.h>
 #endif
 
@@ -850,4 +851,29 @@ int IUnlinkNativePath(std::string_view szPath) {
         return unlink(PathFromUtf8(szPath).c_str());
 #endif
     });
+}
+
+NATIVEFILEOWNER NfoNativeLock(std::string_view szPath) {
+    NATIVEFILEOWNER file(PfNativeOpenFlags(szPath, {.mdAccess = NATIVEFILEACCESS::readWrite,
+                         .mdShare = NATIVEFILESHARE::exclusive, .fCreate = true, .fNative = true}), ICloseNativeFile);
+#ifndef _WIN32
+    if (file && flock(file->fd, LOCK_EX | LOCK_NB) != 0) file.reset();
+#endif
+    return file;
+}
+int ISyncNativeDirectory(std::string_view szPath) {
+    if (!FPath(szPath)) return -1;
+#ifdef _WIN32
+    // Windows publication uses MoveFileEx(MOVEFILE_WRITE_THROUGH).
+    return 0;
+#else
+    return FileCall(nullptr, -1, [&] {
+        const auto path = PathFromUtf8(szPath.empty() ? "." : szPath);
+        const int fd = open(path.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+        if (fd < 0) return -1;
+        const int result = fsync(fd);
+        const int error = errno;
+        close(fd); errno = error; return result;
+    });
+#endif
 }

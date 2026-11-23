@@ -6,7 +6,7 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
-- Hosted turn generation now creates missing player turn files when advancing a host-only or partial game.
+- Hosted turn generation creates missing player turn files when advancing a host-only or partial game. A failed generation restores the previous host, orders, turns and backups, and stops the batch with exit status 2.
 
 - The Race Wizard growth arrows now bypass habitat immunity checks. Clicking
   either arrow previously read beyond the three habitat axes.

@@ -11,7 +11,7 @@ extern std::uint8_t        vrgTDIshAip[];
 extern std::uint8_t        vrgAiTurinDroneResOrder[];
 extern RobotoidRecipe vrgRobIshAip[];
 
-void    DoAiTurn(APPSESSION &app, std::int16_t iPlayer, std::uint16_t wMdPlr);
+bool    DoAiTurn(APPSESSION &app, std::int16_t iPlayer, std::uint16_t wMdPlr);
 void    DoRobotoidAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
 void    EnsureRobotoidShdefs(APPSESSION &app);
 std::int16_t IdTargetArmada(APPSESSION &app, FLEET *lpfl);

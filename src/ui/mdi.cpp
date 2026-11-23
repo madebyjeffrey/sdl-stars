@@ -1321,10 +1321,10 @@ LPrintMapCleanup:
             FWriteHistFile(app, idCur);
         RepGen:
             ShowProgressGauge(app);
-            EnsureAis(app);
             hcurT = win32::SetCursor(win32::LoadCursorA(nullptr, win32::IDC_WAIT));
-            FGenerateTurn(app);
+            fRet = FGenerateTurn(app);
             win32::SetCursor(hcurT);
+            if (!fRet) { app.lpui->iPassCnt = 0; goto LTutorialFinishUp; }
             switch (LOWORD(wParam)) {
             case IDM_DEBUG_GEN_10_TURNS:
             case IDM_DEBUG_GEN_100_TURNS:
@@ -1883,10 +1883,10 @@ Top:
         if (app.state.gd.fProgressTxt) {
             ShowProgressGauge(app);
         }
-        EnsureAis(app);
         hcurSav = win32::SetCursor(win32::LoadCursorA(nullptr, win32::IDC_WAIT));
-        FGenerateTurn(app);
+        fRet = FGenerateTurn(app);
         win32::SetCursor(hcurSav);
+        if (!fRet) app.lpui->iPassCnt = 0;
         if (app.lpui->iPassCnt != 0) {
             app.lpui->iPassCnt--;
             if (ControlIO().pfnGetAsyncKeyState(win32::VK_SHIFT) >= 0 && ControlIO().pfnGetAsyncKeyState(win32::VK_CONTROL) >= 0)
@@ -2272,16 +2272,20 @@ void  HostTimerProc(HWND hwnd, UINT msg, UINT_PTR idTimer, DWORD dwTime) {
             if (app.state.gd.fProgressTxt) {
                 ShowProgressGauge(app);
             }
-            EnsureAis(app);
             hcurSav = win32::SetCursor(win32::LoadCursorA(nullptr, win32::IDC_WAIT));
-            FGenerateTurn(app);
+            const bool fGenerated = FGenerateTurn(app);
             win32::SetCursor(hcurSav);
             HideProgressGauge(app);
             if (app.state.ini.fGen) {
                 win32::PostQuitMessage(app.state.vretExitValue);
-            } else {
+            } else if (fGenerated) {
                 EnsureAis(app);
                 goto Loop;
+            } else {
+                win32::KillTimer(nullptr, app.lpui->uTimerId);
+                app.lpui->uTimerId = 0;
+                app.lpui->vtimer.fAutoGenWhenIn = 0;
+                app.lpui->vtimer.mdForce = 0;
             }
         }
     Done:

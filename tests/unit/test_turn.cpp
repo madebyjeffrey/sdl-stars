@@ -324,6 +324,45 @@ static std::vector<std::byte> RgbReadBackupFile(const std::string &szFile) {
     return rgb;
 }
 
+static void test_generate_rolls_back_failed_host_write(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+    const char *rgszAi[] = {"#1 4"};
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("generate-rollback", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, rgszAi, 1));
+    TEST_ASSERT(FStarsTestGenerate(app));
+    const std::string szBase = app.state.szBase;
+    const std::string szBackup = std::string(szDir) + szDirSep + "backup" + szDirSep + "game";
+    const auto rgbHost = RgbReadBackupFile(szBase + ".hst");
+    const auto rgbTurn = RgbReadBackupFile(szBase + ".m1");
+    const auto rgbBackup = RgbReadBackupFile(szBackup + ".hst");
+    TEST_ASSERT(RemoveNativeFile(szBase + ".m2") == 0);
+    {
+        RECORDIO io = RecordIO();
+        io.pfnFCreateFile = [](APPSESSION &session, DtFileType dt, std::int16_t iPlayer,
+                               std::optional<std::string_view> szName) -> std::int16_t {
+            if (dt == dtHost) return 0;
+            return FCreateFile(session, dt, iPlayer, szName);
+        };
+        RECORDIOSCOPE scope(io);
+        TEST_CHECK(!FStarsTestGenerate(app));
+    }
+    TEST_CHECK(RgbReadBackupFile(szBase + ".hst") == rgbHost);
+    TEST_CHECK(RgbReadBackupFile(szBase + ".m1") == rgbTurn);
+    TEST_CHECK(RgbReadBackupFile(szBackup + ".hst") == rgbBackup);
+    TEST_CHECK(!FFileExists(szBase + ".m2"));
+    TEST_ASSERT(FStarsTestGenerate(app));
+    TEST_ASSERT(FStarsTestLoadHost(app));
+    TEST_CHECK(app.state.game.turn == 2);
+}
+
 static void test_generate_backup_path_capacity(void) {
 #ifdef STARS_UI_SDL
     APPSESSION &app = ui::app;
@@ -569,6 +608,7 @@ TEST_LIST = {{"batch command iterates owned LF paths and stops on invalid names"
              {"definition creation succeeds with logging and the command-line basename", test_DefinitionCreation_logging},
              {"generate one turn", test_generate_one_turn},
              {"generate backs up an unsubmitted turn", test_generate_backs_up_unsubmitted_turn},
+             {"failed final host write rolls back all player turns", test_generate_rolls_back_failed_host_write},
              {"generate preserves full UTF-8 backup paths", test_generate_backup_path_capacity},
              {"backup directories preserve rotation names at the path boundary", test_backup_directory_names},
              {"MoveFleets caught pursuer keeps moving", test_MoveFleets_caught_pursuer_keeps_moving},

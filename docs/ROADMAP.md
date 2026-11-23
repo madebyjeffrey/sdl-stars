@@ -1,6 +1,6 @@
 # Roadmap
 
-The hosted-game workflow exercises generation of missing player turns after a host-only import (#83).
+The hosted-game workflow exercises missing player turns after a host-only import. Generation takes the family lock and journals the live files and backups before preparing AI orders. A failed write restores the previous generation before retry (#83).
 
 The `2.6jrc3` tag is the faithful reconstruction, original bugs included, and
 the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
