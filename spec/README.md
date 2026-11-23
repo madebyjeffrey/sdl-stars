@@ -21,7 +21,7 @@ The unpublished work is integrated into `develop` at `26a54e72`; the primary
 project folder now checks out that branch. Every registered checkout head is
 included. Production, build configuration, catalogs, resources and frozen
 regression fixtures remain identical to qualified `b6491ed2`. The C++ interface
-review's six follow-ups are recorded in [the roadmap](../docs/ROADMAP.md#c-follow-up-review-backlog),
+review's six follow-ups are recorded in [the roadmap](../docs/ROADMAP.md#initial-c-follow-up-review-snapshot),
 including the separate planned Milestone D file-selection work. They are not
 reported as implemented by this consolidation.
 
