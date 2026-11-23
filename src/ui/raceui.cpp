@@ -662,7 +662,7 @@ std::int16_t IrcRaceDlgHitTest(APPSESSION &app, POINT16 pt) {
     for (i = 0; i < app.lpui->crcRCW && win32::PtInRect(reinterpret_cast<RECT *>(&app.lpui->vrgrcRCW[i].left), PointFrom16(pt)) == 0; i++) {
     }
     if (i < app.lpui->crcRCW) {
-        if (app.lpui->iPanelActive == rwPageHabitability && app.state.vplr.rgEnvVarMax[i / 5] < 0) {
+        if (app.lpui->iPanelActive == rwPageHabitability && i < 15 && app.state.vplr.rgEnvVarMax[i / 5] < 0) {
             return -1;
         }
         return i;

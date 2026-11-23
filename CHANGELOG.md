@@ -6,6 +6,9 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The Race Wizard growth arrows now bypass habitat immunity checks. Clicking
+  either arrow previously read beyond the three habitat axes.
+
 - RDL variant `apply` now retains and validates the enclosing union type before
   returning a record constructor result. Direct projections previously bypassed
   union requirements, and nested generic inference treated a case name as an
