@@ -152,7 +152,7 @@ def check_backup_import(executable):
         control.mkdir(parents=True)
         with (control / 'lock').open('wb') as writer:
             fcntl.flock(writer, fcntl.LOCK_EX)
-            for name in ('backup', 'backup.1', 'backup123', 'backup.000'):
+            for name in ('backup', 'backup.1', 'backup123', 'backup.000', 'backup.12345'):
                 selected = backup.with_name(name)
                 backup.rename(selected)
                 try:

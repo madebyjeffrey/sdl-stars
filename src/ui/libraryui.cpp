@@ -2220,8 +2220,9 @@ static bool FImportIsRace(std::string_view pszSource) {
 static bool FFamilyBackupPath(std::string_view szName) {
     if (!szName.starts_with("backup")) return false;
     szName.remove_prefix(6);
-    if (szName.starts_with('.')) szName.remove_prefix(1);
-    return szName.size() <= 3 && std::ranges::all_of(szName, [](char ch) { return ch >= '0' && ch <= '9'; });
+    const bool fDotted = szName.starts_with('.');
+    if (fDotted) szName.remove_prefix(1);
+    return szName.size() <= (fDotted ? 5u : 3u) && std::ranges::all_of(szName, [](char ch) { return ch >= '0' && ch <= '9'; });
 }
 
 struct IMPORTFAMILYLOCK {
