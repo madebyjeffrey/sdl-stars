@@ -248,22 +248,16 @@ A movement fixture covers
 an unchanged course with a fixed random seed. Full migration qualification is
 recorded in [the implementation ledger](CPP-B-IMPLEMENTATION.md).
 
-## Race habitat growth hit test — located on main
+## Race habitat growth hit test — fixed
 
-`raceui.cpp`: habitat initialization exposes 17 hit rectangles; 15 and 16 are the
-growth arrows. `IrcRaceDlgHitTest` tests immunity using
-`vplr.rgEnvVarMax[i / 5]` for every hit on this page. Both growth hits therefore
-read index 3 of the three-element array. Its adjacency to `pctIdealGrowth`
-does not make the C array access defined. Read-only mode and other active pages
-skip that read.
+The Race Wizard has five hit rectangles for each of three habitat axes, followed
+by the growth arrows at indices 15 and 16. `IrcRaceDlgHitTest` previously
+consulted a fourth immunity value for either arrow. It now checks immunity
+only for the first 15 rectangles. The SDL race dialog test exercises growth in
+both directions, including with all three axes immune.
 
-The [M04 boundary](../spec/M04-wizard-controller.md#habitat-growth-hit-test-boundary)
-and [historical C11 fixture](../tests/spec/check_race_hit_source.py) use the
-pre-migration helper, native PLAYER layout and initialized rectangle receipts:
-104 defined cases pass, and both growth hits stop at an array-bounds sanitizer diagnostic. The fixture
-does not consume an undefined return value. Full native mouse/paint reachability,
-current C++ sanitizer reproduction, original-binary comparison and a separately
-scoped repair remain open; no runtime or regression-baseline change was made by this specification review.
+The [historical M04 fixture](../spec/M04-wizard-controller.md#habitat-growth-hit-test-boundary)
+records the earlier behavior (GAP-27).
 
 ## Production editor queue sanitization — located on main
 
