@@ -29,7 +29,9 @@
 #include <cerrno>
 #include <string_view>
 #include <utility>
+#include <vector>
 #include "libraryzip.h"
+#include "filesystem.h"
 
 /* Desktop metadata is deliberately outside the legacy game records. A folder
  * is listed only after its complete generated family and metadata are saved. */
@@ -2214,6 +2216,31 @@ static bool FImportIsRace(std::string_view pszSource) {
     return rtbof && !std::memcmp(rtbof->rgid, "J3J3", 4) && rtbof->dt == dtRace;
 }
 
+// Recovery also recognizes older backup spellings, including backup123 and backup.1.
+static bool FFamilyBackupPath(std::string_view szName) {
+    if (!szName.starts_with("backup")) return false;
+    szName.remove_prefix(6);
+    if (szName.starts_with('.')) szName.remove_prefix(1);
+    return szName.size() <= 3 && std::ranges::all_of(szName, [](char ch) { return ch >= '0' && ch <= '9'; });
+}
+
+struct IMPORTFAMILYLOCK {
+    std::string szLock;
+    NATIVEFILEOWNER file{nullptr, ICloseNativeFile};
+
+    bool FAcquire(const std::string &szDir, const std::string &szStem) {
+        const std::string szControl = szDir + szDirSep + "save-transactions" + szDirSep + szStem;
+        szLock = szControl + szDirSep + "lock";
+        file = NfoNativeExistingLock(szLock);
+        if (!file && errno != ENOENT) return false;
+        return !IGetNativeFileInfo(szControl + szDirSep + "transaction", NATIVELINKMODE::inspect) && errno == ENOENT;
+    }
+
+    bool FStable() const {
+        return szLock.empty() || file || (!IGetNativeFileInfo(szLock, NATIVELINKMODE::inspect) && errno == ENOENT);
+    }
+};
+
 // The writer creates a permanent lock before its first change. If a fresh
 // source acquires one during the copy, discard the snapshot and allow a retry.
 static bool FCopyImportSnapshot(APPSESSION &app, const std::string &szDir, const std::string &szStem,
@@ -2222,17 +2249,26 @@ static bool FCopyImportSnapshot(APPSESSION &app, const std::string &szDir, const
     for (char &ch : szFolded)
         if (ch >= 'A' && ch <= 'Z') ch += 'a' - 'A';
     if (szFolded.empty() || szFolded == "." || szFolded == "..") return false;
-    const std::string szControl = szDir + szDirSep + "save-transactions" + szDirSep + szFolded;
-    const std::string szLock = szControl + szDirSep + "lock";
-    auto lock = NfoNativeExistingLock(szLock);
-    if (!lock && errno != ENOENT) return false;
-    if (IGetNativeFileInfo(szControl + szDirSep + "transaction", NATIVELINKMODE::inspect) || errno != ENOENT) return false;
+    std::vector<IMPORTFAMILYLOCK> rgLocks;
+    const auto szRoot = SzFilesystemCanonicalPath(szDir);
+    if (!szRoot) return false;
+    const auto ichSlash = szRoot->rfind('/');
+    if (ichSlash != std::string::npos) {
+        std::string szLeaf = szRoot->substr(ichSlash + 1);
+        for (char &ch : szLeaf)
+            if (ch >= 'A' && ch <= 'Z') ch += 'a' - 'A';
+        // A host rotates these members under the enclosing game's lock.
+        if (FFamilyBackupPath(szLeaf) && !rgLocks.emplace_back().FAcquire(szRoot->substr(0, ichSlash), szFolded)) return false;
+    }
+    if (!rgLocks.emplace_back().FAcquire(*szRoot, szFolded)) return false;
 
     auto copyMember = [&](const std::string &szFrom, const std::string &szTo, std::string_view szName) {
         if (szName != szSelected && !FImportFamilyMember(szName, szStem) && !FMalformedImportFamilyMember(szName, szStem)) return true;
         const std::string szPath = szFrom + szDirSep + std::string(szName);
         auto info = IGetNativeFileInfo(szPath, NATIVELINKMODE::inspect);
-        return info && info->fRegular && !info->fLink && FCopyNativeFileExclusive(szPath, szTo + szDirSep + std::string(szName));
+        const std::string szTarget = szTo + szDirSep + std::string(szName);
+        // Reject a member that the importer cannot address before copying its bytes.
+        return szTarget.size() < 512 && info && info->fRegular && !info->fLink && FCopyNativeFileExclusive(szPath, szTarget);
     };
     auto visit = [&](const std::string &szPath, const auto &copy) {
         // Enumeration treats an early callback stop as success.
@@ -2251,10 +2287,11 @@ static bool FCopyImportSnapshot(APPSESSION &app, const std::string &szDir, const
         auto info = IGetNativeFileInfo(szBackup, NATIVELINKMODE::inspect);
         if (!info || info->fLink) return false;
         if (!info->fDirectory) return true;
-        return CreateNativeDir(szTarget) == 0 && visit(szBackup,
+        if (!rgLocks.emplace_back().FAcquire(szBackup, szFolded)) return false;
+        return szTarget.size() < 512 && CreateNativeDir(szTarget) == 0 && visit(szBackup,
             [&](std::string_view szFile) { return copyMember(szBackup, szTarget, szFile); });
     })) return false;
-    return lock || (!IGetNativeFileInfo(szLock, NATIVELINKMODE::inspect) && errno == ENOENT);
+    return std::ranges::all_of(rgLocks, &IMPORTFAMILYLOCK::FStable);
 }
 
 static std::int16_t FImportExternalFile(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource, bool fDetectRace) {
@@ -2285,10 +2322,9 @@ static std::int16_t FImportExternalFile(APPSESSION &app, HWND hwnd, std::optiona
     }
     if (!FInitLibrary(app) || !FCreateLibraryZipStage(app, szStage, "import-snapshot")) return 0;
     struct SnapshotCleanup {
-        APPSESSION &app;
         const char *pszPath;
-        ~SnapshotCleanup() { RemoveLibraryGameTree(app, pszPath); }
-    } cleanup{app, szStage};
+        ~SnapshotCleanup() { RemoveFilesystemTempTree(pszPath); }
+    } cleanup{szStage};
     const auto szInput = szFile.empty() ? std::string(szStage) : std::string(szStage) + szDirSep + szFile;
     if (member && member->dt == dtTurn) {
         // A subsequent turn can be supplied on its own, regardless of the

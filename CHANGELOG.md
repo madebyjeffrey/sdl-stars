@@ -652,7 +652,7 @@ produce different results from a 2.6j host for the same turn.
   Library unloaded the game after a failed Save or Save & Submit. Simulation
   results and all native regression baseline scenarios remain unchanged.
 
-- Game import reads external folders through a private snapshot, including folders with read-only permissions.
+- Game import reads external folders through a private snapshot, including folders with read-only permissions. Backup imports respect the enclosing game lock, and failed imports clean up staged files even when their paths exceed the importer’s limit.
 
 - `FImportSubsequentTurn` now installs a player’s first standalone turn using
   the matching managed universe, including host-only games. Previously it
