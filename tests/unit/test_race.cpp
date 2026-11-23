@@ -770,6 +770,13 @@ static void test_RaceWizardDlg2_paints_habitat_and_increases_growth(void) {
         TEST_CHECK(app.state.vplr.rgEnvVarMax[i] == envImmune);
     }
     DrawRace2(app, hwnd, NULL, -1);
+    TEST_CHECK(IrcRaceDlgHitTest(app, ptGrowth) == 15);
+    ptGrowth = {static_cast<std::int16_t>((rgrc[16].left + rgrc[16].right) / 2),
+                static_cast<std::int16_t>((rgrc[16].top + rgrc[16].bottom) / 2)};
+    TEST_CHECK(IrcRaceDlgHitTest(app, ptGrowth) == 16);
+    TEST_ASSERT(win32::PostMessageA(hwnd, win32::WM_LBUTTONUP, 0, win32::MAKELPARAM(ptGrowth.x, ptGrowth.y)));
+    TEST_CHECK(FTrackRaceDlg2(app, hwnd, ptGrowth, 0));
+    TEST_CHECK(app.state.vplr.pctIdealGrowth == pctGrowth);
     for (i = 0; i < 3; i++) {
         win32::CheckDlgButton(hwnd, IDC_IMMUNE_TO_GRAVITY + i, win32::BST_UNCHECKED);
         ui::SendMessage(hwnd, win32::WM_COMMAND, win32::MAKEWPARAM(IDC_IMMUNE_TO_GRAVITY + i, win32::BN_CLICKED),
