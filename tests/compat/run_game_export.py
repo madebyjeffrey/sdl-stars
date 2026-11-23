@@ -16,12 +16,21 @@ def files(directory, metadata=True):
 
 def exportable(snapshot):
     return {p: data for p, data in snapshot.items()
-            if p != Path('.library') and p.parts[0] != 'save-transactions'}
+            if p != Path('.library') and 'save-transactions' not in p.parts}
 
 
 def check_export(directory, expected):
-    assert not (directory / 'save-transactions').exists()
+    assert not list(directory.rglob('save-transactions'))
     assert files(directory) == expected
+
+
+def check_zip_export(path, expected):
+    with zipfile.ZipFile(path) as archive:
+        members = archive.infolist()
+        paths = [Path(member.filename) for member in members]
+        assert all('save-transactions' not in relative.parts for relative in paths)
+        assert len(paths) == len(set(paths))
+        assert {relative: archive.read(member) for relative, member in zip(paths, members)} == expected
 
 
 def main():
@@ -49,9 +58,10 @@ def main():
         parent = work / 'export'
         parent.mkdir()
         # Exercise the export boundary even on builds that create locks lazily.
-        control = managed / 'save-transactions/managed-copy'
-        control.mkdir(parents=True, exist_ok=True)
-        (control / 'lock').touch(exist_ok=True)
+        for root in (managed, managed / 'backup.000'):
+            control = root / 'save-transactions/managed-copy'
+            control.mkdir(parents=True, exist_ok=True)
+            (control / 'lock').touch(exist_ok=True)
         before = files(managed)
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(parent))
         exported = parent / 'managed-copy'
@@ -187,8 +197,7 @@ def main():
         # importing it uses the same validation and managed-game workflow.
         zip_path = work / 'managed-copy.zip'
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(zip_path))
-        with zipfile.ZipFile(zip_path) as archive:
-            assert {Path(name): archive.read(name) for name in archive.namelist()} == exportable(files(managed))
+        check_zip_export(zip_path, exportable(files(managed)))
         zip_reimport_work = work / 'zip-reimport'
         run(executable, zip_reimport_work, STARS_CLIENT_IMPORT_SOURCE=str(zip_path), STARS_CLIENT_IMPORT_NAME='managed-copy')
         zip_reimported = zip_reimport_work / 'library/Games/managed-copy'
@@ -286,8 +295,7 @@ def main():
         dirty_zip = work / 'dirty-saved.zip'
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(dirty_zip),
             STARS_CLIENT_EXPORT_ACTION='save', STARS_CLIENT_EXPORT_RESEARCH='1')
-        with zipfile.ZipFile(dirty_zip) as archive:
-            assert {Path(name): archive.read(name) for name in archive.namelist()} == exportable(files(managed))
+        check_zip_export(dirty_zip, exportable(files(managed)))
         dirty_work = work / 'dirty-zip-reimport'
         run(executable, dirty_work, STARS_CLIENT_IMPORT_SOURCE=str(dirty_zip), STARS_CLIENT_IMPORT_NAME='managed-copy')
         dirty_game = dirty_work / 'library/Games/managed-copy/managed-copy.m1'
