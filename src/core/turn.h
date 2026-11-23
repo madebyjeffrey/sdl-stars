@@ -13,7 +13,7 @@ extern std::int16_t rgrgdmgMine[3][2];
 
 void    InitGameStuff(APPSESSION &app);
 std::int16_t FGenerateTurn(APPSESSION &app);
-void    EnsureAis(APPSESSION &app);
+bool    EnsureAis(APPSESSION &app);
 void    DoOrders(APPSESSION &app, std::int16_t fPostMovement);
 void    MoveThings(APPSESSION &app, std::int16_t fPostProd);
 void    FuelFleets(APPSESSION &app);

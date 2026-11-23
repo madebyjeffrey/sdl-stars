@@ -1,4 +1,6 @@
 #include "common.h"
+#include "filefamily.h"
+#include <cerrno>
 #include <algorithm>
 #include <new>
 #include <utility>
@@ -36,7 +38,7 @@ void InitGameStuff(APPSESSION &app) {
     return;
 }
 
-std::int16_t FGenerateTurn(APPSESSION &app) {
+static std::int16_t FGenerateTurnContents(APPSESSION &app) {
     std::int16_t  fErrSav;
     std::int16_t  ish;
     std::int16_t  j;
@@ -268,7 +270,7 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
         ValidateWaypoints(app);
         UpdateGuesses(app);
         UpdateProgressGauge(app, static_cast<ProgressStep>(852));
-        FMarkFile(app, dtHost, iplrNone, mdMarkInUse, 0);
+        if (!FMarkFile(app, dtHost, iplrNone, mdMarkInUse, 0)) StarsThrowError(starsErrorFile, idsErrorWritingFile);
         try {
             szT = CreateBackupDir(app);
             szCur = app.state.szBase;
@@ -323,11 +325,12 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
                 szCur += szExt;
                 szT.resize(cchBak);
                 szT += szExt;
-                RemoveNativeFile(szT);
-                if (!FFileExists(szCur)) {
+                if (RemoveNativeFile(szT) != 0 && errno != ENOENT) StarsThrowError(starsErrorFile, idsErrorWritingFile);
+                if (!IGetNativeFileInfo(szCur, NATIVELINKMODE::inspect)) {
+                    if (errno != ENOENT) StarsThrowError(starsErrorFile, idsErrorWritingFile);
                     rgfNoXFile[i] = 1;
                 } else {
-                    RenameNativeFile(szCur, szT);
+                    if (RenameNativeFile(szCur, szT) != 0) StarsThrowError(starsErrorFile, idsErrorWritingFile);
                 }
                 szT[cchBak + 1] = 'm';
                 szCur[cchCur + 1] = 'm';
@@ -337,11 +340,13 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
                 szT.resize(cchBak);
                 szT += ".hst";
             }
-            RemoveNativeFile(szT);
-            if (i >= 0 && rgfNoXFile[i]) {
-                StarsCopyFile(app, szCur, szT);
-            } else {
-                RenameNativeFile(szCur, szT);
+            if (RemoveNativeFile(szT) != 0 && errno != ENOENT) StarsThrowError(starsErrorFile, idsErrorWritingFile);
+            if (!IGetNativeFileInfo(szCur, NATIVELINKMODE::inspect)) {
+                if (i < 0 || errno != ENOENT) StarsThrowError(starsErrorFile, idsErrorWritingFile);
+            } else if (i >= 0 && rgfNoXFile[i]) {
+                if (!FCopyNativeFileDurable(szCur, szT)) StarsThrowError(starsErrorFile, idsErrorWritingFile);
+            } else if (RenameNativeFile(szCur, szT) != 0) {
+                StarsThrowError(starsErrorFile, idsErrorWritingFile);
             }
             i++;
         }
@@ -356,7 +361,8 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
                 i = -1;
                 fDone = 1;
             }
-            FWriteDataFile(app, app.state.szBase, i, i != -1 && rgfNoXFile[i]);
+            if (!FWriteDataFile(app, app.state.szBase, i, i != -1 && rgfNoXFile[i]))
+                StarsThrowError(starsErrorFile, idsErrorWritingFile);
             i++;
         }
         UpdateProgressGauge(app, static_cast<ProgressStep>(998));
@@ -379,14 +385,48 @@ FreeStuffUp:
     app.state.gd.fGeneratingTurn = 0;
     app.state.gd.fRetryOpens = 0;
     app.state.idPlayer = iplrNone;
-    if (fSuccess && app.state.ini.fGen) {
-        app.state.vretExitValue = 1;
+    return fSuccess;
+}
+
+std::int16_t FGenerateTurn(APPSESSION &app) {
+    bool fSuccess = false;
+    const auto fSilent = app.state.fFileErrSilent;
+    const auto fHost = app.state.gd.fHostMode;
+    const auto fSubmit = app.state.gd.fSubmit;
+    {
+        // Command-line and batch inputs can still carry the host suffix. Lock
+        // the same stem that the loader and player writers will use.
+        SetSzWorkFromDt(app, dtHost, iplrNone);
+        NATIVEFAMILY family(app.state.szBase);
+        if (family) {
+            try {
+                fSuccess = EnsureAis(app) && FGenerateTurnContents(app) && family.Commit();
+            } catch (const StarsError &) {}
+            if (!fSuccess) {
+                RecordIO().pfnStreamClose(app);
+                app.state.gd.fGeneratingTurn = 0;
+                app.state.gd.fRetryOpens = 0;
+                app.state.fFileErrSilent = fSilent;
+                app.state.gd.fHostMode = fHost;
+                app.state.gd.fSubmit = fSubmit;
+                app.state.fAi = 0;
+                const bool fRestored = family.Rollback();
+                DestroyCurGame(app);
+                app.state.idPlayer = iplrNone;
+                if (fRestored) FLoadGame(app, app.state.szBase, "hst");
+            }
+        }
     }
+    if (!fSuccess) {
+        app.state.gd.fAisDone = 0;
+        FileError(app, idsErrorWritingFile);
+    }
+    if (app.state.ini.fGen) app.state.vretExitValue = fSuccess ? 1 : 2;
     TurnLog(app, static_cast<StringId>(idsFailed + fSuccess));
     return fSuccess;
 }
 
-void EnsureAis(APPSESSION &app) {
+bool EnsureAis(APPSESSION &app) {
     std::int16_t fHostSav;
     std::int16_t fErrSav;
     std::int16_t fOpened;
@@ -394,6 +434,8 @@ void EnsureAis(APPSESSION &app) {
     std::int16_t fSubmitSav;
     std::int16_t iPlayer;
     MDPLR   rgmdplr[16];
+
+    bool fSaved = true;
 
     fSubmitSav = app.state.gd.fSubmit;
     fWorkDone = 0;
@@ -421,7 +463,7 @@ void EnsureAis(APPSESSION &app) {
                 if (fOpened) {
                     RecordIO().pfnStreamClose(app);
                 } else {
-                    DoAiTurn(app, iPlayer, rgmdplr[iPlayer].wMdPlr());
+                    if (!DoAiTurn(app, iPlayer, rgmdplr[iPlayer].wMdPlr())) { fSaved = false; break; }
                 }
             }
         }
@@ -431,9 +473,9 @@ void EnsureAis(APPSESSION &app) {
             FLoadGame(app, app.state.szBase, "hst");
         }
         app.state.fFileErrSilent = fErrSav;
-        app.state.gd.fAisDone = 1;
+        app.state.gd.fAisDone = fSaved;
     }
-    return;
+    return fSaved;
 }
 
 void VerifyTurns(APPSESSION &app) {
@@ -839,8 +881,7 @@ std::int16_t FRunCmdLine(APPSESSION &app) {
     }
 LBatchNext:
     if ((!app.state.ini.fWait && !app.state.ini.fTry) || CTurnsOutSafe(app) == 0) {
-        EnsureAis(app);
-        FGenerateTurn(app);
+        if (!FGenerateTurn(app)) return 1;
         if (app.state.ini.fBatch && app.state.lpchBatch < app.state.lpchBatchMac) {
         LTryNextBatch:
             DestroyCurGame(app);

@@ -1,5 +1,6 @@
 #include "common.h"
 #include <algorithm>
+#include <cerrno>
 #include "appstate.h"
 #include "text_io.h"
 #include "turn_io.h"
@@ -323,8 +324,16 @@ std::int16_t FWriteDataFile(APPSESSION &app, std::string_view pszFileBase, std::
     }
     StarsRecoveryScope scopeRecovery;
     try {
-        if (fAppend && FAppendFile(app, iPlayer))
-            goto LAppend;
+        if (fAppend) {
+            // A hosted game may arrive without player turns. Opening a missing
+            // turn for append would abort the enclosing generation transaction.
+            if (IGetNativeFileInfo(app.state.szWork, NATIVELINKMODE::inspect)) {
+                if (!FAppendFile(app, iPlayer)) goto LFail;
+                goto LAppend;
+            } else if (errno != ENOENT) {
+                goto LFail;
+            }
+        }
         if (!RecordIO().pfnFCreateFile(app, iPlayer == iplrNone ? dtHost : dtTurn, iPlayer, std::nullopt))
             goto LFail;
 LAppend:
@@ -482,6 +491,7 @@ LAppend:
     }
     goto FreeUp;
 LFail:
+    RecordIO().pfnStreamClose(app);
     app.state.idPlayer = iPlayer;
     if (fAppend) {
         AlertIO().pfnAlertSz(app, TextIO().pfnFormat(app, idsUnableUpdateTurnFile, {}).data(), win32::MB_ICONHAND);

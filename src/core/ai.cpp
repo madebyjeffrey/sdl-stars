@@ -1,4 +1,5 @@
 #include "common.h"
+#include <cerrno>
 #include <algorithm>
 #include "appstate.h"
 #include "fleet_query_io.h"
@@ -9,10 +10,12 @@
 #include "race_query_io.h"
 #include "random_io.h"
 
-void DoAiTurn(APPSESSION &app, std::int16_t iPlayer, std::uint16_t wMdPlr) {
+bool DoAiTurn(APPSESSION &app, std::int16_t iPlayer, std::uint16_t wMdPlr) {
     char    szExt[4];
     PROD    rgprod[64];
     std::int16_t idSav;
+
+    bool fSaved;
 
     idSav = app.state.idPlayer;
     app.state.fAi = 1;
@@ -21,7 +24,8 @@ void DoAiTurn(APPSESSION &app, std::int16_t iPlayer, std::uint16_t wMdPlr) {
     if (!FLoadGame(app, app.state.szBase, szExt)) {
         app.state.idPlayer = idSav;
         app.state.fAi = 0;
-        return;
+        const std::string szTurn = std::string(app.state.szBase) + "." + szExt;
+        return !IGetNativeFileInfo(szTurn, NATIVELINKMODE::inspect) && errno == ENOENT;
     }
     if (app.state.rgplr[app.state.idPlayer].fDead)
         goto Cleanup;
@@ -67,8 +71,7 @@ void DoAiTurn(APPSESSION &app, std::int16_t iPlayer, std::uint16_t wMdPlr) {
         break;
     }
 Cleanup:
-    FWriteLogFile(app, app.state.szBase, iPlayer);
-    FWriteHistFile(app, iPlayer);
+    fSaved = FWriteLogFile(app, app.state.szBase, iPlayer) && FWriteHistFile(app, iPlayer);
     if (app.state.vrglpplAi) {
         HeapIO().pfnFree(app, app.state.vrglpplAi, htMisc);
         app.state.vrglpplAi = nullptr;
@@ -81,7 +84,7 @@ Cleanup:
     }
     app.state.idPlayer = idSav;
     app.state.fAi = 0;
-    return;
+    return fSaved;
 }
 
 void DoRobotoidAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod) {

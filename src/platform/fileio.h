@@ -90,6 +90,8 @@ std::optional<std::int64_t> LNativePosition(NATIVEFILE *pf);
 std::optional<std::int64_t> CbNativeFile(NATIVEFILE *pf);
 int ITruncateNativeFile(NATIVEFILE *pf, std::int64_t cb);
 int IFlushNativeFile(NATIVEFILE *pf);
+NATIVEFILEOWNER NfoNativeLock(std::string_view szPath);
+int ISyncNativeDirectory(std::string_view szPath);
 int ISyncNativeFile(NATIVEFILE *pf);
 int ICopyNativePermissions(NATIVEFILE *pf, std::string_view szExisting);
 std::optional<NATIVEFILEIDENTITY> FNativeFileIdentity(NATIVEFILE *pf);

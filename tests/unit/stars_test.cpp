@@ -225,7 +225,6 @@ int16_t FStarsTestSaveGame(APPSESSION &app) {
 int16_t FStarsTestGenerate(APPSESSION &app) {
     DestroyCurGame(app);
     app.state.idPlayer = iplrNone;
-    EnsureAis(app);
     return FGenerateTurn(app);
 }
 
