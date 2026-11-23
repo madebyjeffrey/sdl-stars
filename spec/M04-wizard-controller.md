@@ -122,25 +122,15 @@ unsafe string or inconsistent service input, not a new C rejection branch.
 
 ### Habitat growth hit-test boundary
 
-The next page-control audit has a concrete undefined array-access boundary:
-`IrcRaceDlgHitTest` searches `crcRCW` rectangles, then on the habitat page reads
-`vplr.rgEnvVarMax[i / 5]` to reject immune axes. Habitat initialization sets
-`crcRCW=17`; indices 15 and 16 are the growth arrows. Both therefore reach index
-3 of the three-element `PLAYER.rgEnvVarMax` array. Being adjacent to
-`pctIdealGrowth` in the native struct does not make that array access defined.
-Read-only mode returns before the search; a different active page skips this
-particular read. No supported boolean/index result is specified for the invalid
-access. This is [GAP-27](README.md#gap-27), separate from the rectangle lifetime
-and initialization obligations in GAP-26.
+The desktop checks immunity for habitat rectangles 0–14. On an editable page,
+rectangles 15 and 16 increase and decrease growth regardless of habitat immunity.
+The [SDL race dialog test](../tests/unit/test_race.cpp) exercises both arrows.
 
-The [hit-test source fixture](../tests/spec/check_race_hit_source.py) compiles
-the actual helper with native `PLAYER` and initialized, disjoint rectangle
-receipts. It checks 104 defined cases and requires an array-bounds sanitizer
-diagnostic for each of the two editable habitat growth hits. The helper's
-post-diagnostic return is never consumed. Scripted geometry establishes the
-reached invalid access, not full native mouse/paint/event reachability or original
-binary parity. M04/S05/S06 own a native event trace and a separately scoped
-repair with focused regression evidence; runtime source remains unchanged.
+The [historical C11 fixture](../tests/spec/check_race_hit_source.py) preserves the
+earlier GAP-27 evidence. Its pinned helper indexed the three-element habitat
+array with index 3 for either growth arrow. The fixture checks 104 defined cases
+and records the two sanitizer diagnostics. Rectangle lifetime and initialization
+are tracked separately under GAP-26.
 
 ### Existing checks and unclosed page scope
 
