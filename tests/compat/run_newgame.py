@@ -54,17 +54,26 @@ def check_first_player_turn(executable):
             source.mkdir()
             for extension in extensions:
                 shutil.copyfile(fixture / ('game' + extension), source / ('exchange' + extension))
-            run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source),
-                STARS_CLIENT_IMPORT_NAME='first-turn',
-                STARS_CLIENT_IMPORT_EXPECTED_PLAYERS='1' if player == 2 else '0')
+            original = {p.name: p.read_bytes() for p in source.iterdir()}
+            mode = source.stat().st_mode
+            try:
+                if player == 2 and os.name != 'nt':
+                    source.chmod(0o555)
+                run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source),
+                    STARS_CLIENT_IMPORT_NAME='first-turn',
+                    STARS_CLIENT_IMPORT_EXPECTED_PLAYERS='1' if player == 2 else '0')
+                assert {p.name for p in source.iterdir()} == set(original)
+            finally:
+                source.chmod(mode)
             managed = work / 'library' / 'Games' / 'first-turn'
             incoming = work / ('incoming.m' + str(player))
             shutil.copyfile(fixture / ('game.m' + str(player)), incoming)
+            # Updating one turn must not require a readable companion host file.
+            incoming.with_suffix('.hst').mkdir()
             target = managed / ('first-turn.m' + str(player))
             for extension in ('.x1', '.x2', '.h1', '.h2'):
                 (managed / ('first-turn' + extension)).write_bytes(b'preserve companion')
             before = {p.name: p.read_bytes() for p in managed.iterdir() if p.is_file()}
-            original = {p.name: p.read_bytes() for p in source.iterdir()}
             target.mkdir()
             run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
                 STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail')
@@ -89,6 +98,94 @@ def check_first_player_turn(executable):
             assert not list(managed.glob('*.importing.*'))
             run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
                 STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
+
+
+def check_import_transaction(executable):
+    if os.name == 'nt':
+        return
+    import fcntl
+    fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai1/checkpoints/000'
+    with tempfile.TemporaryDirectory(prefix='stars-import-lock-') as directory:
+        work = Path(directory)
+        source = work / 'exchange'
+        control = source / 'save-transactions/game'
+        control.mkdir(parents=True)
+        for ext in ('.xy', '.m1'):
+            shutil.copyfile(fixture / ('game' + ext), source / ('game' + ext))
+        with (control / 'lock').open('wb') as writer:
+            fcntl.flock(writer, fcntl.LOCK_EX)
+            run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='locked',
+                STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not (work / 'library/Games/locked').exists()
+        journal = control / 'transaction'
+        journal.mkdir()
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='pending',
+            STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert journal.is_dir() and not (work / 'library/Games/pending').exists()
+        journal.rmdir()
+        (control / 'lock').chmod(0o444)
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='unlocked',
+            STARS_CLIENT_IMPORT_EXPECTED_PLAYERS='1')
+        assert (work / 'library/Games/unlocked/unlocked.m1').read_bytes() == (source / 'game.m1').read_bytes()
+        assert not list((work / 'library/Games').glob('.import-snapshot.*'))
+
+
+def check_backup_import(executable):
+    if os.name == 'nt':
+        return
+    import fcntl
+    fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai2/checkpoints/000'
+    with tempfile.TemporaryDirectory(prefix='stars-import-backup-') as directory:
+        work = Path(directory)
+        source = work / 'host'
+        source.mkdir()
+        for ext in ('.xy', '.hst'):
+            shutil.copyfile(fixture / ('game' + ext), source / ('game' + ext))
+        run(executable, work, STARS_CLIENT_IMPORT_SOURCE=str(source), STARS_CLIENT_IMPORT_NAME='first-turn',
+            STARS_CLIENT_IMPORT_EXPECTED_PLAYERS='0')
+        backup = work / 'external/backup.000'
+        backup.mkdir(parents=True)
+        incoming = backup / 'game.m1'
+        shutil.copyfile(fixture / 'game.m1', incoming)
+        target = work / 'library/Games/first-turn/first-turn.m1'
+        control = backup.parent / 'save-transactions/game'
+        control.mkdir(parents=True)
+        with (control / 'lock').open('wb') as writer:
+            fcntl.flock(writer, fcntl.LOCK_EX)
+            for name in ('backup', 'backup.1', 'backup123', 'backup.000', 'backup.12345'):
+                selected = backup.with_name(name)
+                backup.rename(selected)
+                try:
+                    run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(selected / 'game.m1'),
+                        STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail')
+                    assert not target.exists()
+                finally:
+                    selected.rename(backup)
+        assert not target.exists()
+        (control / 'transaction').mkdir()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming), STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail')
+        assert not target.exists()
+        (control / 'transaction').rmdir()
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming), STARS_CLIENT_IMPORT_UPDATE_EXPECTED='identical')
+        assert target.read_bytes() == incoming.read_bytes()
+
+
+def check_snapshot_path_limit(executable):
+    if os.name == 'nt':
+        return
+    fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai2/checkpoints/000'
+    with tempfile.TemporaryDirectory(prefix='stars-import-path-') as directory:
+        work = Path(directory)
+        source = work / 'source'
+        source.mkdir()
+        stem = 's' * 248
+        for ext in ('.xy', '.m1'):
+            shutil.copyfile(fixture / ('game' + ext), source / (stem + ext))
+        library = work / ('a' * (248 - len(os.fsencode(work)) - len('/Games') - 1))
+        library.mkdir()
+        run(executable, work, STARS_LIBRARY_DIR=str(library), STARS_CLIENT_IMPORT_SOURCE=str(source),
+            STARS_CLIENT_IMPORT_NAME='short', STARS_CLIENT_IMPORT_INVALID_EXPECTED='1')
+        assert not list((library / 'Games').iterdir())
 
 
 def check_failed_switch_save(executable):
@@ -172,6 +269,11 @@ def check_recent_startup(executable):
 def main():
     executable = Path(sys.argv[1]).resolve()
     check_first_player_turn(executable)
+    check_import_transaction(executable)
+    check_backup_import(executable)
+    check_snapshot_path_limit(executable)
+    if sys.argv[2:] == ['--import-snapshot']:
+        return 0
     check_failed_switch_save(executable)
     check_uppercase_imports(executable)
     check_recent_startup(executable)

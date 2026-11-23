@@ -10,6 +10,8 @@ std::optional<std::string> SzFilesystemTempDir();
 bool FFilesystemCreateDirectory(std::string_view szPath);
 std::optional<std::string> SzFilesystemCanonicalPath(std::string_view szPath);
 bool FFilesystemRemove(std::string_view szPath);
+// Remove a private staging directory and all of its descendants.
+void RemoveFilesystemTempTree(std::string_view szPath) noexcept;
 
 
 #endif

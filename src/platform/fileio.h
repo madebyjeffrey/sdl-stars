@@ -64,6 +64,8 @@ struct NATIVEFILETEMPRESULT {
 // candidate even on open failure and owns an unadopted successful stream.
 NATIVEFILETEMPRESULT NftNativeCreateTemp(std::string_view szTemplate);
 NATIVEFILEOWNER NfoNativeTemporary(void);
+// Acquire an existing family lock for an external snapshot without creating it.
+NATIVEFILEOWNER NfoNativeExistingLock(std::string_view szPath);
 // A present count includes successful zero-byte IO; nullopt reports failure
 // through errno. Partial counts and stream error/EOF state remain observable.
 std::optional<std::size_t> CbReadNativeFile(NATIVEFILE *pf, std::span<std::byte> rgb);

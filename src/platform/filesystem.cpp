@@ -76,3 +76,13 @@ bool FFilesystemRemove(std::string_view szPath) {
         return false;
     }
 }
+
+// Inspection can create transaction state beneath the private copy. Its
+// descendants may exceed the fixed path buffers used by the legacy importer.
+void RemoveFilesystemTempTree(std::string_view szPath) noexcept {
+    if (!FPathValid(szPath)) return;
+    try {
+        std::error_code ec;
+        fs::remove_all(PathFromUtf8(szPath), ec);
+    } catch (...) {}
+}
