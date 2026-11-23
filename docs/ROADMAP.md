@@ -433,6 +433,8 @@ The Games-list double-click shares the Open action rather than falling through
 to another library command; the real-client workflow verifies that dispatch.
 Reopening a duplicated or renamed game reads metadata from its game folder and
 retains the exchange basename while updating the remembered player and time.
+Game import preserves the external file family while validating and publishing a private copy (#82).
+
 Existing managed games accept a first standalone turn for any player present
 in their stored universe, including host-only games, without replacing companion
 orders or history. Invalid player slots and failed publication leave the game intact.

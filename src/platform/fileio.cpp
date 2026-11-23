@@ -36,6 +36,7 @@
 #else
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <unistd.h>
 #endif
 
@@ -728,6 +729,14 @@ NATIVEFILETEMPRESULT NftNativeCreateTemp(std::string_view szTemplate) {
 #endif
     });
     return nft;
+}
+NATIVEFILEOWNER NfoNativeExistingLock(std::string_view szPath) {
+    NATIVEFILEOWNER file(PfNativeOpenFlags(szPath, {.mdAccess = NATIVEFILEACCESS::read,
+        .mdShare = NATIVEFILESHARE::exclusive, .fNative = true}), ICloseNativeFile);
+#ifndef _WIN32
+    if (file && flock(file->fd, LOCK_SH | LOCK_NB) != 0) file.reset();
+#endif
+    return file;
 }
 NATIVEFILEOWNER NfoNativeTemporary(void) {
     return FileCall(nullptr, NATIVEFILEOWNER{nullptr, ICloseNativeFile}, [&]() -> NATIVEFILEOWNER {

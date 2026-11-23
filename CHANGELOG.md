@@ -646,6 +646,8 @@ produce different results from a 2.6j host for the same turn.
   Library unloaded the game after a failed Save or Save & Submit. Simulation
   results and all native regression baseline scenarios remain unchanged.
 
+- Game import reads external folders through a private snapshot, including folders with read-only permissions.
+
 - `FImportSubsequentTurn` now installs a player’s first standalone turn using
   the matching managed universe, including host-only games. Previously it
   required an existing turn for that player. It validates the player slot,

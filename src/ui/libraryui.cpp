@@ -2203,34 +2203,120 @@ static std::int16_t FChooseLibraryImportFile(APPSESSION &app, HWND hwnd, std::sp
     return FSelectLibraryFile(hwnd, std::move(request), pszChosen);
 }
 
-/* Choose the workflow from the BOF type, leaving complete validation and
- * source-preserving publication to the corresponding importer. */
-std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
-    char szChosen[512];
-    NATIVEFILE *pf;
-    std::optional<HDR> hdr;
-    std::optional<RTBOF> rtbof;
-    std::int16_t fRace;
+static std::int16_t FImportLocalGame(APPSESSION &app, HWND hwnd, std::string_view pszPath);
 
+static bool FImportIsRace(std::string_view pszSource) {
+    NATIVEFILEOWNER file(PfOpenNativeFile(pszSource, NATIVEFILEMODE::read), ICloseNativeFile);
+    if (!file) return false;
+    const auto hdr = FReadLibraryHdr(file.get());
+    if (!hdr || hdr->rt != rtBOF || hdr->cb != cbWireBof) return false;
+    const auto rtbof = FReadLibraryBof(file.get());
+    return rtbof && !std::memcmp(rtbof->rgid, "J3J3", 4) && rtbof->dt == dtRace;
+}
+
+// The writer creates a permanent lock before its first change. If a fresh
+// source acquires one during the copy, discard the snapshot and allow a retry.
+static bool FCopyImportSnapshot(APPSESSION &app, const std::string &szDir, const std::string &szStem,
+                                const std::string &szStage, std::string_view szSelected, bool fSingleFile) {
+    std::string szFolded = szStem;
+    for (char &ch : szFolded)
+        if (ch >= 'A' && ch <= 'Z') ch += 'a' - 'A';
+    if (szFolded.empty() || szFolded == "." || szFolded == "..") return false;
+    const std::string szControl = szDir + szDirSep + "save-transactions" + szDirSep + szFolded;
+    const std::string szLock = szControl + szDirSep + "lock";
+    auto lock = NfoNativeExistingLock(szLock);
+    if (!lock && errno != ENOENT) return false;
+    if (IGetNativeFileInfo(szControl + szDirSep + "transaction", NATIVELINKMODE::inspect) || errno != ENOENT) return false;
+
+    auto copyMember = [&](const std::string &szFrom, const std::string &szTo, std::string_view szName) {
+        if (szName != szSelected && !FImportFamilyMember(szName, szStem) && !FMalformedImportFamilyMember(szName, szStem)) return true;
+        const std::string szPath = szFrom + szDirSep + std::string(szName);
+        auto info = IGetNativeFileInfo(szPath, NATIVELINKMODE::inspect);
+        return info && info->fRegular && !info->fLink && FCopyNativeFileExclusive(szPath, szTo + szDirSep + std::string(szName));
+    };
+    auto visit = [&](const std::string &szPath, const auto &copy) {
+        // Enumeration treats an early callback stop as success.
+        bool fCopied = true;
+        return FNativeEnumerateDirectory(app, szPath, [&](APPSESSION &, std::string_view szName) {
+            fCopied = copy(szName);
+            return fCopied;
+        }) && fCopied;
+    };
+    if (fSingleFile) {
+        if (!copyMember(szDir, szStage, szSelected)) return false;
+    } else if (!visit(szDir, [&](std::string_view szName) {
+        if (!FBackupDirectoryName(szName)) return copyMember(szDir, szStage, szName);
+        const std::string szBackup = szDir + szDirSep + std::string(szName);
+        const std::string szTarget = szStage + szDirSep + std::string(szName);
+        auto info = IGetNativeFileInfo(szBackup, NATIVELINKMODE::inspect);
+        if (!info || info->fLink) return false;
+        if (!info->fDirectory) return true;
+        return CreateNativeDir(szTarget) == 0 && visit(szBackup,
+            [&](std::string_view szFile) { return copyMember(szBackup, szTarget, szFile); });
+    })) return false;
+    return lock || (!IGetNativeFileInfo(szLock, NATIVELINKMODE::inspect) && errno == ENOENT);
+}
+
+static std::int16_t FImportExternalFile(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource, bool fDetectRace) {
+    char szChosen[512], szStage[512], szUniverseStem[256]{};
+    std::string szDir, szFile, szStem;
+    std::optional<LIBRARYFAMILYMEMBER> member;
     if (!pszSource) {
         if (!FChooseLibraryImportFile(app, hwnd, std::span{szChosen})) return 0;
         pszSource = szChosen;
     }
-    fRace = 0;
-    pf = PfOpenNativeFile(*pszSource, NATIVEFILEMODE::read);
-    if (pf) {
-        hdr = FReadLibraryHdr(pf);
-        if (hdr && hdr->rt == rtBOF && hdr->cb == cbWireBof) {
-            rtbof = FReadLibraryBof(pf);
-            fRace = rtbof && !std::memcmp(rtbof->rgid, "J3J3", 4) && rtbof->dt == dtRace;
+    if (pszSource->size() >= sizeof(szChosen) || pszSource->find('\0') != std::string_view::npos) return 0;
+    if (FNativeDirectoryExists(*pszSource)) {
+        szDir = *pszSource;
+        if (!FNativeEnumerateDirectory(app, szDir, FindImportUniverse, szUniverseStem) || !szUniverseStem[0] || szUniverseStem[0] == '!') {
+            AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryUniverseRequired).data(), win32::MB_ICONEXCLAMATION);
+            return 0;
         }
-        ICloseNativeFile(pf);
+        szStem = szUniverseStem;
+    } else {
+        const auto slash = pszSource->find_last_of("/\\");
+        szFile = pszSource->substr(slash == std::string_view::npos ? 0 : slash + 1);
+        szDir = slash == std::string_view::npos ? "." : std::string(pszSource->substr(0, slash + 1));
+        szStem = szFile.substr(0, szFile.rfind('.'));
+        if (FPathIsZip(*pszSource)) return FImportLocalGame(app, hwnd, *pszSource);
+        member = FImportFamilyMember(szFile, szStem);
+        if (fDetectRace && !member && FImportIsRace(*pszSource))
+            return FImportLibraryRaceAndEdit(app, hwnd, *pszSource);
     }
-    return fRace ? FImportLibraryRaceAndEdit(app, hwnd, pszSource) : FImportLibraryGame(app, hwnd, pszSource);
+    if (!FInitLibrary(app) || !FCreateLibraryZipStage(app, szStage, "import-snapshot")) return 0;
+    struct SnapshotCleanup {
+        APPSESSION &app;
+        const char *pszPath;
+        ~SnapshotCleanup() { RemoveLibraryGameTree(app, pszPath); }
+    } cleanup{app, szStage};
+    const auto szInput = szFile.empty() ? std::string(szStage) : std::string(szStage) + szDirSep + szFile;
+    if (member && member->dt == dtTurn) {
+        // A subsequent turn can be supplied on its own, regardless of the
+        // contents of neighboring files. A new game needs the full family.
+        if (!FCopyImportSnapshot(app, szDir, szStem, szStage, szFile, true)) goto LCopyFailed;
+        if (fDetectRace && FImportIsRace(szInput)) return FImportLibraryRaceAndEdit(app, hwnd, szInput);
+        const auto fUpdated = FImportSubsequentTurn(app, hwnd, szInput);
+        if (fUpdated >= 0) return fUpdated;
+        if (RemoveNativeFile(szInput) != 0) goto LCopyFailed;
+    }
+    if (FCopyImportSnapshot(app, szDir, szStem, szStage, szFile, false)) {
+        if (fDetectRace && member && FImportIsRace(szInput)) return FImportLibraryRaceAndEdit(app, hwnd, szInput);
+        return FImportLocalGame(app, hwnd, szInput);
+    }
+LCopyFailed:
+    AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryGameImportFailed).data(), win32::MB_ICONEXCLAMATION);
+    return 0;
+}
+
+std::int16_t FImportDesktopFile(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
+    return FImportExternalFile(app, hwnd, pszSource, true);
 }
 
 std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::string_view> pszSource) {
-    char szChosen[512];
+    return FImportExternalFile(app, hwnd, pszSource, false);
+}
+
+static std::int16_t FImportLocalGame(APPSESSION &app, HWND hwnd, std::string_view pszPath) {
     char szSource[512], szDir[512], szStem[256], *pch, *pchSlash, *pchName;
     char szZipStage[512];
     LIBRARYIMPORT li;
@@ -2240,11 +2326,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
     std::int16_t fImported, iZipResult;
     std::string_view pszSourceView;
 
-    if (!pszSource) {
-        if (!FChooseLibraryImportFile(app, hwnd, std::span{szChosen})) return 0;
-        pszSource.emplace(szChosen);
-    }
-    pszSourceView = *pszSource;
+    pszSourceView = pszPath;
     if (pszSourceView.size() >= sizeof(szSource) || pszSourceView.find('\0') != std::string_view::npos) return 0;
     std::ranges::copy(pszSourceView, std::span{szSource}.begin());
     szSource[pszSourceView.size()] = 0;
@@ -2265,7 +2347,7 @@ std::int16_t FImportLibraryGame(APPSESSION &app, HWND hwnd, std::optional<std::s
             AlertIO().pfnAlertSz(app, TextIO().pfnCompressed(app, idsLibraryZipInvalid).data(), win32::MB_ICONEXCLAMATION);
             return 0;
         }
-        fImported = FImportLibraryGame(app, hwnd, szZipStage);
+        fImported = FImportLocalGame(app, hwnd, szZipStage);
         FNativeEnumerateDirectory(app, szZipStage, RemoveImportTreeEntry, std::string_view{szZipStage});
         RemoveNativePath(szZipStage);
         return fImported;
