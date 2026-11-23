@@ -386,6 +386,9 @@ produce different results from a 2.6j host for the same turn.
   exception and could not take ownership. Initialization stops at the first
   pending failure; successful creation and modal return values are unchanged.
 
+- `TrackMenu` now preserves the selected popup command ID when a caller requests
+  `TPM_RETURNCMD`. Previously every successful selection returned 1.
+
 - `TrackMenu` suppresses command delivery and selected-ID returns when popup
   teardown fails. Previously a failing `WM_UNINITMENUPOPUP` callback still queued
   `WM_COMMAND` after selection. Capture and popup cleanup finish before failure

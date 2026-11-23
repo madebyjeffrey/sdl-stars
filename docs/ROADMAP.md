@@ -351,7 +351,7 @@ Logical origins, ROP2 operations and copied pattern brushes now work; see
 [drawing state](WIN32-DRAWING-STATE.md). Ellipses and cosmetic dash/dot
 lines and rectangles now work; see [geometry](WIN32-GEOMETRY.md).
 Logical child windows, nested composition, coordinate conversion, IDs, focus
-and enable state now work; see [child windows](WIN32-CHILDREN.md). Menu data, mutation and submenu ownership now work; see [menus](WIN32-MENUS.md). Window menu attachment and interactive popup menus now work; see [popup menus](WIN32-POPUPS.md). Menu resource loading and accelerator dispatch now work; see [UI resources](WIN32-UI-RESOURCES.md). Visible menu bars and dropdown routing now work; see [menu bars](WIN32-MENU-BARS.md). Icons/cursors now load and draw with preserved AND/XOR masks and hotspots; see [icons and cursors](WIN32-ICONS-CURSORS.md).
+and enable state now work; see [child windows](WIN32-CHILDREN.md). Menu data, mutation and submenu ownership now work; see [menus](WIN32-MENUS.md). Window menu attachment and interactive popup menus now support returning the selected command ID; see [popup menus](WIN32-POPUPS.md). Menu resource loading and accelerator dispatch now work; see [UI resources](WIN32-UI-RESOURCES.md). Visible menu bars and dropdown routing now work; see [menu bars](WIN32-MENU-BARS.md). Icons/cursors now load and draw with preserved AND/XOR masks and hotspots; see [icons and cursors](WIN32-ICONS-CURSORS.md).
 Logical palettes and palette-indexed drawing now work on the true-color backend;
 see [palettes](WIN32-PALETTES.md). Interactive modal message boxes and asynchronous
 SDL audio alerts now work; library management opts out of message-box sounds for

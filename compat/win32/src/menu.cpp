@@ -689,7 +689,8 @@ static bool FMenuTracked(HMENU hmenu) {
     }
     return 0;
 }
-static bool TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc, HMENU hbar, int iBar, bool fKeyboard) {
+// TPM_RETURNCMD returns the selected command ID, not a Boolean success flag.
+static BOOL TrackMenu(HMENU hmenu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT *lprc, HMENU hbar, int iBar, bool fKeyboard) {
     COMPATTRACK track = {};
     HWND hwndCapture;
     win32::MSG msg;
