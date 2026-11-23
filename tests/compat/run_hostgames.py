@@ -34,7 +34,8 @@ def main():
         subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=75)
         assert (settings / "Games" / "Hosted" / "Hosted.xy").read_bytes() == (source / "game.xy").read_bytes()
         assert (settings / "Games" / "Hosted" / "Hosted.hst").read_bytes() != (source / "game.hst").read_bytes()
-        assert (settings / "Games" / "Hosted" / "Hosted.m1").is_file()
+        for player in (1, 2):
+            assert (settings / "Games" / "Hosted" / f"Hosted.m{player}").stat().st_size > 0
         assert (settings / "Games" / "PlayerCopy" / "PlayerCopy.xy").is_file()
         assert (settings / "Games" / "PlayerCopy" / "PlayerCopy.hst").is_file()
         assert (settings / "Games" / "PlayerCopy" / "PlayerCopy.m1").is_file()

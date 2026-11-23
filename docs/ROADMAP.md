@@ -1,5 +1,7 @@
 # Roadmap
 
+The hosted-game workflow exercises generation of missing player turns after a host-only import (#83).
+
 The `2.6jrc3` tag is the faithful reconstruction, original bugs included, and
 the `2.6j` branch keeps it. 2.8 is released (tag `v2.8.0`, branch `2.8` for
 patch releases). 2.9 is released (tag `v2.9.0`); `main` is the 2.9 line,

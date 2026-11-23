@@ -6,6 +6,8 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Hosted turn generation now creates missing player turn files when advancing a host-only or partial game.
+
 - RDL variant `apply` now retains and validates the enclosing union type before
   returning a record constructor result. Direct projections previously bypassed
   union requirements, and nested generic inference treated a case name as an
