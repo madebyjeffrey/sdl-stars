@@ -244,6 +244,66 @@ static void test_BatchRun_games(void) {
     TEST_CHECK(app.state.game.turn == 2);
 }
 
+static void test_BatchRun_conditional_orders(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szPending[cbTestPath], szReady[cbTestPath];
+    const char *rgszAi[] = {"#6 4"};
+
+    for (const bool fReadyFirst : {false, true}) {
+        TEST_CASE_("%s game first", fReadyFirst ? "ready" : "pending");
+        TEST_ASSERT(FStarsTestInit(app));
+        TEST_ASSERT(FStarsTestDir("batch-pending", szPending, sizeof(szPending)));
+        TEST_ASSERT(FStarsTestNewGame(app, szPending, 12345, nullptr, 0));
+        const std::string szPendingBase(app.state.szBase);
+        TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+        app.state.gd.fSubmit = 0;
+        TEST_ASSERT(FWriteLogFile(app, szPendingBase, 0));
+
+        TEST_ASSERT(FStarsTestDir("batch-ready", szReady, sizeof(szReady)));
+        TEST_ASSERT(FStarsTestNewGame(app, szReady, 67890, rgszAi, 1));
+        const std::string szReadyBase(app.state.szBase);
+        TEST_ASSERT(FStarsTestLoadPlayer(app, 0));
+        app.state.gd.fSubmit = 1;
+        TEST_ASSERT(FWriteLogFile(app, szReadyBase, 0));
+        app.state.gd.fSubmit = 0;
+        DestroyCurGame(app);
+
+        const std::string szBatch = std::string(szPending) + szDirSep + "conditional.txt";
+        const auto &szFirst = fReadyFirst ? szReadyBase : szPendingBase;
+        const auto &szSecond = fReadyFirst ? szPendingBase : szReadyBase;
+        const std::string szInput = szFirst + ".hst\r\n" + szSecond + ".hst\r\n";
+        {
+            NATIVEFILEOWNER lpfile(PfNativeOpen(szBatch, NATIVEFILEMODE::writeTruncate), ICloseNativeFile);
+            TEST_ASSERT(lpfile && CbWriteNativeFile(lpfile.get(), std::as_bytes(std::span{szInput})) == szInput.size());
+        }
+        app.state.vretExitValue = 0;
+        TEST_ASSERT(ParseCmdLine(app, "-t -b " + szBatch).fValid);
+        TEST_CHECK(FRunCmdLine(app));
+        TEST_CHECK(app.state.vretExitValue == 1);
+
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szReadyBase) >= 0);
+        TEST_ASSERT(FStarsTestLoadHost(app));
+        TEST_CHECK(app.state.game.turn == 1);
+        TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szPendingBase) >= 0);
+        TEST_ASSERT(FStarsTestLoadHost(app));
+        TEST_CHECK(app.state.game.turn == 0);
+        TEST_CHECK(FFileExists(szPendingBase + ".x1"));
+        DestroyCurGame(app);
+    }
+
+    TEST_CASE("missing host");
+    app.state.ini.SetWFlags(0);
+    app.state.vretExitValue = 0;
+    TEST_ASSERT(ParseCmdLine(app, std::string("-t -g1 ") + szPending + szDirSep + "missing.hst").fValid);
+    TEST_CHECK(FRunCmdLine(app));
+    TEST_CHECK(app.state.vretExitValue == 2);
+}
+
 // test_generate_one_turn checks the turn-test plumbing: create a game, load
 // its host file, generate a turn, and load the result.
 static void test_generate_one_turn(void) {
@@ -604,6 +664,7 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
 }
 
 TEST_LIST = {{"batch command iterates owned LF paths and stops on invalid names", test_BatchRun_games}, {"batch input preserves names and full file sizes", test_BatchInput_contract}, {"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
+             {"conditional batch advances only the game with submitted orders", test_BatchRun_conditional_orders},
              {"definition filename survives logging and shared-buffer aliases", test_DefinitionFilename_logging},
              {"definition creation succeeds with logging and the command-line basename", test_DefinitionCreation_logging},
              {"generate one turn", test_generate_one_turn},

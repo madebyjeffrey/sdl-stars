@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Conditional hosting (`-t`) loads each game before checking its submitted
+  orders. Batch entries with outstanding human orders stay at their current
+  turn. A host-file load failure exits with status 2.
+
 - Hosted turn generation creates missing player turn files when advancing a host-only or partial game. A failed generation restores the previous host, orders, turns and backups, and stops the batch with exit status 2.
 
 - The Race Wizard growth arrows now bypass habitat immunity checks. Clicking

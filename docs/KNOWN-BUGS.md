@@ -155,6 +155,15 @@ copying beyond the path. Real tests reproduce the LF truncation and exercise
 both initial and later names through two generated games, with rejection of a
 later overlong path. The separate batch-size wrapping repair is recorded above.
 
+## Conditional batch hosting advances games with outstanding orders — fixed
+
+`turn.cpp`, `FRunCmdLine`: moving to the next batch entry cleared the
+player count before the readiness check. The host now loads the selected
+game under the turn transaction's lock before checking its roster and
+orders. Tests run a game with a submitted turn and a game with an unsubmitted
+draft in both list orders. Only the submitted game advances, and the pending
+game's draft survives.
+
 ## Memory-backed records lack source bounds — fixed on develop
 
 `file.cpp`, `ReadRtHeader`/`RgFromStream`, and tutorial loops in `log.cpp`/

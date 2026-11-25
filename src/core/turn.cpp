@@ -388,8 +388,11 @@ FreeStuffUp:
     return fSuccess;
 }
 
-std::int16_t FGenerateTurn(APPSESSION &app) {
+enum class MDTURNGEN { failed, pending, generated };
+
+static MDTURNGEN MdGenerateTurn(APPSESSION &app, bool fConditional) {
     bool fSuccess = false;
+    bool fReady = true;
     const auto fSilent = app.state.fFileErrSilent;
     const auto fHost = app.state.gd.fHostMode;
     const auto fSubmit = app.state.gd.fSubmit;
@@ -400,7 +403,16 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
         NATIVEFAMILY family(app.state.szBase);
         if (family) {
             try {
-                fSuccess = EnsureAis(app) && FGenerateTurnContents(app) && family.Commit();
+                if (fConditional) {
+                    // Check this game's roster and orders under the same lock as generation.
+                    DestroyCurGame(app);
+                    fReady = FLoadGame(app, app.state.szBase, "hst");
+                    if (fReady && CTurnsOutSafe(app) != 0) {
+                        if (family.Rollback()) return MDTURNGEN::pending;
+                        fReady = false;
+                    }
+                }
+                fSuccess = fReady && EnsureAis(app) && FGenerateTurnContents(app) && family.Commit();
             } catch (const StarsError &) {}
             if (!fSuccess) {
                 RecordIO().pfnStreamClose(app);
@@ -423,7 +435,11 @@ std::int16_t FGenerateTurn(APPSESSION &app) {
     }
     if (app.state.ini.fGen) app.state.vretExitValue = fSuccess ? 1 : 2;
     TurnLog(app, static_cast<StringId>(idsFailed + fSuccess));
-    return fSuccess;
+    return fSuccess ? MDTURNGEN::generated : MDTURNGEN::failed;
+}
+
+std::int16_t FGenerateTurn(APPSESSION &app) {
+    return MdGenerateTurn(app, false) == MDTURNGEN::generated;
 }
 
 bool EnsureAis(APPSESSION &app) {
@@ -879,11 +895,14 @@ std::int16_t FRunCmdLine(APPSESSION &app) {
     if (!app.state.ini.fGen) {
         return 0;
     }
-LBatchNext:
-    if ((!app.state.ini.fWait && !app.state.ini.fTry) || CTurnsOutSafe(app) == 0) {
-        if (!FGenerateTurn(app)) return 1;
+    const bool fConditional = app.state.ini.fWait || app.state.ini.fTry;
+    for (;;) {
+        const auto mdTurn = MdGenerateTurn(app, fConditional);
+        if (mdTurn == MDTURNGEN::failed)
+            return 1;
+        if (mdTurn == MDTURNGEN::pending && !app.state.ini.fTry)
+            return 0;
         if (app.state.ini.fBatch && app.state.lpchBatch < app.state.lpchBatchMac) {
-        LTryNextBatch:
             DestroyCurGame(app);
             if (!FNextBatchPath(app)) {
                 app.state.ini.fBatch = 0;
@@ -891,19 +910,12 @@ LBatchNext:
                 return 1;
             }
             app.state.ini.fStartupFile = 1;
-            goto LBatchNext;
+            continue;
         }
-        if (app.state.ini.cTurnGen == 0)
+        if (mdTurn == MDTURNGEN::pending || app.state.ini.cTurnGen == 0)
             return 1;
         app.state.ini.cTurnGen--;
-        goto LBatchNext;
     }
-    if (app.state.ini.fTry) {
-        if (app.state.ini.fBatch && app.state.lpchBatch < app.state.lpchBatchMac)
-            goto LTryNextBatch;
-        return 1;
-    }
-    return 0;
 }
 
 void DoOrders(APPSESSION &app, std::int16_t fPostMovement) {
