@@ -14,7 +14,7 @@ not a standalone build: upstream tests, CMake helpers and external music
 libraries are not included. Nothing in that directory is compiled or added
 to any include search path.
 
-The working implementation is our local C11 library, `stars_win32`, under
+The working implementation is our local C++20 library, `stars_win32`, under
 `compat/win32/src/`. It uses our existing ABI-checked Win32 headers and SDL3.
 This first adaptation contains:
 
@@ -31,10 +31,11 @@ the core's `DwTickCount` remains unchanged.
 Game code is unchanged. The shared UI now links into the native `stars-sdl`
 preview; `stars-ui-compat-check` remains a separate compile check. See
 [client status](WIN32-CLIENT.md). Only SDL compatibility consumers see
-`stars_win32_headers`; Windows uses its actual SDK, and `stars-host` keeps
-its existing native implementation. The game stays C11, with no new C++ or
-SDL3_image/SDL3_mixer requirement. The unmodified C++ source reference is
-kept as attribution and material for subsequent adaptations.
+`stars_win32_headers`, including the Windows SDL client. Independent Windows
+SDK references use the actual SDK, and `stars-host` keeps its SDL-free native
+implementation. The application and wrapper now use C++20;
+SDL3_image/SDL3_mixer remain unnecessary. See the [migration plan](CPP-MIGRATION.md).
+The unmodified C++ source reference is kept as attribution and material for subsequent adaptations.
 
 The subsequent [window and message milestone](WIN32-WINDOWS.md) adapts
 top-level window creation and dispatch and adds per-window state, filters
@@ -51,8 +52,8 @@ local definition location. A local body may implement only the documented subset
 
 | Decision | Source spellings |
 | --- | ---: |
-| Adapted into the local C11 runtime | 17 |
-| Implemented as local C11 extensions | 167 |
+| Adapted into the local C++20 runtime | 17 |
+| Implemented as local C++20 extensions | 167 |
 | Legacy macro supplied by our headers; no separate implementation | 4 |
 | Platform difference: reject desktop logoff and exit Stars only | 1 |
 

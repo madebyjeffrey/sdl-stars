@@ -1,39 +1,47 @@
 #ifndef STARS_DECOMPILED_SCAN_H
 #define STARS_DECOMPILED_SCAN_H
 
-#include <stdint.h>
+#include "win.h"
+#include <cstdint>
+#include <span>
+#include <string_view>
 #include <windows.h>
 
-extern uint32_t rgcrScanMine[3];
-extern int16_t  vrgPopRad[19];
+extern std::uint32_t rgcrScanMine[3];
+extern std::int16_t  vrgPopRad[19];
 
-LRESULT CALLBACK ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-int16_t          DrawScanner(HDC hdc, RECT *prc);
-void             DrawScanFleetCount(FLEET *lpfl, int16_t x, int16_t y, HDC hdc, HDC hdcMem);
-int32_t          CShipsScanVis(FLEET *lpfl);
+struct SCANORIENTATIONRESULT {
+    POINT16 ptOrigin;
+    POINT16 ptSize;
+};
+
+LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+std::int16_t          DrawScanner(APPSESSION &app, HDC hdc, RECT *prc);
+void             DrawScanFleetCount(APPSESSION &app, FLEET *lpfl, std::int16_t x, std::int16_t y, HDC hdc, HDC hdcMem);
+std::int32_t          CShipsScanVis(APPSESSION &app, FLEET *lpfl);
 void             DrawRadarCircle(DRAWCIR *pdc, RECT *prc);
-void             SetScanPathWarp(int16_t iwp, int16_t iWarp);
-void             DrawShipScanPath(HDC hdc, int16_t fShow);
-void             DrawScannerSBar(HDC hdc, RECT *prc, SBAR *psbar, int16_t fFullRedraw);
-void             DrawLockLight(HDC hdc, RECT *prc, int16_t fFullRedraw);
-void             SetScanScrollBars(HWND hwnd);
-void             ScrollScanner(int16_t dx, int16_t dy);
-void             RedrawScanSel(HDC hdc, int16_t fVis);
-int16_t          FEnsurePointOnScreen(POINT16 pt, int16_t fScroll);
-void             CtrPointScan(POINT16 pt, int16_t fScroll);
-void             ZoomScanAt(ScanZoom iScanNew, POINT16 ptScan);
-void             LogicalToScan(POINT16 *ppt);
-void             ScanToLogical(POINT16 *ppt);
-int16_t          FAddWayPoint(POINT16 ptIn, SCAN *pscan);
-int16_t          FNearAWayPoint(POINT16 pt, int16_t fLogical);
-int16_t          FHandleWayPointDrag(POINT16 pt);
-void             DrawScanXorLines(HDC hdc, POINT16 *rgpt, int16_t cpt);
-int16_t          SetScanWp(int16_t iNew);
-int16_t          FGetNextObjHere(SCAN *pscan, int16_t fOnlyOurs);
-INT_PTR CALLBACK FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-int16_t          FSelectSz(char *szName);
-void             GetScanFleetOrientation(FLEET *lpfl, POINT16 *ppt, POINT16 *pptD);
-void             GetDxDyOrientation(int16_t dx, int16_t dy, POINT16 *ppt, POINT16 *pptD);
-int16_t          FHandleMeasuringTape(SCAN *pscan, POINT16 pt);
+void             SetScanPathWarp(APPSESSION &app, std::int16_t iwp, std::int16_t iWarp);
+void             DrawShipScanPath(APPSESSION &app, HDC hdc, std::int16_t fShow);
+void             DrawScannerSBar(APPSESSION &app, HDC hdc, RECT *prc, SBAR *psbar, std::int16_t fFullRedraw);
+void             DrawLockLight(APPSESSION &app, HDC hdc, RECT *prc, std::int16_t fFullRedraw);
+void             SetScanScrollBars(APPSESSION &app, HWND hwnd);
+void             ScrollScanner(APPSESSION &app, std::int16_t dx, std::int16_t dy);
+void             RedrawScanSel(APPSESSION &app, HDC hdc, std::int16_t fVis);
+std::int16_t          FEnsurePointOnScreen(APPSESSION &app, POINT16 pt, std::int16_t fScroll);
+void             CtrPointScan(APPSESSION &app, POINT16 pt, std::int16_t fScroll);
+void             ZoomScanAt(APPSESSION &app, ScanZoom iScanNew, POINT16 ptScan);
+void             LogicalToScan(APPSESSION &app, POINT16 *ppt);
+void             ScanToLogical(APPSESSION &app, POINT16 *ppt);
+std::int16_t          FAddWayPoint(APPSESSION &app, POINT16 ptIn, SCAN *pscan);
+std::int16_t          FNearAWayPoint(APPSESSION &app, POINT16 pt, std::int16_t fLogical);
+std::int16_t          FHandleWayPointDrag(APPSESSION &app, POINT16 pt);
+void             DrawScanXorLines(APPSESSION &app, HDC hdc, std::span<const POINT16> rgpt);
+std::int16_t          SetScanWp(APPSESSION &app, std::int16_t iNew);
+std::int16_t          FGetNextObjHere(APPSESSION &app, SCAN *pscan, std::int16_t fOnlyOurs);
+INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+std::int16_t          FSelectSz(APPSESSION &app, std::string_view szName);
+SCANORIENTATIONRESULT GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl);
+SCANORIENTATIONRESULT GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy);
+std::int16_t          FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt);
 
 #endif

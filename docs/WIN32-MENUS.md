@@ -74,5 +74,5 @@ year 2407, page 24, instruction 186 after 94 actions, then times out querying th
 observer. Its Wine log reports `free(): invalid next size (fast)`. The Windows
 tutorial does not link the SDL runtime or this menu implementation. Earlier
 diagnostic evidence captures a native Wine/X11 popup destruction failure, as
-recorded in the [tutorial report](../tests/scaffold/tutorial/README.md). The full
+recorded in the [tutorial report](../tests/reference/win32-tutorial/README.md). The full
 tutorial gate is not passing; it must be resolved before final client completion.

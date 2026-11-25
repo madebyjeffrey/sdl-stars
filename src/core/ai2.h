@@ -1,17 +1,18 @@
 #ifndef STARS_DECOMPILED_AI2_H
 #define STARS_DECOMPILED_AI2_H
 
-#include <stdint.h>
+#include "common.h"
+#include <cstdint>
 
-extern uint8_t vrgISIshAip[];
-extern uint8_t vrgISAip[];
-extern uint8_t vrgAiISResOrder[];
+extern std::uint8_t vrgISIshAip[];
+extern std::uint8_t vrgISAip[cvrgISAip];
+extern std::uint8_t vrgAiISResOrder[];
 
-void    DoMaidAiTurn(PROD *rgprod);
-int16_t FPotentISWarFleet(FLEET *lpfl, int16_t iPotency);
-void    DoAutomitronAiTurn(PROD *rgprod);
-void    EnsureISShdefs(int16_t iroCur);
-void    DoRototillAiTurn(PROD *rgprod);
-void    EnsureCAShdefs(int16_t iroCur);
+void    DoMaidAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
+std::int16_t FPotentISWarFleet(APPSESSION &app, FLEET *lpfl, std::int16_t iPotency);
+void    DoAutomitronAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
+void    EnsureISShdefs(APPSESSION &app, std::int16_t iroCur);
+void    DoRototillAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
+void    EnsureCAShdefs(std::int16_t iroCur);
 
 #endif

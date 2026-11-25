@@ -1,12 +1,18 @@
 #ifndef STARS_DECOMPILED_PRODUCE_H
 #define STARS_DECOMPILED_PRODUCE_H
 
-#include <stdint.h>
+#include "common.h"
+#include <cstdint>
+#include <optional>
+#include <span>
 
-void  InitProduction(PROD *rgprod);
-void  FinishProduction(int16_t fWrite);
-char *PszNameProdItem(PROD *lpprod);
-void  GetProductionCosts(PLANET *lppl, PROD *lpprod, uint32_t *rgCost, int16_t iplr, int16_t fOnlyOne);
-void  EstimateItemProdSched(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, int16_t *piFirst, int16_t *piLast);
+void  InitProduction(APPSESSION &app, std::optional<std::span<PROD, 64>> rgprod);
+void  FinishProduction(APPSESSION &app, std::int16_t fWrite);
+std::array<char, 360> PszNameProdItem(APPSESSION &app, PROD *lpprod);
+void  GetProductionCosts(APPSESSION &app, PLANET *lppl, PROD *lpprod, std::span<std::int32_t, 4> rgCost, std::int16_t iplr, std::int16_t fOnlyOne);
+struct PRODUCTIONESTIMATE {
+    std::int16_t iFirst, iLast;
+};
+PRODUCTIONESTIMATE EstimateItemProdSched(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem);
 
 #endif

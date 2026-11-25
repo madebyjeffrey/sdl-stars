@@ -1,0 +1,30 @@
+(* Generated from data/races/predefined.yaml by tools/generate_stars_presets.py. *)
+import stars.settings
+
+Race humanoid = {
+  name = "Humanoid";
+  plural_name = "Humanoids";
+  source_index = 0;
+  portrait(1)
+  gravity(15, 85)
+  temperature(15, 85)
+  radiation(15, 85)
+  growth(15)
+  population_efficiency(1000)
+  factory_output(10)
+  factory_cost(10)
+  factory_operation(10)
+  mine_output(10)
+  mine_cost(5)
+  mine_operation(10)
+  energy_research(standard)
+  weapons_research(standard)
+  propulsion_research(standard)
+  construction_research(standard)
+  electronics_research(standard)
+  biotechnology_research(standard)
+  research_allocation(15)
+  leftover_points(surface_minerals)
+  standard_capacity
+  jack_of_all_trades
+}

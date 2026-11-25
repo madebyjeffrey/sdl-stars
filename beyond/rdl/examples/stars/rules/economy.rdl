@@ -1,0 +1,179 @@
+import stars.rules.population
+
+(* mine.cpp:82. Supply the random draw from [0,100) separately from the
+   expected fractional yield. Depletion uses pre-efficiency A, not Q. *)
+type MiningYield = {
+  race: Race;
+  mines: integer;
+  concentration: integer;
+  homeworld: bool = false;
+  remote: bool = false;
+  draw: integer = 99;
+  require self.mines >= 0 && self.concentration >= 0 && self.concentration <= 100;
+  require self.draw >= 0 && self.draw < 100;
+  derive effective_concentration: integer = if self.homeworld && (not self.remote || self.race.prt_id = 8)
+    then max 30 self.concentration else self.concentration;
+  derive extraction: integer = self.mines * self.effective_concentration;
+  derive hundredths_kt: integer = if self.remote then self.extraction
+    else self.extraction * (if self.race.prt_id = 8 then 10 else self.race.Economy.mine_output) / 10;
+  derive whole_kt: integer = self.hundredths_kt / 100;
+  derive extra_probability_percent: integer = self.hundredths_kt % 100;
+  derive generated_kt: integer = self.whole_kt + (if self.draw < self.extra_probability_percent then 1 else 0);
+  derive depletion_input: integer = self.extraction / 100;
+}
+type RemoteMining = {
+  race: Race;
+  module_ability: integer;
+  modules: integer;
+  ships: integer;
+  owned_inhabited: bool = false;
+  require self.module_ability >= 0 && self.modules >= 0 && self.ships >= 0;
+  derive effective_mines: integer = min 4000 (self.module_ability * self.modules * self.ships);
+  derive may_mine: bool = not self.owned_inhabited || self.race.prt_id = 8;
+}
+
+(* produce.cpp:358..427. Costs for one installation, no miniaturization. *)
+type InstallationCosts = {
+  race: Race;
+  tutorial: bool = false;
+  defense_base_cost: integer = 0;
+  derive can_build_installations: bool = self.race.prt_id != 8;
+  derive factory_resources: integer = self.race.Economy.factory_cost;
+  derive factory_germanium: integer = (if self.tutorial then 2 else 4) - (if self.race.cheap_factories then 1 else 0);
+  derive factory_ironium: integer = if self.tutorial then self.factory_germanium else 0;
+  derive factory_boranium: integer = self.factory_ironium;
+  derive mine_resources: integer = self.race.Economy.mine_cost;
+  derive defense_channel: integer = if self.race.prt_id = 4 then self.defense_base_cost * 3 / 5 else self.defense_base_cost;
+  derive alchemy_resources: integer = if self.race.ma then 25 else 100;
+  derive alchemy_each_mineral_kt: integer = 1;
+  derive terraforming_resources: integer = (if self.race.tt then 70 else 100) / (if self.race.prt_id = 3 then 2 else 1);
+}
+
+(* turn3.cpp:575; turn2.cpp:44. Aggregate gifted values AFTER division by four
+   for each design. Destination owner determines UR. Extra pool wraps u16. *)
+type ScrapDesignValue = {
+  design_cost: integer;
+  ships: integer;
+  gifted: bool = false;
+  derive total: integer = self.design_cost * self.ships / (if self.gifted then 4 else 1);
+}
+type Recycling = {
+  destination: Race;
+  at_planet: bool;
+  has_base: bool;
+  colonizing: bool = false;
+  design_mineral_total: integer;
+  cargo_mineral: integer = 0;
+  design_resource_total: integer;
+  previous_extra_pool: integer = 0;
+  base_resources: integer;
+  require self.design_mineral_total >= 0 && self.design_resource_total >= 0 && self.base_resources >= 0;
+  require self.previous_extra_pool >= 0 && self.previous_extra_pool <= 65535;
+  derive ultimate: bool = not self.colonizing && self.at_planet && self.destination.ur;
+  derive recovered_mineral: integer = self.cargo_mineral +
+    (if self.colonizing then self.design_mineral_total * 3 / 4
+     else if not self.at_planet then self.design_mineral_total / 3
+     else if self.has_base then self.design_mineral_total * (if self.ultimate then 9 else 8) / 10
+     else if self.ultimate then self.design_mineral_total * 9 / 20 else self.design_mineral_total / 3);
+  derive recovered_resources: integer = if self.ultimate then min 65535 self.design_resource_total else 0;
+  derive extra_pool: integer = (self.previous_extra_pool + self.recovered_resources) % 65536;
+  derive production_bonus: integer = if self.base_resources + self.extra_pool = 0 then 0
+    else self.base_resources * self.extra_pool / (self.base_resources + self.extra_pool);
+}
+
+(* research.cpp:7,10; turn2.cpp:2134,2280. Base level table is catalog data. *)
+object type ResearchLevelCost = { level: integer; cost: integer; }
+type ResearchCost = {
+  current: TechVector;
+  target_level: integer;
+  cost_class: integer;
+  slow_technology: bool = false;
+  require self.target_level >= 0 && self.target_level <= 26;
+  require self.cost_class >= 0 && self.cost_class <= 2;
+  derive base: integer = List.sum (query { from c: ResearchLevelCost where c.level = self.target_level select c.cost }) + 10 * self.current.total;
+  derive resources: integer = (if self.cost_class = 0 then 2 * self.base - self.base / 4
+    else if self.cost_class = 2 then self.base / 2 else self.base) * (if self.slow_technology then 2 else 1);
+}
+type ResearchAllocation = {
+  race: Race;
+  resources: integer;
+  slow_technology: bool = false;
+  tracked_field_spending: integer = 0;
+  living_players: integer = 1;
+  annual_pool: bool = true;
+  require self.resources >= 0 && self.tracked_field_spending >= 0 && self.living_players >= 1;
+  derive selected_field: integer = if self.race.gr then (self.resources + 1) / 2 else self.resources;
+  derive tracked_other_field: integer = if self.race.gr then (3 * self.resources + 19) / 20 else 0;
+  derive stored_other_field: integer = self.tracked_other_field / (if self.slow_technology then 2 else 1);
+  derive spy_raw: integer = if self.race.prt_id = 1 && self.annual_pool && self.living_players > 1
+    then (self.tracked_field_spending / self.living_players) / 2 else 0;
+  derive spy_gain: integer = if self.spy_raw <= 1 then 0 else if self.slow_technology then (self.spy_raw + 1) / 2 else self.spy_raw;
+}
+
+(* ship.cpp:1127. One channel (I/B/G/resources) at a time preserves shifts
+   and nearest rounding. category = weapon | gate | engine | terra | normal.
+   bypass_excess is REQUIRED for BET on a source bypass category, whose C++
+   local is uninitialized; callers must choose a policy explicitly. *)
+type PartCost = {
+  race: Race;
+  cost: integer;
+  excess_tech: integer;
+  has_tech_requirement: bool;
+  category: string = "normal";
+  resource_channel: bool = false;
+  bypass_miniaturization: bool = false;
+  bypass_excess: integer = 0;
+  bypass_decision_made: bool = false;
+  suppress_bet: bool = false;
+  require self.cost >= 0 && self.cost <= 65535;
+  require self.category = "normal" || self.category = "weapon" || self.category = "gate" || self.category = "engine" || self.category = "terra";
+  require not (self.bypass_miniaturization && self.race.bet && self.has_tech_requirement && not self.suppress_bet) || self.bypass_decision_made;
+  derive excess: integer = if self.bypass_miniaturization then
+    self.bypass_excess else min 19 self.excess_tech;
+  derive discount: integer = if self.bypass_miniaturization || self.excess < 1 then 0
+    else min (if self.race.bet then 80 else 75) (self.excess * (if self.race.bet then 5 else 4));
+  derive miniature: integer = if self.cost = 0 then 0 else max 1 (self.cost - (self.cost * self.discount + 50) / 100);
+  derive adjusted: integer =
+    let c = self.miniature in
+    if (self.category = "weapon" && self.race.prt_id = 2) || (self.category = "gate" && self.race.prt_id = 7) then c - c / 4
+    else if self.category = "weapon" && self.race.prt_id = 4 then c + c / 4
+    else if self.category = "engine" && self.race.ce then c - c / 2
+    else if self.category = "terra" && self.resource_channel && self.race.prt_id = 3 then c / 2 else c;
+  derive final_cost: integer = (self.adjusted * (if self.race.bet && self.excess < 1 && self.has_tech_requirement && not self.suppress_bet then 2 else 1)) % 65536;
+}
+type StarbaseCost = {
+  race: Race;
+  assembled_channel: integer;
+  require self.assembled_channel >= 0;
+  derive discounted: integer = self.assembled_channel - (if self.race.prt_id = 8 || self.race.isb then self.assembled_channel / 5 else 0);
+  derive final_cost: integer = (self.discounted + 1) / 2;
+}
+
+(* research.cpp rglTechCost, index 0..26. *)
+ResearchLevelCost research_level_0 = { level = 0; cost = 0; }
+ResearchLevelCost research_level_1 = { level = 1; cost = 50; }
+ResearchLevelCost research_level_2 = { level = 2; cost = 80; }
+ResearchLevelCost research_level_3 = { level = 3; cost = 130; }
+ResearchLevelCost research_level_4 = { level = 4; cost = 210; }
+ResearchLevelCost research_level_5 = { level = 5; cost = 340; }
+ResearchLevelCost research_level_6 = { level = 6; cost = 550; }
+ResearchLevelCost research_level_7 = { level = 7; cost = 890; }
+ResearchLevelCost research_level_8 = { level = 8; cost = 1440; }
+ResearchLevelCost research_level_9 = { level = 9; cost = 2330; }
+ResearchLevelCost research_level_10 = { level = 10; cost = 3770; }
+ResearchLevelCost research_level_11 = { level = 11; cost = 6100; }
+ResearchLevelCost research_level_12 = { level = 12; cost = 9870; }
+ResearchLevelCost research_level_13 = { level = 13; cost = 13850; }
+ResearchLevelCost research_level_14 = { level = 14; cost = 18040; }
+ResearchLevelCost research_level_15 = { level = 15; cost = 22440; }
+ResearchLevelCost research_level_16 = { level = 16; cost = 27050; }
+ResearchLevelCost research_level_17 = { level = 17; cost = 31870; }
+ResearchLevelCost research_level_18 = { level = 18; cost = 36900; }
+ResearchLevelCost research_level_19 = { level = 19; cost = 42140; }
+ResearchLevelCost research_level_20 = { level = 20; cost = 47590; }
+ResearchLevelCost research_level_21 = { level = 21; cost = 53250; }
+ResearchLevelCost research_level_22 = { level = 22; cost = 59120; }
+ResearchLevelCost research_level_23 = { level = 23; cost = 65200; }
+ResearchLevelCost research_level_24 = { level = 24; cost = 71490; }
+ResearchLevelCost research_level_25 = { level = 25; cost = 77990; }
+ResearchLevelCost research_level_26 = { level = 26; cost = 84700; }

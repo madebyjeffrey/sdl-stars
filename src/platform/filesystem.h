@@ -1,22 +1,17 @@
 #ifndef STARS_FILESYSTEM_H
 #define STARS_FILESYSTEM_H
-#include <stddef.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Paths are strict UTF-8. Return 1 on success, 0 on any failure.
-// Output buffers are caller-owned and empty on failure; paths are never truncated.
-// Input paths and output buffers must not overlap. Create/Remove require a change.
+#include <optional>
+#include <string>
+#include <string_view>
+// Paths are strict UTF-8. Create/Remove return true only when they make a change.
 // Returned paths use '/' separators on every platform.
 // TempDir creates a unique directory atomically. Remove never removes recursively.
-int FFilesystemTempDir(char *pszOut, size_t cbOut);
-int FFilesystemCreateDirectory(const char *pszPath);
-int FFilesystemCanonicalPath(const char *pszPath, char *pszOut, size_t cbOut);
-int FFilesystemRemove(const char *pszPath);
+std::optional<std::string> SzFilesystemTempDir();
+bool FFilesystemCreateDirectory(std::string_view szPath);
+std::optional<std::string> SzFilesystemCanonicalPath(std::string_view szPath);
+bool FFilesystemRemove(std::string_view szPath);
+// Remove a private staging directory and all of its descendants.
+void RemoveFilesystemTempTree(std::string_view szPath) noexcept;
 
-#ifdef __cplusplus
-}
-#endif
+
 #endif

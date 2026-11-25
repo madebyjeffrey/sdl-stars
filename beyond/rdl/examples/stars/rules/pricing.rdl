@@ -1,0 +1,2 @@
+(* Compatibility entry: Race includes the habitat and wizard-pricing rules. *)
+import stars.design

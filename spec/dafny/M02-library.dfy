@@ -5,7 +5,7 @@ module M02Library {
   import opened S01
   import N = S01LibraryNames
   import R = M04Race
-  // Persisted PLAYER prefix after clearing fLearned; names end at their NUL.
+  // Compared native PLAYER prefix after clearing fLearned; names end at NUL.
   // S01 owns extraction/layout; this is stronger than checksum equality.
   datatype Design = Design(prefix: Bytes,singular: Bytes,plural: Bytes)
   predicate FSame(a: Design,b: Design) { a==b }

@@ -12,12 +12,12 @@ this is not a claim of complete forecast/simulation verification.
 [Verification](README.md#production-forecast-controller-continuation) records
 actual checks and their limits.
 
-Sources: [produce.c](../src/core/produce.c) `EstimateItemProdSched`;
-[turn2.c](../src/core/turn2.c) `CBuildProdItem`;
-[mine.c](../src/core/mine.c) `EstMineralsMined`;
-[planet.c](../src/core/planet.c) `CResourcesAtPlanet`;
-[util.c](../src/core/util.c) `ChgPopFromPlanet`;
-[research.c](../src/core/research.c) `ProjectedResearchSpending`.
+Sources: [produce.cpp](../src/core/produce.cpp) `EstimateItemProdSched`;
+[turn2.cpp](../src/core/turn2.cpp) `CBuildProdItem`;
+[mine.cpp](../src/core/mine.cpp) `EstMineralsMined`;
+[planet.cpp](../src/core/planet.cpp) `CResourcesAtPlanet`;
+[util.cpp](../src/core/util.cpp) `ChgPopFromPlanet`;
+[research.cpp](../src/core/research.cpp) `ProjectedResearchSpending`.
 M08/M19 own mining, capacity, resources and growth; M12 owns spending/quotes;
 M09 owns row costs and production; S06/S04 own storage/heap/RNG adapters.
 

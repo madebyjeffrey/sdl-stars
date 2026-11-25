@@ -22,10 +22,10 @@ to existing `ScannerInstall`. These are producer handoffs, not second formulas
 for queue clipping or installation. [Collection evidence](README.md#colony-capability-producers-continuation)
 records actual checks and remaining obligations.
 
-Sources: [planet.c](../src/core/planet.c) `IpctCanTerraformLppl`,
-`StargateRangeFromLppl`; [parts.c](../src/core/parts.c)
+Sources: [planet.cpp](../src/core/planet.cpp) `IpctCanTerraformLppl`,
+`StargateRangeFromLppl`; [parts.cpp](../src/core/parts.cpp)
 `LookupBestPlanetaryScanner`, `FLookupPart`, `TechStatus`;
-[turn2.c](../src/core/turn2.c) `Produce`, `CBuildProdItem`, `FBuildObject`;
+[turn2.cpp](../src/core/turn2.cpp) `Produce`, `CBuildProdItem`, `FBuildObject`;
 native [structs.h](../src/core/structs.h),
 [gate rows](../data/parts/starbase-specials.yaml) and
 [planetary rows](../data/parts/planetary.yaml). Existing M11 owns exact race,

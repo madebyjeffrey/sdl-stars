@@ -7,15 +7,10 @@ No game source or baseline is changed. Invalid numeric/pointer candidates stop
 before C. Missing-return fixtures use an explicit lookup longjmp provider.
 """
 from pathlib import Path
-import os
 import random
-import re
-import shlex
 import struct
 import subprocess
-import sys
 import tempfile
-from check_s02_source import ROOT,function
 from check_native_colony_source import Boundary,checked,signed,div
 from check_research_source import TECH,mix
 
@@ -203,65 +198,9 @@ def cases():
 
 
 def main():
-    research=(ROOT/'src/core/research.c').read_text();start=research.index('int32_t  rglTechCost[27]');table=research[start:research.index(';',start)+1]
-    declarations=r'''
-#include "common.h"
-#include <assert.h>
-#include <stdlib.h>
-#include <inttypes.h>
-static int32_t cfg[424];PLAYER rgplr[16];GAME game;int16_t idPlayer;
-static unsigned costs,lookups,messages,generals,tts,primaries,entries;static uint32_t hash;
-static int lastField,lastLevel,typeCalls[16];static COMPART supplied;static jmp_buf escaped;
-static int16_t NativeGetRaceStat(PLAYER *,RaceStat);static int16_t NativeGetRaceGrbit(PLAYER *,RaceGrbit);
-static int32_t NativeTechCost(TechFieldType,int16_t,int16_t);static void NativeUpdateResearchStatus(int16_t);
-static void hv(int32_t value){hash=hash*UINT32_C(16777619)^(uint32_t)value;}
-int16_t GetRaceStat(PLAYER *p,RaceStat stat){if(stat==rsMajorAdv){primaries++;hv(30);hv((int32_t)(p-rgplr));hv(2);}return NativeGetRaceStat(p,stat);}
-int16_t GetRaceGrbit(PLAYER *p,RaceGrbit bit){assert(bit==ibitRaceGeneralizedResearch || bit==ibitRaceTT);hv(30);hv((int32_t)(p-rgplr));hv(bit==ibitRaceTT ? 1:0);if(bit==ibitRaceTT)tts++;else generals++;return NativeGetRaceGrbit(p,bit);}
-int32_t GetTechLevelCost(TechFieldType field,int16_t level,int16_t player){int total=0;for(int i=0;i<6;i++)total+=rgplr[player].rgTech[i];int32_t value=NativeTechCost(field,level,player);costs++;hv(20);hv(player);hv(field);hv(level);hv(total);hv(value);return value;}
-void UpdateResearchStatus(int16_t pool){entries++;hv(40);hv(!!pool);hv(idPlayer);NativeUpdateResearchStatus(pool);}
-static int kind(uint16_t mask){for(int i=0;i<16;i++)if(mask==(UINT32_C(1)<<i))return i;abort();}
-int16_t FLookupPart(PART *part){int k=kind(part->hs.grhst),item=part->hs.iItem,at=typeCalls[k]++;hv(50);hv(idPlayer);hv(k);hv(item);lookups++;
-    if((int)lookups-1==cfg[5])longjmp(escaped,1);
-    int limit=cfg[3]==0 ? 0:(cfg[3]==1 || cfg[3]==2 || cfg[3]==6) ? 18:cfg[3]==3 ? k%3+1:cfg[3]==5 ? 32769:258;
-    if(at>=limit){part->pcom=NULL;return mdPartAvailInvalid;}assert(cfg[3]!=6);
-    int avail=mdPartAvailAvailable,requirement=lastLevel;
-    if(cfg[3]==1){static const int states[]={1,-1,2,99,1};avail=states[item%5];if(item%5)requirement=(int8_t)(lastLevel-1);}
-    memset(&supplied,0,sizeof(supplied));for(int i=0;i<6;i++)supplied.rgTech[i]=(int8_t)requirement;part->pcom=&supplied;return (int16_t)avail;
-}
-int16_t FSendPlrMsg(int16_t player,MessageId id,MsgGoto target,int16_t a,int16_t b,int16_t d,int16_t p4,int16_t p5,int16_t p6,int16_t p7){
-    assert(!p4 && !p5 && !p6 && !p7);int tag;
-    switch(id){case idmScientistsHaveCompletedResearchTechLevelWill:tag=0;break;case idmScientistsHaveCompletedResearchTechLevelPrimary:tag=1;break;
-    case idmRecentBreakthroughHasAlsoGivenHullDesign:tag=2;break;case idmRecentBreakthroughHasAlsoGivenHullType:tag=3;break;
-    case idmRecentBreakthroughHasAlsoTaughtHowBuild:tag=4;break;case idmRecentBreakthroughHasAlsoTaughtHowBuild2:tag=5;break;
-    case idmRecentBreakthroughHasAlsoGivenBenefit:tag=6;break;case idmIntelligenceGatheringActivitiesCombinedSynergist:tag=7;break;default:abort();}
-    messages++;hv(10);hv(player);hv(tag);hv((int16_t)target);hv(a);hv(b);hv(d);if(tag<2){lastField=b;lastLevel=a;memset(typeCalls,0,sizeof(typeCalls));}return (int16_t)cfg[4];
-}
-'''
-    getter=next(x for x in (ROOT/'src/core/race.c').read_text().splitlines() if x.startswith('int16_t GetRaceStat(')).replace('int16_t GetRaceStat(', 'static int16_t NativeGetRaceStat(',1)
-    bodies=table+'\n'+getter+'\n'+function('src/core/race.c','int16_t GetRaceGrbit(').replace('int16_t GetRaceGrbit(', 'static int16_t NativeGetRaceGrbit(',1)+'\n'
-    bodies+=function('src/core/research.c','int32_t GetTechLevelCost(').replace('int32_t GetTechLevelCost(', 'static int32_t NativeTechCost(',1)+'\n'
-    bodies+=next(x for x in (ROOT/'src/core/msg.c').read_text().splitlines() if x.startswith('int16_t FSendPlrMsg2('))+'\n'
-    bodies+=function('src/core/turn2.c','void UpdateResearchStatus(').replace('void UpdateResearchStatus(', 'static void NativeUpdateResearchStatus(',1)+'\n'
-    harness=r'''
-static void setup(void){memset(rgplr,0,sizeof(rgplr));memset(&game,0,sizeof(game));hash=costs=lookups=messages=generals=tts=primaries=entries=0;lastField=lastLevel=0;memset(typeCalls,0,sizeof(typeCalls));game.cPlayer=(int16_t)cfg[0];game.fSlowTech=cfg[2];idPlayer=(int16_t)cfg[6];
-    for(int i=0;i<16;i++){int at=8+26*i;PLAYER *p=&rgplr[i];p->rgAttr[rsMajorAdv]=(int8_t)cfg[at];p->grbitAttr=(cfg[at+1] ? UINT32_C(1)<<ibitRaceGeneralizedResearch:0)|(cfg[at+2] ? UINT32_C(1)<<ibitRaceTT:0);
-        p->fDead=cfg[at+3];p->fCrippled=cfg[at+4];p->iTechNow=cfg[at+5];p->iTechNext=cfg[at+6];p->lResLastYear=cfg[at+7];
-        for(int f=0;f<6;f++){p->rgTech[f]=(int8_t)cfg[at+8+f];p->rgAttr[8+f]=(int8_t)cfg[at+14+f];p->rgResSpent[f]=(uint32_t)cfg[at+20+f];}}
-}
-int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");assert(file);unsigned long cases=0,checks=0;int64_t expected[234];
-    while(fread(cfg,sizeof(cfg),1,file)==1){assert(fread(expected,sizeof(expected),1,file)==1);setup();PLAYER before[16];memcpy(before,rgplr,sizeof(before));GAME gameBefore=game;int complete=0;
-        if(!setjmp(escaped)){UpdateResearchStatus((int16_t)cfg[1]);complete=1;}
-        int64_t actual[234];for(int i=0;i<16;i++){for(int f=0;f<6;f++){actual[i*14+f]=rgplr[i].rgTech[f];actual[i*14+6+f]=rgplr[i].rgResSpent[f];}actual[i*14+12]=(uint8_t)rgplr[i].iTechCur;actual[i*14+13]=rgplr[i].lResLastYear;
-            PLAYER unchanged=rgplr[i];memcpy(unchanged.rgTech,before[i].rgTech,sizeof(unchanged.rgTech));memcpy(unchanged.rgResSpent,before[i].rgResSpent,sizeof(unchanged.rgResSpent));unchanged.iTechCur=before[i].iTechCur;assert(!memcmp(&unchanged,&before[i],sizeof(unchanged)));checks++;}
-        assert(!memcmp(&game,&gameBefore,sizeof(game)));checks++;
-        int64_t extra[]={idPlayer,hash,costs,lookups,messages,generals,tts,primaries,entries,complete};memcpy(actual+224,extra,sizeof(extra));
-        for(int i=0;i<234;i++){checks++;if(actual[i]!=expected[i]){fprintf(stderr,"case %lu field %d actual %lld expected %lld (pool %d slow %d mode %d)\n",cases,i,(long long)actual[i],(long long)expected[i],cfg[1],cfg[2],cfg[3]);return 1;}}cases++;
-    }
-    assert(feof(file));fclose(file);printf("Native host research: %lu cases, %lu assertions passed\n",cases,checks);return 0;
-}
-'''
     with tempfile.TemporaryDirectory(prefix='host-research-') as work:
-        path=Path(work);data=path/'vectors.bin';excluded={};count=0
+        from linked_witness import binary as linked_binary
+        binary=linked_binary("host-research");path=Path(work);data=path/'vectors.bin';excluded={};count=0
         with data.open('wb') as stream:
             for c in cases():
                 assert len(c)==424
@@ -269,50 +208,7 @@ int main(int argc,char **argv){assert(argc==2);FILE *file=fopen(argv[1],"rb");as
                 except Boundary as why:excluded[str(why)]=excluded.get(str(why),0)+1;continue
                 stream.write(struct.pack('<424i234q',*c,*result));count+=1
         print(f'Prepared {count} host research vectors; excluded before C: {excluded}',flush=True)
-        for generator in ['text/textgen.py','data/datagen.py']:
-            subprocess.run([sys.executable,str(ROOT/generator),str(path)],check=True,stdout=subprocess.DEVNULL)
-        source=path/'witness.c';source.write_text(declarations+bodies+harness);binary=path/'witness'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-variable','-Wno-unused-but-set-variable','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(source),'-lm','-o',str(binary)],check=True)
         subprocess.run([str(binary),str(data)],check=True)
+        subprocess.run([str(binary),"--catalog"],check=True)
 
-        # Bind actual byte catalog terminators without replacing availability logic.
-        # Headless reads exercise every byte ID; player contexts exercise every
-        # out-of-range ID for each signed primary trait before later availability.
-        catalog_declarations=r'''
-#include "common.h"
-#include <assert.h>
-PLAYER rgplr[16];int16_t idPlayer;
-'''
-        catalog_bodies=next(x for x in (ROOT/'src/core/race.c').read_text().splitlines() if x.startswith('int16_t GetRaceStat('))+'\n'
-        catalog_bodies+=function('src/core/race.c','int16_t GetRaceGrbit(')+'\n'
-        catalog_bodies+=function('src/core/parts.c','int16_t FLookupPart(')+'\n'
-        catalog_bodies+=function('src/core/parts.c','int16_t TechStatus(')+'\n'
-        catalog_bodies+=function('src/core/research.c','int16_t FShouldPartBeHidden(')+'\n'
-        model=(ROOT/'spec/dafny/S03-research-catalog.dfy').read_text()
-        match=re.search(r'function Limits\(\).*?\{\s*\[([0-9,\s]+)\]\s*\}',model,re.S)
-        if match is None:raise AssertionError('expected literal S03 research catalog limits')
-        limits=[int(value) for value in match[1].split(',')]
-        assert len(limits)==16 and all(0<=value<256 for value in limits)
-        catalog_declarations+='const unsigned rgcModelLimits[]={'+','.join(map(str,limits))+'};\n'
-        catalog_harness=r'''
-int main(void){
-    const unsigned counts[]={iengineCount,iscannerCount,ishieldCount,iarmorCount,ibeamCount,itorpCount,ibombCount,iminingCount,iminesCount,ispecialSBCount,isbhullCount,ispecialECount,ispecialMCount,iterraCount,ihuldefOrbitalFort,iplanetaryCount};
-    unsigned long checks=0;PART part;memset(rgplr,0,sizeof(rgplr));
-    for(unsigned k=0;k<16;k++){assert(counts[k]<256);checks++;assert(counts[k]==rgcModelLimits[k]);checks++;idPlayer=iplrNone;
-        for(unsigned item=0;item<256;item++){memset(&part,0,sizeof(part));part.hs.grhst=(HullSlotType)(UINT32_C(1)<<k);part.hs.iItem=item;
-            int available=FLookupPart(&part);if((available==mdPartAvailInvalid)!=(item>=counts[k])){fprintf(stderr,"catalog kind %u item %u count %u status %d\n",k,item,counts[k],available);return 1;}checks++;
-            if(item<counts[k]){assert(part.pcom);checks++;}}
-        idPlayer=0;for(int trait=-128;trait<128;trait++){rgplr[0].rgAttr[rsMajorAdv]=(int8_t)trait;
-            for(unsigned item=counts[k];item<256;item++){memset(&part,0,sizeof(part));part.hs.grhst=(HullSlotType)(UINT32_C(1)<<k);part.hs.iItem=item;
-                assert(FLookupPart(&part)==mdPartAvailInvalid);checks++;}}}
-    printf("Native actual catalog terminators: %lu assertions passed, all 16 counts below byte wrap\n",checks);return 0;
-}
-'''
-        catalog=path/'catalog.c';catalog.write_text(catalog_declarations+catalog_bodies+catalog_harness);catalog_binary=path/'catalog'
-        subprocess.run(shlex.split(os.environ.get('CC','cc'))+['-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-variable','-Wno-unused-but-set-variable','-Wno-pointer-sign',
-            '-fsanitize=address,undefined','-fno-sanitize-recover=all','-I'+str(ROOT/'src/core'),'-I'+str(ROOT/'src/platform'),'-I'+str(path),str(catalog),str(path/'data_tables.c'),'-lm','-o',str(catalog_binary)],check=True)
-        subprocess.run([str(catalog_binary)],check=True)
-
-
-if __name__=='__main__':main()
+if __name__=="__main__":main()

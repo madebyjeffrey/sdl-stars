@@ -32,7 +32,5 @@ Claim it by assigning the driving developer. Resolve it by recording
 the answer, closing the ticket, and linking the result from the map.
 
 ## Branching Conventions
-- Feature PRs target `develop`.
-- After changes have been tested on `develop`, promote them to `main` with a PR
-  from `develop` to `main`.
+- Open pull requests against `main`.
 - Do not push commits directly to `main`.

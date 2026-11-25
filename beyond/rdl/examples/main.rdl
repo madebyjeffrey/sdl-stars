@@ -1,0 +1,8 @@
+import races
+import stars.defaults
+
+query {
+  from r : race
+  where r.population >= starting_population
+  select { name = r.name; points = r.habitability_points; }
+}

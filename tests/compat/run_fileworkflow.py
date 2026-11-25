@@ -77,7 +77,8 @@ with tempfile.TemporaryDirectory(prefix='stars-file-workflow-') as directory:
     managed_turn = managed / 'Renamed copy.m1'
     export_failure = root / 'missing-directory' / 'cannot-write.x1'
     chooser = Chooser(bus, '/org/freedesktop/portal/desktop')
-    env = dict(os.environ, STARS_SETTINGS_DIR=str(root), STARS_TEST_RACE_PATH=str(race), STARS_TEST_RACE_REPEAT_PATH=str(race_repeat),
+    env = dict(os.environ, STARS_SETTINGS_DIR=str(root), STARS_TEST_GAME_PATH=str(game),
+               STARS_TEST_RACE_PATH=str(race), STARS_TEST_RACE_REPEAT_PATH=str(race_repeat),
                STARS_TEST_EXPORT_EXPECTED=str(exported), STARS_TEST_EXPORT_PREVIOUS=str(previous_export),
                STARS_TEST_MANAGED_ORDERS=str(managed_orders),
                STARS_TEST_MANAGED_TURN=str(managed_turn), STARS_TEST_EXPORT_FAILURE_TARGET=str(export_failure),

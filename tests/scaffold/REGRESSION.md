@@ -294,7 +294,7 @@ place the divergence in that AI's decisions.
 
 Configure a separate build with `-DSTARS_TEST_TRACE=ON` and prepare a native run
 from it. The linker wraps `Random` and `PctPlanetCapacity`
-(`tests/scaffold/regression_trace.c`). The trace build behaves identically.
+(`tests/scaffold/regression_trace.cpp`). The trace build behaves identically.
 With `--trace`, `crossfeed` and `bisect` set `STARS_TRACE` and write
 `trace.log` beside the output. Each `Random` line records the turn, player, AI flag,
 range, result, caller address, and RNG seeds before the draw. Seeds allow replaying
@@ -330,7 +330,7 @@ the `.xN` AI logs in each save directory.
 The native-port checks (player-message serialization and both readers,
 legacy link bytes, recipient filtering, maximum text length, static-control
 color dispatch, and the Win16 battle heap rollover boundary) are unit tests
-now: `tests/unit/test_native_ports.c`, run with `make test-unit`. See
+now: `tests/unit/test_native_ports.cpp`, run with `make test-unit`. See
 [tests/unit/README.md](../unit/README.md).
 
 The save CLI's own tests check salt/ID normalization, retention of

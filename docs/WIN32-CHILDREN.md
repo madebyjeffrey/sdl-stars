@@ -116,7 +116,7 @@ with the ancestor filter on both implementations.
 
 ## Verification
 
-`tests/compat/win32_children.c` checks parent/owner relationships, retained IDs and
+`tests/compat/win32_children.inc` checks parent/owner relationships, retained IDs and
 titles, sibling traversal, nested screen/client conversion, effective visibility,
 enable/focus callbacks, descendant queue/timer filtering, rejected creation,
 destruction during movement and parent-before-child destruction messages.

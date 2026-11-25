@@ -6,7 +6,15 @@ Stars! has two version numbers, and only one of them changes on `main`.
 
 The version of the executable, stored in its `VERSIONINFO` resource and
 shown to players. `cmake/version.cmake` generates it from git into
-`<build>/generated/version.h` on every build:
+`<build>/generated/version.h` on every build. This application header exposes
+inline C++ constants, with fixed readonly character arrays at native string
+boundaries. The same generation writes `version_resource.h` for the Windows
+resource compiler; its six preprocessing values stay private to `stars.rc`.
+The two headers carry identical version components and display bytes, and
+neither is rewritten when its contents are unchanged. Packaging and release
+readers consume the C++ declarations.
+
+The generated values follow the checkout:
 
 | Checkout | Version | Shown as | Build |
 | --- | --- | --- | --- |
@@ -25,7 +33,7 @@ theirs after the version: `2.9 linux-x64`, `2.9 macos-x64`,
 `2.9 macos-arm64`. CMake passes the platform (`STARS_VERSION_PLATFORM`,
 `os-arch`) to `cmake/version.cmake`. Development builds append the full
 version in parentheses. It appears in the About box, on the splash screen
-and in report headers (`SzVersion` in `util.c`), in `ProductVersion`, in
+and in report headers (`SzVersion` in `util.cpp`), in `ProductVersion`, in
 release titles and in `stars-host --version`.
 
 A development build is numbered toward the next version: the patch after the

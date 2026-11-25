@@ -3,7 +3,7 @@
 
 #include <windows.h>
 #include "resource.h"
-#include "version.h"
+#include "version_resource.h"
 
 /* Icons */
 STARSICO ICON "icons/starsico.ico"

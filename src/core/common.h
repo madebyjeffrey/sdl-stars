@@ -1,46 +1,44 @@
 #ifndef STARS_DECOMPILED_COMMON_H
 #define STARS_DECOMPILED_COMMON_H
 
-#include "test_impl.h"
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
+class APPSESSION;
 
-#include <ctype.h>
-#include <math.h>
-#include <setjmp.h>
-#include <string.h>
-#include <time.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <span>
+
+#include <cctype>
+#include <cmath>
+#include <cstring>
+#include <ctime>
+#include "errors.h"
 
 // Raw Win16 storage is byte-addressed and may be unaligned, so scalar
 // accesses through it copy bytes instead of dereferencing a cast pointer.
-static inline uint16_t RawLoad16(const void *p) {
-    uint16_t v;
-    memcpy(&v, p, sizeof v);
+static inline std::uint16_t RawLoad16(std::span<const std::byte> rgb) {
+    std::uint16_t v;
+    std::memcpy(&v, rgb.data(), sizeof v);
     return v;
 }
-static inline uint32_t RawLoad32(const void *p) {
-    uint32_t v;
-    memcpy(&v, p, sizeof v);
+static inline std::uint32_t RawLoad32(std::span<const std::byte> rgb) {
+    std::uint32_t v;
+    std::memcpy(&v, rgb.data(), sizeof v);
     return v;
 }
-static inline void RawStore16(void *p, uint16_t v) { memcpy(p, &v, sizeof v); }
-static inline void RawStore32(void *p, uint32_t v) { memcpy(p, &v, sizeof v); }
+static inline void RawStore16(std::span<std::byte> rgb, std::uint16_t v) { std::memcpy(rgb.data(), &v, sizeof v); }
+static inline void RawStore32(std::span<std::byte> rgb, std::uint32_t v) { std::memcpy(rgb.data(), &v, sizeof v); }
 
 #include "enums.h"
 #include "native.h"
 
-// Native storage; the analysis model retains the original 18-byte layout.
-typedef jmp_buf ENV;
-
 // Comparator for qsort and bsearch, which call it through the native int
 // return type.
-typedef int (*QSORTCOMPARE)(const void *, const void *);
-
-// Dereference the saved pointer to the native jump-buffer array.
-#define StarsLongJump(env, value) longjmp(*(env), (value))
+using QSORTCOMPARE = int (*)(const void *, const void *);
 
 #include "structs.h"
+#include "streamcodec.h"
+#include "streamviews.h"
 
 #include "ai.h"
 #include "ai2.h"
@@ -53,13 +51,22 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "file.h"
 #include "globals.h"
 #include "log.h"
+#include "logcodec.h"
+#include "logviews.h"
 #include "memory.h"
 #include "mine.h"
 #include "msg.h"
+#include "messagecodec.h"
+#include "messageviews.h"
 #include "parts.h"
 #include "planet.h"
 #include "produce.h"
 #include "race.h"
+#include "recordcodec.h"
+#include "battlecodec.h"
+#include "battleviews.h"
+#include "aiviews.h"
+#include <new>
 #include "report.h"
 #include "research.h"
 #include "save.h"
@@ -73,5 +80,7 @@ typedef int (*QSORTCOMPARE)(const void *, const void *);
 #include "ui.h"
 #include "util.h"
 #include "utilgen.h"
+
+#include "file_guard.h"
 
 #endif

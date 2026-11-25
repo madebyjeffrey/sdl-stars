@@ -1,0 +1,119 @@
+(* Generated from data/races/predefined.yaml by tools/generate_stars_presets.py. *)
+import design
+
+(* Declarative templates: typed inputs supply component values.
+   Habitat uses the source 0..100 coordinates; population efficiency
+   counts colonists/resource, not hundreds. *)
+
+type Immunity = | immune
+type ResearchCostClass = | expensive | standard | cheap
+type LeftoverChoice = | surface_minerals | concentrations | mines | factories | defenses | option_5 | option_6
+
+trait portrait(index: integer) {
+  provides Portrait = index
+}
+
+trait gravity(lower: integer, upper: integer) {
+  require lower >= 0 && upper <= 100 && lower < upper && upper - lower >= 2
+  provides GravityTolerance {
+    range = { lower = lower; preferred = lower + (upper - lower) / 2; upper = upper; };
+  }
+}
+
+trait gravity(mode: Immunity) {
+  provides GravityTolerance {
+    range = { lower = -1; preferred = -1; upper = -1; };
+  }
+}
+
+trait temperature(lower: integer, upper: integer) {
+  require lower >= 0 && upper <= 100 && lower < upper && upper - lower >= 2
+  provides TemperatureTolerance {
+    range = { lower = lower; preferred = lower + (upper - lower) / 2; upper = upper; };
+  }
+}
+
+trait temperature(mode: Immunity) {
+  provides TemperatureTolerance {
+    range = { lower = -1; preferred = -1; upper = -1; };
+  }
+}
+
+trait radiation(lower: integer, upper: integer) {
+  require lower >= 0 && upper <= 100 && lower < upper && upper - lower >= 2
+  provides RadiationTolerance {
+    range = { lower = lower; preferred = lower + (upper - lower) / 2; upper = upper; };
+  }
+}
+
+trait radiation(mode: Immunity) {
+  provides RadiationTolerance {
+    range = { lower = -1; preferred = -1; upper = -1; };
+  }
+}
+
+trait growth(percent: integer) {
+  provides SelectedGrowth = percent
+  provides GrowthRate = real percent / 100.0
+}
+
+trait population_efficiency(colonists: integer) {
+  require colonists % 100 = 0
+  provides PopulationResourceDivisor = colonists / 100
+}
+
+trait factory_output(value: integer) {
+  provides FactoryOutput = value
+}
+
+trait factory_cost(value: integer) {
+  provides FactoryCost = value
+}
+
+trait factory_operation(value: integer) {
+  provides FactoryOperationLimit = value
+}
+
+trait mine_output(value: integer) {
+  provides MineOutput = value
+}
+
+trait mine_cost(value: integer) {
+  provides MineCost = value
+}
+
+trait mine_operation(value: integer) {
+  provides MineOperationLimit = value
+}
+
+trait energy_research(cost: ResearchCostClass) {
+  provides EnergyResearchCost = match cost with | expensive -> 0 | standard -> 1 | cheap -> 2
+}
+
+trait weapons_research(cost: ResearchCostClass) {
+  provides WeaponsResearchCost = match cost with | expensive -> 0 | standard -> 1 | cheap -> 2
+}
+
+trait propulsion_research(cost: ResearchCostClass) {
+  provides PropulsionResearchCost = match cost with | expensive -> 0 | standard -> 1 | cheap -> 2
+}
+
+trait construction_research(cost: ResearchCostClass) {
+  provides ConstructionResearchCost = match cost with | expensive -> 0 | standard -> 1 | cheap -> 2
+}
+
+trait electronics_research(cost: ResearchCostClass) {
+  provides ElectronicsResearchCost = match cost with | expensive -> 0 | standard -> 1 | cheap -> 2
+}
+
+trait biotechnology_research(cost: ResearchCostClass) {
+  provides BiotechnologyResearchCost = match cost with | expensive -> 0 | standard -> 1 | cheap -> 2
+}
+
+trait research_allocation(percent: integer) {
+  provides ResearchAllocationPercent = percent
+}
+
+trait leftover_points(choice: LeftoverChoice) {
+  provides LeftoverAllocation = match choice with | surface_minerals -> 0 | concentrations -> 1 | mines -> 2 | factories -> 3 | defenses -> 4 | option_5 -> 5 | option_6 -> 6
+}

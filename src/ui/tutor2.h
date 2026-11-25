@@ -1,14 +1,17 @@
 #ifndef STARS_DECOMPILED_TUTOR2_H
 #define STARS_DECOMPILED_TUTOR2_H
 
-#include <stdint.h>
+#include "win.h"
+#include <cstdint>
+#include <optional>
+#include <span>
 #include <windows.h>
 
-extern uint8_t acTUT[];
+extern std::uint8_t acTUT[];
 extern char    aTUTCmpr[];
-extern int16_t aiTUTChunkOffset[];
+extern std::int16_t aiTUTChunkOffset[];
 extern char    rgTUTLookupTable[];
 
-int16_t CchTutorString(char *pchOut, TutorId idt);
+std::optional<std::size_t> CchTutorString(APPSESSION &app, std::span<char> pchOut, TutorId idt);
 
 #endif

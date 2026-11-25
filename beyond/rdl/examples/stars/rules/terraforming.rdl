@@ -1,0 +1,83 @@
+import stars.rules.population
+
+(* planet.cpp:785. General and axis allowances use MAX, never addition. *)
+type TerraformReach = {
+  race: Race;
+  field_level: integer;
+  biotechnology: integer;
+  require self.field_level >= 0 && self.biotechnology >= 0;
+  derive general: integer = if not self.race.tt then 0 else
+    if self.biotechnology >= 25 then 30 else if self.biotechnology >= 22 then 25
+    else if self.biotechnology >= 17 then 20 else if self.biotechnology >= 13 then 15
+    else if self.biotechnology >= 9 then 10 else if self.biotechnology >= 6 then 7
+    else if self.biotechnology >= 3 then 5 else 3;
+  derive axis: integer = if self.field_level >= 16 && self.biotechnology >= 4 then 15
+    else if self.field_level >= 10 && self.biotechnology >= 3 then 11
+    else if self.field_level >= 5 && self.biotechnology >= 2 then 7
+    else if self.field_level >= 1 && self.biotechnology >= 1 then 3 else 0;
+  derive maximum: integer = max self.general self.axis;
+  derive resource_cost: integer = (if self.general >= self.axis && self.race.tt then 70 else 100)
+    / (if self.race.prt_id = 3 then 2 else 1);
+}
+type TerraformAxis = {
+  tolerance: HabitatAxis;
+  original: integer;
+  current: integer;
+  reach: integer;
+  helpful: bool = true;
+  require self.original >= 0 && self.original <= 100 && self.current >= 0 && self.current <= 100 && self.reach >= 0;
+  derive lower: integer = if self.original - self.reach >= self.current then -100 else max 1 (self.original - self.reach);
+  derive upper: integer = if self.original + self.reach <= self.current then -100 else min 99 (self.original + self.reach);
+  derive target: integer =
+    if self.tolerance.immune || self.reach = 0 then self.current
+    else if self.helpful then
+      (if self.current > self.tolerance.preferred && self.lower != -100 then max self.lower self.tolerance.preferred
+       else if self.current < self.tolerance.preferred && self.upper != -100 then min self.upper self.tolerance.preferred else self.current)
+    else let d = abs (self.current - self.tolerance.preferred) in
+      let lo = if self.lower = -100 then 0 else abs (self.lower - self.tolerance.preferred) in
+      let hi = if self.upper = -100 then 0 else abs (self.upper - self.tolerance.preferred) in
+      if d >= lo && d >= hi then self.current else if lo >= hi then self.lower else self.upper;
+  derive tick: integer = if self.target = self.current then 0 else if self.target > self.current then 1 else -1;
+}
+(* planet.cpp:240, turn2.cpp:666. Compare candidate extrema, keep first tie,
+   then buy ONE coordinate tick. Candidate habitat is calculated with PlanetHabitat. *)
+type TerraformSelection = {
+  before: integer;
+  gravity_after: integer; gravity_distance: integer;
+  temperature_after: integer; temperature_distance: integer;
+  radiation_after: integer; radiation_distance: integer;
+  derive gravity_score: integer = if self.gravity_distance = 0 then 0 else 100 * abs (self.gravity_after - self.before) / abs self.gravity_distance + 1;
+  derive temperature_score: integer = if self.temperature_distance = 0 then 0 else 100 * abs (self.temperature_after - self.before) / abs self.temperature_distance + 1;
+  derive radiation_score: integer = if self.radiation_distance = 0 then 0 else 100 * abs (self.radiation_after - self.before) / abs self.radiation_distance + 1;
+  derive selected_axis: integer = if self.gravity_score = 0 && self.temperature_score = 0 && self.radiation_score = 0 then -1
+    else if self.gravity_score >= self.temperature_score && self.gravity_score >= self.radiation_score then 0
+    else if self.temperature_score >= self.radiation_score then 1 else 2;
+}
+(* turn2.cpp:1108. Axis is chosen once by the caller. Ten-percent and low-pop
+   tests are separate draws; unselected axes get no attempt. *)
+type ClaimAdjustment = {
+  race: Race;
+  axis: TerraformAxis;
+  population: integer;
+  selected_axis: bool = true;
+  ten_percent_success: bool = false;
+  population_draw: integer = 999;
+  require self.population >= 0 && self.population_draw >= 0 && self.population_draw < 1000;
+  derive permanent_success: bool = self.race.prt_id = 3 && self.selected_axis && not self.axis.tolerance.immune
+    && self.axis.original != self.axis.tolerance.preferred && self.ten_percent_success
+    && (self.population >= 1000 || self.population_draw < self.population);
+  derive original_after: integer = self.axis.original + (if not self.permanent_success then 0
+    else if self.axis.original > self.axis.tolerance.preferred then -1 else 1);
+  derive auto_adjusted: integer = if self.race.prt_id = 3 then self.axis.target else self.axis.current;
+  derive on_abandonment: integer = if self.race.prt_id = 3 then self.original_after else self.auto_adjusted;
+}
+type RemoteTerraform = {
+  adjuster_owner: Race;
+  modules: integer;
+  ships: integer;
+  self_or_friend: bool;
+  target_has_base: bool;
+  require self.modules >= 0 && self.ships >= 0;
+  derive permitted: bool = self.adjuster_owner.prt_id = 3 && (self.self_or_friend || not self.target_has_base);
+  derive attempted_ticks: integer = if self.permitted then self.modules * self.ships else 0;
+}

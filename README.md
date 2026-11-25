@@ -18,12 +18,14 @@ for the Zensical build and GitHub Pages publishing workflow.
 
 ## Build and run
 
-Run the commands below from the repository root. All builds need a C11 compiler,
+Run the commands below from the repository root. All builds need C11 and C++20 compilers,
 CMake 3.23 or newer, Ninja, and Python 3.12 or newer with pip and venv support.
 CMake creates a build-local Python environment and installs the pinned Python
 dependencies on the first configure. Desktop builds also need
-SDL3, FreeType, Fontconfig, Cairo and libwmf for fonts, printing and offline help,
-plus a C++17 compiler for the C-compatible filesystem bridge.
+SDL3, FreeType, Fontconfig, Cairo and libwmf for fonts, printing and offline help.
+The game, desktop UI, host, SDL wrapper, generated tables and ordinary tests
+compile as C++20; AppKit adapters use Objective-C++20. Independent storage and
+Windows SDK reference tests retain C11. See the [migration plan](docs/CPP-MIGRATION.md).
 The SDL presets use an installed SDL3 3.4 or newer, or download the pinned SDL
 source on the first configure. Host-only builds do not need SDL or desktop
 libraries.

@@ -1,38 +1,51 @@
 #ifndef STARS_DECOMPILED_MSG_H
 #define STARS_DECOMPILED_MSG_H
 
-#include <stdint.h>
+#include "common.h"
+#include <cstdint>
+#include <optional>
+#include <string_view>
 
 extern char    rgcMsgArgs[];
-extern uint8_t acMSG[];
+extern std::uint8_t acMSG[];
 extern char    aMSGCmpr[];
 extern char    rgMSGLookupTable[];
-extern int16_t aiMSGChunkOffset[];
+extern std::int16_t aiMSGChunkOffset[];
 
-int16_t IMsgNext(int16_t fFilteredOnly);
-int16_t IMsgPrev(int16_t fFilteredOnly);
-int16_t FSendPlrMsg2(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2);
-int16_t FSendPlrMsg(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7);
-int16_t FSendPrependedPlrMsg(int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7);
-int16_t PackageUpMsg(uint8_t *pb, int16_t iPlr, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6,
-                     int16_t p7);
-int16_t FSendPlrMsg2XGen(int16_t fPrepend, MessageId iMsg, MsgGoto iObj, int16_t p1, int16_t p2);
-int16_t IdmGetMessageN(int16_t iMsg);
-int16_t FGetNMsgbig(MessageId iMsg, MSGBIG *pmb);
-char   *PszGetMessageN(int16_t iMsg);
-char   *PszFormatString(char *pszFormat, int16_t *pParamsReal);
-char   *PszFormatMessage(MessageId idm, int16_t *pParams);
-char   *PszFormatIds(StringId ids, int16_t *pParams);
-int16_t FRemovePlayerMessage(int16_t iPlr, MessageId iMsg, MsgGoto iObj);
-int16_t FFindPlayerMessage(int16_t iPlr, int16_t iMsg, MsgGoto iObj);
-void    MarkPlanetsPlayerLost(int16_t iPlayer);
-void    MarkPlayersThatSentMsgs(int16_t iPlayer);
-void    WritePlayerMessages(int16_t iPlayer);
-void    ResetMessages();
-void    ReadPlayerMessages();
-void    WriteRtPlrMsg(MSGPLR *lpmp);
-MSGPLR *LpmsgplrFromRt();
-char   *PszGetCompressedMessage(MessageId idm);
-void    SetFilteringGroups(MessageId idm, int16_t fSet);
+std::int16_t IMsgNext(APPSESSION &app, std::int16_t fFilteredOnly);
+std::int16_t IMsgPrev(APPSESSION &app, std::int16_t fFilteredOnly);
+std::int16_t FSendPlrMsg2(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2);
+std::int16_t FSendPlrMsg(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2, std::int16_t p3, std::int16_t p4, std::int16_t p5, std::int16_t p6, std::int16_t p7);
+std::int16_t FSendPrependedPlrMsg(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2, std::int16_t p3, std::int16_t p4, std::int16_t p5, std::int16_t p6, std::int16_t p7);
+std::int16_t PackageUpMsg(APPSESSION &app, std::span<std::uint8_t> rgb, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2, std::int16_t p3, std::int16_t p4, std::int16_t p5, std::int16_t p6,
+                     std::int16_t p7);
+std::int16_t FSendPlrMsg2XGen(APPSESSION &app, std::int16_t fPrepend, MessageId iMsg, MsgGoto iObj, std::int16_t p1, std::int16_t p2);
+std::int16_t IdmGetMessageN(APPSESSION &app, std::int16_t iMsg);
+std::optional<MSGBIG> FGetNMsgbig(APPSESSION &app, MessageId iMsg);
+struct MESSAGETEXTRESULT {
+    std::array<char, 256> sz{};
+    std::int16_t cch = 0;
+
+    char *data() noexcept { return sz.data(); }
+    const char *data() const noexcept { return sz.data(); }
+    std::string_view view() const noexcept { return {sz.data(), static_cast<std::size_t>(cch)}; }
+};
+MESSAGETEXTRESULT PszGetMessageN(APPSESSION &app, std::int16_t iMsg);
+// Readonly bounded inputs; stop before an incomplete expansion and terminate
+// the complete UTF-8 output prefix. Embedded NUL ends the format text.
+MESSAGETEXTRESULT PszFormatMessage(APPSESSION &app, MessageId idm, std::span<const std::int16_t> pParams);
+MESSAGETEXTRESULT PszFormatString(APPSESSION &app, std::string_view pszFormat, std::span<const std::int16_t> pParamsReal);
+MESSAGETEXTRESULT PszFormatIds(APPSESSION &app, StringId ids, std::span<const std::int16_t> pParams);
+std::int16_t FRemovePlayerMessage(APPSESSION &app, std::int16_t iPlr, MessageId iMsg, MsgGoto iObj);
+std::int16_t FFindPlayerMessage(APPSESSION &app, std::int16_t iPlr, std::int16_t iMsg, MsgGoto iObj);
+void    MarkPlanetsPlayerLost(APPSESSION &app, std::int16_t iPlayer);
+void    MarkPlayersThatSentMsgs(APPSESSION &app, std::int16_t iPlayer);
+void    WritePlayerMessages(APPSESSION &app, std::int16_t iPlayer);
+void    ResetMessages(APPSESSION &app);
+void    ReadPlayerMessages(APPSESSION &app);
+void    WriteRtPlrMsg(APPSESSION &app, MSGPLR *lpmp);
+MSGPLR *LpmsgplrFromRt(APPSESSION &app);
+std::array<char, 256> PszGetCompressedMessage(APPSESSION &app, MessageId idm);
+void    SetFilteringGroups(APPSESSION &app, MessageId idm, std::int16_t fSet);
 
 #endif

@@ -1,0 +1,103 @@
+import stars.design
+
+(* All population quantities below are in HUNDREDS of colonists, as in PLAYER
+   and PLANET. The suffix _colonists is used only after conversion to people.
+   planet.cpp:436..658; util.cpp:2246. Orbital hull index 0..4. *)
+type Colony = {
+  race: Race;
+  habitat: integer;
+  population: integer;
+  owned: bool = true;
+  has_base: bool = true;
+  orbital_hull: integer = 2;
+  factories: integer = 0;
+  mines: integer = 0;
+  defenses: integer = 0;
+  energy_tech: integer = 0;
+  delta_remainder: integer = 0;
+  require self.habitat >= -45 && self.habitat <= 100;
+  require self.population >= 0 && self.factories >= 0 && self.mines >= 0 && self.defenses >= 0;
+  require self.race.prt_id != 8 || self.population = 0 || self.has_base;
+  require self.orbital_hull >= 0 && self.orbital_hull <= 4;
+  require self.delta_remainder >= 0 && self.delta_remainder < 100;
+  derive initial_capacity: integer = if self.race.prt_id = 8 then
+    (if not self.owned || not self.has_base then 0
+     else if self.orbital_hull = 0 then 2500 else if self.orbital_hull = 1 then 5000
+     else if self.orbital_hull = 2 then 10000 else if self.orbital_hull = 3 then 20000 else 30000)
+    else let c = if self.habitat < 5 then 500 else self.habitat * 100 in
+    if self.race.prt_id = 0 then c - c / 2 else if self.race.prt_id = 9 then c + c / 5 else c;
+  derive capacity: integer = self.initial_capacity + (if self.race.obrm then self.initial_capacity / 10 else 0);
+  derive capacity_colonists: integer = self.capacity * 100;
+  derive effective_population: integer = if self.population > self.capacity
+    then min (2 * self.capacity) (self.capacity + (self.population - self.capacity) / 2) else self.population;
+  derive factory_limit: integer = if self.race.prt_id = 8 then 0 else max 10 (self.capacity * self.race.Economy.factory_operation / 100);
+  derive mine_limit: integer = if self.race.prt_id = 8 then 0 else max 10 (self.capacity * self.race.Economy.mine_operation / 100);
+  derive operating_factories: integer = if self.race.prt_id = 8 then 0 else min self.factories (max 1 (min self.factory_limit (self.population * self.race.Economy.factory_operation / 100)));
+  derive operating_mines: integer = if self.race.prt_id = 8 then int (sqrt (real self.population)) else min self.mines (max 1 (min self.mine_limit (self.population * self.race.Economy.mine_operation / 100)));
+  derive defense_limit: integer = if self.race.prt_id = 8 then 0 else max 10 (min 100 (4 * self.habitat));
+  derive defense_operation_limit: integer = min self.defense_limit (min 1000 ((self.population + 24) / 25));
+  derive operating_defenses: integer = min self.defenses self.defense_operation_limit;
+  derive resources: integer = if self.population = 0 then 0 else max 1
+    (if self.race.prt_id = 8 then int (sqrt (real self.effective_population * real (max 1 self.energy_tech) / real self.race.Economy.population_divisor)
+      * real (max self.habitat 25) / 10.0 + 0.999)
+     else self.effective_population / self.race.Economy.population_divisor + (self.operating_factories * self.race.Economy.factory_output + 9) / 10);
+  derive no_growth: bool = not self.owned || self.population = 0 ||
+    (self.habitat >= 0 && self.population >= self.capacity && self.population < self.capacity + 10);
+  derive growth_hundredths_percent: integer =
+    let g = self.race.effective_growth_percent * self.habitat in
+    if self.no_growth || self.habitat < 0 then 0
+    else if self.population <= self.capacity / 4 then g
+    else let full = self.population * 1000 / self.capacity in
+    if self.population >= self.capacity then 4 * max (-300) (99 - full / 10)
+    else let r = (1000 - full) * (1000 - full) in
+    if g < 1000 then g * r / 562500 else ((g / 10) * r / 562500) * 10;
+  derive delta_hundredths: integer = if self.no_growth then 0 else if self.habitat < 0 then
+    -(max 1 (self.population * (-self.habitat) / 10))
+    else let q = self.population * (self.growth_hundredths_percent / 100) in
+    let q = if q < 10000000 then self.population * self.growth_hundredths_percent / 100 else q in
+    if q = 0 then 1 else q;
+  derive next_remainder: integer = ((self.delta_remainder + self.delta_hundredths % 100) % 100 + 100) % 100;
+  derive population_change: integer = self.delta_hundredths / 100
+    + (if self.delta_remainder + self.delta_hundredths % 100 < 0 then -1
+       else if self.delta_remainder + self.delta_hundredths % 100 >= 100 then 1 else 0);
+  derive next_population: integer = self.population + self.population_change;
+  derive lost_with_base: bool = self.race.prt_id = 8;
+}
+
+(* turn2.cpp:2052; turn.cpp:1497,1686. Random inputs are explicit draw outcomes,
+   so repeated queries are deterministic. Cargo units are hundreds of people. *)
+type FleetPopulation = {
+  race: Race;
+  population: integer;
+  free_capacity: integer;
+  friendly_owned_colony: bool = false;
+  one_in_three: bool = false;
+  first_movement_pass: bool = true;
+  radiating_engine: bool = false;
+  movement_pass: integer = 0;
+  require self.population >= 0 && self.free_capacity >= 0;
+  derive breeding: integer = if self.race.prt_id != 4 then 0 else
+    let n = self.population * self.race.DesignSettings.selected_growth / 200 in
+    if n = 0 && self.one_in_three then 1 else n;
+  derive aboard_gain: integer = min self.free_capacity self.breeding;
+  derive colony_gain: integer = if self.friendly_owned_colony then self.breeding - self.aboard_gain else 0;
+  derive ar_movement_loss: integer = if self.race.prt_id = 8 && self.first_movement_pass && self.population > 10
+    then (3 * self.population + 33) / 100 else 0;
+  derive radiating_loss: integer =
+    let r = self.race.Habitability.radiation in
+    if not self.radiating_engine || self.population = 0 || self.movement_pass > 1 || r.immune || r.lower + r.upper >= 170 then 0
+    else let rate = (86 - (r.lower + r.upper) / 2) / 2 in
+    let n = rate * self.population / 100 in
+    let signed16 = ((n + 32768) % 65536 + 65536) % 65536 - 32768 in
+    min self.population (max 1 signed16);
+}
+
+type EnvironmentDisplay = {
+  coordinate: integer;
+  require self.coordinate >= 0 && self.coordinate <= 100;
+  derive temperature_c: integer = 4 * self.coordinate - 200;
+  derive radiation_mr: integer = self.coordinate;
+  derive gravity_hundredths: integer = let d = abs (self.coordinate - 50) in
+    let v = if d <= 25 then 100 + 4 * d else 200 + 24 * (d - 25) in
+    if self.coordinate < 50 then 10000 / v else v;
+}

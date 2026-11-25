@@ -1,0 +1,120 @@
+#include <cassert>
+#include <cerrno>
+#include <cstdio>
+#include <string_view>
+#include "library_file_io.h"
+#include "librarypublication.h"
+#include "native_publish.h"
+#include "win.h"
+static int         faults;
+static NATIVEFILE *copySource, *copyTarget;
+static NATIVEFILE *copyOpen(std::string_view path, NATIVEFILEMODE mode) {
+    NATIVEFILE *f = PfOpenNativeFile(path, mode);
+    if (mode == NATIVEFILEMODE::read)
+        copySource = f;
+    else
+        copyTarget = f;
+    return f;
+}
+static size_t copyRead(std::span<std::byte> data, NATIVEFILE *f) { return f == copySource && (faults & 1) ? 0 : CbReadNativeStream(data, f); }
+static bool   copyError(NATIVEFILE *f) { return FNativeStreamError(f) || (f == copySource && (faults & 1)); }
+static size_t copyWrite(std::span<const std::byte> data, NATIVEFILE *f) { return CbWriteNativeStream(faults & 2 ? data.first(data.size() / 2) : data, f); }
+static int    copyClose(NATIVEFILE *f) {
+    int forced = (f == copySource && (faults & 4)) || (f == copyTarget && (faults & 8));
+    if (f == copySource)
+        copySource = NULL;
+    if (f == copyTarget)
+        copyTarget = NULL;
+    int status = ICloseNativeFile(f);
+    if (forced) {
+        errno = EIO;
+        return EOF;
+    }
+    return status;
+}
+static int copyRemove(std::string_view path, bool fDirectory) {
+    assert(!fDirectory);
+    if (faults & 16) {
+        errno = EACCES;
+        return -1;
+    }
+    return remove(std::string{path}.c_str());
+}
+static void writeSource(int n) {
+    FILE *f = fopen("source", "wb");
+    assert(f);
+    for (int i = 0; i < n; i++)
+        assert(fputc((i * 31) % 251, f) != EOF);
+    assert(fclose(f) == 0);
+}
+static void verifyTarget(int n) {
+    FILE *f = fopen("target", "rb");
+    assert(f);
+    for (int i = 0; i < n; i++)
+        assert(fgetc(f) == (i * 31) % 251);
+    assert(fgetc(f) == EOF && !ferror(f));
+    assert(fclose(f) == 0);
+}
+int main(void) {
+    LIBRARYFILEIO io;
+    io.pfnOpen = copyOpen;
+    io.pfnRead = copyRead;
+    io.pfnWrite = copyWrite;
+    io.pfnError = copyError;
+    io.pfnClose = copyClose;
+    LIBRARYFILEIOSCOPE fileScope(io);
+    NATIVEPUBLISHIO    nativeIO;
+    nativeIO.pfnRemove = copyRemove;
+    NATIVEPUBLISHIOSCOPE nativeScope(nativeIO);
+    const int            lengths[] = {0, 1, 8191, 8192, 8193, 16384, 16385};
+    int                  cases = 0;
+    for (unsigned i = 0; i < sizeof(lengths) / sizeof(lengths[0]); i++) {
+        remove("target");
+        writeSource(lengths[i]);
+        assert(FCopyNativeFileExclusive("source", "target"));
+        verifyTarget(lengths[i]);
+        cases++;
+        writeSource(lengths[i] + 1);
+        errno = 0;
+        assert(!FCopyNativeFileExclusive("source", "target") && errno == EEXIST);
+        verifyTarget(lengths[i]);
+        cases++;
+    }
+    remove("source");
+    remove("target");
+    assert(!FCopyNativeFileExclusive("source", "target"));
+    assert(!fopen("target", "rb"));
+    cases++;
+    for (int bits = 0; bits < 32; bits++) {
+        remove("target");
+        writeSource(8193);
+        faults = bits;
+        copySource = copyTarget = NULL;
+        int ok = FCopyNativeFileExclusive("source", "target");
+        assert(ok == !(bits & 15));
+        int retained = ok || (bits & 16), length = (bits & 1) ? 0 : (bits & 2) ? 4096 : 8193;
+        if (retained)
+            verifyTarget(length);
+        else
+            assert(!fopen("target", "rb"));
+        FILE *f = fopen("source", "rb");
+        assert(f);
+        for (int i = 0; i < 8193; i++)
+            assert(fgetc(f) == (i * 31) % 251);
+        assert(fgetc(f) == EOF && !ferror(f));
+        assert(fclose(f) == 0);
+        cases++;
+    }
+    faults = 0;
+    remove("target");
+    writeSource(1);
+    assert(FCopyNativeFileExclusive("source", "target"));
+    faults = 4;
+    errno = 0;
+    assert(!FCopyNativeFileExclusive("source", "target") && errno == EEXIST);
+    verifyTarget(1);
+    cases++;
+    faults = 0;
+    printf("%d linked-copy cases: 15 real-stdio boundaries plus 33 read/write/close/cleanup receipt combinations\n", cases);
+    return 0;
+}

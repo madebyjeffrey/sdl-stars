@@ -215,9 +215,9 @@ A numbered race suffix is a library version, unrelated to player number.
 | `.hN` | 4 (`dtHist`) | N-1 | Last-known planets, other players/designs, filters, score history and AI memory. | Must match game and player; does not require the current turn number. |
 | `.rN` | 5 (`dtRace`) | writer uses -1 | One race/player snapshot plus race checksum. | Standalone. It does not contain hulls, fleets, or a universe. |
 
-Evidence: [save.c](../src/core/save.c) `SetSzWorkFromDt`, `WriteBOF`,
-`FWriteDataFile`; [log.c](../src/core/log.c) file writers;
-[race.c](../src/core/race.c) `FWasRaceFile`. `SetSzWorkFromDt` does not provide
+Evidence: [save.cpp](../src/core/save.cpp) `SetSzWorkFromDt`, `WriteBOF`,
+`FWriteDataFile`; [log.cpp](../src/core/log.cpp) file writers;
+[race.cpp](../src/core/race.cpp) `FWasRaceFile`. `SetSzWorkFromDt` does not provide
 a race suffix case: race writers supply an explicit filename to `FCreateFile`.
 The game title, library name and exchange basename remain distinct under
 [ADR 0001](../docs/adr/0001-desktop-managed-libraries.md).
@@ -686,9 +686,9 @@ Trace: [S01-US01](#s01-us01), [US02](#s01-us02),
 [family inventory](#21-file-family-inventory), [companion conditions](#23-companion-conditions-in-dafny),
 [canonical contracts](S01-game-file-contracts.dfy): `Bof`, `FSameGame`,
 `FOrdersFor`, `FHistoryFor`; [file rules](dafny/S01-files.dfy) `FLibraryFamily`.
-Evidence: [save.c](../src/core/save.c) `SetSzWorkFromDt`, `WriteBOF`;
-[file.c](../src/core/file.c) `FLoadGame`, `FOpenFile`;
-[log.c](../src/core/log.c) `FLoadLogFile`, `FWriteHistFile`.
+Evidence: [save.cpp](../src/core/save.cpp) `SetSzWorkFromDt`, `WriteBOF`;
+[file.cpp](../src/core/file.cpp) `FLoadGame`, `FOpenFile`;
+[log.cpp](../src/core/log.cpp) `FLoadLogFile`, `FWriteHistFile`.
 
 ```mermaid
 classDiagram
@@ -754,9 +754,9 @@ Trace: [S01-US01](#s01-us01), [state mapping](#22-state-and-lifetime),
 [appended turns](#33-appended-player-turns), [history](#34-history-hn),
 [canonical specification](S01-game-file-specification.dfy): `Snapshot`,
 `FDesignGroups`, `FSnapshot`, `FAppendedTurns`; [S06](S06-shared-game-state.md).
-Evidence: [save.c](../src/core/save.c) `FWriteDataFile`, `WritePlanet`,
-`WriteRtShDef`, `WriteFleet`; [file.c](../src/core/file.c) `FReadPlanet`,
-`FReadShDef`, `FReadFleet`; [log.c](../src/core/log.c) `FWriteHistFile`.
+Evidence: [save.cpp](../src/core/save.cpp) `FWriteDataFile`, `WritePlanet`,
+`WriteRtShDef`, `WriteFleet`; [file.cpp](../src/core/file.cpp) `FReadPlanet`,
+`FReadShDef`, `FReadFleet`; [log.cpp](../src/core/log.cpp) `FWriteHistFile`.
 
 ```mermaid
 classDiagram

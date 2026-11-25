@@ -1,0 +1,10 @@
+[package]
+name = "society-prototype"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+rdl = { path = "../rdl", default-features = false }
+scars-window = { path = "../scars/scars-window" }
+

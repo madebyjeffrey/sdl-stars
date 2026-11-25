@@ -2,7 +2,16 @@
 #include <stdarg.h>
 #include "win.h"
 
+#ifdef __cplusplus
+#include "uistate.h"
+#include "callbackcontext.h"
+// The archived native C hook keeps its ABI; this projection checks current owners.
+#define OBSERVER_OWNER_ARG app,
+int16_t __real_InitInstance(APPSESSION &app, int16_t nCmdShow);
+#else
+#define OBSERVER_OWNER_ARG
 int16_t __real_InitInstance(int16_t nCmdShow);
+#endif
 
 static HWND      stateWindow;
 static HWND      stateEdit;
@@ -74,6 +83,67 @@ static HWND StateFindDialog(const char *title) {
 
 // StateTimer publishes state on the UI thread, including during modal dialogs.
 static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD tick) {
+#ifdef __cplusplus
+    APPSESSION &app = *static_cast<APPSESSION *>(PvCompatCallbackContext());
+    // Keep the archived observation identifiers local to its fixed timer entry.
+    auto &cFleet = app.state.cFleet;
+    auto &cFutureTech = app.lpui->cFutureTech;
+    auto &cMsg = app.state.cMsg;
+    auto &cPlanet = app.state.cPlanet;
+    auto &crgbtnXfer = app.lpui->crgbtnXfer;
+    auto &dxResLeft = app.lpui->dxResLeft;
+    auto &dyArial8 = app.state.dyArial8;
+    auto &dySBar = app.lpui->dySBar;
+    auto &game = app.state.game;
+    auto &gd = app.state.gd;
+    auto &grbitScan = app.lpui->grbitScan;
+    auto &hwndBrowser = app.lpui->hwndBrowser;
+    auto &hwndFleetCompLB = app.lpui->hwndFleetCompLB;
+    auto &hwndFrame = app.lpui->hwndFrame;
+    auto &hwndMessage = app.lpui->hwndMessage;
+    auto &hwndMine = app.lpui->hwndMine;
+    auto &hwndPlanet = app.lpui->hwndPlanet;
+    auto &hwndPlanetProdLB = app.lpui->hwndPlanetProdLB;
+    auto &hwndProdDlg = app.lpui->hwndProdDlg;
+    auto &hwndRepCB = app.lpui->hwndRepCB;
+    auto &hwndReportDlg = app.lpui->hwndReportDlg;
+    auto &hwndScanner = app.lpui->hwndScanner;
+    auto &hwndScoreXDlg = app.lpui->hwndScoreXDlg;
+    auto &hwndShipDD = app.lpui->hwndShipDD;
+    auto &hwndShipLB = app.lpui->hwndShipLB;
+    auto &hwndSlotDlg = app.lpui->hwndSlotDlg;
+    auto &hwndTb = app.lpui->hwndTb;
+    auto &hwndTitle = app.lpui->hwndTitle;
+    auto &iMsgCur = app.state.iMsgCur;
+    auto &idPlayer = app.state.idPlayer;
+    auto &lpPlanets = app.state.lpPlanets;
+    auto &lpshdefBuild = app.lpui->lpshdefBuild;
+    auto &mdBuild = app.lpui->mdBuild;
+    auto &mdXferDlg = app.lpui->mdXferDlg;
+    auto &pctResGlob = app.lpui->pctResGlob;
+    auto &pxfer = app.state.pxfer;
+    auto &rcMsgTitle = app.lpui->rcMsgTitle;
+    auto &rcProdDiamond = app.lpui->rcProdDiamond;
+    auto &rcSpinBot = app.lpui->rcSpinBot;
+    auto &rcSpinTop = app.lpui->rcSpinTop;
+    auto &rgbtnXfer = app.lpui->rgbtnXfer;
+    auto &rghwndBtn = app.lpui->rghwndBtn;
+    auto &rghwndMsgBtn = app.lpui->rghwndMsgBtn;
+    auto &rghwndOrderDD = app.lpui->rghwndOrderDD;
+    auto &rglpfl = app.state.rglpfl;
+    auto &rgplr = app.state.rgplr;
+    auto &rgptPlan = app.state.rgptPlan;
+    auto &rgrcBuildSpin = app.lpui->rgrcBuildSpin;
+    auto &rgrcRef = app.lpui->rgrcRef;
+    auto &rgshdef = app.state.rgshdef;
+    auto &sel = app.state.sel;
+    auto &szWork = app.state.szWork;
+    auto &tutor = app.state.tutor;
+    auto &vprptCur = app.lpui->vprptCur;
+    auto &vrgrcSlot = app.lpui->vrgrcSlot;
+    auto &yTopFutureTech = app.lpui->yTopFutureTech;
+#endif
+
     int     i, j, x;
     RECT    rect;
     HWND    researchWindow, popupWindow;
@@ -93,7 +163,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     // Keep the previous complete observation until the input handler returns.
     if (fStateReading || cScannerInput != 0)
         return;
-    fStateReading = TRUE;
+    fStateReading = 1;
     stateLength = 0;
     memcpy(savedWork, szWork, sizeof(savedWork));
     StateAppend("version=1\nturn=%u\nyear=%u\nactive=%u\npage=%d\nbold=%d\nturnDone=%u\nautoComplete=%u\nerror=%d\nselection=%d|%d|%d\nmessage=%d\nfontHeight=%"
@@ -141,7 +211,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     if (popupWindow != NULL) {
         GetWindowThreadProcessId(popupWindow, &popupProcess);
         if (popupProcess == GetCurrentProcessId()) {
-            popupMenu = (HMENU)SendMessage(popupWindow, 0x01e1, 0, 0);
+            popupMenu = (HMENU)SendMessageA(popupWindow, 0x01e1, 0, 0);
             for (i = 0; i < GetMenuItemCount(popupMenu); i++) {
                 GetMenuStringA(popupMenu, i, menuText, sizeof(menuText), MF_BYPOSITION);
                 if (GetMenuItemRect(NULL, popupMenu, i, &rect)) {
@@ -153,7 +223,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     x = 4;
     for (i = 0; i < 29; i++) {
         int button = (int8_t)vrgTBBtn[i];
-        int width = DxOfBtn(button);
+        int width = DxOfBtn(OBSERVER_OWNER_ARG static_cast<ToolbarButton>(button));
         if (button >= 0) {
             SetRect(&rect, x, 0, x + width, 28);
             StateRect("toolbarButton", button, hwndTb, &rect);
@@ -184,15 +254,15 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     if (game.lid != 0 && idPlayer >= 0 && hwndScanner != NULL) {
         for (i = 0; i < game.cPlanMax; i++) {
             point = rgptPlan[i];
-            LogicalToScan(&point);
-            StateAppend("planet.%d=%s|%d|%d\n", i, PszGetPlanetName(i), point.x, point.y);
+            LogicalToScan(OBSERVER_OWNER_ARG &point);
+            StateAppend("planet.%d=%s|%d|%d\n", i, PszGetPlanetName(OBSERVER_OWNER_ARG i), point.x, point.y);
         }
         for (i = 0; i < cPlanet; i++) {
             planet = &lpPlanets[i];
             StateAppend("planetSettings.%d=%d|%u\n", planet->id, planet->iPlayer, planet->fNoResearch);
             if (planet->lpplprod != NULL) {
                 for (j = 0; j < planet->lpplprod->iprodMac; j++) {
-                    PROD *prod = &planet->lpplprod->rgprod[j];
+                    PROD *prod = &planet->lpplprod->rgprod()[j];
                     StateAppend("production.%d.%d=%u|%u|%u\n", planet->id, j, prod->grobj, prod->iItem, prod->cItem);
                 }
             }
@@ -203,13 +273,13 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
             if (fleet == NULL)
                 continue;
             point = fleet->pt;
-            LogicalToScan(&point);
-            StateAppend("fleet.%d=%s|%d|%d|%ld|%ld|%ld|%ld|%ld|%u\n", fleet->id, PszGetFleetName(fleet->id), point.x, point.y, (long)fleet->rgwtMin[0],
+            LogicalToScan(OBSERVER_OWNER_ARG &point);
+            StateAppend("fleet.%d=%s|%d|%d|%ld|%ld|%ld|%ld|%ld|%u\n", fleet->id, PszGetFleetName(OBSERVER_OWNER_ARG fleet->id), point.x, point.y, (long)fleet->rgwtMin[0],
                         (long)fleet->rgwtMin[1], (long)fleet->rgwtMin[2], (long)fleet->rgwtMin[3], (long)fleet->rgwtMin[4], fleet->fRepOrders);
             for (j = 0; j < fleet->cord; j++) {
-                order = &fleet->lpplord->rgord[j];
+                order = &fleet->lpplord->rgord()[j];
                 point = order->pt;
-                LogicalToScan(&point);
+                LogicalToScan(OBSERVER_OWNER_ARG &point);
                 StateAppend("waypoint.%d.%d=%d|%d|%u|%u|%d|%d\n", fleet->id, j, order->grobj, order->id, order->grTask, order->iWarp, point.x, point.y);
             }
         }
@@ -226,8 +296,9 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
         StateAppend("transferMode=%d\n", mdXferDlg);
         for (i = 0; i < 2; i++) {
             if (pxfer[i].grobj == grobjFleet) {
-                StateAppend("transferFleet.%d=%d|%ld|%ld|%ld\n", i, pxfer[i].fl.id, (long)pxfer[i].fl.rgwtMin[3], (long)pxfer[i].fl.rgwtMin[4],
-                            (long)LGetFleetStat(&pxfer[i].fl, 1));
+                FLEET &fl = pxfer[i].fl();
+                StateAppend("transferFleet.%d=%d|%ld|%ld|%ld\n", i, fl.id, (long)fl.rgwtMin[3], (long)fl.rgwtMin[4],
+                            (long)LGetFleetStat(OBSERVER_OWNER_ARG &fl, 1));
             }
         }
         for (i = 0; i < crgbtnXfer; i++) {
@@ -247,7 +318,7 @@ static void CALLBACK StateTimer(HWND window, UINT message, UINT_PTR timer, DWORD
     }
     SetWindowTextA(stateEdit, stateText);
     memcpy(szWork, savedWork, sizeof(savedWork));
-    fStateReading = FALSE;
+    fStateReading = 0;
 }
 
 // StateWindowProc refreshes observations synchronously without changing game state.
@@ -260,9 +331,15 @@ static LRESULT CALLBACK StateWindowProc(HWND window, UINT message, WPARAM wParam
 }
 
 // __wrap_InitInstance installs an observer after the real application initializes.
+#ifdef __cplusplus
+int16_t __wrap_InitInstance(APPSESSION &app, int16_t nCmdShow) {
+    auto &hInst = app.lpui->hInst;
+    auto &hwndFrame = app.lpui->hwndFrame;
+#else
 int16_t __wrap_InitInstance(int16_t nCmdShow) {
+#endif
     WNDCLASSA observerClass = {0};
-    int16_t   result = __real_InitInstance(nCmdShow);
+    int16_t   result = __real_InitInstance(OBSERVER_OWNER_ARG nCmdShow);
     if (result == 0)
         return result;
     observerClass.lpfnWndProc = StateWindowProc;
@@ -278,7 +355,7 @@ int16_t __wrap_InitInstance(int16_t nCmdShow) {
         fputs("Cannot create tutorial test observer\n", stderr);
         ExitProcess(2);
     }
-    SendMessage(stateEdit, EM_SETLIMITTEXT, sizeof(stateText), 0);
+    SendMessageA(stateEdit, EM_SETLIMITTEXT, sizeof(stateText), 0);
     StateTimer(stateWindow, WM_TIMER, 1, GetTickCount());
     return result;
 }

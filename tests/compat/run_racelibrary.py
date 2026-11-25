@@ -47,7 +47,7 @@ def main():
                    STARS_CLIENT_RACE_LIBRARY_TEST="1", STARS_CLIENT_RACE_IMPORT_SOURCE=str(source),
                    STARS_CLIENT_RACE_IMPORT_SNAPSHOT=str(snapshot),
                    SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy", STARS_SDL_RENDERER="software",
-                   STARS_FILE_DIALOG_BACKEND="compat")
+                   STARS_FILE_DIALOG_BACKEND="native")
         try:
             subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=60)
         except subprocess.CalledProcessError:

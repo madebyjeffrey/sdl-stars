@@ -2,6 +2,7 @@
 
 Status: source-derived detailed specification; logical ownership is proposed.
 Inspected: `e2eae18cff0f990db20415c1c2262aed2022f95b`, 2026-10-24.
+Integer-format continuation: `e3222eb1fbdb01d68067231b5d5ef14a71759b30`, 2026-10-27.
 
 Canonical entry: [S04-platform-specification.dfy](S04-platform-specification.dfy);
 [rules and proofs](dafny/S04-platform.dfy). Behavior statuses and evidence follow
@@ -71,7 +72,7 @@ output operations. The contract never silently truncates a successful path.
 `PathFits` describes valid nonempty text fitting with a terminator. Returned paths
 use generic `/` separators. `DirectoryChanged` distinguishes a successful actual
 create/remove from no change or an error; remove is not recursive. File open/read/
-write/seek/close wrappers in [native.c](../src/platform/native.c) retain native
+write/seek/close wrappers in [native.cpp](../src/platform/native.cpp) retain native
 modes and caller-visible errors (E04-1), not S01-level transaction guarantees.
 
 Temporary directory creation canonicalizes the temp base and tries up to 64
@@ -88,7 +89,7 @@ The [byte-level prefix model](dafny/S04-utf8-prefix.dfy) supplies `Count`,
 suffix and NUL stopping. S02 consumes it for exact profile buffer accounting;
 `Utf8Copy` below remains the separate reject-on-insufficient-capacity projection.
 
-[encoding.c](../src/platform/encoding.c) rejects malformed UTF-8, overlong forms,
+[encoding.cpp](../src/platform/encoding.cpp) rejects malformed UTF-8, overlong forms,
 surrogates, values above U+10FFFF and embedded NUL for the bounded validation API.
 `Utf8Copy` classifies zero capacity/insufficient capacity as too small, malformed
 input as invalid, and otherwise successful copy. Native return codes and empty
@@ -144,6 +145,7 @@ not a proved runtime outcome. The dated collection run records actual checks.
 | <a id="s04-ac05"></a>**S04-AC05** / [S04-US03](#s04-us03) | Given a clock wrapping from 4294967290 to 5, when using modulo elapsed subtraction, then obtain 11 ticks. | `TickDelta`, vectors; caller convention |
 | <a id="s04-ac06"></a>**S04-AC06** / [S04-US03](#s04-us03) | Given equal comparator results, when sorting, then preserve the qsort16 algorithm’s outcome rather than assuming stability. | E04-3; qsort16; regression |
 | <a id="s04-ac07"></a>**S04-AC07** / [S04-US04](#s04-us04) | Given 64 temp-name collisions, when attempting creation, then fail after the bounded attempts without claiming a directory was created. | `Attempts`; E04-1 native loop |
+| <a id="s04-ac08"></a>**S04-AC08** / [S04-US03](#s04-us03) | Given a NUL-free literal/%d/%% template shorter than 256 bytes, one promoted signed-32 integer and output fitting the actual destination and formatter limit, preserve decimal sign/digits and literal percent bytes. Distinguish another conversion from a second absent argument. | `S04IntegerFormat.Format`, `DecimalTemplate`, `CallDomain`, `Fits`; [helper contract](S03-player-labels-and-race-titles.md#m04-preset-plural-and-title-handoffs) and actual CchSprintf/wsprintfA cases. Full formatting grammar/failure/truncation remains E04-2. |
 
 ## 5. Interaction and quality requirements
 
@@ -194,12 +196,12 @@ further decomposition; it is not a claim that their algorithms are proved.
 | Boundary | Scope and limitation | Owner / next evidence or decision |
 | --- | --- | --- |
 | E04-1 | Actual filesystem/open modes, path canonicalization, OS errors, temp randomness/races, permissions, handles and cleanup are native adapters. The predicates classify supplied outcomes, not external effects. | S04/S01/S02; filesystem tests and platform/fault matrix. |
-| E04-2 | Full UTF-8/UTF-16/CP1252 decoding and formatting/varargs/error returns are native implementations of shared byte/text contracts. Prefix truncation now has a byte-level checked model and source-extracted witnesses; complete caller mapping and cross-platform runtime evidence remain open. | S04/S01/S05; encoding and formatter boundary fixtures. |
+| E04-2 | Full UTF-8/UTF-16/CP1252 decoding and formatting/varargs/error returns are native implementations of shared byte/text contracts. Prefix truncation now has a byte-level checked model and linked production witnesses; complete caller mapping and cross-platform runtime evidence remain open. | S04/S01/S05; encoding and formatter boundary fixtures. |
 | E04-3 | qsort16 implementation refinement, extreme native integer domains, binary64 rounding, actual clocks and wrap handling by each caller remain external obligations. | S04/S06/gameplay; arithmetic/sort tests, cross-platform regression and clock-boundary qualification. |
 
 ## 7. Evidence and verification
 
-[native services](../src/platform/native.c), [filesystem API](../src/platform/filesystem.h), [encoding](../src/platform/encoding.c), [filesystem tests](../tests/compat/filesystem.c), [encoding tests](../tests/unit/test_encoding.c), and [Unicode contract](../docs/UNICODE-BOUNDARIES.md). No filesystem safety or cross-platform guarantee is inferred merely from mathematical predicates.
+[native services](../src/platform/native.cpp), [filesystem API](../src/platform/filesystem.h), [encoding](../src/platform/encoding.cpp), [filesystem tests](../tests/compat/filesystem.cpp), [encoding tests](../tests/unit/test_encoding.cpp), and [Unicode contract](../docs/UNICODE-BOUNDARIES.md). No filesystem safety or cross-platform guarantee is inferred merely from mathematical predicates.
 
 [Collection verification](README.md#remaining-specifications-verification)
 records exact commands and outcomes for this batch. Proofs establish only the
@@ -258,3 +260,37 @@ stateDiagram-v2
 ```
 
 The input gate is a contract projection for the relevant API, not a claim that every native wrapper runs one shared validator. Empty picker results are not valid empty filenames. Sort/rounding/clock boundaries retain their own exact contracts; no new arithmetic or filesystem guarantee is introduced.
+
+
+### Race filename-prefix adapter evidence
+
+The [M02 state companion](M02-native-state-and-save.md) reuses canonical
+S04Utf8Prefix Count/Prefix for the fifteen-byte legacy cache and 255-byte UI
+suggestion, including malformed-input stopping and preserved unused buffer
+tails. Actual encoding/SetSzRaceFile bodies are compared with an independent
+maximal-valid-prefix oracle in the race workflow fixture. This supplements
+existing prefix contracts without replacing them or qualifying every native
+path/Unicode comparison/OS backend. See the [continuation evidence](README.md#m02-native-state-version-and-save-continuation).
+
+The [M02 allocation companion](M02-race-file-allocation.md) specifies its callers'
+1000-attempt temporary-name loops, unsigned tick/counter text, 239-byte UTF-8
+suggestion cut and open/copy/cleanup receipts. Native controller fixtures check
+names and call order; real-stdio cases distinguish `wb` self-truncation from
+`wbx` collision protection and expose read/write/close/cleanup failures. These
+are caller contracts and selected native evidence, not closure of E04-1's actual
+OS/path/concurrency domain. GAP-22's missing final suggestion budget belongs to
+M02 with S04/S05 qualification; it adds no generic platform guard.
+
+The [M02 file-action companion](M02-race-file-actions.md) composes those receipts
+with Duplicate/Export/Delete and separates a local failed replacement from the
+whole export's effects. GAP-23 retains literal destination/temporary equality:
+exclusive creation may already have changed an initially absent destination.
+Its returning-service source fixture does not close native path aliases,
+concurrency, picker ABI or the complete filesystem error matrix in E04-1.
+
+The [M02 import companion](M02-race-import.md) now composes stage/copy/save with
+source/name choice and customization wrappers. Current import publishes before
+the second parser call, and ordinary FALSE can retain a target when removal
+fails. Logical hf closure remains distinct from physical descriptor release.
+Full native decoder/BOF/credential, UI and filesystem refinement remains with
+S01/S04/S05; these controller receipts are not an atomicity/durability guarantee.

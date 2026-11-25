@@ -14,7 +14,9 @@ if(APPLE AND STARS_MACOS_BUNDLE)
     # SDL_GetBasePath returns Contents/Resources for a Cocoa app bundle.
     set(STARS_DATA_FROM_BIN ".")
 endif()
-target_compile_definitions(stars_win32 PRIVATE STARS_INSTALLED_DATA="${STARS_DATA_FROM_BIN}")
+configure_file("${PROJECT_SOURCE_DIR}/compat/win32/src/installed_data.h.in"
+    "${STARS_GENERATED_DIR}/installed_data.h" @ONLY)
+target_include_directories(stars_win32 PRIVATE "${STARS_GENERATED_DIR}")
 file(RELATIVE_PATH STARS_LIB_FROM_BIN "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
     "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

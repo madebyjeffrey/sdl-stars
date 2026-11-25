@@ -1,0 +1,60 @@
+import stars.catalog
+
+(* create.cpp:761..832. Priority lists apply only to listed placeholders;
+   fallback preserves the template, even when that placeholder is not currently
+   eligible. Starbases skip this upgrade pass entirely. *)
+type StartingPartUpgrade = {
+  state: StartingState;
+  category: string;
+  initial_index: integer;
+  colony_ship_hull: bool = false;
+  starbase: bool = false;
+  derive result: integer = if self.starbase then self.initial_index else
+    if self.category = "engine" && (self.initial_index = 1) then
+      (if (self.state.race.Habitability.radiation.immune || not self.colony_ship_hull || self.state.race.Habitability.radiation.preferred >= 85) && (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iengineRadiatingHydroRamScoop; }).eligible then 10 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iengineAlphaDrive8; }).eligible then 5 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iengineDaddyLongLegs7; }).eligible then 4 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iengineFuelMizer; }).eligible then 2 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iengineLongHump6; }).eligible then 3 else
+       self.initial_index)
+    else     if self.category = "shield" && (self.initial_index = 0 || self.initial_index = 1) then
+      (if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_ishieldWolverineDiffuseShield; }).eligible then 2 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_ishieldCowHideShield; }).eligible then 1 else
+       self.initial_index)
+    else     if self.category = "armor" && (self.initial_index = 0 || self.initial_index = 1) then
+      (if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iarmorCarbonicArmor; }).eligible then 2 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iarmorCrobmnium; }).eligible then 1 else
+       self.initial_index)
+    else     if self.category = "beam" && (self.initial_index = 0 || self.initial_index = 1) then
+      (if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_ibeamYakimoraLightPhaser; }).eligible then 3 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_ibeamXRayLaser; }).eligible then 1 else
+       self.initial_index)
+    else     if self.category = "torpedo" && (self.initial_index = 0) then
+      (if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_itorpBetaTorpedo; }).eligible then 1 else
+       self.initial_index)
+    else     if self.category = "bomb" && (self.initial_index = 0) then
+      (if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_ibombBlackCatBomb; }).eligible then 1 else
+       self.initial_index)
+    else     if self.category = "mining" && (self.initial_index = 0 || self.initial_index = 1) then
+      (if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iminingRoboMiner; }).eligible then 2 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iminingRoboMidgetMiner; }).eligible then 0 else
+       self.initial_index)
+    else     if self.category = "scanner" && (self.initial_index = 0 || self.initial_index = 1) then
+      (if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iscannerPossumScanner; }).eligible then 4 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iscannerMoleScanner; }).eligible then 2 else
+       if (EquipmentEligibility { race = self.state.race; technology = self.state.technology; part = part_iscannerRhinoScanner; }).eligible then 1 else
+       self.initial_index)
+    else self.initial_index;
+}
+
+(* create.cpp:591. Home template's originally empty first slot receives the
+   PRT installation. Second-world templates already contain their fitted part. *)
+type StartingBaseSlot = {
+  state: StartingState;
+  template_index: integer;
+  slot: StartingSlot;
+  derive injected: bool = self.template_index = 0 && self.slot.slot = 0
+    && (self.state.has_mass_driver || self.state.has_home_gate);
+  derive part_index: integer = if self.injected then (if self.state.has_mass_driver then 7 else 0) else self.slot.part_index;
+  derive quantity: integer = if self.injected then 1 else self.slot.quantity;
+}

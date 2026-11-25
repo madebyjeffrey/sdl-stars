@@ -1,0 +1,2656 @@
+{
+  "source_parent": "0911d08f",
+  "initialization_sites": [
+    {
+      "path": "src/ui/stars.cpp",
+      "line": 24,
+      "code": "std::memset(&app.state.tutor, 0, sizeof(TUTOR))",
+      "replacement": "app.state.tutor = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/stars.cpp",
+      "line": 25,
+      "code": "std::memset(&app.lpui->vtimer, 0, sizeof(TIMER))",
+      "replacement": "app.lpui->vtimer = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "line": 371,
+      "code": "std::memset(lpplprodT->rgprod(), 0, cMax * 4)",
+      "replacement": "std::fill_n(lpplprodT->rgprod(), cMax, PROD{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "line": 13,
+      "code": "std::memset(app.state.vrgZip, 0, 96)",
+      "replacement": "std::fill_n(app.state.vrgZip, 4, ZIPORDER{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/preferencesui.cpp",
+      "line": 46,
+      "code": "std::memset(app.state.vrgZipProd, 0, 200)",
+      "replacement": "std::fill_n(app.state.vrgZipProd, 5, ZIPPRODQ{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "line": 1328,
+      "code": "std::memset(plf, 0, sizeof(LOGFONT))",
+      "replacement": "*plf = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "line": 931,
+      "code": "std::memset(rgWhatsHere, 0, 999)",
+      "replacement": "std::ranges::fill(rgWhatsHere, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "line": 1758,
+      "code": "std::memset(rgDup, 0, app.state.sel.fl.cord * 2)",
+      "replacement": "std::fill_n(rgDup, app.state.sel.fl.cord, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "line": 2401,
+      "code": "std::memset(reinterpret_cast<std::uint8_t *>(lpord) - 10, 0, 10)",
+      "replacement": "lpord[-1].txp = {}",
+      "disposition": "typed-subobject-reset",
+      "reason": "Reset the existing native task/template subobject while retaining its enclosing header; every original payload bit remains represented by the actual typed members."
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "line": 601,
+      "code": "std::memset(rgfSeen, 0, 0x100)",
+      "replacement": "std::ranges::fill(rgfSeen, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "line": 332,
+      "code": "std::memset(app.state.vplr.szName, 0, 32)",
+      "replacement": "std::ranges::fill(app.state.vplr.szName, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "line": 334,
+      "code": "std::memset(app.state.vplr.szNames, 0, 32)",
+      "replacement": "std::ranges::fill(app.state.vplr.szNames, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "line": 340,
+      "code": "std::memset(app.state.vplr.szName, 0, 32)",
+      "replacement": "std::ranges::fill(app.state.vplr.szName, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "line": 343,
+      "code": "std::memset(app.state.vplr.szNames, 0, 32)",
+      "replacement": "std::ranges::fill(app.state.vplr.szNames, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "line": 1442,
+      "code": "std::memset(&ofn, 0, sizeof(OPENFILENAME))",
+      "replacement": "ofn = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 206,
+      "code": "std::memset(&app.state.tutor, 0, sizeof(TUTOR))",
+      "replacement": "app.state.tutor = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 251,
+      "code": "std::memset(reinterpret_cast<std::uint8_t *>(reinterpret_cast<ZIPPRODQ *>(app.state.vrgZipProd)) + 14, 0, 26)",
+      "replacement": "app.state.vrgZipProd[0].SetZpq1({})",
+      "disposition": "typed-subobject-reset",
+      "reason": "Reset the existing native task/template subobject while retaining its enclosing header; every original payload bit remains represented by the actual typed members."
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 357,
+      "code": "std::memset(&app.state.tutor, 0, sizeof(TUTOR))",
+      "replacement": "app.state.tutor = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 969,
+      "code": "std::memset(&ofn, 0, sizeof(ofn))",
+      "replacement": "ofn = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 970,
+      "code": "std::memset(szTarget, 0, sizeof(szTarget))",
+      "replacement": "std::ranges::fill(szTarget, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1040,
+      "code": "std::memset(&ofn, 0, sizeof(ofn))",
+      "replacement": "ofn = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1041,
+      "code": "std::memset(szTarget, 0, sizeof(szTarget))",
+      "replacement": "std::ranges::fill(szTarget, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1183,
+      "code": "std::memset(&ofn, 0, sizeof(ofn))",
+      "replacement": "ofn = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1184,
+      "code": "std::memset(szSource, 0, sizeof(szSource))",
+      "replacement": "std::ranges::fill(szSource, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1674,
+      "code": "std::memset(&ofn, 0, sizeof(ofn))",
+      "replacement": "ofn = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1675,
+      "code": "std::memset(szZipName, 0, sizeof(szZipName))",
+      "replacement": "std::ranges::fill(szZipName, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1724,
+      "code": "std::memset(&le, 0, sizeof(le))",
+      "replacement": "le = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1731,
+      "code": "std::memset(&li, 0, sizeof(li))",
+      "replacement": "li = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1925,
+      "code": "std::memset(&lm, 0, sizeof(lm))",
+      "replacement": "lm = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1996,
+      "code": "std::memset(&ofn, 0, sizeof(ofn))",
+      "replacement": "ofn = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 1997,
+      "code": "std::memset(pszChosen, 0, cchChosen)",
+      "replacement": "std::fill_n(pszChosen, cchChosen, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 2113,
+      "code": "std::memset(&li, 0, sizeof(li))",
+      "replacement": "li = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 2425,
+      "code": "std::memset(&ofn, 0, sizeof(ofn))",
+      "replacement": "ofn = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 2426,
+      "code": "std::memset(szChosen, 0, sizeof(szChosen))",
+      "replacement": "std::ranges::fill(szChosen, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/libraryui.cpp",
+      "line": 2809,
+      "code": "std::memset(&continueLibrary, 0, sizeof(continueLibrary))",
+      "replacement": "continueLibrary = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/scaninspect.cpp",
+      "line": 105,
+      "code": "std::memset(&scan, 0, sizeof(scan))",
+      "replacement": "scan = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "line": 66,
+      "code": "std::memset(rgszLibraryRaceNew, 0, sizeof(rgszLibraryRaceNew))",
+      "replacement": "for (auto &sz : rgszLibraryRaceNew) std::ranges::fill(sz, char{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "line": 67,
+      "code": "std::memset(app.state.vrgplrTypeNew, 0, 16)",
+      "replacement": "std::ranges::fill(app.state.vrgplrTypeNew, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "line": 70,
+      "code": "std::memset(&app.state.game, 0, sizeof(GAME))",
+      "replacement": "app.state.game = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 331,
+      "code": "std::memset(&zs, 0, sizeof(zs))",
+      "replacement": "zs = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 1049,
+      "code": "std::memset(&pd, 0, sizeof(PRINTDLG))",
+      "replacement": "pd = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 1751,
+      "code": "std::memset(&ofn, 0, sizeof(OPENFILENAME))",
+      "replacement": "ofn = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "line": 477,
+      "code": "std::memset(lpshdef, 0, sizeof(SHDEF))",
+      "replacement": "*lpshdef = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "line": 480,
+      "code": "std::memset(lpshdef->hul.rghs, 0, 64)",
+      "replacement": "std::fill_n(lpshdef->hul.rghs, 16, HS{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "line": 930,
+      "code": "std::memset(reinterpret_cast<std::uint8_t *>(&app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct]) + 8, 0, 10)",
+      "replacement": "app.state.sel.fl.lpplord->rgord()[app.state.sel.iwpAct].txp = {}",
+      "disposition": "typed-subobject-reset",
+      "reason": "Reset the existing native task/template subobject while retaining its enclosing header; every original payload bit remains represented by the actual typed members."
+    },
+    {
+      "path": "src/core/memory.cpp",
+      "line": 110,
+      "code": "std::memset(static_cast<std::byte *>(hmem) + cbCur, 0, cbGrow)",
+      "replacement": "std::fill_n(static_cast<std::byte *>(hmem) + cbCur, cbGrow, std::byte{})",
+      "disposition": "explicit-byte-fill",
+      "reason": "Initialize only the grown arena suffix while preserving every existing object and rounded spare-slot byte."
+    },
+    {
+      "path": "src/core/memory.cpp",
+      "line": 377,
+      "code": "std::memset(storage.data(), 0, sizeof(ORDER))",
+      "replacement": "std::ranges::fill(storage.first(sizeof(ORDER)), std::byte{})",
+      "disposition": "explicit-byte-fill",
+      "reason": "Clear the validated physical ORDER storage before partial-prefix decode; bytes outside the received prefix remain observable through order equality."
+    },
+    {
+      "path": "src/core/log.cpp",
+      "line": 351,
+      "code": "std::memset(&lxNew, 0, sizeof(LOGXFER))",
+      "replacement": "lxNew = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/log.cpp",
+      "line": 901,
+      "code": "std::memset(lpxfCur, 0, sizeof(XFERFULL))",
+      "replacement": "*lpxfCur = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/log.cpp",
+      "line": 1345,
+      "code": "std::memset(rtlh.rgbUnused, 0, sizeof(rtlh.rgbUnused))",
+      "replacement": "std::ranges::fill(rtlh.rgbUnused, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/util.cpp",
+      "line": 1021,
+      "code": "std::memset(lpfl, 0, sizeof(FLEET))",
+      "replacement": "*lpfl = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/util.cpp",
+      "line": 1088,
+      "code": "std::memset(rgdp, 0, 64)",
+      "replacement": "std::ranges::fill(rgdp, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/util.cpp",
+      "line": 1089,
+      "code": "std::memset(rgcshDamaged, 0, 32)",
+      "replacement": "std::ranges::fill(rgcshDamaged, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/util.cpp",
+      "line": 1930,
+      "code": "std::memset(&score, 0, sizeof(SCORE))",
+      "replacement": "score = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "line": 93,
+      "code": "std::memset(app.state.vrgPlanResExtra, 0, app.state.game.cPlanMax * 2)",
+      "replacement": "std::fill_n(app.state.vrgPlanResExtra, app.state.game.cPlanMax, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "line": 96,
+      "code": "std::memset(app.state.vrgiplrPopScore, 0xff, app.state.game.cPlanMax * sizeof(std::int16_t))",
+      "replacement": "std::fill_n(app.state.vrgiplrPopScore, app.state.game.cPlanMax, std::int16_t{-1})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "line": 305,
+      "code": "std::memset(rgfNoXFile, 0, 16)",
+      "replacement": "std::ranges::fill(rgfNoXFile, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "line": 443,
+      "code": "std::memset(app.state.vrgPlanResExtra, 0, app.state.game.cPlanMax * 2)",
+      "replacement": "std::fill_n(app.state.vrgPlanResExtra, app.state.game.cPlanMax, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "line": 1478,
+      "code": "std::memset(&flDead, 0, sizeof(FLEET))",
+      "replacement": "flDead = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/turn.cpp",
+      "line": 1881,
+      "code": "std::memset(&flDead, 0, sizeof(FLEET))",
+      "replacement": "flDead = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/save.cpp",
+      "line": 226,
+      "code": "std::memset(lpord + 1, 0, sizeof(ORDER))",
+      "replacement": "lpord[1] = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/save.cpp",
+      "line": 331,
+      "code": "std::memset(&plrT.idPlanetHome, 0, reinterpret_cast<std::uint8_t *>(&plrT.szName) - reinterpret_cast<std::uint8_t *>(&plrT.idPlanetHome))",
+      "replacement": "std::memset(&plrT.idPlanetHome, 0, reinterpret_cast<std::uint8_t *>(&plrT.szName) - reinterpret_cast<std::uint8_t *>(&plrT.idPlanetHome))",
+      "disposition": "retained-byte-range",
+      "reason": "Clear only the encoded player prefix preceding the retained UTF-8 names, including reserved physical bits; a whole PLAYER reset would discard retained fields."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "line": 651,
+      "code": "std::memset(rgb, 0, 80)",
+      "replacement": "std::fill_n(rgb, 80, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/core/save.cpp",
+      "line": 957,
+      "code": "std::memset(&rtbof, 0, sizeof(rtbof))",
+      "replacement": "rtbof = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 37,
+      "code": "std::memset(app.state.vlpbAiPlanet, 0, app.state.game.cPlanMax * 16)",
+      "replacement": "std::fill_n(app.state.vlpbAiPlanet, app.state.game.cPlanMax * 16, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 159,
+      "code": "std::memset(rgRecycleShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 177,
+      "code": "std::memset(rgRecycleSBShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleSBShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 180,
+      "code": "std::memset(rgRecycleSBShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleSBShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 183,
+      "code": "std::memset(rgRecycleSBShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleSBShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 424,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 437,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 916,
+      "code": "std::memset(rgRecycleShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 1201,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 1263,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ai.cpp",
+      "line": 1309,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 298,
+      "code": "std::memset(rggrfAttack, 0, 32)",
+      "replacement": "std::fill_n(rggrfAttack, 16, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 299,
+      "code": "std::memset(rgcsh, 0, 64)",
+      "replacement": "std::ranges::fill(rgcsh, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 458,
+      "code": "std::memset(rgctok, 0, 16)",
+      "replacement": "std::ranges::fill(rgctok, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 955,
+      "code": "std::memset(mpiplrdibrc, 255, 16)",
+      "replacement": "std::ranges::fill(mpiplrdibrc, 255)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 961,
+      "code": "std::memset(rgfTorp, 0, 16)",
+      "replacement": "std::ranges::fill(rgfTorp, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 1972,
+      "code": "std::memset(&flDead, 0, sizeof(FLEET))",
+      "replacement": "flDead = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2082,
+      "code": "std::memset(app.state.lpbBattleCur, 0, 8)",
+      "replacement": "std::fill_n(app.state.lpbBattleCur, 8, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2315,
+      "code": "std::memset(rgPlrLosses, 0, 0x200)",
+      "replacement": "std::ranges::fill(rgPlrLosses, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2317,
+      "code": "std::memset(rgfInit, 0, 64)",
+      "replacement": "std::ranges::fill(rgfInit, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2318,
+      "code": "std::memset(app.state.vrgtok, 0, 256 * sizeof(TOK))",
+      "replacement": "std::fill_n(app.state.vrgtok, 256, TOK{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2322,
+      "code": "std::memset(app.state.rgTechBattle, 0, 6)",
+      "replacement": "std::ranges::fill(app.state.rgTechBattle, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2323,
+      "code": "std::memset(app.state.rgTechTrader, 0, 13)",
+      "replacement": "std::ranges::fill(app.state.rgTechTrader, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2581,
+      "code": "std::memset(rgcfl, 0, 16)",
+      "replacement": "std::ranges::fill(rgcfl, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/aiutil.cpp",
+      "line": 27,
+      "code": "std::memset(&shdef, 0, sizeof(SHDEF))",
+      "replacement": "shdef = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/aiutil.cpp",
+      "line": 116,
+      "code": "std::memset(rgfBmpUsed, 0, 8)",
+      "replacement": "std::ranges::fill(rgfBmpUsed, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/aiutil.cpp",
+      "line": 246,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/aiutil.cpp",
+      "line": 264,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/aiutil.cpp",
+      "line": 675,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/aiutil.cpp",
+      "line": 962,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/aiutil.cpp",
+      "line": 1167,
+      "code": "std::memset(app.state.lpplProdGlob->rgprod(), 0, 4)",
+      "replacement": "std::fill_n(app.state.lpplProdGlob->rgprod(), 1, PROD{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/aiutil.cpp",
+      "line": 1835,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ship2.cpp",
+      "line": 33,
+      "code": "std::memset(rgpct, 0, 32)",
+      "replacement": "std::ranges::fill(rgpct, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ship2.cpp",
+      "line": 67,
+      "code": "std::memset(&flDead, 0, sizeof(FLEET))",
+      "replacement": "flDead = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/turn3.cpp",
+      "line": 550,
+      "code": "std::memset(app.state.rgTechBattle, 0, 6)",
+      "replacement": "std::ranges::fill(app.state.rgTechBattle, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn3.cpp",
+      "line": 551,
+      "code": "std::memset(app.state.rgTechTrader, 0, 13)",
+      "replacement": "std::ranges::fill(app.state.rgTechTrader, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "line": 328,
+      "code": "std::memset(pprodPartial, 0, sizeof(PROD))",
+      "replacement": "*pprodPartial = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "line": 800,
+      "code": "std::memset(rgcCol, 0, 64)",
+      "replacement": "std::ranges::fill(rgcCol, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "line": 801,
+      "code": "std::memset(rgcPower, 0, 64)",
+      "replacement": "std::ranges::fill(rgcPower, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "line": 912,
+      "code": "std::memset(app.state.rgTechBattle, 0, 6)",
+      "replacement": "std::ranges::fill(app.state.rgTechBattle, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "line": 913,
+      "code": "std::memset(app.state.rgTechTrader, 0, 13)",
+      "replacement": "std::ranges::fill(app.state.rgTechTrader, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "line": 937,
+      "code": "std::memset(&prod, 0, sizeof(PROD))",
+      "replacement": "prod = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/turn2.cpp",
+      "line": 1601,
+      "code": "std::memset(rgcCond, 0, 16)",
+      "replacement": "std::ranges::fill(rgcCond, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/thing.cpp",
+      "line": 16,
+      "code": "std::memset(&thNew, 0, sizeof(THING))",
+      "replacement": "thNew = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 52,
+      "code": "std::memset(&shdef, 0, sizeof(SHDEF))",
+      "replacement": "shdef = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 109,
+      "code": "std::memset(pplr, 0, sizeof(PLAYER))",
+      "replacement": "*pplr = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 221,
+      "code": "std::memset(app.state.rgplr, 0, app.state.game.cPlayer * 192)",
+      "replacement": "std::fill_n(app.state.rgplr, app.state.game.cPlayer, PLAYER{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 381,
+      "code": "std::memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING))",
+      "replacement": "std::fill_n(app.state.lpThings, app.state.cThingAlloc, THING{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 616,
+      "code": "std::memset(app.state.vlprgScoreX, 0, app.state.game.cPlayer * sizeof(SCOREX))",
+      "replacement": "std::fill_n(app.state.vlprgScoreX, app.state.game.cPlayer, SCOREX{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 665,
+      "code": "std::memset(app.state.lpThings, 0, app.state.cThingAlloc * sizeof(THING))",
+      "replacement": "std::fill_n(app.state.lpThings, app.state.cThingAlloc, THING{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 687,
+      "code": "std::memset(lpth, 0, sizeof(THING))",
+      "replacement": "*lpth = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 863,
+      "code": "std::memset(lppl, 0, sizeof(PLANET))",
+      "replacement": "*lppl = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 1028,
+      "code": "std::memset(lpfl, 0, sizeof(FLEET))",
+      "replacement": "*lpfl = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 1035,
+      "code": "std::memset(lpfl->lpplord->rgord(), 0, (lpfl->cord + 1) * 18)",
+      "replacement": "std::fill_n(lpfl->lpplord->rgord(), lpfl->cord + 1, ORDER{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/file.cpp",
+      "line": 1039,
+      "code": "std::memset(app.state.rgbCur, 0, 18)",
+      "replacement": "std::fill_n(app.state.rgbCur, 18, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/core/create.cpp",
+      "line": 174,
+      "code": "std::memset(grUsed, 0, 128)",
+      "replacement": "std::ranges::fill(grUsed, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/create.cpp",
+      "line": 190,
+      "code": "std::memset(app.state.lpPlanets, 0, cPlanMax * sizeof(PLANET))",
+      "replacement": "std::fill_n(app.state.lpPlanets, cPlanMax, PLANET{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/create.cpp",
+      "line": 574,
+      "code": "std::memset(lpshdef + 4, 0, 6 * sizeof(SHDEF))",
+      "replacement": "std::fill_n(lpshdef + 4, 6, SHDEF{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/create.cpp",
+      "line": 619,
+      "code": "std::memset(lpshdef, 0, 16 * sizeof(SHDEF))",
+      "replacement": "std::fill_n(lpshdef, 16, SHDEF{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/create.cpp",
+      "line": 1011,
+      "code": "std::memset(&app.state.game, 0, sizeof(GAME))",
+      "replacement": "app.state.game = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/create.cpp",
+      "line": 1353,
+      "code": "std::memset(&app.state.game, 0, sizeof(GAME))",
+      "replacement": "app.state.game = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/race.cpp",
+      "line": 496,
+      "code": "std::memset(plr.szName + cch, 0, sizeof(plr.szName) - cch)",
+      "replacement": "std::fill_n(plr.szName + cch, sizeof(plr.szName) - cch, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "line": 498,
+      "code": "std::memset(plr.szNames + cch, 0, sizeof(plr.szNames) - cch)",
+      "replacement": "std::fill_n(plr.szNames + cch, sizeof(plr.szNames) - cch, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/core/race.cpp",
+      "line": 538,
+      "code": "std::memset(pplr, 0, sizeof(PLAYER))",
+      "replacement": "*pplr = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/produce.cpp",
+      "line": 39,
+      "code": "std::memset(rgprod, 0, 64 * sizeof(PROD))",
+      "replacement": "std::fill_n(rgprod, 64, PROD{})",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 67,
+      "code": "std::memset(app.state.vlpbAiData, 0, 0x2000)",
+      "replacement": "std::fill_n(app.state.vlpbAiData, 0x2000, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 103,
+      "code": "std::memset(rgRecycleShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 145,
+      "code": "std::memset(rgRecycleSBShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleSBShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 148,
+      "code": "std::memset(rgRecycleSBShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleSBShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 151,
+      "code": "std::memset(rgRecycleSBShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleSBShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 157,
+      "code": "std::memset(lpciPlanTemp, 0, app.state.game.cPlanMax * cbWireCyberInfo)",
+      "replacement": "std::fill_n(lpciPlanTemp, app.state.game.cPlanMax * cbWireCyberInfo, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 1027,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 1069,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ship.cpp",
+      "line": 256,
+      "code": "std::memset(&xfer.pl(), 0, sizeof(PLANET))",
+      "replacement": "xfer.pl() = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ship.cpp",
+      "line": 765,
+      "code": "std::memset(&rgflCur[i], 0, sizeof(FLEET))",
+      "replacement": "rgflCur[i] = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ship.cpp",
+      "line": 936,
+      "code": "std::memset(&flDead, 0, sizeof(FLEET))",
+      "replacement": "flDead = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ai2.cpp",
+      "line": 111,
+      "code": "std::memset(rgRecycleShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai2.cpp",
+      "line": 276,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/ai2.cpp",
+      "line": 652,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "line": 675,
+      "code": "std::memset(app.state.bitfMsgSent, 0, 49)",
+      "replacement": "std::ranges::fill(app.state.bitfMsgSent, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/msg.cpp",
+      "line": 676,
+      "code": "std::memset(app.state.bitfMsgFiltered, 0, 49)",
+      "replacement": "std::ranges::fill(app.state.bitfMsgFiltered, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai3.cpp",
+      "line": 116,
+      "code": "std::memset(rgRecycleShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgRecycleShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai3.cpp",
+      "line": 153,
+      "code": "std::memset(rgSplitShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgSplitShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai3.cpp",
+      "line": 156,
+      "code": "std::memset(rgSplitShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgSplitShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai3.cpp",
+      "line": 159,
+      "code": "std::memset(rgSplitShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgSplitShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai3.cpp",
+      "line": 163,
+      "code": "std::memset(rgSplitShdef, 0, 16)",
+      "replacement": "std::ranges::fill(rgSplitShdef, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "src/core/ai3.cpp",
+      "line": 935,
+      "code": "std::memset(&ord, 0, sizeof(ORDER))",
+      "replacement": "ord = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/memory.cpp",
+      "line": 206,
+      "code": "std::memset(rgb + lp->cb, 0, cb - lp->cb)",
+      "replacement": "std::fill_n(rgb + lp->cb, cb - lp->cb, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "compat/win32/src/dialog_template.cpp",
+      "line": 49,
+      "code": "std::memset(lpdlg, 0, sizeof(*lpdlg))",
+      "replacement": "*lpdlg = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/edit.cpp",
+      "line": 459,
+      "code": "std::memset(pszComp, '*', cchComp)",
+      "replacement": "std::fill_n(pszComp, cchComp, '*')",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "compat/win32/src/input.cpp",
+      "line": 30,
+      "code": "std::memset(rgbInput, 0, sizeof(rgbInput))",
+      "replacement": "std::ranges::fill(rgbInput, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "compat/win32/src/input.cpp",
+      "line": 30,
+      "code": "std::memset(rgbRead, 0, sizeof(rgbRead))",
+      "replacement": "std::ranges::fill(rgbRead, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "compat/win32/src/input.cpp",
+      "line": 31,
+      "code": "std::memset(rgbRecent, 0, sizeof(rgbRecent))",
+      "replacement": "std::ranges::fill(rgbRecent, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "compat/win32/src/input.cpp",
+      "line": 31,
+      "code": "std::memset(rgbAsync, 0, sizeof(rgbAsync))",
+      "replacement": "std::ranges::fill(rgbAsync, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "compat/win32/src/input.cpp",
+      "line": 34,
+      "code": "std::memset(rghwndClick, 0, sizeof(rghwndClick))",
+      "replacement": "std::ranges::fill(rghwndClick, nullptr)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "compat/win32/src/input.cpp",
+      "line": 34,
+      "code": "std::memset(rgcClick, 0, sizeof(rgcClick))",
+      "replacement": "std::ranges::fill(rgcClick, 0)",
+      "disposition": "typed-array-fill"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 227,
+      "code": "std::memset(lpmsg, 0, sizeof(*lpmsg))",
+      "replacement": "*lpmsg = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/window.cpp",
+      "line": 566,
+      "code": "std::memset(&cs, 0, sizeof(cs))",
+      "replacement": "cs = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/profile.cpp",
+      "line": 220,
+      "code": "std::memset(szResult + cchOut, 0, cchMax - cchOut)",
+      "replacement": "std::fill_n(szResult + cchOut, cchMax - cchOut, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 803,
+      "code": "std::memset(lpps, 0, sizeof(*lpps))",
+      "replacement": "*lpps = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/paint.cpp",
+      "line": 1963,
+      "code": "std::memset(rgb, 0, cbRow)",
+      "replacement": "std::fill_n(rgb, cbRow, 0)",
+      "disposition": "typed-byte-fill",
+      "reason": "Destination is character/byte storage; retain the exact original bounded range and fill value."
+    },
+    {
+      "path": "compat/win32/src/file.cpp",
+      "line": 85,
+      "code": "std::memset(lpof, 0, sizeof(*lpof))",
+      "replacement": "*lpof = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 80,
+      "code": "std::memset(&ds, 0, sizeof(ds))",
+      "replacement": "ds = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/list.cpp",
+      "line": 345,
+      "code": "std::memset(&ms, 0, sizeof(ms))",
+      "replacement": "ms = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/inspect.cpp",
+      "line": 113,
+      "code": "std::memset(lpsnap, 0, sizeof(*lpsnap))",
+      "replacement": "*lpsnap = {}",
+      "disposition": "value-assignment"
+    },
+    {
+      "path": "compat/win32/src/dib.cpp",
+      "line": 21,
+      "code": "std::memset(lpdib, 0, sizeof(*lpdib))",
+      "replacement": "*lpdib = {}",
+      "disposition": "value-assignment"
+    }
+  ],
+  "null_pointer_sites": [
+    {
+      "path": "src/core/ai3.cpp",
+      "line": 402,
+      "code": "for (ifl = 0; ifl < app.state.cFleet && (lpfl = app.state.rglpfl[ifl]) != 0; ifl++) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/ai4.cpp",
+      "line": 417,
+      "code": "LpplFindClosestEnum(app, lppl, FEnumDropOffStage2) != 0) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 14,
+      "code": "alignas(std::max_align_t) COLDROP *lpcd = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 15,
+      "code": "alignas(std::max_align_t) FLEET  **rglpfl = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 24,
+      "code": "alignas(std::max_align_t) MSGPLR  *vlpmsgplrIn = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 25,
+      "code": "alignas(std::max_align_t) MSGPLR  *vlpmsgplrOut = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 26,
+      "code": "alignas(std::max_align_t) PLANET **vrglpplAi = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 27,
+      "code": "alignas(std::max_align_t) PLANET  *lpPlanets = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 30,
+      "code": "alignas(std::max_align_t) PLPROD  *lpplProdGlob = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 32,
+      "code": "alignas(std::max_align_t) PROD    *pProdGlob = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 38,
+      "code": "alignas(std::max_align_t) SCOREX   *vlprgScoreX = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 45,
+      "code": "alignas(std::max_align_t) THING    *lpThings = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 46,
+      "code": "alignas(std::max_align_t) THING    *lpthBattle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 47,
+      "code": "alignas(std::max_align_t) TOK      *vrgtok = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 49,
+      "code": "alignas(std::max_align_t) XFER     *pxfer = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 50,
+      "code": "alignas(std::max_align_t) XFERFULL *lpxf = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 57,
+      "code": "alignas(std::max_align_t) char     *lpbDefMac = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 58,
+      "code": "alignas(std::max_align_t) char     *lpbDefUni = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 82,
+      "code": "alignas(std::max_align_t) std::uint8_t  *lpMsg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 83,
+      "code": "alignas(std::max_align_t) std::int16_t  *vrgiflMerge = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 84,
+      "code": "alignas(std::max_align_t) std::int16_t  *vrgiplrPopScore = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 130,
+      "code": "alignas(std::max_align_t) std::int32_t  *vrgwtPopScore = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 137,
+      "code": "alignas(std::max_align_t) std::uint16_t *vlprgidFleet = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 138,
+      "code": "alignas(std::max_align_t) std::uint16_t *vlprgidPlanet = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 139,
+      "code": "alignas(std::max_align_t) std::uint16_t *vlpwtCargo = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 140,
+      "code": "alignas(std::max_align_t) std::uint16_t *vrgPlanResExtra = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 141,
+      "code": "alignas(std::max_align_t) std::uint16_t *vrgPlrLosses = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 146,
+      "code": "alignas(std::max_align_t) std::uint8_t  *lpLog = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 147,
+      "code": "alignas(std::max_align_t) std::uint8_t  *lpbBattleCur = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 148,
+      "code": "alignas(std::max_align_t) std::uint8_t  *lpbBattleLog = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 149,
+      "code": "alignas(std::max_align_t) std::uint8_t  *lpbBattleT = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 150,
+      "code": "alignas(std::max_align_t) std::uint8_t  *vAiMacRecycleSB = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 151,
+      "code": "alignas(std::max_align_t) std::uint8_t  *vlpMemStream = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 152,
+      "code": "alignas(std::max_align_t) std::uint8_t  *vlpbAiData = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 153,
+      "code": "alignas(std::max_align_t) std::uint8_t  *vlpbAiPlanet = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 163,
+      "code": "alignas(std::max_align_t) char     *lpchBatch = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/appstate.h",
+      "line": 164,
+      "code": "alignas(std::max_align_t) char     *lpchBatchMac = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2632,
+      "code": "pwThem = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2633,
+      "code": "pwUs = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2682,
+      "code": "pwThem = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/battle.cpp",
+      "line": 2683,
+      "code": "pwUs = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/log.cpp",
+      "line": 728,
+      "code": "if ((lpfl = LpflFromId(app, id)) == 0) return 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/log.cpp",
+      "line": 964,
+      "code": "if (LpflNewSplit(app, &rgxf[0].fl()) != 0)",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/core/report.cpp",
+      "line": 623,
+      "code": "if (app.state.rglpbtlplan[lpfl->iplr()] != 0) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/buildui.cpp",
+      "line": 600,
+      "code": "app.lpui->hwndSlotDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/createui.cpp",
+      "line": 251,
+      "code": "app.lpui->hwndTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "line": 153,
+      "code": "app.lpui->hwndPopup = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/fileui.cpp",
+      "line": 155,
+      "code": "app.lpui->hwndActive = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/init.cpp",
+      "line": 46,
+      "code": "app.lpui->hbrRadarNear = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/init.cpp",
+      "line": 76,
+      "code": "app.lpui->hpenRadarNear = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 109,
+      "code": "ZIPFILES zfChild = {0};",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/libraryzip.cpp",
+      "line": 176,
+      "code": "ZIPFILES zf = {0};",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 39,
+      "code": "wc.hIcon = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 70,
+      "code": "wc.hIcon = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 81,
+      "code": "wc.hIcon = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 89,
+      "code": "wc.hIcon = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 97,
+      "code": "wc.hIcon = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 107,
+      "code": "wc.hIcon = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 120,
+      "code": "wc.hIcon = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 553,
+      "code": "hcs = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 814,
+      "code": "hcs = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 850,
+      "code": "if (LpflFromId(app, app.state.ini.iObjSel) != 0) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 1118,
+      "code": "hfontSav = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 2704,
+      "code": "app.lpui->vhdibTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 2734,
+      "code": "app.lpui->hwndTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 2814,
+      "code": "app.lpui->hwndTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mdi.cpp",
+      "line": 2938,
+      "code": "app.lpui->hwndTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/mineui.cpp",
+      "line": 433,
+      "code": "if ((1 << app.state.idPlayer & lpth->thw().grbitPlrTrav()) && (lpthDest = LpthFromId(app, lpth->thw().idPartner())) != 0) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "line": 91,
+      "code": "hcs = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/msgui.cpp",
+      "line": 715,
+      "code": "if (LpflFromId(app, app.lpui->idMsgObj) != 0) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "line": 113,
+      "code": "hcs = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/planetui.cpp",
+      "line": 1634,
+      "code": "objNull.SetPfl(0);",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "line": 28,
+      "code": "app.lpui->hwndPopup = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "line": 54,
+      "code": "app.lpui->hwndPopup = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/popup.cpp",
+      "line": 405,
+      "code": "hmenuSub = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "line": 27,
+      "code": "app.lpui->hwndProdDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "line": 43,
+      "code": "app.lpui->hwndProdDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "line": 199,
+      "code": "hcs = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/produceui.cpp",
+      "line": 427,
+      "code": "app.lpui->hwndProdDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/raceui.cpp",
+      "line": 723,
+      "code": "psz = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "line": 269,
+      "code": "app.lpui->hwndReportDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "line": 286,
+      "code": "app.lpui->vprptCur = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "line": 514,
+      "code": "app.lpui->hwndScoreXDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "line": 2357,
+      "code": "psz[i] = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/reportui.cpp",
+      "line": 2433,
+      "code": "app.lpui->vprptCur = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "line": 643,
+      "code": "app.lpui->hwndBrowser = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/researchui.cpp",
+      "line": 652,
+      "code": "app.lpui->hwndBrowser = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "line": 516,
+      "code": "hdcScreen = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "line": 517,
+      "code": "hbmpScreen = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "line": 2535,
+      "code": "sbar.psz = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "line": 2541,
+      "code": "sbar.pscan = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/scan.cpp",
+      "line": 2977,
+      "code": "sbar.psz = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/ship2ui.cpp",
+      "line": 116,
+      "code": "app.lpui->hwndZipOrderDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/shipui.cpp",
+      "line": 913,
+      "code": "app.state.vrgiflMerge = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/tb.cpp",
+      "line": 611,
+      "code": "app.lpui->hwndTooltip = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 80,
+      "code": "app.state.tutor.hwnd = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 219,
+      "code": "app.lpui->hwndTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 260,
+      "code": "app.lpui->hwndTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 1688,
+      "code": "if (LpflFromId(app, 2) == 0) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 1926,
+      "code": "if (LpflFromId(app, 12) == 0 || LpflFromId(app, 12)->fDead) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/tutor.cpp",
+      "line": 1939,
+      "code": "if (LpflFromId(app, 12) != 0) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 12,
+      "code": "alignas(std::max_align_t) std::uint8_t       *vlpbdVCR = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 13,
+      "code": "alignas(std::max_align_t) std::uint8_t       *vlpbdVCRNext = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 15,
+      "code": "alignas(std::max_align_t) std::uint8_t        *vlpbrVCR = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 16,
+      "code": "alignas(std::max_align_t) BTN           *rgbtnXfer = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 24,
+      "code": "alignas(std::max_align_t) FARPROC        lpfnBrowserDlgProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 25,
+      "code": "alignas(std::max_align_t) FARPROC        lpfnGaugeDlgProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 26,
+      "code": "alignas(std::max_align_t) FARPROC        lpfnTutorDlgProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 29,
+      "code": "alignas(std::max_align_t) HACCEL         hAccel = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 30,
+      "code": "alignas(std::max_align_t) HACCEL         hAccelTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 31,
+      "code": "alignas(std::max_align_t) HBITMAP        hbmpBackBld = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 32,
+      "code": "alignas(std::max_align_t) HBITMAP        hbmpMono = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 33,
+      "code": "alignas(std::max_align_t) HBITMAP        hbmpMsg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 34,
+      "code": "alignas(std::max_align_t) HBITMAP        hbmpNumbers = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 35,
+      "code": "alignas(std::max_align_t) HBITMAP        hbmpScanShip = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 36,
+      "code": "alignas(std::max_align_t) HBITMAP        hbmpScanner = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 37,
+      "code": "alignas(std::max_align_t) HBITMAP        hbmpUnknownPlanet = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 38,
+      "code": "alignas(std::max_align_t) HBRUSH         hbr50Screen = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 39,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrBBlue = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 40,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrBlue = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 41,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrButtonFace = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 42,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrButtonHilite = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 43,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrButtonShadow = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 44,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrButtonText = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 45,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrCargo = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 46,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrDesktop = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 47,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrDkYellow = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 48,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrDock = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 49,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrEnemy = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 50,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrGray = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 51,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrGreen = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 52,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrLightGray = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 53,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrPurple = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 54,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrRadar = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 55,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrRadarNear = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 56,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrRed = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 57,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrSelect = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 58,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrShip = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 59,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrStarbase = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 60,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrTooltip = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 61,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrWindow = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 62,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrWindowFrame = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 63,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrWindowText = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 64,
+      "code": "alignas(std::max_align_t) HBRUSH         hbrYellow = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 70,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurArrowHelp = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 71,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurCloseGrab = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 72,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurHand = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 73,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurNoWay = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 74,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurOpenGrab = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 75,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurResize4Way = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 76,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurResizeNS = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 77,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurResizeWE = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 78,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurScanAdd = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 79,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurScanner = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 80,
+      "code": "alignas(std::max_align_t) HCURSOR        hcurTrashCan = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 85,
+      "code": "alignas(std::max_align_t) HGLOBAL        hdibPlanets = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 86,
+      "code": "alignas(std::max_align_t) HGLOBAL        hdibPlaque = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 87,
+      "code": "alignas(std::max_align_t) HGLOBAL        hdibRaces = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 88,
+      "code": "alignas(std::max_align_t) HGLOBAL        hdibRacesT = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 89,
+      "code": "alignas(std::max_align_t) HGLOBAL        hdibRacesX = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 90,
+      "code": "alignas(std::max_align_t) HGLOBAL        hdibThings = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 91,
+      "code": "alignas(std::max_align_t) HGLOBAL        hdibToolbar = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 95,
+      "code": "alignas(std::max_align_t) HGLOBAL        vhdibTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 96,
+      "code": "alignas(std::max_align_t) HICON          hiconHost = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 97,
+      "code": "alignas(std::max_align_t) HICON          hiconStars = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 98,
+      "code": "alignas(std::max_align_t) HICON          hiconWait = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 100,
+      "code": "alignas(std::max_align_t) HINSTANCE      hInst = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 101,
+      "code": "alignas(std::max_align_t) HPALETTE       vhpal = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 102,
+      "code": "alignas(std::max_align_t) HPALETTE       vhpalSplash = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 103,
+      "code": "alignas(std::max_align_t) HPEN           hpenDkBlue = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 104,
+      "code": "alignas(std::max_align_t) HPEN           hpenDkGreen = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 105,
+      "code": "alignas(std::max_align_t) HPEN           hpenDkPurple = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 106,
+      "code": "alignas(std::max_align_t) HPEN           hpenDkYellow = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 107,
+      "code": "alignas(std::max_align_t) HPEN           hpenEnemy = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 108,
+      "code": "alignas(std::max_align_t) HPEN           hpenMassPath = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 109,
+      "code": "alignas(std::max_align_t) HPEN           hpenRadar = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 110,
+      "code": "alignas(std::max_align_t) HPEN           hpenRadarNear = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 111,
+      "code": "alignas(std::max_align_t) HPEN           hpenShip = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 112,
+      "code": "alignas(std::max_align_t) HPEN           hpenStarbase = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 113,
+      "code": "alignas(std::max_align_t) HPEN           hpenYellow = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 114,
+      "code": "alignas(std::max_align_t) HRGN           hrgnHuge = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 115,
+      "code": "alignas(std::max_align_t) HRGN           hrgnScratch = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 117,
+      "code": "alignas(std::max_align_t) HWND           hwndActive = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 118,
+      "code": "alignas(std::max_align_t) HWND           hwndBattleDD = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 119,
+      "code": "alignas(std::max_align_t) HWND           hwndBrowser = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 120,
+      "code": "alignas(std::max_align_t) HWND           hwndBrowserChild = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 121,
+      "code": "alignas(std::max_align_t) HWND           hwndFleetCompLB = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 122,
+      "code": "alignas(std::max_align_t) HWND           hwndFrame = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 123,
+      "code": "alignas(std::max_align_t) HWND           hwndMDIClient = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 124,
+      "code": "alignas(std::max_align_t) HWND           hwndMain = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 125,
+      "code": "alignas(std::max_align_t) HWND           hwndMessage = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 126,
+      "code": "alignas(std::max_align_t) HWND           hwndMine = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 127,
+      "code": "alignas(std::max_align_t) HWND           hwndMineCB = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 128,
+      "code": "alignas(std::max_align_t) HWND           hwndMsgDrop = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 129,
+      "code": "alignas(std::max_align_t) HWND           hwndMsgEdit = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 130,
+      "code": "alignas(std::max_align_t) HWND           hwndMsgScroll = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 131,
+      "code": "alignas(std::max_align_t) HWND           hwndOrderED = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 132,
+      "code": "alignas(std::max_align_t) HWND           hwndPlanet = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 133,
+      "code": "alignas(std::max_align_t) HWND           hwndPlanetProdLB = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 134,
+      "code": "alignas(std::max_align_t) HWND           hwndPopup = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 135,
+      "code": "alignas(std::max_align_t) HWND           hwndProdDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 136,
+      "code": "alignas(std::max_align_t) HWND           hwndProgressGauge = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 137,
+      "code": "alignas(std::max_align_t) HWND           hwndRaceParent = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 138,
+      "code": "alignas(std::max_align_t) HWND           hwndRepCB = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 139,
+      "code": "alignas(std::max_align_t) HWND           hwndReportDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 140,
+      "code": "alignas(std::max_align_t) HWND           hwndScanner = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 141,
+      "code": "alignas(std::max_align_t) HWND           hwndScoreXDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 142,
+      "code": "alignas(std::max_align_t) HWND           hwndShipDD = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 143,
+      "code": "alignas(std::max_align_t) HWND           hwndShipLB = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 144,
+      "code": "alignas(std::max_align_t) HWND           hwndSlotDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 145,
+      "code": "alignas(std::max_align_t) HWND           hwndTBRadar = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 146,
+      "code": "alignas(std::max_align_t) HWND           hwndTb = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 147,
+      "code": "alignas(std::max_align_t) HWND           hwndTitle = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 148,
+      "code": "alignas(std::max_align_t) HWND           hwndTooltip = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 149,
+      "code": "alignas(std::max_align_t) HWND           hwndVCRDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 150,
+      "code": "alignas(std::max_align_t) HWND           hwndZipOrderDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 163,
+      "code": "alignas(std::max_align_t) PLAYER        *vrgplrNew = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 191,
+      "code": "alignas(std::max_align_t) RECT          *vrgrcRCW = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 202,
+      "code": "alignas(std::max_align_t) RPT           *vprptCur = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 204,
+      "code": "alignas(std::max_align_t) SHDEF         *lpshdefBuild = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 208,
+      "code": "alignas(std::max_align_t) TIMERPROC      lpfnHostTimerProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 210,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnFakeCEProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 211,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnFakeComboProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 212,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnFakeEditProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 213,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnFakeListProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 214,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnRealCEProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 215,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnRealComboProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 216,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnRealEditProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 217,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnRealListProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 218,
+      "code": "alignas(std::max_align_t) WNDPROC        lpfnReportDlgProc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 230,
+      "code": "alignas(std::max_align_t) char          *vrgszFileNew = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 231,
+      "code": "alignas(std::max_align_t) char          *vrgszMRU = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 249,
+      "code": "alignas(std::max_align_t) std::int16_t       *rgXferValidHulls = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 337,
+      "code": "alignas(std::max_align_t) std::int32_t       *vrgdpVCR = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 340,
+      "code": "alignas(std::max_align_t) std::uint16_t      *vlprgidMisc = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 341,
+      "code": "alignas(std::max_align_t) std::uint16_t      *vlprgidRep = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/uistate.h",
+      "line": 354,
+      "code": "alignas(std::max_align_t) std::uint8_t       *lpb2k = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "line": 1001,
+      "code": "if (hrsrc == 0) {",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/utilgenui.cpp",
+      "line": 1204,
+      "code": "app.lpui->hwndProgressGauge = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    },
+    {
+      "path": "src/ui/vcr.cpp",
+      "line": 501,
+      "code": "app.lpui->hwndVCRDlg = 0;",
+      "replacement": "compiler-confirmed integer null pointer constant -> nullptr"
+    }
+  ]
+}

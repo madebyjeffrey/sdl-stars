@@ -1,0 +1,127 @@
+#include <cerrno>
+#include "appstate.h"
+#ifdef STARS_UI_SDL
+#include "uistate.h"
+#endif
+#include "callbackcontext.h"
+#include <cstdio>
+#include <cstring>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <span>
+#include "filesystem.h"
+#include "host_profile.h"
+#include "profile_io.h"
+#include "text_io.h"
+#include "win.h"
+static const char *const *fixture;
+static int                loadOK = 1, checks;
+static std::optional<std::string> szDirectory;
+static char                       szFixture[8192];
+static std::int16_t GetString(APPSESSION &, StringId id, std::span<char> out) {
+    return static_cast<std::int16_t>(CchCopyUtf8(out, id == static_cast<StringId>(1) ? "A" : "k"));
+}
+static NATIVEFILE *OpenFixture(std::string_view, NATIVEFILEMODE) {
+    NATIVEFILE *pf;
+    if (!loadOK) {
+        errno = EACCES;
+        return nullptr;
+    }
+    pf = PfNativeOpen(szFixture, NATIVEFILEMODE::writeTruncate);
+    if (!pf)
+        return nullptr;
+    for (unsigned i = 0; fixture[i]; i++)
+        if (CWriteNative(std::span{fixture[i], strlen(fixture[i])}, pf) != strlen(fixture[i])) {
+            ICloseNativeFile(pf);
+            return nullptr;
+        }
+    if (ICloseNativeFile(pf) != 0)
+        return nullptr;
+    return PfNativeOpen(szFixture, NATIVEFILEMODE::read);
+}
+#define CHECK(x)                                                                                                                                               \
+    do {                                                                                                                                                       \
+        checks++;                                                                                                                                              \
+        if (!(x)) {                                                                                                                                            \
+            fprintf(stderr, "witness %d failed: %s\n", checks, #x);                                                                                            \
+            return 1;                                                                                                                                          \
+        }                                                                                                                                                      \
+    } while (0)
+
+int main(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+
+    static const char *const one[] = {"[AB]\n", NULL};
+    static const char *const unicode[] = {"[\xc3\xa9]\n", NULL};
+    static const char *const duplicate[] = {"[A]\n", "x=first\n", "[A]\n", "k=second\n", NULL};
+    static const char *const quoted[] = {"[A]\n", "k=' a '\n", NULL};
+    static const char *const empty[] = {NULL};
+    char                     out[16], longline[320];
+    const std::string        szIniWithSuffix = "[A]\nk=exact\n[other]\nk=ignored";
+    const std::string_view   szIniView{szIniWithSuffix.data(), std::strlen("[A]\nk=exact\n")};
+    PROFILEIO                io;
+    io.pfnOpen = OpenFixture;
+    PROFILEIOSCOPE profileScope(io);
+    TEXTIO         text;
+    text.pfnCchGetString = GetString;
+    TEXTIOSCOPE textScope(text);
+    if (!(szDirectory = SzFilesystemTempDir()))
+        return 1;
+    snprintf(szFixture, sizeof(szFixture), "%s/profile", szDirectory->c_str());
+    CHECK(CchUtf8Prefix("A\xc3\xa9"
+                        "B",
+                        2) == 1);
+    CHECK(CchUtf8Prefix("A\xc3\xa9"
+                        "B",
+                        3) == 3);
+    CHECK(CchUtf8Prefix("A\xff"
+                        "B",
+                        8) == 1);
+    CHECK(CchUtf8Prefix("A\0B", 8) == 1);
+    CHECK(!FUtf8Valid(std::string_view{"A\0B", 3}));
+    fixture = one;
+    memset(out, 9, sizeof(out));
+    CHECK(win32::GetPrivateProfileStringA(NULL, NULL, "", out, 4, "x") == 2 && !memcmp(out, "AB\0\0", 4));
+    CHECK(out[4] == 9);
+    fixture = unicode;
+    memset(out, 9, sizeof(out));
+    CHECK(win32::GetPrivateProfileStringA(NULL, NULL, "", out, 3, "x") == 1 && out[0] == 0 && out[1] == 0 && out[2] == 0 && out[3] == 9);
+    fixture = empty;
+    memset(out, 9, sizeof(out));
+    CHECK(win32::GetPrivateProfileStringA(NULL, NULL, "", out, 3, "x") == 0 && out[0] == 0 && out[1] == 0 && out[2] == 9);
+    fixture = quoted;
+    memset(out, 9, sizeof(out));
+    CHECK(win32::GetPrivateProfileStringA("A", "k", "", out, 3, "x") == 2 && !strcmp(out, " a"));
+    fixture = duplicate;
+    CHECK(win32::GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
+    CHECK(FIniValue(app, "[A]\nx=first\n[A]\nk=second", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}) && !strcmp(out, "second"));
+    CHECK(FIniValue(app, szIniView, static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}) && !strcmp(out, "exact"));
+    CHECK(FIniValue(app, "[A]\nk=\xce\xa9\xe6\x9d\xb1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}.first(3)) && !strcmp(out, "\xce\xa9"));
+    CHECK(!FIniValue(app, " [A]\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}));
+    CHECK(!FIniValue(app, "[ A ]\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}));
+    CHECK(!FIniValue(app, "[A]\n k=1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}));
+    CHECK(FIniValue(app, "[A]\n[broken\nk=1", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}) && !strcmp(out, "1"));
+    CHECK(FIniValue(app, "[A]\nk= '2'  ", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}) && !strcmp(out, "'2'"));
+    CHECK(FIniValue(app, "[A]\nk=abcd", static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}.first(3)) && !strcmp(out, "ab"));
+    CHECK(LIniInt(app, "[A]\nk=0x2", static_cast<StringId>(1), static_cast<StringId>(2), 7) == 0);
+    CHECK(LIniInt(app, "[A]\nk='2'", static_cast<StringId>(1), static_cast<StringId>(2), 7) == 0);
+    CHECK(LIniInt(app, "[A]\nk=", static_cast<StringId>(1), static_cast<StringId>(2), 7) == 0);
+    CHECK(LIniInt(app, "[A]\nx=", static_cast<StringId>(1), static_cast<StringId>(2), 7) == 7);
+    CHECK(LIniInt(app, "[A]\nk=-12suffix", static_cast<StringId>(1), static_cast<StringId>(2), 7) == -12);
+    strcpy(longline, "[A]\nk=");
+    memset(longline + 6, 'a', 270);
+    strcpy(longline + 276, "\nk=second");
+    CHECK(FIniValue(app, longline, static_cast<StringId>(1), static_cast<StringId>(2), std::span{out}.first(4)) && !strcmp(out, "aaa"));
+    loadOK = 0;
+    CHECK(win32::GetPrivateProfileStringA("A", "k", "fallback", out, sizeof(out), "x") == 8 && !strcmp(out, "fallback"));
+    printf("S02 profile I/O and host linked witnesses: %d passed\n", checks);
+    if (IUnlinkNativePath(szFixture) != 0 || !FFilesystemRemove(*szDirectory))
+        return 1;
+    return 0;
+}

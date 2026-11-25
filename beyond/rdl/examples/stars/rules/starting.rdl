@@ -1,0 +1,147 @@
+import stars.rules.pricing
+
+(* create.cpp:392..757. These are generation INPUTS, independent of the Random
+   design-template flag. AI difficulty: 0 easy, 1 standard, 2 tough, 3 expert. *)
+type StartingState = {
+  race: Race;
+  galaxy_size: integer = 0;
+  tutorial: bool = false;
+  accelerated: bool = false;
+  ai: bool = false;
+  ai_difficulty: integer = 0;
+  require self.galaxy_size >= 0 && self.galaxy_size <= 4;
+  require self.ai_difficulty >= 0 && self.ai_difficulty <= 4;
+  derive base_technology: TechVector = {
+    energy = if (self.race.prt_id = 2 || self.race.prt_id = 3 || self.race.prt_id = 8) then 1 else if (self.race.prt_id = 6) then 4 else if (self.race.prt_id = 9) then 3 else 0;
+    weapons = if (self.race.prt_id = 2) then 6 else if (self.race.prt_id = 3) then 1 else if (self.race.prt_id = 9) then 3 else 0;
+    propulsion = if (self.race.prt_id = 2 || self.race.prt_id = 3) then 1 else if (self.race.prt_id = 5) then 2 else if (self.race.prt_id = 7) then 5 else if (self.race.prt_id = 9) then 3 else 0;
+    construction = if (self.race.prt_id = 3) then 2 else if (self.race.prt_id = 7) then 5 else if (self.race.prt_id = 9) then 3 else 0;
+    electronics = if (self.race.prt_id = 1) then 5 else if (self.race.prt_id = 9) then 3 else 0;
+    biotechnology = if (self.race.prt_id = 3) then 6 else if (self.race.prt_id = 5) then 2 else if (self.race.prt_id = 9) then 3 else 0;
+  };
+  derive technology: TechVector = {
+    energy = max self.base_technology.energy (if self.race.higher_starting_tech && self.race.ResearchPreferences.costs.energy = 0 then (if self.race.prt_id = 9 then 4 else 3) else 0);
+    weapons = max self.base_technology.weapons (if self.race.higher_starting_tech && self.race.ResearchPreferences.costs.weapons = 0 then (if self.race.prt_id = 9 then 4 else 3) else 0);
+    propulsion = max self.base_technology.propulsion (if self.race.higher_starting_tech && self.race.ResearchPreferences.costs.propulsion = 0 then (if self.race.prt_id = 9 then 4 else 3) else 0) + (if self.race.ce then 1 else 0) + (if self.race.ife && not self.tutorial then 1 else 0);
+    construction = max self.base_technology.construction (if self.race.higher_starting_tech && self.race.ResearchPreferences.costs.construction = 0 then (if self.race.prt_id = 9 then 4 else 3) else 0);
+    electronics = max self.base_technology.electronics (if self.race.higher_starting_tech && self.race.ResearchPreferences.costs.electronics = 0 then (if self.race.prt_id = 9 then 4 else 3) else 0);
+    biotechnology = max self.base_technology.biotechnology (if self.race.higher_starting_tech && self.race.ResearchPreferences.costs.biotechnology = 0 then (if self.race.prt_id = 9 then 4 else 3) else 0);
+  };
+  derive base_population: integer = if self.race.lsp then 175 else 250;
+  derive ai_population: integer = self.base_population + (if self.ai && self.ai_difficulty >= 3 then self.base_population / 10 else 0);
+  derive initial_population: integer = if self.accelerated then self.ai_population * (2 * self.race.effective_growth_percent + 10) / 10 else self.ai_population;
+  derive second_world: bool = self.galaxy_size > 0 && (self.race.prt_id = 6 || self.race.prt_id = 7);
+  derive home_population: integer = if self.second_world then 4 * self.initial_population / 5 else self.initial_population;
+  derive second_population: integer = if self.second_world then 2 * self.initial_population / 5 else 0;
+  derive home_colonists: integer = 100 * self.home_population;
+  derive second_colonists: integer = 100 * self.second_population;
+  derive galaxy_width: integer = 400 * self.galaxy_size + 400;
+  derive second_distance_min: integer = self.galaxy_width * 15 / 100;
+  derive second_distance_max: integer = self.galaxy_width * 23 / 100;
+  derive has_home_gate: bool = self.race.prt_id = 7 && not self.tutorial;
+  derive has_second_gate: bool = self.second_world && self.race.prt_id = 7 && not self.tutorial;
+  derive has_mass_driver: bool = self.race.prt_id = 6;
+  derive home_base_template: integer = 0;
+  derive home_base_design_slot: integer = if self.race.prt_id = 8 then 1 else 0;
+  derive unbuilt_starter_colony_design: bool = self.race.prt_id = 8;
+  derive second_base_template: integer = if not self.second_world then -1 else if self.race.prt_id = 6 || self.tutorial then 1 else 2;
+  derive scanner_index: integer = if self.race.prt_id = 8 then 31 else 0;
+  derive higher_starting_tech_floor: integer = if self.race.prt_id = 9 then 4 else 3;
+}
+
+(* create.cpp:268,465. Minerals copy LIVE element zero, supplied by the caller
+   for each player in order; these are not immutable racial constants. *)
+type StartingMineralSeed = {
+  concentration: integer;
+  concentration_draw: integer;
+  low_stock_draw: integer = 0;
+  accelerated: bool = false;
+  require self.concentration > 0 && self.concentration <= 100;
+  require self.concentration_draw >= 0 && self.concentration_draw < self.concentration * 10;
+  require self.low_stock_draw >= 0 && self.low_stock_draw < 150;
+  derive normal: integer = self.concentration_draw + 10 + (if self.concentration_draw + 10 < 200 then self.low_stock_draw + 155 else 0);
+  derive stock: integer = self.normal + (if self.accelerated then self.normal / 4 else 0);
+}
+type StartingMinerals = {
+  state: StartingState;
+  advantage_points: integer;
+  ironium: integer; boranium: integer; germanium: integer;
+  ironium_concentration: integer; boranium_concentration: integer; germanium_concentration: integer;
+  generation_tutorial_flag: bool = false;
+  derive points: integer = if self.state.ai then 50 else min 50 self.advantage_points;
+  require self.points >= 0;
+  derive allocation: integer = self.state.race.DesignSettings.leftover_allocation;
+  derive surface: bool = self.allocation = 0 || self.allocation > 4;
+  derive concentrations: bool = self.allocation = 1 || (self.surface && self.state.ai && self.state.ai_difficulty >= 2);
+  derive concentration_bonus: integer = if self.points > 0 && self.points < 3 then 1 else self.points / 2;
+  derive least_mineral: integer = if self.ironium < self.boranium then (if self.ironium < self.germanium then 0 else 2)
+    else if self.boranium < self.germanium then 1 else 2;
+  derive concentration_floor: integer = if self.generation_tutorial_flag then 25 else 30;
+  derive least_concentration: integer = if max self.concentration_floor self.ironium_concentration <= max self.concentration_floor self.boranium_concentration && max self.concentration_floor self.ironium_concentration <= max self.concentration_floor self.germanium_concentration then 0
+    else if max self.concentration_floor self.boranium_concentration <= max self.concentration_floor self.germanium_concentration then 1 else 2;
+  derive ironium_stock: integer = self.ironium + (if not self.surface then 0 else 10 * self.points / 4
+    + (if self.least_mineral = 0 then 10 * self.points / 4 + (10 * self.points) % 4 else 0));
+  derive ironium_concentration_after: integer = (max self.concentration_floor self.ironium_concentration
+    + (if self.concentrations then (self.concentration_bonus + 1) / 2 + (if self.least_concentration = 0 then self.concentration_bonus else 0) else 0)) % 256;
+  derive boranium_stock: integer = self.boranium + (if not self.surface then 0 else 10 * self.points / 4
+    + (if self.least_mineral = 1 then 10 * self.points / 4 + (10 * self.points) % 4 else 0));
+  derive boranium_concentration_after: integer = (max self.concentration_floor self.boranium_concentration
+    + (if self.concentrations then (self.concentration_bonus + 1) / 2 + (if self.least_concentration = 1 then self.concentration_bonus else 0) else 0)) % 256;
+  derive germanium_stock: integer = self.germanium + (if not self.surface then 0 else 10 * self.points / 4
+    + (if self.least_mineral = 2 then 10 * self.points / 4 + (10 * self.points) % 4 else 0));
+  derive germanium_concentration_after: integer = (max self.concentration_floor self.germanium_concentration
+    + (if self.concentrations then (self.concentration_bonus + 1) / 2 + (if self.least_concentration = 2 then self.concentration_bonus else 0) else 0)) % 256;
+  derive factories: integer = if self.state.race.prt_id = 8 then 0 else 10 + (if self.allocation = 3 then self.points / 5 else 0);
+  derive mines: integer = if self.state.race.prt_id = 8 then 0 else 10 + (if self.allocation = 2 then self.points / 2 else 0);
+  derive defenses: integer = if self.state.race.prt_id = 8 then 0 else 10 + (if self.allocation = 4 then (self.points + 5) / 10 else 0);
+}
+type StartingEnvironment = {
+  tolerance: HabitatAxis;
+  immune_draw: integer;
+  require self.immune_draw >= 0 && self.immune_draw < 99;
+  derive coordinate: integer = if self.tolerance.immune then self.immune_draw + 1 else self.tolerance.preferred;
+}
+type SecondWorldCandidate = {
+  state: StartingState;
+  unowned: bool;
+  distance_squared: integer;
+  candidates_so_far: integer;
+  reservoir_draw: integer;
+  environment_attempts: integer = 0;
+  habitat: integer = 0;
+  require self.candidates_so_far > 0 && self.reservoir_draw >= 0 && self.reservoir_draw < self.candidates_so_far;
+  derive in_band: bool = self.unowned && self.distance_squared >= self.state.second_distance_min * self.state.second_distance_min
+    && self.distance_squared <= self.state.second_distance_max * self.state.second_distance_max;
+  derive replace_selection: bool = self.in_band && self.reservoir_draw = 0;
+  derive reroll_environment: bool = self.habitat < 10 && self.environment_attempts < 100;
+  derive copy_home_environment: bool = self.environment_attempts >= 100;
+  derive factories: integer = 4;
+  derive mines: integer = 10;
+  derive defenses: integer = 0;
+  derive minimum_mineral_stock: integer = 100;
+  derive maximum_mineral_stock: integer = 299;
+}
+(* create.cpp:635. One result per template; each fleet holds one ship, starts
+   empty of cargo, full fuel and battle plan zero. Duplicate first ship on IT/PP
+   second world, AFTER home grants and BEFORE ARM fleets. *)
+type StartingFleetCount = {
+  state: StartingState;
+  template_index: integer;
+  require self.template_index >= 0;
+  derive first_template: integer = if self.state.race.prt_id = 6 then 4 else if self.state.race.prt_id = 2 || self.state.race.prt_id = 9 then 3
+    else if self.state.race.prt_id = 1 && self.state.technology.energy >= 2 then 5 else 2;
+  derive primary: integer = if self.template_index = self.first_template then 1 else 0;
+  derive colonizers: integer = if self.state.race.prt_id = 0 then (if self.template_index = 12 then 3 else 0)
+    else if self.template_index = (if self.state.race.prt_id = 7 then 11 else if self.state.race.prt_id = 8 then 10 else 9) then 1 else 0;
+  derive extras: integer =
+    (if self.state.race.prt_id = 1 && not self.state.ai && self.template_index = 1 then 1 else 0)
+    + (if self.state.race.prt_id = 2 && self.state.technology.construction >= 3 && (self.template_index = 7 || self.template_index = 13) then 1 else 0)
+    + (if self.state.race.prt_id = 5 && (self.template_index = 16 || self.template_index = 18) then 1 else 0)
+    + (if self.state.race.prt_id = 3 && self.template_index = 17 then 1 else 0)
+    + (if self.state.race.prt_id = 7 && (self.template_index = 7 || self.template_index = 8) then 1 else 0)
+    + (if self.state.race.prt_id = 9 && (self.template_index = 4 || self.template_index = 7 || self.template_index = 14
+       || self.template_index = (if self.state.technology.construction < 4 then 6 else 8)) then 1 else 0)
+    + (if self.state.race.arm && not self.state.race.obrm && self.template_index = 15 then 2 else 0);
+  derive home_fleets: integer = self.primary + self.colonizers + self.extras;
+  derive second_fleets: integer = if self.state.second_world && self.template_index = self.first_template then 1 else 0;
+}

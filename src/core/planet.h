@@ -1,38 +1,71 @@
 #ifndef STARS_DECOMPILED_PLANET_H
 #define STARS_DECOMPILED_PLANET_H
 
-#include <stdint.h>
+#include "common.h"
+#include <array>
+#include <span>
+#include <optional>
 
-int16_t FGetBestDefensePart(PART *ppart);
-char   *PszProductionETA(PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem, int16_t *etaFirst, int16_t *etaLast);
-void    ChangeMainObjSel(GrobjClass grobjNew, int16_t iObjSel);
-void    SelectAdjPlanet(int16_t dInc, int16_t idPlanet);
-int16_t IdFindAdjStarbase(int16_t idPlanet, int16_t fNext);
-int16_t IBestTerraform(PLANET *lppl, int16_t fHelp);
-char   *PszCalcEnvVar(EnvType iEnv, int16_t iVar);
-char   *PszCalcGravity(int16_t iGravity);
-int16_t PctPlanetCapacity(PLANET *lppl);
-int16_t PctPlanetOptValue(PLANET *lppl, int16_t iPlr);
-int16_t PctPlanetDesirability(PLANET *lppl, int16_t iPlr);
-int32_t CalcPlanetMaxPop(int16_t idpl, int16_t iplr);
-int16_t CMaxMines(PLANET *lppl, int16_t iplr);
-int16_t CMaxOperableMines(PLANET *lppl, int16_t iplr, int16_t fNextYear);
-int16_t CMinesOperating(PLANET *lppl);
-int16_t CFactoriesOperating(PLANET *lppl);
-int16_t CMaxFactories(PLANET *lppl, int16_t iplr);
-int16_t CMaxOperableFactories(PLANET *lppl, int16_t iplr, int16_t fNextYear);
-int16_t CMaxDefenses(PLANET *lppl, int16_t iplr);
-int16_t CMaxOperableDefenses(PLANET *lppl, int16_t iplr, int16_t fNextYear);
-int16_t CResourcesAtPlanet(PLANET *lppl, int16_t iplr);
-int16_t IWarpMAFromLppl(PLANET *lppl, int16_t *pfTwo);
-int16_t StargateRangeFromLppl(PLANET *lppl, int16_t iplr, int16_t ish);
-int16_t FProdIsTerra(PROD *lpprod);
-int16_t IpctCanTerraformLppl(PLANET *lppl);
-int16_t FCanTerraformLppl(PLANET *lppl, int16_t *rgEnvMin, int16_t *rgEnvMax, int16_t *rgEnvCost, int16_t fHelp);
-void    UninhabitPlanet(PLANET *lppl);
-int16_t PctCloakFromHuldef(HUL *lphul, int16_t iplr, int16_t *ppctSteal);
+struct TERRAFORMRESULT {
+    bool fCan;
+    std::array<std::int16_t, 3> rgEnvMin;
+    std::array<std::int16_t, 3> rgEnvMax;
+    std::array<std::optional<std::int16_t>, 3> rgEnvCost;
+};
 
-int16_t FProdItemLine(PLANET *lppl, PLPROD *lpplprod, int16_t iprod, int16_t fShowNever, char *szLine);
-char   *PszProdQueueTop(PLANET *lppl, PLPROD *lpplprod);
+struct WARPRESULT {
+    std::int16_t iWarp;
+    std::int16_t fTwo;
+};
+#include <cstdint>
+#include <string_view>
+
+std::int16_t FGetBestDefensePart(APPSESSION &app, PART *ppart);
+struct PRODUCTIONETARESULT {
+    std::array<char, 360> sz;
+    std::int16_t etaFirst, etaLast;
+    std::int16_t cch;
+
+    std::string_view view() const noexcept { return {sz.data(), static_cast<std::size_t>(cch)}; }
+};
+PRODUCTIONETARESULT PszProductionETA(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, ProdItemType iItem);
+struct PLANETTEXTRESULT {
+    std::array<char, 360> sz{};
+    std::size_t cch = 0;
+
+    char *data() noexcept { return sz.data(); }
+    const char *data() const noexcept { return sz.data(); }
+    std::string_view view() const noexcept { return {sz.data(), cch}; }
+};
+void    ChangeMainObjSel(APPSESSION &app, GrobjClass grobjNew, std::int16_t iObjSel);
+void    SelectAdjPlanet(APPSESSION &app, std::int16_t dInc, std::int16_t idPlanet);
+std::int16_t IdFindAdjStarbase(APPSESSION &app, std::int16_t idPlanet, std::int16_t fNext);
+std::int16_t IBestTerraform(APPSESSION &app, PLANET *lppl, std::int16_t fHelp);
+PLANETTEXTRESULT PszCalcEnvVar(APPSESSION &app, EnvType iEnv, std::int16_t iVar);
+PLANETTEXTRESULT PszCalcGravity(APPSESSION &app, std::int16_t iGravity);
+std::int16_t PctPlanetCapacity(APPSESSION &app, PLANET *lppl);
+std::int16_t PctPlanetOptValue(APPSESSION &app, PLANET *lppl, std::int16_t iPlr);
+std::int16_t PctPlanetDesirability(APPSESSION &app, PLANET *lppl, std::int16_t iPlr);
+std::int32_t CalcPlanetMaxPop(APPSESSION &app, std::int16_t idpl, std::int16_t iplr);
+std::int16_t CMaxMines(APPSESSION &app, PLANET *lppl, std::int16_t iplr);
+std::int16_t CMaxOperableMines(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t fNextYear);
+std::int16_t CMinesOperating(APPSESSION &app, PLANET *lppl);
+std::int16_t CFactoriesOperating(APPSESSION &app, PLANET *lppl);
+std::int16_t CMaxFactories(APPSESSION &app, PLANET *lppl, std::int16_t iplr);
+std::int16_t CMaxOperableFactories(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t fNextYear);
+std::int16_t CMaxDefenses(APPSESSION &app, PLANET *lppl, std::int16_t iplr);
+std::int16_t CMaxOperableDefenses(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t fNextYear);
+std::int16_t CResourcesAtPlanet(APPSESSION &app, PLANET *lppl, std::int16_t iplr);
+WARPRESULT IWarpMAFromLppl(APPSESSION &app, PLANET *lppl);
+std::int16_t StargateRangeFromLppl(APPSESSION &app, PLANET *lppl, std::int16_t iplr, std::int16_t ish);
+std::int16_t FProdIsTerra(PROD *lpprod);
+std::int16_t IpctCanTerraformLppl(APPSESSION &app, PLANET *lppl);
+std::optional<TERRAFORMRESULT> FCanTerraformLppl(APPSESSION &app, PLANET *lppl, std::int16_t fHelp);
+void    UninhabitPlanet(APPSESSION &app, PLANET *lppl);
+std::int16_t PctCloakFromHuldef(APPSESSION &app, HUL *lphul, std::int16_t iplr);
+
+std::int16_t FProdItemLine(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod, std::int16_t iprod, std::int16_t fShowNever, std::span<char> szLine);
+std::array<char, 360> PszProdQueueTop(APPSESSION &app, PLANET *lppl, PLPROD *lpplprod);
+
 
 #endif

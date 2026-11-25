@@ -1,0 +1,75 @@
+"""The native SDK diagnostic list must never hide a boundary failure or missing run."""
+from pathlib import Path
+import tempfile
+import unittest
+import xml.etree.ElementTree as ET
+
+from configure_matrix import sdk_outcome, assert_sdk_registry, assert_sdk_compilation, sdk_reference_name
+
+
+class SdkProbePolicy(unittest.TestCase):
+    names = {'test_win32_abi_reference', 'test_win32_controls_reference', 'test_sdk_type_isolation'}
+    diagnostics = {'test_win32_controls_reference'}
+
+    def receipt(self, failures=(), skipped=(), omitted=()):
+        suite = ET.Element('testsuite')
+        for name in sorted(self.names - set(omitted)):
+            case = ET.SubElement(suite, 'testcase', name=name)
+            if name in failures:
+                ET.SubElement(case, 'failure', message='native probe assertion')
+            if name in skipped:
+                ET.SubElement(case, 'skipped')
+        temporary = tempfile.TemporaryDirectory(prefix='stars-sdk-policy-')
+        self.addCleanup(temporary.cleanup)
+        path = Path(temporary.name) / 'tests.xml'
+        ET.ElementTree(suite).write(path)
+        return path
+
+    def test_known_probe_failure_is_visible(self):
+        result = sdk_outcome(self.receipt(failures=self.diagnostics), self.diagnostics, self.names)
+        self.assertEqual(result['failed_diagnostics'], ['test_win32_controls_reference'])
+        self.assertEqual(result['failed_contracts'], [])
+        self.assertEqual(result['passed'], 2)
+
+    def test_abi_failure_remains_a_gate(self):
+        result = sdk_outcome(self.receipt(failures={'test_win32_abi_reference'}), self.diagnostics, self.names)
+        self.assertEqual(result['failed_contracts'], ['test_win32_abi_reference'])
+
+    def test_fixed_probe_can_pass_without_changing_expected_values(self):
+        result = sdk_outcome(self.receipt(), self.diagnostics, self.names)
+        self.assertEqual(result['passed'], 3)
+        self.assertEqual(result['failed_diagnostics'], [])
+
+    def test_diagnostics_must_execute(self):
+        for report in (self.receipt(skipped=self.diagnostics), self.receipt(omitted=self.diagnostics)):
+            with self.assertRaises(AssertionError):
+                sdk_outcome(report, self.diagnostics, self.names)
+
+    def test_source_already_named_reference_has_one_suffix(self):
+        self.assertEqual(sdk_reference_name(Path('win32_gdi_reference.c')),
+                         'test_win32_gdi_reference')
+        self.assertEqual(sdk_reference_name(Path('win32_abi.c')),
+                         'test_win32_abi_reference')
+
+    def test_registry_rejects_replacement_with_same_count(self):
+        with self.assertRaises(AssertionError):
+            assert_sdk_registry({'test_alpha_reference', 'test_gamma_reference'},
+                                {'test_alpha_reference', 'test_beta_reference'})
+
+    def test_sdk_entries_use_c_compiler_once_each(self):
+        with tempfile.TemporaryDirectory(prefix='stars-sdk-compile-') as directory:
+            root = Path(directory)
+            expected = {f'tests/reference/sdk/{name}.c' for name in ('alpha', 'beta')}
+            rows = [{'file': str(root / name), 'command': f'/tool/cc -c {root / name}'}
+                    for name in sorted(expected)]
+            assert_sdk_compilation(rows, root, expected, '/tool/cc')
+            for changed in (rows[:1], rows + [rows[0]],
+                            [dict(rows[0], command=rows[0]['command'].replace('/tool/cc', '/tool/c++')), rows[1]],
+                            [dict(rows[0], command=rows[0]['command'] + ' -x c++'), rows[1]],
+                            [dict(rows[0], command=rows[0]['command'] + ' /TP'), rows[1]]):
+                with self.subTest(changed=changed), self.assertRaises(AssertionError):
+                    assert_sdk_compilation(changed, root, expected, '/tool/cc')
+
+
+if __name__ == '__main__':
+    unittest.main()

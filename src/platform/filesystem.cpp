@@ -1,8 +1,7 @@
+#include "path_utf8.h"
 #include "filesystem.h"
-extern "C" {
 #include "encoding.h"
-}
-#include <cstring>
+
 #include <filesystem>
 #include <random>
 #include <string>
@@ -10,22 +9,18 @@ extern "C" {
 
 namespace fs = std::filesystem;
 
-static bool FPathValid(const char *pszPath) {
-    return pszPath && *pszPath && FUtf8Valid(pszPath, std::strlen(pszPath));
+static bool FPathValid(std::string_view szPath) {
+    return !szPath.empty() && FUtf8Valid(szPath);
 }
 
-static bool FCopyPath(const fs::path &pth, char *pszOut, size_t cbOut) {
-    std::string sz = pth.generic_u8string();
-    if (sz.size() >= cbOut || !FUtf8Valid(sz.data(), sz.size()))
-        return false;
-    std::memcpy(pszOut, sz.c_str(), sz.size() + 1);
-    return true;
+static std::optional<std::string> SzPath(const fs::path &pth) {
+    std::string sz = SzFromUtf8(pth.generic_u8string());
+    if (!FUtf8Valid(sz))
+        return std::nullopt;
+    return sz;
 }
 
-int FFilesystemTempDir(char *pszOut, size_t cbOut) {
-    if (!pszOut || cbOut == 0)
-        return 0;
-    *pszOut = 0;
+std::optional<std::string> SzFilesystemTempDir() {
     try {
         fs::path pthBase = fs::canonical(fs::temp_directory_path());
         std::random_device randDevice;
@@ -36,53 +31,58 @@ int FFilesystemTempDir(char *pszOut, size_t cbOut) {
             for (int iChar = 0; iChar < 32; iChar++)
                 szName += rgchHex[randDevice() & 15];
             fs::path pthCandidate = pthBase / szName;
-            // Check capacity before creating anything, so failure leaves no directory.
-            if (!FCopyPath(pthCandidate, pszOut, cbOut))
-                return 0;
+            std::optional<std::string> szCandidate = SzPath(pthCandidate);
+            if (!szCandidate)
+                return std::nullopt;
             if (fs::create_directory(pthCandidate, ec))
-                return 1;
-            *pszOut = 0;
+                return szCandidate;
             if (ec && ec != std::errc::file_exists)
-                return 0;
+                return std::nullopt;
         }
     } catch (...) {
-        // Allocation, encoding and filesystem exceptions must not cross the C ABI.
+        // Allocation, encoding and filesystem exceptions must preserve the service failure contract.
     }
-    *pszOut = 0;
-    return 0;
+    return std::nullopt;
 }
 
-int FFilesystemCreateDirectory(const char *pszPath) {
-    if (!FPathValid(pszPath))
-        return 0;
+bool FFilesystemCreateDirectory(std::string_view szPath) {
+    if (!FPathValid(szPath))
+        return false;
     try {
         std::error_code ec;
-        return fs::create_directory(fs::u8path(pszPath), ec) && !ec;
+        return fs::create_directory(PathFromUtf8(szPath), ec) && !ec;
     } catch (...) {
-        return 0;
+        return false;
     }
 }
 
-int FFilesystemCanonicalPath(const char *pszPath, char *pszOut, size_t cbOut) {
-    if (!pszOut || cbOut == 0)
-        return 0;
-    *pszOut = 0;
-    if (!FPathValid(pszPath))
-        return 0;
+std::optional<std::string> SzFilesystemCanonicalPath(std::string_view szPath) {
+    if (!FPathValid(szPath))
+        return std::nullopt;
     try {
-        return FCopyPath(fs::canonical(fs::u8path(pszPath)), pszOut, cbOut);
+        return SzPath(fs::canonical(PathFromUtf8(szPath)));
     } catch (...) {
-        return 0;
+        return std::nullopt;
     }
 }
 
-int FFilesystemRemove(const char *pszPath) {
-    if (!FPathValid(pszPath))
-        return 0;
+bool FFilesystemRemove(std::string_view szPath) {
+    if (!FPathValid(szPath))
+        return false;
     try {
         std::error_code ec;
-        return fs::remove(fs::u8path(pszPath), ec) && !ec;
+        return fs::remove(PathFromUtf8(szPath), ec) && !ec;
     } catch (...) {
-        return 0;
+        return false;
     }
+}
+
+// Inspection can create transaction state beneath the private copy. Its
+// descendants may exceed the fixed path buffers used by the legacy importer.
+void RemoveFilesystemTempTree(std::string_view szPath) noexcept {
+    if (!FPathValid(szPath)) return;
+    try {
+        std::error_code ec;
+        fs::remove_all(PathFromUtf8(szPath), ec);
+    } catch (...) {}
 }

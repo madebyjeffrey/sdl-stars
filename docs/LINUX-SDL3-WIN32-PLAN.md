@@ -320,7 +320,7 @@ Exit criterion: two-window smoke application with child hit testing, synchronous
 
 ### Milestone 3: GDI reference rendering and acceleration
 
-Basic painting is now implemented in `compat/win32/src/paint.c`: window DCs,
+Basic painting is now implemented in `compat/win32/src/paint.cpp`: window DCs,
 paint lifecycle, solid/null objects, lines/rectangles, fixed ASCII text, and
 per-window SDL renderer presentation. `stars-compat-paint` verifies two-window
 painting and resize/close behavior. The subsequent [bitmap milestone](WIN32-BITMAPS.md) adds memory DCs,

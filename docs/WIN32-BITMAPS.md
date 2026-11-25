@@ -1,6 +1,6 @@
 # Memory DC and bitmap milestone
 
-The native C11 runtime now supports memory DCs, compatible bitmaps, bitmap
+The native C++20 runtime now supports memory DCs, compatible bitmaps, bitmap
 selection and unscaled bitmap transfers. Memory DCs draw through the same
 geometry and text APIs as window DCs, without creating SDL windows or
 renderers. Their lifetime is independent of the window used as a reference.
@@ -28,7 +28,7 @@ usable. `--self-test` checks the same path automatically.
 checking pixels and ownership. Its source is also compiled as the Windows
 `test_win32_bitmap_reference` target, using the actual SDK and GDI under Wine.
 Useful breakpoints are `CreateCompatibleDC`, `SelectObject`, `BitBlt` and
-`DeleteDC` in `compat/win32/src/paint.c`.
+`DeleteDC` in `compat/win32/src/paint.cpp`.
 
 ## Supported behavior
 

@@ -1,0 +1,196 @@
+import stars.design
+
+(* planet.cpp:922; ship2.cpp:653. Add POINTS before applying the curve. *)
+type CloakCurve = {
+  points: integer;
+  design_path: bool = false;
+  derive percent: integer = if self.points < 0 || (self.design_path && self.points > 25000) then 0
+    else if self.points <= 100 then self.points / 2
+    else if self.points <= 300 then 50 + (self.points - 100) / 8
+    else if self.points <= 612 then 75 + (self.points - 300) / 24
+    else if self.points <= 1124 then 88 + (self.points - 612) / 64
+    else if self.points < 1380 then 96 else if self.points < 1612 then 97 else 98;
+}
+type DesignCloak = {
+  race: Race;
+  component_points: integer;
+  starbase: bool = false;
+  derive points: integer = self.component_points + (if self.race.prt_id = 1 then 300 else 0)
+    + (if self.starbase && self.race.isb then 40 else 0);
+  derive percent: integer = (CloakCurve { points = self.points; design_path = true; }).percent;
+}
+(* One design's weighted contribution. Sum these numerator/mass pairs in fleet
+   design order, switching the accumulator to binary64 at the source thresholds. *)
+type FleetCloakContribution = {
+  race: Race;
+  component_points: integer;
+  empty_mass: integer;
+  ships: integer;
+  previous_points: integer = 0;
+  previous_mass: integer = 0;
+  require self.empty_mass >= 0 && self.ships >= 0;
+  derive mass: integer = self.empty_mass * self.ships;
+  derive points: integer = max 0 (self.component_points + (if self.race.prt_id = 1 then 300 else 0));
+  derive weighted_points: integer = self.points * self.mass;
+  derive switch_to_real: bool = self.points > 4000 || self.mass > 500000 || self.previous_points > 100000000 || self.previous_mass > 50000000;
+}
+type FleetCloak = {
+  race: Race;
+  weighted_points: real;
+  empty_mass: real;
+  cargo_minerals_and_colonists: integer = 0;
+  require self.weighted_points >= 0.0 && self.empty_mass > 0.0 && self.cargo_minerals_and_colonists >= 0;
+  derive points: integer = int (self.weighted_points / (self.empty_mass + (if self.race.prt_id = 1 then 0.0 else real self.cargo_minerals_and_colonists)));
+  derive percent: integer = (CloakCurve { points = self.points; }).percent;
+}
+(* util.cpp:1755. Sum fourth powers of scanner ranges x quantities, THEN root.
+   JOAT and special penetrating contributions survive NAS. A zero-range scanner
+   installed is distinct from no scanner. *)
+type ScannerContribution = {
+  normal_range: integer;
+  penetrating_range: integer;
+  quantity: integer = 1;
+  derive normal_fourth: real = real self.normal_range * real self.normal_range * real self.normal_range * real self.normal_range * real self.quantity;
+  derive penetrating_fourth: real = real self.penetrating_range * real self.penetrating_range * real self.penetrating_range * real self.penetrating_range * real self.quantity;
+}
+type ShipScanning = {
+  race: Race;
+  electronics: integer;
+  joat_hull: bool = false;
+  tutorial: bool = false;
+  normal_fourth_sum: real = 0.0;
+  penetrating_fourth_sum: real = 0.0;
+  installed_scanner: bool = false;
+  require self.electronics >= 0 && self.normal_fourth_sum >= 0.0 && self.penetrating_fourth_sum >= 0.0;
+  derive builtin_normal: integer = if self.race.prt_id = 9 && self.joat_hull then (if self.tutorial then 40 else 20 * self.electronics) else 0;
+  derive builtin_penetrating: integer = self.builtin_normal / 2;
+  derive normal_total: real = self.normal_fourth_sum + (ScannerContribution { normal_range = self.builtin_normal; penetrating_range = 0; }).normal_fourth;
+  derive penetrating_total: real = self.penetrating_fourth_sum + (ScannerContribution { normal_range = 0; penetrating_range = self.builtin_penetrating; }).penetrating_fourth;
+  derive normal: integer = if self.normal_total = 0.0 && not self.installed_scanner then -1
+    else int (sqrt (sqrt self.normal_total)) * (if self.race.nas then 2 else 1);
+  derive penetrating: integer = int (sqrt (sqrt self.penetrating_total));
+}
+type PlanetScanning = {
+  race: Race;
+  population: integer;
+  scanner_ability: integer = 0;
+  scanner_installed: bool = false;
+  orbital_hull: integer = 2;
+  require self.population >= 0;
+  derive ar_base: integer = int (sqrt (real (10 * self.population)));
+  derive normal: integer = if self.race.prt_id = 8 then
+    (if self.race.nas then self.ar_base * 1412 / 1000 else self.ar_base)
+    else if self.scanner_installed then abs self.scanner_ability * (if self.race.nas then 2 else 1) else 0;
+  derive penetrating: integer = if self.race.prt_id = 8 then
+    (if not self.race.nas && self.orbital_hull >= 3 then self.normal / 2 else 0)
+    else if self.scanner_installed && self.scanner_ability < 0 then abs self.scanner_ability / 2 else 0;
+}
+object type TachyonFactor = { count: integer; percent: integer; }
+type Detection = {
+  target_cloak: integer;
+  tachyon_detectors: integer = 0;
+  scan_range: integer;
+  distance_squared: real;
+  require self.target_cloak >= 0 && self.target_cloak <= 100 && self.tachyon_detectors >= 0 && self.scan_range >= 0 && self.distance_squared >= 0.0;
+  derive tachyon_percent: integer = List.sum (query { from t: TachyonFactor where t.count = min 17 self.tachyon_detectors select t.percent });
+  derive effective_cloak: integer = self.target_cloak * self.tachyon_percent / 100;
+  derive visible: bool = self.distance_squared <= real (self.scan_range * self.scan_range) * real ((100 - self.effective_cloak) * (100 - self.effective_cloak)) / 10000.0;
+}
+type Intelligence = {
+  viewer: Race;
+  theft_bits: integer = 0;
+  cargo_slot: integer = 0;
+  colocated: bool = false;
+  learned_design: bool = false;
+  target_deep_space: bool = true;
+  inside_own_minefield: bool = false;
+  target_cloak: integer = 0;
+  detection_draw: integer = 99;
+  packet_warp: integer = 0;
+  source_gate_range: integer = 0;
+  target_has_gate: bool = false;
+  target_base_visibility: real = 1.0;
+  distance_squared: real = 0.0;
+  require self.theft_bits >= 0 && self.theft_bits <= 3 && self.cargo_slot >= 0 && self.cargo_slot <= 4;
+  require self.detection_draw >= 0 && self.detection_draw < 100;
+  derive may_steal_fleet: bool = self.theft_bits != 0 && self.cargo_slot < 3;
+  derive may_steal_planet: bool = self.theft_bits >= 2 && self.cargo_slot < 3;
+  derive fleet_cargo_detail: bool = self.colocated && self.theft_bits % 2 = 1;
+  derive planet_more_detail: bool = self.theft_bits >= 2;
+  derive enemy_design_detail: integer = if self.viewer.prt_id = 2 || self.learned_design then 7 else 3;
+  derive minefield_detected: bool = self.viewer.prt_id = 5 && self.target_deep_space && self.inside_own_minefield && self.detection_draw >= self.target_cloak;
+  derive all_packets_visible: bool = self.viewer.prt_id = 6;
+  derive moving_packet_scan_radius: integer = if self.viewer.prt_id = 6 then self.packet_warp * self.packet_warp else 0;
+  derive gate_planet_detected: bool = self.viewer.prt_id = 7 && self.target_has_gate &&
+    (if self.source_gate_range = -1 then self.distance_squared <= 100000000.0
+     else self.distance_squared <= real (self.source_gate_range * self.source_gate_range) * self.target_base_visibility);
+  derive other_races_habitat_known: bool = self.viewer.prt_id = 3;
+}
+TachyonFactor tachyon_0 = { count = 0; percent = 100; }
+TachyonFactor tachyon_1 = { count = 1; percent = 95; }
+TachyonFactor tachyon_2 = { count = 2; percent = 93; }
+TachyonFactor tachyon_3 = { count = 3; percent = 91; }
+TachyonFactor tachyon_4 = { count = 4; percent = 90; }
+TachyonFactor tachyon_5 = { count = 5; percent = 89; }
+TachyonFactor tachyon_6 = { count = 6; percent = 88; }
+TachyonFactor tachyon_7 = { count = 7; percent = 87; }
+TachyonFactor tachyon_8 = { count = 8; percent = 86; }
+TachyonFactor tachyon_9 = { count = 9; percent = 86; }
+TachyonFactor tachyon_10 = { count = 10; percent = 85; }
+TachyonFactor tachyon_11 = { count = 11; percent = 84; }
+TachyonFactor tachyon_12 = { count = 12; percent = 84; }
+TachyonFactor tachyon_13 = { count = 13; percent = 83; }
+TachyonFactor tachyon_14 = { count = 14; percent = 83; }
+TachyonFactor tachyon_15 = { count = 15; percent = 82; }
+TachyonFactor tachyon_16 = { count = 16; percent = 82; }
+TachyonFactor tachyon_17 = { count = 17; percent = 81; }
+
+(* ship2.cpp:753. Supply the catalog's electrical cloak ability when applicable;
+   other categories use these explicit code cases. Quantity includes slot count. *)
+type ComponentCloak = {
+  symbol: string;
+  electrical_cloak_ability: integer = 0;
+  quantity: integer = 1;
+  derive points: integer = self.quantity *
+    (if self.symbol = "iscannerChameleonScanner" || self.symbol = "iarmorMegaPolyShell" then 40
+     else if self.symbol = "iarmorDepletedNeutronium" || self.symbol = "iminingOrbitalAdjuster" then 50
+     else if self.symbol = "ishieldShadowShield" then 70
+     else if self.symbol = "iminingAlienMiner" then 60
+     else if Set.contains self.symbol {"ispecialMMultiCargoPod"; "ishieldLangstonShell"; "ibeamMultiContainedMunition"; "iengineEnigmaPulsar"} then 20
+     else self.electrical_cloak_ability);
+}
+(* util.cpp:1755. Ordinary positive scanner ability is 1/2/other =>50/100/200;
+   the special cases override it before the fourth-power stacking. *)
+type ComponentScanning = {
+  symbol: string;
+  scanner_normal_range: integer = 0;
+  scanner_ability: integer = 0;
+  derive normal: integer = if self.symbol = "iarmorMegaPolyShell" then 80
+    else if self.symbol = "ibeamMultiContainedMunition" then 150
+    else if self.symbol = "ishieldLangstonShell" then 50 else self.scanner_normal_range;
+  derive penetrating: integer = if self.symbol = "iscannerChameleonScanner" then 45
+    else if self.symbol = "iscannerPickPocketScanner" then 0
+    else if self.symbol = "iscannerRobberBaronScanner" then 120
+    else if self.symbol = "iarmorMegaPolyShell" then 40
+    else if self.symbol = "ibeamMultiContainedMunition" then 75
+    else if self.symbol = "ishieldLangstonShell" then 25
+    else if self.scanner_ability <= 0 then 0 else if self.scanner_ability = 1 then 50 else if self.scanner_ability = 2 then 100 else 200;
+  derive theft_bits: integer = if self.symbol = "iscannerPickPocketScanner" then 1 else if self.symbol = "iscannerRobberBaronScanner" then 3 else 0;
+}
+(* Fleet scanner aggregation: max ranges, OR theft, minimum tachyon factor.
+   Use this binary step for each occupied design in source order. *)
+type FleetScanStep = {
+  previous_normal: integer;
+  previous_penetrating: integer;
+  previous_theft: integer = 0;
+  previous_detection: integer = 100;
+  design_normal: integer;
+  design_penetrating: integer;
+  design_theft: integer = 0;
+  design_detection: integer = 100;
+  derive normal: integer = max self.previous_normal self.design_normal;
+  derive penetrating: integer = max self.previous_penetrating self.design_penetrating;
+  derive theft: integer = (if self.previous_theft % 2 = 1 || self.design_theft % 2 = 1 then 1 else 0)
+    + (if self.previous_theft >= 2 || self.design_theft >= 2 then 2 else 0);
+  derive detection: integer = min self.previous_detection self.design_detection;
+}

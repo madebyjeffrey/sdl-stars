@@ -6,6 +6,466 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Hosted turn generation creates missing player turn files when advancing a host-only or partial game. A failed generation restores the previous host, orders, turns and backups, and stops the batch with exit status 2.
+
+- The Race Wizard growth arrows now bypass habitat immunity checks. Clicking
+  either arrow previously read beyond the three habitat axes.
+
+- RDL variant `apply` now retains and validates the enclosing union type before
+  returning a record constructor result. Direct projections previously bypassed
+  union requirements, and nested generic inference treated a case name as an
+  unknown type. Case projections remain available; regressions cover direct
+  validation, nested generics, typed empty aggregates and owner-dependent trait
+  arguments. Native regression matches all 519 checkpoints; no scenarios moved.
+
+- RDL constructor checking now retains the enclosing generic definition's type
+  parameter scope. Valid record constructors in generic rules previously failed
+  with an unbound-variable error. Global bindings retain separate scopes; tests
+  cover several instantiations and trait calls forcing owner-validated generic
+  results. Native game checkpoints are unaffected.
+
+- RDL `validate_value` now finishes owner-dependent checks on retained trait
+  arguments when an application is selected. Ownerless arguments previously
+  stayed unchecked indefinitely. Validation uses each selection's owner while
+  preserving already-owned inputs; regressions cover reusable applications,
+  generic records/variants, cached checks and atomic failure. Native game
+  checkpoints are unaffected.
+
+- RDL `context` now distinguishes a named entity from a nested value with the
+  same type. Nested requirements and derived properties previously read the
+  containing object's `self`. Regression tests preserve nested `self`, outer
+  owner context and named-reference identity. Native checkpoints are unchanged.
+
+- RDL `instantiate_trait` now uses owner-sensitive argument keys for evaluation,
+  separate from logical trait identity. Cached applications previously reused
+  another owner's metadata and skipped its requirements. Regressions cover
+  both evaluation orders, retained results and generic wrappers. Native game
+  behavior and checkpoints are unaffected.
+
+- RDL variant constructor registration and `apply` now retain and infer the
+  enclosing type parameters. Generic payloads previously reached normalization
+  with unresolved variables. Checking, field access and matching now substitute
+  those parameters and reject incompatible instantiations. Generic variant
+  regression tests pass; native game checkpoints are unaffected.
+
+- RDL `query_item_type` now preserves captured argument types on partially
+  applied functions. Empty `List.sum` and `List.product` previously returned
+  integer identities for real projections. Regression tests cover empty,
+  filtered and populated queries for both numeric types; native checkpoints
+  are unaffected.
+
+- RDL `pattern` now obtains entity-reference types from their declarations.
+  Direct and query references previously missed valid named cases or selected a
+  wildcard instead. Object, optional and trait-reference regressions cover the
+  fix; native game checkpoints are unaffected.
+
+- RDL `instantiate_trait` now defers provider constraints until component
+  composition, matching named traits. Templates previously rejected base values
+  that modifiers would make valid. Scalar and record regressions cover both
+  repaired and invalid final values; native game checkpoints are unaffected.
+
+- RDL `instantiate_trait` and variant `apply` now validate normalized arguments
+  and payloads before use. Structural records previously bypassed their `require`
+  constraints. Regression tests cover rejected queries, retries and atomic loads.
+  The experimental interpreter does not change native game checkpoints.
+
+- `CreateWindowExA` keeps modal `#32770` dialogs independent on Cocoa while
+  retaining their Win32 owner and modal behavior. Native SDL parent attachment
+  made the race wizard stutter while dragging; the same creation path is used by
+  the New Game wizard. Cocoa modal sessions process input only for the active
+  dialog; modeless dialogs and other platforms keep native parenting.
+
+- `DrawBtn` now draws the spinner arrows slightly smaller and keeps them centered
+  in their existing buttons. Button size and hit targets are unchanged.
+
+- `FTrackBtn` now passes an empty optional label to `DrawBtn` for unlabeled
+  controls. The race wizard's growth-rate buttons previously passed `NULL`,
+  which was converted to `std::string_view` and crashed while drawing the
+  first press. Increasing or decreasing the ideal growth rate now works.
+
+- Runtime object-target access keeps `OBJ` and `PART` pointer storage compatible
+  with the active Win16 packing while dispatching `PART` snapshots through an
+  aligned typed view. The first variant-storage attempt triggered Linux
+  alignment errors; current native and host regression runs still match all
+  519 checkpoints. `FCanTerraformLppl` now represents unavailable terraform
+  output with `std::optional` and preserves unwritten cost entries, matching the
+  old output-parameter behavior.
+
+- `CchSprintfFields` now links from the shared formatter library. Standalone
+  SDL compatibility tests previously failed to link because its definition
+  was only in the core object target. The formatter implementation and game
+  output are unchanged; native and host regressions each match all 519
+  checkpoints.
+
+- `NewGameWizard` now uses the bounded filename copy length to remove the
+  `.xy` extension. If the copy does not contain that suffix, it cancels safely
+  instead of indexing before the basename. Valid filenames and saved records
+  are unchanged.
+
+- `DrawMineSurvey` now starts the fully surveyed unowned-planet label at the
+  beginning of its local buffer. It previously measured uninitialized storage
+  before appending the production value. The visible label now contains only
+  the production value; game rules and saved records are unchanged.
+
+- `CommandHandler` now snapshots the active file path before save and tutorial
+  prompts or `WriteIniSettings` can reuse the shared work buffer. Returning to
+  the title screen previously copied the last INI value into the game's base
+  path instead of preserving its file family. The path is still bounded UTF-8,
+  and only its final extension
+  after the last path separator is removed. Game rules and saved records are
+  unchanged.
+
+- `FOpenGame` now rejects an oversized generated startup path before copying it
+  into its 256-byte file-dialog buffer. A maximum-length basename plus `.hst`
+  previously overflowed that local buffer; fitting startup paths and game file
+  behavior remain unchanged.
+
+- `DrawScannerSBar` now keeps enough local text capacity for the complete
+  distance, unit, connector and location label. A valid long location name
+  previously overflowed its 100-byte stack buffer. Bounded catalog writes
+  and location appends preserve fitting output and complete UTF-8 names;
+  screen clipping and saved records remain unchanged. No native regression
+  checkpoint moved after regeneration and comparison.
+
+- `FWasRaceFile` now owns its input path across reads, password prompts and
+  close callbacks. Shared-buffer changes could previously replace the loaded
+  race filename or its diagnostic, and a long error path could overrun the
+  work buffer. Complete UTF-8 paths reach I/O unchanged; only diagnostic text
+  is shortened to its buffer. Invalid path text is rejected before I/O. No
+  native regression checkpoint moved after regeneration and comparison.
+
+- `NewGameDlg` now bounds the blank-title filename fallback to the saved
+  title's 31-byte UTF-8 budget. A longer basename previously overran the
+  title field and could corrupt adjacent game state. The full filename and
+  fixed record layout remain unchanged. No native regression checkpoint moved.
+
+- `FLoadGame` and `FWriteLogFile` now admit complete UTF-8 basenames before
+  changing load state, appending template orders or invoking file I/O. Their
+  raw copies could overrun the shared basename or stage malformed text. Owned
+  snapshots also keep filenames stable across shared-buffer changes and writer
+  callbacks. The loader checks host/player identifiers before loading, and
+  consistently uses the normalized game family for orders and recent files.
+  Valid record bytes, storage widths and game rules remain unchanged. No native
+  regression checkpoint moved after regeneration and comparison.
+
+- `GenNewGameFromFile` now owns its source filename before logging changes
+  shared buffers. With logging enabled, the command-line basename could lose
+  its extension before the open, and a work-buffer input could become version
+  text. Creation now opens the original complete UTF-8 filename, including
+  extensionless names. Malformed paths and logging basenames exceeding their
+  storage are rejected before staging. Definition contents, saved layouts and
+  game rules remain unchanged. No native regression scenario or checkpoint moved.
+
+- `ClearFile` and `OutputSz` now form complete report filenames within a
+  capacity derived from the basename and extension limits. Their former
+  256-byte arrays could overflow while clearing a report or truncate the path
+  while writing one. Near-limit UTF-8 basenames now reach the intended `.chk`
+  or `.log` file. Existing extension selection, report text, saved layouts and
+  game rules remain unchanged. No native regression scenario or checkpoint moved.
+
+- `FGenerateTurn` and `CreateBackupDir` now build complete backup paths in
+  owned strings. A valid basename near its 255-byte limit could overflow the
+  256-byte backup arrays or leave no room for a file extension. Rotation keeps
+  the same directory names, copy/rename choices and file-operation order while
+  leaving the shared basename intact. Saved layouts and generated turn contents
+  are unchanged; no native regression scenario or checkpoint moved.
+
+- `MakeNewName` now keeps ship-design clone suffix handling inside the saved
+  32-byte name field. Empty names and short closing-parenthesis suffixes could
+  read before that field; an unterminated field could also reach unbounded
+  pixel measurement. Short names receive the existing ` (2)` suffix, and
+  unterminated fields remain untouched. Normal digit stepping, UTF-8 fitting,
+  saved widths, file formats and host turn results are unchanged.
+
+- `SetPlanetTitleBar` now keeps the complete planet caption in bounded owned
+  storage. Its former 30-byte local buffer overflowed when a valid UTF-8 planet
+  name and the `Planet ` prefix exceeded that capacity. Planet names, stored
+  field sizes, fleet captions, file formats and host turn results are unchanged.
+
+- `AddMRUFile` now validates the complete UTF-8 recent-file path within its
+  256-byte row before changing the list or writing preferences. The unbounded
+  basename/extension join could overrun its local buffer, and malformed text
+  could still rotate the list and publish nine preference values. Invalid or
+  oversized paths now leave every recent-file row and preference untouched;
+  fitting filenames, file formats and host turn results are unchanged.
+
+- `FLoadGame` now rejects failed size/position queries instead of accepting two
+  `-1` error results as matching EOF positions. `CbFileSize` returns an optional
+  full-width count, and `StarsCopyFile` rejects an unavailable count before
+  constructing a byte range. Existing successful loads/copies, saved widths and
+  host turn results are unchanged.
+
+- `FSetUpBatchProcessing` now reads the full returned file size into
+  session-owned storage. Previously its signed 16-bit lowword conversion wrapped
+  lists at 64 KiB and could place the cursor end before its buffer at 32 KiB.
+  Batch cursor/end values are bounded indices; failed loading clears the owner.
+  Existing short-list bytes, game records and host turn results are unchanged.
+
+- `FSetUpBatchProcessing` and `FRunCmdLine` now read bounded batch filename
+  lines, preserving LF, CRLF and an unterminated final line. Previously the
+  unconditional last-byte removal truncated LF filenames and the copy loops
+  could overrun the path buffer or read past the list. Empty, overlong or invalid
+  UTF-8 paths now stop the batch; a failed `-b` setup reports command-line failure.
+  Valid CRLF paths, game files and host turn results are unchanged.
+
+- `ReadRt`, `RgFromStream` and tutorial record skipping now keep the source's
+  remaining byte range. Truncated memory-backed headers and payloads report a
+  corrupt-file error instead of reading beyond the resource. Partial read bytes
+  are published as for file reads; an exhausted memory source stays distinct
+  from file input. Tutorial failures clear the borrowed cursor and close created
+  output streams. Valid tutorial bytes, file layouts and host results are unchanged.
+
+- `OutputFileString` now appends a sized text view without narrowing its byte
+  count to 16 bits. Previously 65536 bytes wrote nothing, and longer text lost
+  each complete 64 KiB block. Existing short logging output, file formats and
+  host turn results are unchanged.
+
+- `WriteRt` now receives a readonly payload span and rejects payloads above
+  its 1024-byte scratch capacity before copying, changing encryption seeds
+  or publishing a record. Oversized input previously overwrote scratch
+  storage and wrote malformed data without an error. Existing framing,
+  valid record bytes, stored widths and host turn results are unchanged.
+
+- `PszFromLongK` now rounds large numeric labels without overflowing signed
+  32-bit arithmetic before its `999M` clamp. Debug builds could display values
+  above 2146983647 as negative millions. Normal rounding, numeric storage
+  widths, file records and host turn results are unchanged.
+
+- `LogChangeName` now rejects names exceeding 31 UTF-8 bytes, malformed UTF-8
+  and embedded NULs before changing the fleet or log. Previously it could
+  write an overlong name that replay rejected. Borrowed name slices are staged
+  before replacement, and failed name allocation/resize retains the current
+  owner. Valid name bytes, record sizes and host turn results are unchanged.
+
+- `PszGetCompressedString` now returns owned catalog text. Multiple lookups
+  no longer overwrite one another, and retained popup, button-tracking and
+  menu labels keep their storage alive. Fleet destination/task labels also
+  return owned values. The decoder retains every catalog byte and its
+  256-byte capacity; file records, report goldens and host turn results are
+  unchanged.
+
+- `PszPlayerName` now returns an owned label instead of shared work storage.
+  A second lookup no longer overwrites the first result, and host-status
+  formatting retains the player name when writing into that work buffer.
+  Drawing and message callers retain their existing 50-byte label budget,
+  grammar and UTF-8 text. Save records and host turn results are unchanged.
+
+- `WriteRtPlr`, `WriteRtShDef` and `WriteBattlePlan` now bound saved-name
+  staging and reject unterminated or invalid UTF-8 names before publishing a
+  record. Ship-design encoding takes an actual byte span and returns its byte
+  count; insufficient capacity leaves the destination unchanged. The old
+  unchecked storage/cursor arguments are removed. Valid record bytes,
+  compression budgets and host results are unchanged.
+
+- Display and fixed-label copies in `SetMsgTitle`, `ReadIniSettings`, report
+  fields and drawing/name helpers now use their actual array or tail capacity.
+  Oversized text receives a terminated complete UTF-8 prefix. Fitting text,
+  fixed field widths, file records and host results are unchanged.
+
+- `ScoreXDlg` keeps each history-menu heading within its 40-byte row.
+  Previously the catalog append could use the rest of the shared work buffer
+  and overwrite the next heading. Long labels now retain a complete UTF-8
+  prefix; fitting labels, file records and host results are unchanged.
+
+- `PszCalcEnvVar` now emits the temperature unit `ºC` as UTF-8. Previously
+  it inserted the single byte `0xBA`, which was invalid application text and
+  could lose its suffix during UTF-8 copying or drawing. The live planet-report
+  golden now contains the same UTF-8 unit. Numeric values, save records and
+  turn-generation results are unchanged.
+
+- `TitleWndProc` now frees the writable title bitmap when its window is
+  destroyed. Previously it passed the allocated copy to `FreeResource`, which
+  left it allocated until runtime shutdown. Repeated destruction remains safe;
+  rendering, file records and host results are unchanged.
+
+- `FWriteTutorialMFile` treats tutorial resource bytes as borrowed module data.
+  Previously its heap-unlock cleanup replaced the last error with an invalid
+  handle error, and a failed output operation left the memory stream active.
+  Cleanup now preserves the primary error and clears the borrowed input on
+  failure. Tutorial bytes, file records and host results are unchanged.
+
+- `CchGetString` now receives the destination capacity and returns a terminated
+  UTF-8 prefix when a catalog entry is too long. Previously it copied until the
+  source terminator regardless of the destination size. Report headings,
+  toolbar rows and mutable text-drawing buffers now carry their capacities;
+  fitting catalog text, file records and host results are unchanged.
+
+- `CchSprintf` and the SDL `wsprintfA` now receive each destination's actual
+  capacity. Previously both allowed 1,024 output bytes even for smaller stack
+  buffers or slices. Short destinations now receive a terminated, complete
+  UTF-8 prefix, and empty destinations are left untouched. Output that fits,
+  file records and host results are unchanged.
+
+- `ClickToolbar` honors unhandled dropdowns and completes their ordinary button
+  action on mouse release. Previously `TBDDRET_NODEFAULT` suppressed the action,
+  while `TBDDRET_TREATPRESSED` sent it on mouse down. `TbWndProc` now returns
+  `TBDDRET_DEFAULT` for menus it handles, preserving the game's filter/menu
+  behavior. Game files and host results are unchanged.
+
+- `CheckDlgButton` now returns failure when the requested child control is
+  missing or the dialog handle is invalid. Previously the SDL wrapper reported
+  success even when no button received `BM_SETCHECK`. Existing button updates,
+  game files and host results are unchanged.
+
+- `DispatchMessageA` now matches dequeued timer captures by message time.
+  The C08 pending list previously kept captures newest first, so rearming one
+  thread timer under another owner before dispatch could run its older message
+  against the newer owner. The callback-context test covers both dispatch orders.
+
+- `WinMain` and the command-line host close their application session on every
+  exit. `FreeStuff` stops native callbacks, timers and windows before releasing
+  game streams/heaps, then clears borrowed UI state and private caches. Repeated
+  close is safe; reentrant close from a window procedure keeps its active frame
+  alive. A new initialization after close restores the original defaults. This
+  ownership change preserves game files and all native host results.
+
+- Library folder callbacks capture logical window IDs and transfer their UTF-8
+  paths through owned messages. Previously a late result could retain its path
+  after a window closed, or target a recycled HWND after runtime restart.
+  Nested dialogs borrow the path until dispatch returns; cancellation and failed
+  callbacks release it. Game files and host results are unchanged.
+
+- `StarsCompatPostMessageAsync` owns pending worker-post records through delivery
+  or shutdown. Previously records left in SDL's event queue could be abandoned.
+  Owned one-shot payloads now also release on target destruction, allocation
+  failure, callback failure, cancellation and runtime restart. MSG layout and
+  successful numeric-post behavior are unchanged.
+
+- `StarsCapturePendingError` preserves a primary failure already being handled
+  while UI cleanup runs. Previously a cleanup callback inside a catch handler
+  could leave its secondary error pending for the next operation. A scoped
+  primary-error guard suppresses that secondary capture and retains any first
+  already-pending error. Host results and regression checkpoints are unchanged.
+
+- `DibFromBitmap` releases its temporary global-memory block when pixel
+  conversion fails. Previously it discarded the handle and retained the block
+  in the wrapper registry. Scoped cleanup also restores the selected palette
+  and device context during unwinding. A resource-count fixture detects the
+  old retained handle; host results and regression checkpoints stay unchanged.
+
+- `DibFromBitmap` queries the native `BITMAP` size instead of the original
+  14-byte Win16 size, which left dimensions uninitialized when the native query
+  rejected it. A 2-by-2 bitmap now converts with its actual dimensions and size.
+  This UI repair changes no host results or regression checkpoints.
+
+- `TransferStuff` restores the previous transfer frame and dialog mode on every
+  return or exception. A failed lookup previously left `pxfer` pointing at a
+  returned stack frame and left its dialog mode installed. Nested transfers now
+  restore the outer frame. This UI cleanup does not change host results or files.
+
+- `MoveThings` initializes its retargeting message ID before processing things.
+  Previously a trader could compare an uninitialized ID when it kept its course;
+  the THING view migration exposed an optimized-build movement difference.
+  The initialization retains the existing native regression results.
+
+- `GetPrivateProfileStringA` and `WritePrivateProfileStringA` release their
+  registry lock and partial profile storage when a C++ I/O operation throws.
+  Fault injection previously deadlocked a retry. Failed profile saves now also
+  close/remove their temporary file during unwinding; publication stays checked
+  and the existing destination remains unchanged.
+
+- `OpenCombo` stops on dropdown notification failure and closes a partial popup
+  when owner drawing fails. Previously failed initialization could leave the
+  combo dropped with capture held. Rollback restores capture and selection;
+  reentrant callbacks that replace the popup retain their replacement.
+
+- `MessageBoxA` stops modal setup when an owner-disable callback fails. It
+  previously continued creating a prompt and queued its alert sound with the
+  error pending. Owners restore before the first error reaches its caller.
+
+- `FFileDialog` stops before launching a chooser if disabling its owner fails.
+  Previously it still called the native adapter. Restoration preserves owner,
+  focus, native-dialog count, filename bytes and the original callback error.
+
+- `DialogBoxParamA` stops before dialog initialization if disabling its owner
+  fails. Previously the dialog still received initialization callbacks despite
+  the pending exception. Owner restoration completes before error delivery.
+
+- `FWatchLiveResize` stops painting/presentation after a failed layout or paint
+  callback. Previously it continued drawing after layout failure. Presentation
+  counters and refresh/resize flags now restore during failure or window
+  destruction, and renderer exceptions are contained before returning to SDL.
+
+- `HwndCreateDialog` destroys a modeless dialog when its creation callbacks fail.
+  Previously it returned a live window while the checked C++ caller received an
+  exception and could not take ownership. Initialization stops at the first
+  pending failure; successful creation and modal return values are unchanged.
+
+- `TrackMenu` now preserves the selected popup command ID when a caller requests
+  `TPM_RETURNCMD`. Previously every successful selection returned 1.
+
+- `TrackMenu` suppresses command delivery and selected-ID returns when popup
+  teardown fails. Previously a failing `WM_UNINITMENUPOPUP` callback still queued
+  `WM_COMMAND` after selection. Capture and popup cleanup finish before failure
+  delivery; normal menu selection is unchanged.
+
+- `FFileDialog` restores its owner, focus and native-dialog counter and frees
+  chooser buffers when a C++ adapter throws. Manual cleanup previously left the
+  owner disabled with a native dialog still counted after unwinding. Callback
+  failures during cleanup preserve the primary error.
+
+- `StarsCapturePendingError` keeps a C++ exception already unwinding as the
+  primary failure. A callback failing during cleanup previously left a secondary
+  error pending after the primary had been caught. Standalone cleanup failures
+  and the first already-pending error remain deliverable.
+
+- `_lread` and the other wrapper registry operations release their locks during
+  C++ exception unwinding. Manual release could leave the file registry locked
+  and deadlock a retry. Fault injection reproduces the old hang; the scoped-lock
+  implementation retries successfully. File bytes and gameplay are unchanged.
+
+- The SDL platform environment helper preserves UTF-8 Windows lookup without a
+  `getenv` macro. That macro rewrote C++ standard-library declarations and
+  broke Windows builds after ownership headers included `<cstdlib>`.
+  Workflow harnesses that inherited the macro now call the helper explicitly,
+  retaining Unicode paths and names when the Windows CRT code page differs.
+
+- `LpNewFontRaster` and fallback glyph matching use their owned Fontconfig
+  configuration for default substitution on Fontconfig 2.17 and newer. The older
+  default entry point initialized a second configuration outside the wrapper's
+  ownership; native macOS `leaks` found three leaked allocations (416 bytes).
+  Font contracts pass and game behavior/regression baselines are unchanged.
+
+- The C++ compilation audit explicitly reads UTF-8 sources and compiler manifests,
+  fixing a decoding failure on Windows systems using the default CP1252 locale.
+  Game behavior and regression baselines are unchanged.
+
+- Windows SDK reference tests can be enabled alongside the ordinary tests.
+  CMake registers their shared enum-ABI and file-service contract targets once;
+  previously the combined configuration failed with duplicate-target errors.
+
+- SDL modal message pumps now unwind when a thread timer or another unowned
+  callback fails, completing dialog and owner cleanup before delivering the
+  pending C++ exception. Previously they continued dispatching commands until
+  the dialog was closed. Turn generation and regression baselines are unchanged.
+
+- Stored constants now use C++ enums with explicit underlying types matching
+  the original widths and signedness. C11 callers and generated tables retain
+  compatible integer typedefs. Integer/record-field conversions and enum
+  arithmetic are explicit; a cross-language ABI test checks all 145 stored
+  types. Constant values, file format 2.85 and regression baselines are unchanged.
+
+- Application-owned files now use a shared C++17 stream/filesystem service for
+  game records, host settings, library metadata/import/export, profiles, help,
+  inspection and PDF output. Opaque streams and owned legacy tokens keep native
+  handles private. Exclusive creation, private temporary-file modes, sharing,
+  live-file identity, truncation and durable publication retain narrow native
+  adapters. UTF-8 paths, binary record sizes, turn results and baselines stay
+  unchanged.
+
+- Recoverable memory and file failures now use typed C++ exceptions instead of
+  `setjmp`/`longjmp`. Scoped guards restore recovery state and flags and release
+  owned handles. Window, dialog, timer and inspector callback failures are
+  contained inside C++ thunks; the C runtime completes its dispatch/modal cleanup
+  before the game receives the error. Existing operation-specific recovery and
+  format 2.85 remain intact. Turn results and regression baselines are unchanged.
+
+- The game, desktop UI and command-line host now compile as GNU C++17 while
+  retaining their source filenames, C ABI, integer storage widths and binary
+  record formats. The SDL wrapper and generated tables remain C11. This first
+  migration step retains existing error recovery and file handling; game
+  behavior and native regression baselines are unchanged.
+
 - ZIP game imports now validate each entry name as UTF-8 and require the ZIP
   UTF-8 filename flag for non-ASCII names. Unsupported names receive a specific
   error instead of the generic invalid-archive message. Existing ASCII ZIPs
@@ -193,6 +653,8 @@ produce different results from a 2.6j host for the same turn.
   submission state when saving orders or history fails. Previously Return to
   Library unloaded the game after a failed Save or Save & Submit. Simulation
   results and all native regression baseline scenarios remain unchanged.
+
+- Game import reads external folders through a private snapshot, including folders with read-only permissions. Backup imports respect the enclosing game lock, and failed imports clean up staged files even when their paths exceed the importer’s limit.
 
 - `FImportSubsequentTurn` now installs a player’s first standalone turn using
   the matching managed universe, including host-only games. Previously it

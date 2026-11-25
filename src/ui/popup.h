@@ -1,21 +1,28 @@
 #ifndef STARS_DECOMPILED_POPUP_H
 #define STARS_DECOMPILED_POPUP_H
 
-#include <stdint.h>
+#include "win.h"
+#include <cstdint>
+#include <optional>
+#include <span>
+#include <string_view>
 #include <windows.h>
 
 extern BattleUnitFlags mpimdgrbitBU[8];
 
-LRESULT CALLBACK PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-int16_t          FIsPopupHullType(int16_t ishdef);
-void             DrawPopup(HWND hwnd, HDC hdc);
-void             Popup(HWND hwnd, int16_t x, int16_t y);
-int16_t          PopupMenu(HWND hwnd, int16_t x, int16_t y, int16_t cString, int32_t *rgids, char **rgsz, int16_t iChecked, int16_t fRightBtn);
-POINT16          PtDisplayPlanetStateInfo(HDC hdc, int16_t fPrint);
-POINT16          PtDisplayPlanetPopInfo(HDC hdc, int16_t fPrint);
-POINT16          PtDisplayZipOrdInfo(HDC hdc, int16_t xCtr, int16_t fPrint);
-POINT16          PtDisplayFactoryMineInfo(HDC hdc, int16_t dx, int16_t fPrint);
-POINT16          PtDisplayResourceInfo(HDC hdc, int16_t dx, int16_t fPrint);
-POINT16          PtDisplayString(HDC hdc, int16_t dx, int16_t fPrint);
+LRESULT  PopupWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+std::int16_t          FIsPopupHullType(APPSESSION &app, std::int16_t ishdef);
+void             DrawPopup(APPSESSION &app, HWND hwnd, HDC hdc);
+void             Popup(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y);
+std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t cString,
+                       std::span<const std::int32_t> rgids,
+                       std::span<const std::optional<std::string_view>> rgsz,
+                       std::int16_t iChecked, std::int16_t fRightBtn);
+POINT16          PtDisplayPlanetStateInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint);
+POINT16          PtDisplayPlanetPopInfo(APPSESSION &app, HDC hdc, std::int16_t fPrint);
+POINT16          PtDisplayZipOrdInfo(APPSESSION &app, HDC hdc, std::int16_t xCtr, std::int16_t fPrint);
+POINT16          PtDisplayFactoryMineInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t fPrint);
+POINT16          PtDisplayResourceInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t fPrint);
+POINT16          PtDisplayString(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t fPrint);
 
 #endif

@@ -62,7 +62,7 @@ cmake --build --preset sdl-debug
 ctest --test-dir dist/sdl-debug -R win32_capture --output-on-failure
 ```
 
-`tests/compat/win32_capture.c` shares capture return-value, notification,
+`tests/compat/win32_capture.inc` shares capture return-value, notification,
 cancel-mode, reentrant destruction and ancestor-destruction checks with the
 Windows SDK. Native checks exercise signed coordinates outside bounds, cross-root
 conversion, mouse-button release, restored normal hit testing, invalid handles

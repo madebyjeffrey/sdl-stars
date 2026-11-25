@@ -1,0 +1,41 @@
+{
+  "parent": "4f4591a0",
+  "status": "complete; verified",
+  "function": "LogChangeName",
+  "input": "A synchronous readonly std::string_view, at most 31 UTF-8 bytes with no embedded NUL; empty text clears the optional fleet name. Non-NUL-terminated slices and aliases of the current owner are supported.",
+  "result": "nodiscard bool; false for missing fleets or rejected input. Invalid text uses the existing file-error route before fleet/log publication. Name allocation/resize errors propagate through the existing StarsError channel.",
+  "ownership": "Validate/copy into 32-byte local staging, encode the packet, then allocate or resize the actual persistent htString owner. The existing resize service reuses fitting storage and preserves the old pointer on allocation failure. Input data is no longer borrowed when replacement begins.",
+  "wire": "The compression budget remains the source name byte length, including the raw fallback behavior. Retain the fixed four-byte prefix, one-byte marker, raw NUL and maximum 37-byte name record; an empty clear remains six bytes. Persistent field publication still precedes WriteMemRt and the tutorial callback, preserving log-append failure effects.",
+  "callers": [
+    {
+      "path": "src/ui/shipui.cpp",
+      "scope": "ShipCommandProc",
+      "contract": "Only redraw the renamed fleet after successful admission; borrow the existing owned edit buffer for the call."
+    },
+    {
+      "path": "tests/compat/win32_client_startup.cpp",
+      "scope": "CheckStartup",
+      "contract": "The real host-orders rename fixture requires success before saving/restoring its in-memory name."
+    },
+    {
+      "path": "tests/unit/test_log.cpp",
+      "contract": "Actual rename API used by existing replay setup and new admission, view/wire and injected allocation/resize cases."
+    }
+  ],
+  "copies_removed": 2,
+  "reproduction": "Before the repair, the 32-byte ASCII test replaced the current name and appended a log record instead of reporting rejection. No overflowing input was required to reproduce it.",
+  "verification": {
+    "batch": "L05k bounded fleet-name admission and owner replacement",
+    "debug_build": "Pass; no new warnings; public headers in both include orders.",
+    "desktop": "153/153; includes the actual UI/host-order fixture consumers, invalid UTF-8/byte-limit/NUL admission, non-NUL slices, aliases, empty clears, maximum raw wire bytes, injected name allocation/resize failures, existing ownership/leak checks and available tutorial checkpoints.",
+    "host_units": "28/28",
+    "native_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+    "host_regression": "519 matches, 25 existing warnings, zero differences/errors or skipped reference inputs.",
+    "windows": "147/147 owned production/wrapper units and both changed test units compile with strict MinGW. Actual Windows log executable passes all 21 cases under Wine with per-case isolation. Native Windows desktop qualification remains pending.",
+    "reproduction": "The added 32-byte ASCII test failed against the old writer: current name replaced, log advanced and no admission error set. It passes after validation precedes replacement/publication.",
+    "failure_scope": "Name allocation/resize failures retain the current owner and log; existing log-append failure effects and successful tutorial callback order are preserved.",
+    "baseline": "Ran regression-export after all fixture readers finished; restored only clock-derived game-ID/encryption-salt churn because no semantic scenario/checkpoint moved. Frozen original fixtures, all unit goldens, valid wire bytes/layouts, normal compression budgets, RNG consumption and canonical models unchanged.",
+    "receipts": "dist/verification/live-cpp/l05k/"
+  },
+  "remaining_work": "Other text/path copies, scratch results and service interfaces remain in the main live ledger."
+}

@@ -44,6 +44,15 @@ harness below is retained as a gesture/observer reference.
 
 The suite runs AutoHotkey **v2.0.28** and the rebuilt Stars! executable inside the same isolated Wine prefix. It drives normal Windows controls, menus, keyboard shortcuts and mouse gestures. The test build adds a hidden, read-only observation window; it does not complete tasks or modify game orders.
 
+The current C++ session owns game/UI values in `APPGAMESTATE` and `APPUISTATE`.
+Original-name references preserve the observer's reads and array extents; it
+uses no fixed global addresses. Its transfer read uses the actual fleet accessor,
+and toolbar indices preserve their signed sixteen-bit enum type. The
+`stars-archived-observer-types` object target checks these types against current
+headers. It supplies declarations for retired native-only inspection functions;
+it does not link or execute a native backend. The `InitInstance`/`ScannerWndProc`
+wrappers and literal tutor parser anchors remain unchanged.
+
 ## Historical run instructions
 
 The following commands describe the retired native Win32 client. They do not

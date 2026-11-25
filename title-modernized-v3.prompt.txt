@@ -1,0 +1,10 @@
+Generated with the built-in image generation tool.
+Reference: title-modernized-v2.png
+
+Use case: precise-object-edit
+Asset type: refined game title artwork, typography weight adjustment.
+Input image: the supplied image is the edit target.
+Change only the lettering "STARS!". The user likes the current rounded science-fiction lettering but wants it a little thinner and less bulky. Preserve the exact family of rounded extended letter shapes, title position, approximate overall width and cap height. Reduce all letter stroke thicknesses by roughly 25–30 percent, moving from heavy bold to a confident medium weight. Enlarge interior openings accordingly, particularly the A and R counters and S channels. Keep smooth rounded corners, the soft A apex, rounded terminals and rounded exclamation mark. Make the exclamation mark and its dot lighter in proportion. Keep the brushed silver finish, but reduce bevel thickness, edge highlights and extrusion depth for a flatter, more elegant and less chunky appearance. Preserve strong legibility. This should be a modest, clearly visible refinement of the approved lettering, not a different font.
+Text verbatim: "STARS!" once only.
+Preserve the rest of the image as closely as possible: starfield, purple-blue nebula and central glow, teal spacecraft in lower left, ring craft in lower right, warm curved planet horizon, framing, lighting, palette and proportions.
+No sharp corners, no pointed terminals, no puffy chrome, no 2 badge, no other words or numbers, no UI, no watermark. Output one finished opaque landscape image.

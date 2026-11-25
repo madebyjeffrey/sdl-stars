@@ -178,15 +178,15 @@ catalog specification.
 
 | Required input | Authoritative data / helper | Generation-facing meaning |
 | --- | --- | --- |
-| Race presets and AI snapshots | [predefined races](../data/races/predefined.yaml), [AI races](../data/races/ai.yaml); `CreateRandomRace` in [race.c](../src/core/race.c) | Preserve complete `PLAYER` defaults and 6×4 AI table order. M05 only overwrites the fields described here. |
-| Starting ships | [starting-ships.yaml](../data/parts/starting-ships.yaml), `LpshdefT` in [parts.c](../src/core/parts.c) | Copy full `SHDEF` templates; generation selects indices 0–18 as listed in §4.6. Other entries are not selected by this path. |
+| Race presets and AI snapshots | [predefined races](../data/races/predefined.yaml), [AI races](../data/races/ai.yaml); `CreateRandomRace` in [race.cpp](../src/core/race.cpp) | Preserve complete `PLAYER` defaults and 6×4 AI table order. M05 only overwrites the fields described here. |
+| Starting ships | [starting-ships.yaml](../data/parts/starting-ships.yaml), `LpshdefT` in [parts.cpp](../src/core/parts.cpp) | Copy full `SHDEF` templates; generation selects indices 0–18 as listed in §4.6. Other entries are not selected by this path. |
 | Starting bases | [starting-starbases.yaml](../data/parts/starting-starbases.yaml), `LpshdefSBT` | Four templates in order: Starbase, Accelerator Platform, Porthole to Beyond, Starter Colony. Owner slots and stored design numbers differ; see §4.5. |
 | Hulls and components | [parts catalog](../data/parts), [datagen.py](../data/datagen.py), [structs.h](../src/core/structs.h), [enums.h](../src/core/enums.h) | Full field schemas are the C types; slot category/index/count, six technology requirements, fuel/cargo units and trait restrictions must be preserved. IDs are positional and append-only. |
-| Part eligibility | `FLookupPart` in [parts.c](../src/core/parts.c), `FShouldPartBeHidden` in [research.c](../src/core/research.c) | In the current player's context, test candidate category/index, trait restrictions, hidden trader parts and required technology. Pick the first available candidate; retain the old slot if none qualifies. |
-| Fleet allocation and fuel | `LpflNew` in [util.c](../src/core/util.c), `LGetFleetStat` / `WtMaxShdefStat` in [ship.c](../src/core/ship.c) | Assign next free owner fleet index; create one stationary planet waypoint; fuel derives from hull and installed parts before upgrades. |
+| Part eligibility | `FLookupPart` in [parts.cpp](../src/core/parts.cpp), `FShouldPartBeHidden` in [research.cpp](../src/core/research.cpp) | In the current player's context, test candidate category/index, trait restrictions, hidden trader parts and required technology. Pick the first available candidate; retain the old slot if none qualifies. |
+| Fleet allocation and fuel | `LpflNew` in [util.cpp](../src/core/util.cpp), `LGetFleetStat` / `WtMaxShdefStat` in [ship.cpp](../src/core/ship.cpp) | Assign next free owner fleet index; create one stationary planet waypoint; fuel derives from hull and installed parts before upgrades. |
 | Battle plans | [battle-plans.yaml](../data/battle-plans.yaml), `InitBattlePlan` | Five complete templates, positions 0–4: Default, Kill Starbase, Max-Defense, Sniper, Chicken. |
 | Planet names and messages | [planets.txt](../text/planets.txt), [messages.txt](../text/messages.txt), [strings.txt](../text/strings.txt), [textgen.py](../text/textgen.py) | Preserve ordered name table, generated `cPlanetName`, message IDs/parameter contracts and UTF-8 bytes. Random fallback race names are M03 normalization inputs. |
-| Embedded constants | [create.c](../src/core/create.c), [globals.c](../src/core/globals.c), [utilgen.c](../src/core/utilgen.c), [native.c](../src/platform/native.c) | Distance 12, size/density and wormhole tables, literal `rgPrimes` (including 279), RNG and compatible sorting. |
+| Embedded constants | [create.cpp](../src/core/create.cpp), [globals.cpp](../src/core/globals.cpp), [utilgen.cpp](../src/core/utilgen.cpp), [native.cpp](../src/platform/native.cpp) | Distance 12, size/density and wormhole tables, literal `rgPrimes` (including 279), RNG and compatible sorting. |
 
 `datagen.py` emits designated initializers: omitted fields are zero, `rg` maps
 select array elements, flag lists are ORed, hull slot count comes from `rghs`,
@@ -255,24 +255,24 @@ input. M16 owns subsequent tutorial pages and turn-generation overrides.
 ## 4. Rules, calculations, and validation
 
 The following is the directly invoked normal-game generation path in
-[create.c](../src/core/create.c), `GenerateWorld` and `CreateStartupShip`. `Random(n)` below is
+[create.cpp](../src/core/create.cpp), `GenerateWorld` and `CreateStartupShip`. `Random(n)` below is
 `R(n)` from [M03 arithmetic and RNG](M03-new-game-wizard.md#41-arithmetic-conventions-and-rng). Counts, coordinates, and stock quantities are integers; population is in
 hundreds of colonists. The tutorial has a separate fixed-seed entry point and explicitly noted
 overrides; it is not a fourth wizard page. The [starting
 ships](../data/parts/starting-ships.yaml), [starting
-starbases](../data/parts/starting-starbases.yaml), [planet rules](../src/core/planet.c), [ship
-statistics](../src/core/ship.c), and [wormhole validation](../src/core/thing.c) are dependency
+starbases](../data/parts/starting-starbases.yaml), [planet rules](../src/core/planet.cpp), [ship
+statistics](../src/core/ship.cpp), and [wormhole validation](../src/core/thing.cpp) are dependency
 evidence.
 
 For valid coordinates, `ICompLong` compares x only through a narrowed packed-point subtraction;
 y is not a tie-breaker. Preserve `qsort16`'s Win16 equal-key ordering from
-[native.c](../src/platform/native.c); `ICompLong` is in [utilgen.c](../src/core/utilgen.c). A
+[native.cpp](../src/platform/native.cpp); `ICompLong` is in [utilgen.cpp](../src/core/utilgen.cpp). A
 stable standard-library sort can change planet IDs and everything that consumes the following
 random sequence.
 
 ### 4.1 Universe count and coordinates
 
-Source [src/core/create.c](../src/core/create.c) and enum domains
+Source [src/core/create.cpp](../src/core/create.cpp) and enum domains
 [src/core/enums.h](../src/core/enums.h).
 
 Size index `s` is Tiny 0, Small 1, Medium 2, Large 3, Huge 4. Density `d` is Sparse 0, Normal 1,
@@ -321,7 +321,7 @@ Selections can repeat. Re-sort after the loop. There is no second separation-pru
 
 ### 4.2 Unowned planet initialization
 
-Source [src/core/create.c](../src/core/create.c).
+Source [src/core/create.cpp](../src/core/create.cpp).
 
 In a separate first loop over all planet IDs, choose each name by `Random(cPlanetName)` then
 linear probing/wrap until an unused name; mark its name bit. Normal wizard wrap count is
@@ -352,7 +352,7 @@ stock is zeroed only if it remains unowned.
 
 ### 4.3 Homeworld placement
 
-Source [src/core/create.c](../src/core/create.c).
+Source [src/core/create.cpp](../src/core/create.cpp).
 
 P=number of players (>0), h=start-distance index. Define:
 
@@ -390,7 +390,7 @@ and generate random races afterward.
 
 ### 4.4 Starting technology
 
-Source [src/core/create.c](../src/core/create.c).
+Source [src/core/create.cpp](../src/core/create.cpp).
 
 When race bit `ibitRaceAIPlayer` is set, call M04 `CreateRandomRace`. Clear dead/learned/trader
 state, six technology levels and six spent-resource counters. The technology vector order is
@@ -415,8 +415,8 @@ tutorial. Preserve this ordering.
 
 ### 4.5 Homeworld resources and leftover points
 
-Source [src/core/create.c](../src/core/create.c); true growth
-[src/core/race.c](../src/core/race.c).
+Source [src/core/create.cpp](../src/core/create.cpp); true growth
+[src/core/race.cpp](../src/core/race.cpp).
 
 Home starts owned, starbase index 0, homeworld=true, artifact=false; factories/mines/defenses
 each 10; population 175 hundred with LSP, otherwise 250. Initial population guess is
@@ -461,10 +461,10 @@ see S06/S01 rather than changing those domains.
 
 ### 4.6 Starting fleets, templates, and the recursive dependency boundary
 
-Sources [src/core/create.c](../src/core/create.c),
+Sources [src/core/create.cpp](../src/core/create.cpp),
 [data/parts/starting-ships.yaml](../data/parts/starting-ships.yaml),
 [data/parts/starting-starbases.yaml](../data/parts/starting-starbases.yaml),
-[src/core/ship.c](../src/core/ship.c).
+[src/core/ship.cpp](../src/core/ship.cpp).
 
 `CreateStartupShip(player,planet,templateOrDesign,copyTemplate)` optionally copies a template
 into next design slot, increments its built/existing counters, creates a one-ship fleet at the
@@ -513,7 +513,7 @@ combat are outside M05.
 
 ### 4.7 Second starting world for IT/PP
 
-Source [src/core/create.c](../src/core/create.c).
+Source [src/core/create.cpp](../src/core/create.cpp).
 
 Only size>tiny. Eligible unowned planets have squared distance in inclusive interval
 `[floor(15D/100)^2,floor(23D/100)^2]` from home. Scan planet order, increment fitting count `k`,
@@ -525,7 +525,7 @@ If current desirability<10, reroll each environment axis to `2+Random(97)`, rang
 copies home environment. Thus even success on the hundredth reroll triggers home-environment
 fallback. An already suitable planet consumes no reroll draws.
 
-Shared desirability rule ([src/core/planet.c](../src/core/planet.c)) required by this check:
+Shared desirability rule ([src/core/planet.cpp](../src/core/planet.cpp)) required by this check:
 
 ```text
 positive=0; negative=0; modifier=10000
@@ -561,7 +561,7 @@ without copying a new template.
 
 ### 4.8 Wormholes and event flag
 
-Sources [src/core/create.c](../src/core/create.c), [src/core/thing.c](../src/core/thing.c).
+Sources [src/core/create.cpp](../src/core/create.cpp), [src/core/thing.cpp](../src/core/thing.cpp).
 
 No Random Events gives zero pairs and skips pair-count draw. Otherwise
 pairs=`min[s]+Random(var[s])`, with min=[0,1,1,3,4],var=[3,3,5,4,5]. Ranges by size: 0..2, 1..3,
@@ -595,7 +595,7 @@ distinct players become 2. The scan assigns ordinary AI a constant salt `1560852
 at the second human/housekeeping participant; AI after that break do not receive this assignment
 from this scan. Outside tutorial, the game ID is `DwTickCount()`, so identical RNG state does
 not by itself guarantee byte-identical output. `FCreateFile` in
-[save.c](../src/core/save.c) also builds each BOF salt from `DwTickCount()` plus
+[save.cpp](../src/core/save.cpp) also builds each BOF salt from `DwTickCount()` plus
 `Random(2000)`; reproduce the entire clock-call sequence and file-writing draw
 order for byte comparisons, including the fixed-identity tutorial.
 
@@ -740,10 +740,10 @@ or runtime source. The acceptance matrix above is broader than the tests run.
 
 ## 8. Evidence and remaining work
 
-Primary behavior evidence is [create.c](../src/core/create.c): `GenerateWorld`,
+Primary behavior evidence is [create.cpp](../src/core/create.cpp): `GenerateWorld`,
 `CreateStartupShip`, `InitBattlePlan`, `GenNewGameFromFile`, `CreateTutorWorld`;
-[createui.c](../src/ui/createui.c): `NewGameWizard`; and
-[libraryui.c](../src/ui/libraryui.c): `FCompleteGeneratedFile`, `FFinishLibraryGame`.
+[createui.cpp](../src/ui/createui.cpp): `NewGameWizard`; and
+[libraryui.cpp](../src/ui/libraryui.cpp): `FCompleteGeneratedFile`, `FFinishLibraryGame`.
 The minimum dependency table names the other source functions. The original
 module map's earlier revision is historical; this document and the retained
 M03 generation evidence were checked at the revision in this document's header.

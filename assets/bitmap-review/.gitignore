@@ -1,0 +1,3 @@
+# Keep replacement-art experiments and external candidates out of this extraction.
+/concepts/
+/candidates/

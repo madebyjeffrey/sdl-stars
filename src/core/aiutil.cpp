@@ -1,0 +1,2956 @@
+#include "common.h"
+#include <algorithm>
+#include "appstate.h"
+#include "fleet_query_io.h"
+#include "text_io.h"
+#include "production_io.h"
+#include "colony_io.h"
+#include "planet_query_io.h"
+#include "research_io.h"
+#include "part_query_io.h"
+#include "race_query_io.h"
+#include "capacity_io.h"
+#include "random_io.h"
+
+std::int32_t vrgAiPacketDist[2] = {aiPacketDistanceSquaredSingleMassDriver, aiPacketDistanceSquaredTwoMassDrivers};
+std::uint8_t vrgSBMacAisb[6] = {aiSbRecipeMacSpaceDock, aiSbRecipeMacSpaceStation,     aiSbRecipeMacUltraStationEarly,
+                           aiSbRecipeSpaceStation, aiSbRecipeMacUltraStationLate, aiSbRecipeMacDeathStar};
+
+std::int16_t FCreateAiShdef(APPSESSION &app, std::int16_t ishdef, HulDef ihul, std::span<const std::uint8_t> rgaip) {
+    StringId ids;
+    std::int32_t  grbitHull;
+    std::int16_t  cItem;
+    std::int16_t  ihs;
+    HUL     *lphul;
+    PART     part;
+    std::optional<PART> partResult;
+    SHDEF    shdef;
+
+    shdef = {};
+    if (FLookupPartX(app, &part, ishdef < 0 ? 0x400 : 0x4000, ihul) != mdPartAvailAvailable) {
+        return 0;
+    }
+    lphul = part.phul();
+    if (rgaip.size() < static_cast<std::size_t>(lphul->chs)) {
+        return 0;
+    }
+    shdef.hul = *lphul;
+    shdef.hul.ihuldef = lphul->ihuldef;
+    for (ihs = 0; ihs < lphul->chs; ihs++) {
+        partResult = FGetAIPart(app, static_cast<AiPartPreference>(rgaip[ihs]));
+        if (!partResult) {
+            return 0;
+        }
+        part = *partResult;
+        part.hs.cItem = lphul->rghs[ihs].cItem;
+        shdef.hul.rghs[ihs] = part.hs;
+    }
+    shdef.hul.chs = ihs;
+    shdef.fFree = 0;
+    if (ishdef < 0) {
+        app.state.shdefBuild = shdef;
+        return 1;
+    }
+    ids = idsUniverseDefinitionFileSeemsMissingCorrupt;
+    grbitHull = 1 << ihul;
+    if (grbitHull & 0x780) {
+        ids = idsLyingBastard;
+        cItem = 16;
+    } else if (grbitHull & 0x40) {
+        ids = idsScrapper;
+        cItem = 16;
+    } else if (grbitHull & 0x70) {
+        ids = idsEasterBunny;
+        cItem = 10;
+    } else if (grbitHull & 0xf0000) {
+        ids = idsPidgeon;
+        cItem = 12;
+    } else if (grbitHull & 0xf) {
+        ids = idsGlovebox;
+        cItem = 8;
+    } else if (grbitHull & 0x1f00000) {
+        ids = idsGroundHog;
+        cItem = 8;
+    } else if (grbitHull & 0x3800) {
+        ids = idsPricklyPear;
+        cItem = 8;
+    } else if (grbitHull & 0xc000) {
+        ids = idsEgg;
+        cItem = 8;
+    } else {
+        ids = idsZombie;
+        cItem = 8;
+    }
+    shdef.ishdef = ishdef;
+    PickANameAndBmp(app, &shdef, ids, cItem, lphul->ibmp);
+    return FChangeAiShdef(app, &shdef, ishdef);
+}
+
+std::optional<PART> FGetAIPart(APPSESSION &app, AiPartPreference aip) {
+    std::int16_t cTry;
+    std::int16_t iOffset;
+    std::int16_t i;
+    std::int16_t cItem;
+    PART    part;
+
+    iOffset = 0;
+    for (i = 0; i < static_cast<std::int16_t>(aip); i++) {
+        iOffset += vrgcAiParts[i];
+    }
+    cTry = vrgcAiParts[aip];
+    while (cTry-- > 0) {
+        part.hs.grhst = static_cast<HullSlotType>(1 << vrgAiParts[iOffset].ibit);
+        part.hs.iItem = vrgAiParts[iOffset].iItem;
+        part.hs.cItem = 0;
+        cItem = vrgAiParts[iOffset].cItem;
+        while (cItem-- > 0) {
+            if (PartQueryIO().pfnLookup(app, &part) == mdPartAvailAvailable) {
+                return part;
+            }
+            part.hs.iItem--;
+        }
+        iOffset++;
+    }
+    return std::nullopt;
+}
+
+void PickANameAndBmp(APPSESSION &app, SHDEF *pshdef, StringId ids, std::int16_t cids, std::int16_t ibmpStart) {
+    std::int16_t i;
+    std::int16_t rgfBmpUsed[4];
+    std::int16_t ishdef;
+
+    std::ranges::fill(rgfBmpUsed, 0);
+    if (pshdef->ishdef >= 16) {
+        for (ishdef = 0; ishdef < 10; ishdef++) {
+            if (!app.state.rglpshdefSB[app.state.idPlayer][ishdef].fFree && app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.ihuldef == pshdef->hul.ihuldef) {
+                rgfBmpUsed[app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.ibmp + -ibmpStart] = 1;
+            }
+        }
+    } else {
+        for (ishdef = 0; ishdef < 16; ishdef++) {
+            if (!app.state.rgshdef[ishdef].fFree && app.state.rgshdef[ishdef].hul.ihuldef == pshdef->hul.ihuldef) {
+                rgfBmpUsed[app.state.rgshdef[ishdef].hul.ibmp + -ibmpStart] = 1;
+            }
+        }
+    }
+    for (i = 0; i < 4 && rgfBmpUsed[i] != 0; i++) {
+    }
+    if (i == 4) {
+        i = RandomIO().pfnRandom(app, 4);
+    }
+    pshdef->hul.ibmp = ibmpStart + i;
+    for (i = 0; i < 20; i++) {
+        TextIO().pfnCchGetString(app, static_cast<StringId>(RandomIO().pfnRandom(app, cids) + ids), std::span{pshdef->hul.szClass});
+        if (pshdef->ishdef >= 16) {
+            for (ishdef = 0; ishdef < 10 && (app.state.rglpshdefSB[app.state.idPlayer][ishdef].fFree || app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.ihuldef != pshdef->hul.ihuldef ||
+                                             std::string_view{pshdef->hul.szClass} != std::string_view{app.state.rglpshdefSB[app.state.idPlayer][ishdef].hul.szClass});
+                 ishdef++) {
+            }
+            if (ishdef == 10) {
+                return;
+            }
+        } else {
+            for (ishdef = 0; ishdef < 16 && (app.state.rgshdef[ishdef].fFree ||
+                std::string_view{pshdef->hul.szClass} != std::string_view{app.state.rgshdef[ishdef].hul.szClass}); ishdef++) {
+            }
+            if (ishdef == 16) {
+                return;
+            }
+        }
+    }
+    CchSprintf(pshdef->hul.szClass, "%s %d", TextIO().pfnCompressed(app, static_cast<StringId>(RandomIO().pfnRandom(app, cids) + ids)).data(), RandomIO().pfnRandom(app, 100));
+    return;
+}
+
+std::int16_t FChangeAiShdef(APPSESSION &app, SHDEF *pshdef, std::int16_t ishdef) {
+    SHDEF  *lpshdefBase;
+    std::int16_t iDir;
+    std::int16_t ishdefWork;
+    SHDEF   shdef;
+
+    shdef = *pshdef;
+    shdef.ishdef = ishdef;
+    shdef.turn = app.state.game.turn;
+    shdef.cExist = 0;
+    shdef.cBuilt = 0;
+    if (ishdef >= 16) {
+        lpshdefBase = app.state.rglpshdefSB[app.state.idPlayer];
+        ishdefWork = ishdef - 16;
+    } else {
+        lpshdefBase = app.state.rglpshdef[app.state.idPlayer];
+        ishdefWork = ishdef;
+    }
+    UpdateShdefCost(app, &shdef);
+    if (shdef.fFree != lpshdefBase[ishdefWork].fFree) {
+        iDir = !shdef.fFree ? 1 : -1;
+        if (ishdef >= 16) {
+            app.state.rgplr[app.state.idPlayer].cshdefSB += iDir;
+        } else {
+            app.state.rgplr[app.state.idPlayer].cShDef += iDir;
+        }
+    } else if (!lpshdefBase[ishdefWork].fFree) {
+        lpshdefBase[ishdefWork].fFree = 1;
+        LogChangeShDef(app, lpshdefBase + ishdefWork);
+    }
+    lpshdefBase[ishdefWork] = shdef;
+    LogChangeShDef(app, &shdef);
+    return 1;
+}
+
+std::int16_t XferAiSupply(APPSESSION &app, GrobjClass grobjSrc, std::int16_t idSrc, GrobjClass grobjDst, std::int16_t idDst, MineralType iSupply, std::int16_t cQuan) {
+    std::int16_t dChg;
+    std::int16_t iT;
+    std::int32_t cAvailable;
+
+    if (cQuan == 0) {
+        return 0;
+    }
+    if (cQuan < 0) {
+        iT = grobjSrc;
+        grobjSrc = grobjDst;
+        grobjDst = static_cast<GrobjClass>(iT);
+        iT = idSrc;
+        idSrc = idDst;
+        idDst = iT;
+        cQuan = -cQuan;
+    }
+    cAvailable = ChgCargo(app, grobjSrc, idSrc, iSupply, 0, {});
+    if (cQuan > cAvailable) {
+        cQuan = LOWORD(cAvailable);
+    }
+    if (cQuan == 0) {
+        return 0;
+    }
+    dChg = LOWORD(ChgCargo(app, grobjDst, idDst, iSupply, cQuan, {}));
+    if (dChg != 0) {
+        ChgCargo(app, grobjSrc, idSrc, iSupply, static_cast<std::int16_t>(-dChg), {});
+    }
+    return dChg;
+}
+
+std::int16_t XferAiTroopers(APPSESSION &app, std::int16_t idSrc, std::int16_t idDst, std::int16_t cQuan) {
+    std::int32_t cAvailable;
+
+    if (cQuan == 0) {
+        return 0;
+    }
+    cAvailable = ChgCargo(app, grobjFleet, idSrc, Colonists, 0, {});
+    if (cQuan > cAvailable) {
+        cQuan = LOWORD(cAvailable);
+    }
+    if (cQuan == 0) {
+        return 0;
+    }
+    ChgCargo(app, grobjFleet, idSrc, Colonists, static_cast<std::int16_t>(-cQuan), {});
+    ChgCargo(app, grobjPlanet, idDst, Colonists, cQuan, {});
+    return cQuan;
+}
+
+std::int16_t FColonizeAiFleet(APPSESSION &app, FLEET *lpfl, std::int16_t idPlanet) {
+    ORDER ord;
+
+    ChangeMainObjSel(app, grobjFleet, lpfl->id);
+    ord = {};
+    ord.pt = app.state.rgptPlan[idPlanet];
+    ord.grobj = grobjPlanet;
+    ord.id = idPlanet;
+    ord.grTask = grTaskColonize;
+    ord.fValidTask = 1;
+    ord.iWarp = static_cast<std::uint16_t>(IFindIdealWarp(app, lpfl, 1));
+    if (!FMoveAiFleet(app, lpfl, &ord, 0)) {
+        return 0;
+    }
+    lpfl->fMark = 1;
+    return 1;
+}
+
+std::int16_t FGotoWormholeAiFleet(APPSESSION &app, FLEET *lpfl, THING *lpthWorm) {
+    ORDER ord;
+
+    ChangeMainObjSel(app, grobjFleet, lpfl->id);
+    ord = {};
+    ord.pt = lpthWorm->pt();
+    ord.grobj = grobjThing;
+    ord.id = lpthWorm->idFull();
+    ord.grTask = grTaskNone;
+    ord.fValidTask = 0;
+    ord.iWarp = static_cast<std::uint16_t>(IFindIdealWarp(app, lpfl, 1));
+    if (!FMoveAiFleet(app, lpfl, &ord, 0)) {
+        return 0;
+    }
+    lpfl->fMark = 1;
+    return 1;
+}
+
+COLONIZABLEPLANETRESULT IdNearestColonizablePlanet(APPSESSION &app, FLEET *lpflCol, bool fFindWorm) {
+    PLANET  *lpplMac;
+    POINT16  pt;
+    std::int32_t  dy;
+    std::int32_t  d2;
+    PLANET  *lppl;
+    std::int16_t  idBest;
+    std::int16_t  ifl;
+    FLEET   *lpfl;
+    std::int16_t  i;
+    std::int16_t  iVal;
+    std::int32_t  dx;
+    std::uint8_t *lpb;
+    std::int32_t  d2Cur;
+    THING   *lpthWorm;
+
+    if (app.state.rgplr[app.state.idPlayer].idAi != idAiRobotoid && app.state.rgplr[app.state.idPlayer].idAi != idAiMacinti) {
+        iVal = 16;
+        if (app.state.fMarkedPlanets)
+            goto LFindNearest;
+    } else {
+        iVal = 0;
+    }
+    lpb = app.state.vlpbAiPlanet + 15;
+    i = 0;
+    while (i < app.state.game.cPlanMax) {
+        *lpb = iVal;
+        i++;
+        lpb += 16;
+    }
+    lppl = app.state.lpPlanets;
+    lpplMac = app.state.lpPlanets + app.state.cPlanet;
+    for (; lppl < lpplMac; lppl++) {
+        if (lppl->iPlayer != iplrNone) {
+            if (lppl->iPlayer == app.state.idPlayer) {
+                iVal = 1;
+            } else {
+                iVal = 2;
+            }
+        } else if (app.state.rgplr[app.state.idPlayer].idAi != idAiRobotoid && app.state.rgplr[app.state.idPlayer].idAi != idAiMacinti && PctPlanetOptValue(app, lppl, app.state.idPlayer) < 0) {
+            iVal = 8;
+        } else {
+            iVal = 0;
+        }
+        app.state.vlpbAiPlanet[lppl->id * 16 + 15] = iVal;
+    }
+    for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+        lpfl = app.state.rglpfl[ifl];
+        if (!app.state.rglpfl[ifl])
+            break;
+        if (lpfl->iPlayer == app.state.idPlayer && lpfl->cord > 1 && lpfl != lpflCol && lpfl->lpplord->rgord()[1].grobj == grobjPlanet &&
+            ((app.state.rgplr[app.state.idPlayer].idAi != idAiRobotoid && app.state.rgplr[app.state.idPlayer].idAi != idAiMacinti) || lpfl->lpplord->rgord()[1].grTask == grTaskColonize)) {
+            app.state.vlpbAiPlanet[lpfl->lpplord->rgord()[1].id * 16 + 15] = 4;
+        }
+    }
+LFindNearest:
+    lpb = app.state.vlpbAiPlanet + 15;
+    d2 = 99999999;
+    pt = lpflCol->pt;
+    idBest = idplNone;
+    i = 0;
+    while (i < app.state.game.cPlanMax) {
+        if (*lpb <= 0) {
+            dx = std::abs(pt.x - app.state.rgptPlan[i].x);
+            dy = std::abs(pt.y - app.state.rgptPlan[i].y);
+            if (dx < d2 && dy < d2) {
+                d2Cur = static_cast<std::uint32_t>((dx * dx));
+                if (static_cast<std::int32_t>(static_cast<std::uint32_t>((dx * dx))) < d2) {
+                    d2Cur += static_cast<std::uint32_t>((dy * dy));
+                    if (d2Cur < d2) {
+                        d2 = d2Cur;
+                        idBest = i;
+                    }
+                }
+            }
+        }
+        i++;
+        lpb += 16;
+    }
+    app.state.fMarkedPlanets = 1;
+    lpthWorm = nullptr;
+    if (fFindWorm) {
+        if (lpflCol->idPlanet != idPlanetDeepSpace && app.state.game.turn < 120) {
+            lppl = LpplFromId(app, lpflCol->idPlanet);
+            if (lppl && lppl->iPlayer == app.state.idPlayer) {
+                lpthWorm = LpthWormFind(app, &pt, d2);
+            }
+        }
+        if (lpthWorm) {
+            idBest = idplNone;
+        }
+    }
+    return {idBest, lpthWorm};
+}
+
+THING *LpthWormFind(APPSESSION &app, POINT16 *ppt, std::int32_t d2) {
+    std::int16_t  pctGood;
+    std::int16_t  dy;
+    std::int32_t  d2Worm;
+    std::uint16_t grbitplr;
+    THING   *lpth;
+    THING   *lpthBest;
+    std::int16_t  iVal;
+    std::int16_t  dx;
+    THING   *lpthMac;
+    std::int32_t  d2Cur;
+
+    lpthBest = nullptr;
+    grbitplr = 1 << app.state.idPlayer;
+    d2Worm = 1000000;
+    pctGood = 0;
+    lpth = app.state.lpThings;
+    lpthMac = app.state.lpThings + app.state.cThing;
+    for (; lpth < lpthMac; lpth++) {
+        if (lpth->ith() == ithWormhole) {
+            dx = std::abs(ppt->x - lpth->pt().x());
+            dy = std::abs(ppt->y - lpth->pt().y());
+            d2Cur = static_cast<std::int16_t>((dx * dx + dy * dy));
+            if (d2Cur <= static_cast<std::int32_t>((d2 * 4)) && d2Cur <= 46656) {
+                if (lpth->thw().grbitPlrTrav() & grbitplr) {
+                    iVal = PctWormholeMoves(lpth);
+                    iVal = 70 - 10 * iVal;
+                } else if (d2Cur <= d2) {
+                    iVal = 90;
+                } else {
+                    iVal = 50;
+                }
+                if (iVal > pctGood || (iVal == pctGood && d2Cur < d2Worm)) {
+                    pctGood = iVal;
+                    lpthBest = lpth;
+                    d2Worm = d2Cur;
+                }
+            }
+        }
+    }
+    if (lpthBest && RandomIO().pfnRandom(app, 100) < pctGood) {
+        return lpthBest;
+    }
+    return nullptr;
+}
+
+std::uint32_t UlFleetPower(APPSESSION &app, FLEET *lpfl) {
+    std::uint32_t ul;
+    std::int16_t  iplr;
+    std::int16_t  ishdef;
+
+    ul = 0;
+    iplr = lpfl->iPlayer;
+    for (ishdef = 0; ishdef < 16; ishdef++) {
+        if (lpfl->rgcsh[ishdef] != 0) {
+            ul += static_cast<std::uint32_t>((app.state.rglpshdef[iplr][ishdef].lPower * lpfl->rgcsh[ishdef]));
+            if (ul & 0x80000000)
+                break;
+        }
+    }
+    return ul;
+}
+
+UNKNOWNPLANETRESULT IdNearestUnknownPlanet(APPSESSION &app, FLEET *lpfl) {
+    POINT16  pt;
+    std::int32_t  dy;
+    std::int32_t  d2;
+    UNKNOWNPLANETRESULT result;
+    std::int16_t  idBest;
+    std::int16_t  i;
+    std::int32_t  dx;
+    std::uint8_t *lpb;
+    std::int32_t  d2Cur;
+
+    if (!app.state.fMarkedPlanets) {
+        IdNearestColonizablePlanet(app, lpfl, false);
+    }
+    lpb = app.state.vlpbAiPlanet + 15;
+    d2 = 99999999;
+    pt = lpfl->pt;
+    idBest = idplNone;
+    i = 0;
+    while (i < app.state.game.cPlanMax) {
+        if (*lpb == 16) {
+            dx = std::abs(pt.x - app.state.rgptPlan[i].x);
+            dy = std::abs(pt.y - app.state.rgptPlan[i].y);
+            if (dx < d2 && dy < d2) {
+                d2Cur = static_cast<std::uint32_t>((dx * dx));
+                if (static_cast<std::int32_t>(static_cast<std::uint32_t>((dx * dx))) < d2) {
+                    d2Cur += static_cast<std::uint32_t>((dy * dy));
+                    if (d2Cur < d2) {
+                        d2 = d2Cur;
+                        idBest = i;
+                    }
+                }
+            }
+        }
+        i++;
+        lpb += 16;
+    }
+    result = {idBest, nullptr};
+    if (lpfl->idPlanet != idPlanetDeepSpace && RandomIO().pfnRandom(app, 100) < 5) {
+        result.lpthWorm = LpthWormFind(app, &pt, d2);
+    }
+    if (result.lpthWorm) {
+        result.idPlanet = idplNone;
+    }
+    return result;
+}
+
+void AddMinesToBlockedQueues(APPSESSION &app) {
+    PROD    prod;
+    std::int32_t cMaxBuild;
+    std::int16_t etaBetterAlchemy;
+    std::int32_t cBuild;
+    std::int16_t etaFirst;
+    PLANET *lppl;
+    std::int32_t cResMine;
+    std::int32_t cRes;
+    std::int16_t ipl;
+    std::int32_t rgCost[4];
+    PROD    rgprod[64];
+    std::int16_t etaBetterMines;
+
+    for (ipl = 0; ipl < app.state.vclpplAi; ipl++) {
+        lppl = app.state.vrglpplAi[ipl];
+        if (!app.state.vrglpplAi[ipl])
+            break;
+        if (lppl->lpplprod) {
+            prod = lppl->lpplprod->rgprod()[0];
+            if (prod.grobj == grobjPlanet &&
+                (prod.iItem == mdIdleMine || prod.iItem == iobjAlchemy || prod.iItem == mdIdleAlchemy || prod.iItem == mdIdleTerraform))
+                continue;
+            ChangeMainObjSel(app, grobjPlanet, lppl->id);
+            etaFirst = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjMine).etaFirst;
+            if (etaFirst != 1) {
+                if (etaFirst == -1) {
+                    etaFirst = 600;
+                }
+                ProductionIO().pfnQuote(app, lppl, &prod, std::span<std::int32_t, 4>{rgCost}, app.state.idPlayer, 1);
+                cRes = ResearchIO().pfnResources(app, &app.state.sel.pl, app.state.idPlayer);
+                if (!app.state.sel.pl.fNoResearch) {
+                    cRes -= static_cast<std::int32_t>((cRes * static_cast<std::int16_t>(app.state.rgplr[app.state.idPlayer].pctResearch))) / 100;
+                }
+                if (rgCost[3] <= static_cast<std::int32_t>(static_cast<std::uint32_t>((cRes * static_cast<std::int16_t>((etaFirst - 1)))))) {
+                    cMaxBuild = ColonyIO().pfnOperableMines(app, &app.state.sel.pl, app.state.idPlayer, 1) - app.state.sel.pl.cMines;
+                    if (cMaxBuild < 0) {
+                        cMaxBuild = 0;
+                    }
+                    cResMine = RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMineBuild);
+                    if (static_cast<std::int32_t>(static_cast<std::uint32_t>((cResMine * cMaxBuild))) <= cRes) {
+                        cBuild = cMaxBuild;
+                    } else {
+                        cBuild = static_cast<std::int32_t>((cRes / cResMine));
+                    }
+                    ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
+                    if (cBuild > 0) {
+                        AddItemToQueue(app, mdIdleMine, LOWORD(cBuild), grobjPlanet, addItemFront);
+                        FinishProduction(app, 1);
+                        etaBetterMines = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory).etaFirst;
+                        if (etaBetterMines == -1) {
+                            etaBetterMines = 700;
+                        }
+                        app.state.sel.pl.lpplprod->rgprod()[0].cItem = 1;
+                        app.state.sel.pl.lpplprod->rgprod()[0].iItem = iobjAlchemy;
+                    } else {
+                        etaBetterMines = 700;
+                        AddItemToQueue(app, iobjAlchemy, 1, grobjPlanet, addItemFront);
+                        FinishProduction(app, 1);
+                    }
+                    etaBetterAlchemy = PszProductionETA(app, &app.state.sel.pl, app.state.sel.pl.lpplprod, iobjFactory).etaFirst;
+                    if (etaBetterAlchemy == -1) {
+                        etaBetterAlchemy = 700;
+                    }
+                    if ((etaBetterAlchemy >= etaFirst || etaBetterAlchemy >= etaBetterMines) && cBuild >= 1) {
+                        app.state.sel.pl.lpplprod->rgprod()[0].iItem = mdIdleMine;
+                        if (etaFirst < etaBetterMines || cBuild <= 0) {
+                            app.state.sel.pl.lpplprod->iprodMac--;
+                            std::memmove(app.state.sel.pl.lpplprod->rgprod(), &app.state.sel.pl.lpplprod->rgprod()[1], app.state.sel.pl.lpplprod->iprodMac * sizeof(PROD));
+                        } else {
+                            app.state.sel.pl.lpplprod->rgprod()[0].cItem = LOWORD(cBuild);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return;
+}
+
+std::int16_t FFleetInField(FLEET *lpfl, THING *lpth) {
+    std::int16_t dy;
+    std::int16_t dx;
+    std::int32_t dxy2;
+
+    dx = std::abs(lpfl->pt.x - lpth->pt().x());
+    dy = std::abs(lpfl->pt.y - lpth->pt().y());
+    dxy2 = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+    if (dxy2 < lpth->thm().cMines()) {
+        return 1;
+    }
+    return 0;
+}
+
+void SetAiFleetIdealSpeed(APPSESSION &app, FLEET *lpfl, std::int16_t wtFuelMax, std::optional<std::span<THING * const>> rgMinefields) {
+    THING  *lpth;
+    std::int16_t i;
+    std::int16_t j;
+    std::int16_t ith;
+    std::size_t iMinefield;
+    THING  *lpthMac;
+    bool fMinefield;
+
+    fMinefield = false;
+    if (!rgMinefields) {
+        lpth = app.state.lpThings;
+        lpthMac = app.state.lpThings + app.state.cThing;
+        for (; lpth < lpthMac; lpth++) {
+            if (lpth->ith() == ithMinefield && lpth->iplr() != app.state.idPlayer && lpth->thm().iType() != mineSpeedBump && FFleetInField(lpfl, lpth)) {
+                fMinefield = true;
+                goto LSelectFleet;
+            }
+        }
+    } else {
+        for (iMinefield = 0; iMinefield < rgMinefields->size(); iMinefield++) {
+            if (FFleetInField(lpfl, (*rgMinefields)[iMinefield])) {
+                lpth = (*rgMinefields)[iMinefield];
+                fMinefield = true;
+                goto LSelectFleet;
+            }
+        }
+    }
+LSelectFleet:
+    ChangeMainObjSel(app, grobjFleet, lpfl->id);
+    if (fMinefield) {
+        switch (lpth->thm().iType()) {
+        case mineHeavy:
+            i = 6;
+            break;
+        case mineSpeedBump:
+            i = 5;
+            j = RandomIO().pfnRandom(app, 10);
+            if (j >= 7) {
+                i++;
+            }
+            break;
+        default:
+            i = 4;
+            j = RandomIO().pfnRandom(app, 10);
+            if (j >= 4) {
+                i++;
+            }
+            break;
+        }
+        switch (RaceQueryIO().pfnStat(&app.state.rgplr[app.state.idPlayer], rsMajorAdv)) {
+        case raStealth:
+            i++;
+            break;
+        }
+        goto WarpSet;
+    }
+    i = IWarpBestForWaypoint(app, lpfl, &lpfl->lpplord->rgord()[1]);
+WarpSet:
+    if (i != lpfl->lpplord->rgord()[1].iWarp) {
+        app.state.sel.fl.lpplord->rgord()[1].iWarp = i;
+        FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
+    }
+    return;
+}
+
+std::int16_t IdTargetAttack(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans) {
+    FLEET   *lpflClosest;
+    FLEET   *lpflT;
+    std::int32_t  lDistBest;
+    PLANET  *lpplMac;
+    POINT16  pt;
+    std::int16_t  dy;
+    PLANET  *lppl;
+    std::int32_t  lDist;
+    std::int16_t  idClosest;
+    std::int16_t  i;
+    std::int16_t  cShipsAtk;
+    std::int16_t  cShipsDst;
+    PLANET  *lpplClosest;
+    std::uint8_t *lpb;
+    std::int16_t  dx;
+    FLEET   *lpflAtk2;
+    ORDER    ord;
+
+    cShipsDst = 0;
+    cShipsAtk = 0;
+    for (i = 0; i < 16; i++) {
+        cShipsAtk += lpfl->rgcsh[i];
+    }
+    lpflClosest = nullptr;
+    lpflT = lpflEnemy;
+    lDistBest = 1000000;
+    pt = lpfl->pt;
+    ord = {};
+    for (; lpflT; lpflT = lpflT->lpflNext) {
+        if (fOnlyHumans && app.state.rgplr[lpflT->iPlayer].fAi)
+            goto NextTarg;
+        lpflAtk2 = lpflAtk;
+        cShipsDst = 0;
+        for (; lpflAtk2; lpflAtk2 = lpflAtk2->lpflNext) {
+            if (lpflAtk2 != lpfl && lpflAtk2->cord >= 2 && lpflAtk2->lpplord->rgord()[1].id == lpflT->id && lpflAtk2->lpplord->rgord()[1].grobj == grobjFleet) {
+                for (i = 0; i < 16; i++) {
+                    cShipsDst += lpflAtk2->rgcsh[i];
+                }
+            }
+        }
+        if ((cShipsDst > 0 && RandomIO().pfnRandom(app, 3) == 0) || (5 * cShipsDst > cShipsAtk && RandomIO().pfnRandom(app, 15) == 0))
+            goto NextTarg;
+        dx = lpflT->pt.x - pt.x;
+        dy = lpflT->pt.y - pt.y;
+        lDist = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+        if (lDist < lDistBest) {
+            lDistBest = lDist;
+            lpflClosest = lpflT;
+        }
+    NextTarg:;
+    }
+    if (lDistBest < 32400) {
+        ord.pt = lpflClosest->pt;
+        ord.grobj = grobjFleet;
+        ord.id = lpflClosest->id;
+    } else {
+        if (lpflClosest) {
+            if (lpfl->rgwtMin[4] < static_cast<std::int32_t>((ProductionIO().pfnFleetStat(app, lpfl, 1) / 2)) && FMoveToNearestStarbase(app, lpfl, 0)) {
+                return 0;
+            }
+            pt = lpflClosest->pt;
+            lpplClosest = nullptr;
+            lDistBest = 1000000;
+            lppl = app.state.lpPlanets;
+            lpplMac = app.state.lpPlanets + app.state.cPlanet;
+            for (; lppl < lpplMac; lppl++) {
+                for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord()[1].id != lppl->id ||
+                                                      lpflAtk2->lpplord->rgord()[1].grobj != grobjPlanet);
+                     lpflAtk2 = lpflAtk2->lpflNext) {
+                }
+                if (!lpflAtk2) {
+                    dx = app.state.rgptPlan[lppl->id].x - pt.x;
+                    dy = app.state.rgptPlan[lppl->id].y - pt.y;
+                    lDist = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                    if (lDist < lDistBest) {
+                        lDistBest = lDist;
+                        lpplClosest = lppl;
+                    }
+                }
+            }
+            if (lpplClosest && lpplClosest->id != lpfl->idPlanet) {
+                ord.pt = app.state.rgptPlan[lpplClosest->id];
+                ord.grobj = grobjPlanet;
+                ord.id = lpplClosest->id;
+                goto ThwakSumthin;
+            }
+        } else if (fOnlyHumans) {
+            return IdTargetAttack(app, lpfl, lpflAtk, lpflEnemy, 0);
+        }
+        pt = lpfl->pt;
+        lpplClosest = nullptr;
+        lDistBest = 1000000;
+        lppl = app.state.lpPlanets;
+        lpplMac = app.state.lpPlanets + app.state.cPlanet;
+        for (; lppl < lpplMac; lppl++) {
+            if (lppl->iPlayer != iplrNone && lppl->iPlayer != app.state.idPlayer) {
+                dx = app.state.rgptPlan[lppl->id].x - pt.x;
+                dy = app.state.rgptPlan[lppl->id].y - pt.y;
+                lDist = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                if (lDist < lDistBest) {
+                    lDistBest = lDist;
+                    lpplClosest = lppl;
+                }
+            }
+        }
+        if (lpplClosest && lpplClosest->id != lpfl->idPlanet) {
+            ord.pt = app.state.rgptPlan[lpplClosest->id];
+            ord.grobj = grobjPlanet;
+            ord.id = lpplClosest->id;
+        } else {
+            idClosest = idplNone;
+            lDistBest = 1000000;
+            lpb = app.state.vlpbAiPlanet + 9;
+            i = 0;
+            while (i < app.state.game.cPlanMax) {
+                if (*lpb <= 0) {
+                    dx = app.state.rgptPlan[i].x - pt.x;
+                    dy = app.state.rgptPlan[i].y - pt.y;
+                    lDist = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                    if (lDist < lDistBest) {
+                        lDistBest = lDist;
+                        idClosest = i;
+                    }
+                }
+                i++;
+                lpb += 16;
+            }
+            if (idClosest != idplNone) {
+                ord.pt = app.state.rgptPlan[idClosest];
+                ord.grobj = grobjPlanet;
+                ord.id = idClosest;
+            } else {
+                ord.id = RandomIO().pfnRandom(app, app.state.game.cPlanMax);
+                ord.grobj = grobjPlanet;
+                ord.pt = app.state.rgptPlan[ord.id];
+            }
+        }
+    }
+ThwakSumthin:
+    if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet && ord.grobj == grobjPlanet) {
+        return -1;
+    }
+    ord.grTask = grTaskNone;
+    ord.fValidTask = 1;
+    ord.iWarp = 4;
+    if (!FMoveAiFleet(app, lpfl, &ord, 0)) {
+        return -1;
+    }
+    return 0;
+}
+
+std::int16_t IdTargetFreighter(APPSESSION &app, FLEET *lpflFr, PLANET *lpplHome) {
+    std::int32_t  lWorst2;
+    std::int32_t  scoreBest;
+    PLANET  *lpplMac;
+    std::int32_t  score;
+    POINT16  pt;
+    std::int16_t  dy;
+    std::int32_t  lWorst;
+    std::int16_t  pctFull;
+    std::int16_t  idBest;
+    PLANET  *lppl;
+    std::int32_t  wtPlanCargo;
+    FLEET   *lpfl;
+    std::int32_t  wtCargoMax;
+    std::int16_t  ifl;
+    std::int16_t  i;
+    std::int16_t  iWorst2;
+    std::int32_t  wtCargoFree;
+    THING   *lpthBest;
+    std::int16_t  iWorst;
+    PLANET  *lpplBest;
+    std::int16_t  ishFreighter;
+    std::int16_t  pctHere;
+    std::int16_t  dx;
+    std::uint8_t *lpb;
+    std::int16_t  fNeedy;
+    ORDER    ord;
+    std::int32_t  l;
+    SALVAGETARGETRESULT salvageTarget;
+
+    lpb = app.state.vlpbAiPlanet + 14;
+    i = 0;
+    while (i < app.state.game.cPlanMax) {
+        *lpb = 0;
+        i++;
+        lpb += 16;
+    }
+    for (ishFreighter = 0; ishFreighter < 16 && lpflFr->rgcsh[ishFreighter] <= 0; ishFreighter++) {
+    }
+    lWorst = 1000000000;
+    lWorst2 = 1000000000;
+    for (i = 0; i < 3; i++) {
+        if (lpplHome->rgwtMin[i] < lWorst) {
+            lWorst2 = lWorst;
+            iWorst2 = iWorst;
+            lWorst = lpplHome->rgwtMin[i];
+            iWorst = i;
+        }
+    }
+    fNeedy = lWorst < static_cast<std::int32_t>((lWorst2 >> 1));
+    if (lWorst < static_cast<std::int32_t>((lWorst2 >> 2))) {
+        fNeedy++;
+    }
+    for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+        lpfl = app.state.rglpfl[ifl];
+        if (!app.state.rglpfl[ifl])
+            break;
+        if (lpfl->iPlayer == app.state.idPlayer && lpfl->cord > 1 && lpfl != lpflFr && lpfl->lpplord->rgord()[1].grobj == grobjPlanet && lpfl->rgcsh[ishFreighter] != 0 &&
+            lpfl->lpplord->rgord()[1].id != lpplHome->id) {
+            app.state.vlpbAiPlanet[lpfl->lpplord->rgord()[1].id * 16 + 14] = 1;
+        }
+    }
+    wtCargoMax = ProductionIO().pfnFleetStat(app, lpflFr, 2);
+    wtCargoFree = GetCargoFree(app, lpflFr);
+    if (wtCargoMax <= 0) {
+        return idplNone;
+    }
+    pctFull = 100 - LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((wtCargoFree * 100)) / wtCargoMax)));
+    scoreBest = 0;
+    idBest = idplNone;
+    pt = lpflFr->pt;
+    lppl = app.state.lpPlanets;
+    lpplMac = app.state.lpPlanets + app.state.cPlanet;
+    for (; lppl < lpplMac; lppl++) {
+        if (lppl->id != lpflFr->idPlanet && app.state.vlpbAiPlanet[lppl->id * 16 + 14] == 0) {
+            if (lppl->iPlayer == iplrNone && (app.state.vlpbAiPlanet[lppl->id * 16 + 1] & 0x80)) {
+                dx = pt.x - app.state.rgptPlan[lppl->id].x;
+                dy = pt.y - app.state.rgptPlan[lppl->id].y;
+                l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                l = (static_cast<std::int32_t>(std::sqrt(static_cast<double>(l))) + 24) / 25;
+                if (l < 1) {
+                    l = 1;
+                }
+                score = static_cast<std::int32_t>((static_cast<std::int16_t>(((app.state.vlpbAiPlanet[lppl->id * 16 + 1] & 0x7f) * 0x1f4)) / l));
+            } else {
+                if (lppl->iPlayer != app.state.idPlayer) {
+                    if (app.state.rgplr[app.state.idPlayer].idAi == idAiRobotoid && lpplHome->id == lpflFr->idPlanet &&
+                        ((lpplHome->rgwtMin[3] > 1100 && lppl->uPopGuess < 62) || (lpplHome->rgwtMin[3] > 300 && lppl->uPopGuess < 15))) {
+                        pctHere = 65;
+                        goto ScorePctHere;
+                    }
+                    if (app.state.vlpbAiPlanet[lppl->id * 16 + 3] == 0 || (app.state.vlpbAiPlanet[lppl->id * 16 + 3] & 0x80) || lpplHome->id != lpflFr->idPlanet)
+                        continue;
+                    score = 25000;
+                }
+                if (lppl == lpplHome) {
+                    if (pctFull < 35)
+                        continue;
+                    if (pctFull == 100) {
+                        score = 25000;
+                        goto LScore;
+                    }
+                    dx = pt.x - app.state.rgptPlan[lppl->id].x;
+                    dy = pt.y - app.state.rgptPlan[lppl->id].y;
+                    l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                    l = (static_cast<std::int32_t>(std::sqrt(static_cast<double>(l))) + 24) / 25;
+                    if (l == 0)
+                        continue;
+                    score = static_cast<std::int32_t>((static_cast<std::int16_t>((20 * pctFull)) / l));
+                    goto LScore;
+                }
+                if (lppl->fStarbase || (lppl->lpplprod && lppl->lpplprod->rgprod()[0].grobj == grobjFleet && lppl->lpplprod->rgprod()[0].iItem >= iobjPacketGerm))
+                    continue;
+                if (app.state.vlpbAiPlanet[lppl->id * 16 + 2] != 0 && !(app.state.vlpbAiPlanet[lppl->id * 16 + 2] & 0x80) && lpplHome->id == lpflFr->idPlanet) {
+                    score = 25000;
+                    goto LScore;
+                }
+                if (fNeedy == 2) {
+                    wtPlanCargo = lppl->rgwtMin[iWorst];
+                } else {
+                    wtPlanCargo = 0;
+                    for (i = 0; i < 3; i++) {
+                        if (fNeedy && i != iWorst) {
+                            wtPlanCargo += static_cast<std::int32_t>((lppl->rgwtMin[i] >> 1));
+                        } else {
+                            wtPlanCargo += lppl->rgwtMin[i];
+                        }
+                    }
+                }
+                if (wtPlanCargo < 10)
+                    continue;
+                pctHere = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((wtPlanCargo * 100)) / wtCargoMax)));
+                if (pctHere > 100 - pctFull) {
+                    pctHere = 100 - pctFull;
+                }
+            ScorePctHere:
+                dx = pt.x - app.state.rgptPlan[lppl->id].x;
+                dy = pt.y - app.state.rgptPlan[lppl->id].y;
+                l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                l = (static_cast<std::int32_t>(std::sqrt(static_cast<double>(l))) + 24) / 25;
+                if (l < 1) {
+                    l = 1;
+                }
+                score = static_cast<std::int32_t>((static_cast<std::int16_t>((100 * pctHere)) / l));
+            }
+        LScore:
+            if (score > scoreBest) {
+                scoreBest = score;
+                lpplBest = lppl;
+                idBest = lppl->id;
+            }
+        }
+    }
+    lpthBest = nullptr;
+    salvageTarget = FSalvageTargetFreighter2(app, lpflFr, fNeedy, iWorst, pctFull, wtCargoMax, scoreBest, lpthBest, idBest);
+    lpthBest = salvageTarget.lpthBest;
+    idBest = salvageTarget.idBest;
+    if (salvageTarget.fSalvage && GetCargoFree(app, lpflFr) == 0) {
+        lpthBest = nullptr;
+        lpplBest = lpplHome;
+        idBest = lpplHome->id;
+    }
+    if (idBest == idplNone) {
+        return idplNone;
+    }
+    ord = {};
+    if (lpthBest) {
+        ord.grobj = grobjThing;
+        ord.pt = lpthBest->pt();
+    } else {
+        ord.grobj = grobjPlanet;
+        ord.pt = app.state.rgptPlan[idBest];
+    }
+    ord.id = idBest;
+    ord.grTask = grTaskXfer;
+    ord.fValidTask = 1;
+    ord.iWarp = 4;
+    for (i = 0; i <= 2; i++) {
+        ord.txp.rgia[i].SetIAction(!lpthBest && idBest == lpplHome->id ? 2 : 1);
+    }
+    if (app.state.rgplr[app.state.idPlayer].idAi == idAiTurinDrone) {
+        if (lpplHome->id == lpflFr->idPlanet) {
+            ChangeMainObjSel(app, grobjFleet, lpflFr->id);
+            if (lpplHome->rgwtMin[3] > 1200 && !lpthBest && lpplBest->iPlayer != iplrNone && lpplBest->rgwtMin[3] < lpplHome->rgwtMin[3]) {
+                XferAiSupply(app, grobjPlanet, lpflFr->idPlanet, grobjFleet, lpflFr->id, Colonists, 1000);
+            }
+            FleetQueryIO().pfnLookup(app, lpflFr->id, &app.state.sel.fl);
+        }
+        if (!lpthBest && lpplBest->iPlayer != iplrNone && lpplBest != lpplHome) {
+            ord.txp.rgia[3].SetIAction(iActionUnloadAll);
+        }
+    } else if (app.state.rgplr[app.state.idPlayer].idAi == idAiRobotoid && lpplHome->id == lpflFr->idPlanet && !lpthBest && lpplBest->iPlayer != iplrNone) {
+        if (lpplBest->iPlayer != app.state.idPlayer) {
+            ChangeMainObjSel(app, grobjFleet, lpflFr->id);
+            if (lpplHome->rgwtMin[3] > 900) {
+                XferAiSupply(app, grobjPlanet, lpflFr->idPlanet, grobjFleet, lpflFr->id, Colonists, 300);
+            } else {
+                XferAiSupply(app, grobjPlanet, lpflFr->idPlanet, grobjFleet, lpflFr->id, Colonists, 100);
+            }
+            FleetQueryIO().pfnLookup(app, lpflFr->id, &app.state.sel.fl);
+            ord.txp.rgia[3].SetIAction(iActionUnloadAll);
+        } else if (lpplBest->rgwtMin[3] < 1000 && lpplHome->rgwtMin[3] > static_cast<std::int32_t>((lpplBest->rgwtMin[3] * 3)) / 2 && lpplHome->rgwtMin[3] > 500) {
+            if (lpplHome->rgwtMin[3] > 2000) {
+                l = 10;
+            } else if (lpplHome->rgwtMin[3] > 1500) {
+                l = 8;
+            } else if (lpplHome->rgwtMin[3] > 1000) {
+                l = 5;
+            } else {
+                l = static_cast<std::int32_t>(((lpplHome->rgwtMin[3] - 400) / 100));
+            }
+            l = static_cast<std::int32_t>((lpplHome->rgwtMin[3] * l)) / 100;
+            ChangeMainObjSel(app, grobjFleet, lpflFr->id);
+            XferAiSupply(app, grobjPlanet, lpflFr->idPlanet, grobjFleet, lpflFr->id, Colonists, LOWORD(l));
+            FleetQueryIO().pfnLookup(app, lpflFr->id, &app.state.sel.fl);
+            ord.txp.rgia[3].SetIAction(iActionUnloadAll);
+        }
+    }
+    if (lpthBest) {
+        ord.grTask = grTaskNone;
+        ord.fValidTask = 0;
+    } else if (lpplHome->id != idBest && fNeedy) {
+        if (fNeedy == 2 || lpplBest->rgwtMin[iWorst] >= wtCargoFree) {
+            for (i = 0; i <= 2; i++) {
+                if (i != iWorst) {
+                    ord.txp.rgia[i].SetIAction(iActionNone);
+                }
+            }
+        } else if (lpthBest || lpplBest->iPlayer != iplrNone) {
+            for (i = 0; i <= 2; i++) {
+                ord.txp.rgia[i].SetIAction(iActionFillPercent);
+                if (i == iWorst) {
+                    l = 66;
+                } else {
+                    l = 33;
+                }
+                ord.txp.rgia[i].SetCQuan(LOWORD(l));
+            }
+        }
+    }
+    if (!FMoveAiFleet(app, lpflFr, &ord, 0)) {
+        return idplNone;
+    }
+    return idBest;
+}
+
+SALVAGETARGETRESULT FSalvageTargetFreighter2(APPSESSION &app, FLEET *lpflFr, std::int16_t fNeedy, std::int16_t iWorst, std::int16_t pctFull, std::int32_t wtCargoMax, std::int32_t scoreBest,
+                                 THING *lpthBest, std::int16_t idBest) {
+    POINT16 pt;
+    std::int32_t score;
+    std::int16_t dy;
+    std::int16_t i;
+    std::int32_t wtPlanCargo;
+    THING  *lpth;
+    std::int16_t pctHere;
+    std::int16_t dx;
+    THING  *lpthMac;
+    SALVAGETARGETRESULT result;
+    std::int32_t l;
+
+    result = {false, lpthBest, idBest};
+    pt = lpflFr->pt;
+    lpth = app.state.lpThings;
+    lpthMac = app.state.lpThings + app.state.cThing;
+    for (; lpth < lpthMac; lpth++) {
+        if (lpth->ith() == ithMineralPacket && lpth->thp().iWarp() == 0) {
+            dx = pt.x - lpth->pt().x();
+            dy = pt.y - lpth->pt().y();
+            if (dx == 0 && dy == 0) {
+                if (fNeedy && lpth->thp().rgwtMin(iWorst) != 0) {
+                    XferAiSupply(app, grobjThing, lpth->idFull(), grobjFleet, lpflFr->id, static_cast<MineralType>(iWorst), lpth->thp().rgwtMin(iWorst));
+                }
+                if (fNeedy != 2) {
+                    for (i = 0; i < 3; i++) {
+                        if (lpth->thp().rgwtMin(i) != 0) {
+                            XferAiSupply(app, grobjThing, lpth->idFull(), grobjFleet, lpflFr->id, static_cast<MineralType>(i), lpth->thp().rgwtMin(i));
+                        }
+                    }
+                }
+                result.fSalvage = true;
+                FleetQueryIO().pfnLookup(app, lpflFr->id, &app.state.sel.fl);
+            } else if ((dx <= dy ? dy : dx) <= 200) {
+                if (fNeedy == 2) {
+                    wtPlanCargo = lpth->thp().rgwtMin(iWorst);
+                } else {
+                    wtPlanCargo = 0;
+                    for (i = 0; i < 3; i++) {
+                        if (fNeedy && i != iWorst) {
+                            wtPlanCargo += static_cast<std::int16_t>((lpth->thp().rgwtMin(i) >> 1));
+                        } else {
+                            wtPlanCargo += lpth->thp().rgwtMin(i);
+                        }
+                    }
+                }
+                if (wtPlanCargo >= 10) {
+                    pctHere = LOWORD(static_cast<std::int32_t>((static_cast<std::int32_t>((wtPlanCargo * 100)) / wtCargoMax)));
+                    if (pctHere > 100 - pctFull) {
+                        pctHere = 100 - pctFull;
+                    }
+                    l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                    l = (static_cast<std::int32_t>(std::sqrt(static_cast<double>(l))) + 24) / 25;
+                    if (l < 1) {
+                        l = 1;
+                    }
+                    score = static_cast<std::int32_t>((static_cast<std::int16_t>((100 * pctHere)) / l));
+                    if (score > scoreBest) {
+                        scoreBest = score;
+                        result.lpthBest = lpth;
+                        result.idBest = lpth->idFull();
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
+std::int16_t FMoveAiFleet(APPSESSION &app, FLEET *lpfl, ORDER *pord, std::int16_t fAppend) {
+    std::int16_t iord;
+
+    ChangeMainObjSel(app, grobjFleet, lpfl->id);
+    if (app.state.sel.fl.lpplord->iordMax == app.state.sel.fl.cord) {
+        app.state.sel.fl.lpplord = LpplReAlloc(app, app.state.sel.fl.lpplord, app.state.sel.fl.cord + 1);
+    }
+    iord = !fAppend ? 0 : app.state.sel.fl.cord - 1;
+    if (pord->pt.x != app.state.sel.fl.lpplord->rgord()[iord].pt.x || pord->pt.y != app.state.sel.fl.lpplord->rgord()[iord].pt.y) {
+        iord++;
+    } else if (app.state.sel.fl.cord > 1) {
+        app.state.sel.fl.cord = 1;
+        FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
+    }
+    app.state.sel.fl.lpplord->rgord()[iord] = *pord;
+    app.state.sel.fl.cord = iord + 1;
+    app.state.sel.fl.lpplord->iordMac = iord + 1;
+    return FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
+}
+
+void AddItemToQueue(APPSESSION &app, std::uint16_t iItem, std::uint16_t cItem, GrobjClass grobj, AddItemMode mdAddItem) {
+    std::int16_t fSingle;
+    std::int16_t iprod;
+    std::int16_t i;
+    PROD    rgprod[64];
+
+    fSingle = 0;
+    if (!app.state.sel.pl.lpplprod || app.state.sel.pl.lpplprod->iprodMac <= 200) {
+        if (!app.state.lpplProdGlob) {
+            fSingle = 1;
+            ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
+            for (i = 0; i < app.state.cProdGlob && (rgprod[i].iItem != static_cast<std::uint32_t>(iItem) || rgprod[i].grobj != static_cast<std::uint32_t>(grobj)); i++) {
+            }
+            if (i >= app.state.cProdGlob) {
+                cItem = 0;
+            } else {
+                cItem = cItem >= rgprod[i].cItem ? rgprod[i].cItem : cItem;
+            }
+        }
+        if (cItem > 0) {
+            if (mdAddItem != addItemReplace && app.state.lpplProdGlob->iprodMac == app.state.lpplProdGlob->iprodMax) {
+                app.state.lpplProdGlob = LpplReAlloc(app, app.state.lpplProdGlob, app.state.lpplProdGlob->iprodMac + 3);
+            }
+            switch (mdAddItem) {
+            case addItemReplace:
+                app.state.lpplProdGlob->iprodMac = 0;
+                /* fallthrough */
+            case addItemEnd:
+                iprod = app.state.lpplProdGlob->iprodMac;
+                break;
+            case addItemFront:
+                iprod = 0;
+                std::memmove(&app.state.lpplProdGlob->rgprod()[1], app.state.lpplProdGlob->rgprod(), app.state.lpplProdGlob->iprodMac * sizeof(PROD));
+                std::fill_n(app.state.lpplProdGlob->rgprod(), 1, PROD{});
+            }
+            app.state.lpplProdGlob->rgprod()[iprod].cItem = cItem;
+            app.state.lpplProdGlob->rgprod()[iprod].iItem = iItem;
+            app.state.lpplProdGlob->rgprod()[iprod].grobj = grobj;
+            app.state.lpplProdGlob->rgprod()[iprod].pct = 0;
+            app.state.lpplProdGlob->rgprod()[iprod].unused = 0;
+            app.state.lpplProdGlob->iprodMac++;
+        }
+        if (fSingle) {
+            FinishProduction(app, cItem != 0);
+        }
+    }
+    return;
+}
+
+AIENSURERESULT IroEnsureAi(APPSESSION &app, std::span<const std::uint8_t> rgResOrder, bool fEnsureStarbase, std::int16_t pct) {
+    std::int16_t iSmallest;
+    std::int16_t i;
+    std::int16_t pctTech;
+    std::int16_t ilvl;
+    std::size_t iResOrder;
+    std::optional<std::int16_t> ishdefSBLatest;
+
+    if (fEnsureStarbase) {
+        EnsureAiStarbaseDesigns(app);
+        ishdefSBLatest = IshdefAiSBLatest(app);
+        ValidateStarbaseHistory(app);
+    }
+    app.state.rgplr[app.state.idPlayer].pctResearch = pct;
+    for (i = 0; i < 6 && app.state.rgplr[app.state.idPlayer].rgTech[i] >= 24; i++) {
+    }
+    if (i == 6) {
+        app.state.rgplr[app.state.idPlayer].pctResearch = 0;
+        pctTech = app.state.rgplr[app.state.idPlayer].iTechCur * 256;
+        WriteMemResearch(app, pctTech);
+    }
+    for (iResOrder = 0; iResOrder < rgResOrder.size(); iResOrder++) {
+        ilvl = app.state.rgplr[app.state.idPlayer].rgTech[rgResOrder[iResOrder] >> 5];
+        if (ilvl < (rgResOrder[iResOrder] & 0x1f)) {
+            app.state.rgplr[app.state.idPlayer].SetITechNow(rgResOrder[iResOrder] >> 5);
+            if (iResOrder + 1 < rgResOrder.size() && ilvl + 1 == (rgResOrder[iResOrder] & 0x1f)) {
+                app.state.rgplr[app.state.idPlayer].SetITechNext(rgResOrder[iResOrder + 1] >> 5);
+            }
+            pctTech = app.state.rgplr[app.state.idPlayer].pctResearch + app.state.rgplr[app.state.idPlayer].iTechCur * 256;
+            WriteMemResearch(app, pctTech);
+            return {static_cast<std::int16_t>(iResOrder), ishdefSBLatest};
+        }
+    }
+    iSmallest = 0;
+    for (i = 1; i < 6; i++) {
+        if (app.state.rgplr[app.state.idPlayer].rgTech[i] < app.state.rgplr[app.state.idPlayer].rgTech[iSmallest]) {
+            iSmallest = i;
+        }
+    }
+    if (app.state.rgplr[app.state.idPlayer].iTechNow() != iSmallest) {
+        app.state.rgplr[app.state.idPlayer].SetITechNow(iSmallest);
+        if (app.state.rgplr[app.state.idPlayer].iTechNow() == 0x1a) {
+            app.state.rgplr[app.state.idPlayer].pctResearch = 0;
+        }
+        pctTech = app.state.rgplr[app.state.idPlayer].pctResearch + app.state.rgplr[app.state.idPlayer].iTechCur * 256;
+        WriteMemResearch(app, pctTech);
+    }
+    return {926, ishdefSBLatest};
+}
+
+void KeepFleetsMoving(APPSESSION &app) {
+    std::int16_t i;
+    std::int16_t ifl;
+    FLEET  *lpfl;
+    THING  *lpth;
+    THING  *rglpth[100];
+    std::int16_t ith;
+    THING  *lpthMac;
+    std::optional<std::span<THING * const>> rgMinefields;
+
+    ith = 0;
+    lpth = app.state.lpThings;
+    lpthMac = app.state.lpThings + app.state.cThing;
+    for (; lpth < lpthMac; lpth++) {
+        if (lpth->ith() == ithMinefield && lpth->iplr() != app.state.idPlayer && lpth->thm().iType() != mineSpeedBump) {
+            if (ith == 100) {
+                ith = -1;
+                goto LKeepMovn;
+            }
+            rglpth[ith++] = lpth;
+        }
+    }
+LKeepMovn:
+    for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+        lpfl = app.state.rglpfl[ifl];
+        if (!app.state.rglpfl[ifl])
+            break;
+        if (lpfl->iPlayer == app.state.idPlayer && lpfl->cord > 1) {
+            if (app.state.rgplr[app.state.idPlayer].idAi != idAiRobotoid && app.state.game.turn < 5) {
+                i = 16;
+            } else {
+                i = -1;
+                if (FIsAiTransport(app, lpfl)) {
+                    i = 30;
+                }
+            }
+            if (ith < 0) {
+                rgMinefields = std::nullopt;
+            } else {
+                rgMinefields = std::span<THING * const>{rglpth, static_cast<std::size_t>(ith)};
+            }
+            SetAiFleetIdealSpeed(app, lpfl, i, rgMinefields);
+        }
+    }
+    return;
+}
+
+COLONIZERBUILDRESULT FShouldWeBuildColonizers(APPSESSION &app) {
+    std::int16_t  iMax;
+    std::int16_t  cColFl;
+    std::uint32_t cBuilt;
+    std::int16_t  iMin;
+    std::int16_t  ifl;
+    std::int16_t  i;
+    FLEET   *lpfl;
+    std::int16_t  rgish[16];
+    std::int16_t  cColPl;
+
+    cColFl = 0;
+    cColPl = 0;
+    cBuilt = 0;
+    iMax = -1;
+    iMin = 16;
+    if (app.state.rgplr[app.state.idPlayer].lvlAi == lvlAiEasy && (app.state.game.turn & 1)) {
+        return {false, cColFl};
+    }
+    if (app.state.game.turn < 30) {
+        return {true, cColFl};
+    }
+    for (i = 0; i < 16; i++) {
+        if (!app.state.rgshdef[i].fFree && (app.state.rgshdef[i].hul.ihuldef == ihuldefMiniColonyShip || app.state.rgshdef[i].hul.ihuldef == ihuldefColonyShip)) {
+            rgish[i] = 1;
+            if (i > iMax) {
+                iMax = i;
+            }
+            if (i < iMin) {
+                iMin = i;
+            }
+        } else {
+            rgish[i] = 0;
+        }
+    }
+    iMax++;
+    if (iMax <= 0) {
+        return {false, cColFl};
+    }
+    for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+        lpfl = app.state.rglpfl[ifl];
+        if (!app.state.rglpfl[ifl])
+            break;
+        if (lpfl->iPlayer == app.state.idPlayer) {
+            for (i = iMin; i < iMax; i++) {
+                if (rgish[i] > 0 && lpfl->rgcsh[i] > 0) {
+                    cColFl++;
+                    break;
+                }
+            }
+        }
+    }
+    if (cColFl > 20 * app.state.game.mdSize + 10) {
+        return {false, cColFl};
+    }
+    for (i = 0; i < app.state.game.cPlayer; i++) {
+        if (app.state.rgplr[i].fInclude) {
+            cColPl += app.state.rgplr[i].cPlanet;
+        }
+    }
+    if (cColFl + cColPl > static_cast<std::int16_t>((app.state.game.cPlanMax * 4)) / 5) {
+        return {false, cColFl};
+    }
+    cBuilt = 0;
+    for (i = iMin; i < iMax; i++) {
+        if (rgish[i] > 0) {
+            cBuilt += app.state.rgshdef[i].cBuilt;
+        }
+    }
+    if (cBuilt - static_cast<std::int16_t>((cColPl + cColFl)) > 25 && (cColFl > 4 || RandomIO().pfnRandom(app, 2) != 0)) {
+        return {false, cColFl};
+    }
+    return {true, cColFl};
+}
+
+std::int16_t FIsAiAttack(APPSESSION &app, FLEET *lpfl) {
+    HulDef  ihul;
+    std::int16_t i;
+
+    for (i = 0; i < 16; i++) {
+        if (lpfl->rgcsh[i] > 0) {
+            ihul = app.state.rgshdef[i].hul.ihuldef;
+            if (static_cast<std::int16_t>(ihul) > ihuldefFrigate && static_cast<std::int16_t>(ihul) <= ihuldefDreadnought) {
+                return 1;
+            }
+            switch (ihul) {
+            default:
+                break;
+            case ihuldefFrigate:
+                if (app.state.rglpshdef[app.state.idPlayer][i].lPower > 0) {
+                    return 1;
+                }
+                return 0;
+            case ihuldefMetaMorph:
+            case ihuldefNubian:
+                if (WtMaxShdefStat(&app.state.rgshdef[i], 2) < 500 && app.state.rglpshdef[app.state.idPlayer][i].lPower > 0) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+std::int16_t FIsTurinDroneAiAttack(APPSESSION &app, FLEET *lpfl) {
+    HulDef  ihul;
+    std::int16_t i;
+
+    for (i = 0; i < 16; i++) {
+        if (lpfl->rgcsh[i] > 0) {
+            ihul = app.state.rgshdef[i].hul.ihuldef;
+            if (static_cast<std::int16_t>(ihul) >= ihuldefScout && static_cast<std::int16_t>(ihul) <= ihuldefDreadnought) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+std::int16_t FIsAiTransport(APPSESSION &app, FLEET *lpfl) {
+    HulDef  ihul;
+    std::int16_t i;
+
+    for (i = 0; i < 16; i++) {
+        if (lpfl->rgcsh[i] > 0) {
+            ihul = app.state.rgshdef[i].hul.ihuldef;
+            if ((static_cast<std::int16_t>(ihul) >= ihuldefSmallFreighter && static_cast<std::int16_t>(ihul) <= ihuldefSuperFreighter) ||
+                (static_cast<std::int16_t>(ihul) >= ihuldefPrivateer && static_cast<std::int16_t>(ihul) <= ihuldefGalleon)) {
+                return 1;
+            }
+            if (ihul == ihuldefMetaMorph && WtMaxShdefStat(&app.state.rgshdef[i], 2) >= 500 && app.state.rglpshdef[app.state.idPlayer][i].lPower > 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void ValidateStarbaseHistory(APPSESSION &app) {
+    std::int16_t iWrite;
+    std::int16_t iBest;
+    PLANET *lpplMac;
+    POINT16 pt;
+    std::int16_t id;
+    std::int16_t dy;
+    std::int16_t cFr2;
+    PLANET *lppl;
+    std::int16_t ifl;
+    FLEET  *lpfl;
+    std::int16_t i;
+    std::int16_t j;
+    std::int16_t ipl;
+    std::int16_t cFr;
+    std::int16_t dx;
+    std::int32_t lBest;
+    std::int32_t l;
+
+    if (app.state.rgplr[app.state.idPlayer].idAi != idAiCybertron && app.state.rgplr[app.state.idPlayer].idAi != idAiMacinti) {
+        if (AhvFromLp(app, app.state.vlpbAiData).cbAiHist() <= 2) {
+            AhvFromLp(app, app.state.vlpbAiData).SetCStarbase(0);
+        }
+        if (app.state.game.turn >= 20) {
+            iWrite = 0;
+            if (AhvFromLp(app, app.state.vlpbAiData).cStarbase() < 0 || AhvFromLp(app, app.state.vlpbAiData).cStarbase() > 64) {
+                AhvFromLp(app, app.state.vlpbAiData).SetCStarbase(0);
+            }
+            for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
+                if (AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter() < 0 || AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter() > 8) {
+                    AhvFromLp(app, app.state.vlpbAiData).rgasb(i).SetCFreighter(0);
+                }
+                lppl = LpplFromId(app, AhvFromLp(app, app.state.vlpbAiData).rgasb(i).idPlanet());
+                if (lppl && lppl->iPlayer == app.state.idPlayer) {
+                    if (iWrite != i) {
+                        AhvFromLp(app, app.state.vlpbAiData).rgasb(iWrite).SetValue(AhvFromLp(app, app.state.vlpbAiData).rgasb(i).ReadValue());
+                    }
+                    iWrite++;
+                }
+            }
+            AhvFromLp(app, app.state.vlpbAiData).SetCStarbase(iWrite);
+            for (ipl = 0; ipl < app.state.vclpplAi; ipl++) {
+                lppl = app.state.vrglpplAi[ipl];
+                if (!app.state.vrglpplAi[ipl])
+                    break;
+                if (lppl->fStarbase) {
+                    for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase() && AhvFromLp(app, app.state.vlpbAiData).rgasb(i).idPlanet() != lppl->id; i++) {
+                    }
+                    if (i == AhvFromLp(app, app.state.vlpbAiData).cStarbase() && i < 64) {
+                        AhvFromLp(app, app.state.vlpbAiData).rgasb(i).SetIdPlanet(lppl->id);
+                        AhvFromLp(app, app.state.vlpbAiData).rgasb(i).SetCFreighter(0);
+                        AhvFromLp(app, app.state.vlpbAiData).SetCStarbase(AhvFromLp(app, app.state.vlpbAiData).cStarbase() + 1);
+                    }
+                }
+            }
+            lppl = app.state.lpPlanets;
+            lpplMac = app.state.lpPlanets + app.state.cPlanet;
+            for (; lppl < lpplMac && AhvFromLp(app, app.state.vlpbAiData).cStarbase() < 64; lppl++) {
+                if (lppl->iPlayer == app.state.idPlayer && !lppl->fStarbase && lppl->rgwtMin[3] >= 80) {
+                    l = 0;
+                    for (i = 0; i < 3; i++) {
+                        l += static_cast<std::int32_t>((static_cast<std::uint32_t>((static_cast<std::uint32_t>(lppl->rgMinConc[i]) * static_cast<std::uint32_t>(lppl->rgMinConc[i]))) * 4)) + lppl->rgwtMin[i];
+                    }
+                    if (l >= 7000 && lppl->cMines >= 20 && lppl->cFactories >= 20) {
+                        for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
+                            id = AhvFromLp(app, app.state.vlpbAiData).rgasb(i).idPlanet();
+                            if (id == lppl->id)
+                                break;
+                            if (app.state.rgplr[app.state.idPlayer].idAi == idAiRobotoid) {
+                                pt = app.state.rgptPlan[id];
+                                dx = pt.x - app.state.rgptPlan[lppl->id].x;
+                                dy = pt.y - app.state.rgptPlan[lppl->id].y;
+                                l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                                if (l < 2500)
+                                    break;
+                            }
+                        }
+                        if (i >= AhvFromLp(app, app.state.vlpbAiData).cStarbase()) {
+                            AhvFromLp(app, app.state.vlpbAiData).rgasb(AhvFromLp(app, app.state.vlpbAiData).cStarbase()).SetIdPlanet(lppl->id);
+                            AhvFromLp(app, app.state.vlpbAiData).rgasb(AhvFromLp(app, app.state.vlpbAiData).cStarbase()).SetCFreighter(0);
+                            AhvFromLp(app, app.state.vlpbAiData).SetCStarbase(AhvFromLp(app, app.state.vlpbAiData).cStarbase() + 1);
+                        }
+                    }
+                }
+            }
+            for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+                lpfl = app.state.rglpfl[ifl];
+                if (!app.state.rglpfl[ifl])
+                    break;
+                if (lpfl->iPlayer == app.state.idPlayer && FIsAiTransport(app, lpfl)) {
+                    for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
+                        for (j = 0; j < AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter() && AhvFromLp(app, app.state.vlpbAiData).rgasb(i).rgflid(j) != lpfl->id; j++) {
+                        }
+                        if (j < AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter())
+                            break;
+                    }
+                    if (i == AhvFromLp(app, app.state.vlpbAiData).cStarbase()) {
+                        iBest = -1;
+                        lBest = 10000000;
+                        for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
+                            if (AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter() < 8) {
+                                pt = app.state.rgptPlan[AhvFromLp(app, app.state.vlpbAiData).rgasb(i).idPlanet()];
+                                dx = pt.x - lpfl->pt.x;
+                                dy = pt.y - lpfl->pt.y;
+                                l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                                if (l < lBest) {
+                                    lBest = l;
+                                    iBest = i;
+                                }
+                            }
+                        }
+                        if (iBest != -1) {
+                            AhvFromLp(app, app.state.vlpbAiData).rgasb(iBest).SetNextFlid(lpfl->id);
+                        }
+                    }
+                }
+            }
+            for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); i++) {
+                cFr = AhvFromLp(app, app.state.vlpbAiData).rgasb(i).cFreighter();
+                if (cFr < 4) {
+                    for (j = 0; j < AhvFromLp(app, app.state.vlpbAiData).cStarbase(); j++) {
+                        cFr2 = AhvFromLp(app, app.state.vlpbAiData).rgasb(j).cFreighter();
+                        if (cFr2 >= cFr + 2)
+                            break;
+                    }
+                    if (j < AhvFromLp(app, app.state.vlpbAiData).cStarbase()) {
+                        AhvFromLp(app, app.state.vlpbAiData).rgasb(j).SetCFreighter(AhvFromLp(app, app.state.vlpbAiData).rgasb(j).cFreighter() - 1);
+                        AhvFromLp(app, app.state.vlpbAiData).rgasb(i).SetNextFlid(
+                            AhvFromLp(app, app.state.vlpbAiData).rgasb(j).rgflid(AhvFromLp(app, app.state.vlpbAiData).rgasb(j).cFreighter()));
+                    }
+                }
+            }
+            AhvFromLp(app, app.state.vlpbAiData).SetCbAiHist(AhvFromLp(app, app.state.vlpbAiData).cStarbase() * 20 + 4);
+        }
+    }
+    return;
+}
+
+void GetResourcesAvailable(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgRes) {
+    std::int16_t i;
+    std::int32_t cRes;
+
+    ColonyIO().pfnEstimateMining(app, lppl, rgRes.first<3>(), -1, 0);
+    for (i = 0; i < 3; i++) {
+        rgRes[i] += lppl->rgwtMin[i];
+    }
+    cRes = ResearchIO().pfnResources(app, lppl, app.state.idPlayer);
+    if (!app.state.sel.pl.fNoResearch) {
+        cRes -= static_cast<std::int32_t>((cRes * static_cast<std::int16_t>(app.state.rgplr[app.state.idPlayer].pctResearch))) / 100;
+    }
+    rgRes[3] = cRes;
+    return;
+}
+
+void GetProdQCost(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgCost) {
+    std::int32_t rgCostCur[4];
+    PLPROD *lpplprod;
+    std::int16_t i;
+    std::int16_t j;
+    PROD   *lpprod;
+
+    for (i = 0; i < 4; i++) {
+        rgCost[i] = 0;
+    }
+    if (lppl->lpplprod) {
+        lpplprod = lppl->lpplprod;
+        i = 0;
+        lpprod = lpplprod->rgprod();
+        while (i < lpplprod->iprodMac) {
+            ProductionIO().pfnQuote(app, lppl, lpprod, std::span<std::int32_t, 4>{rgCostCur}, app.state.idPlayer, 0);
+            for (j = 0; j < 4; j++) {
+                rgCost[j] += rgCostCur[j];
+            }
+            i++;
+            lpprod++;
+        }
+    }
+    return;
+}
+
+void MergeAllShdefs(APPSESSION &app, std::int16_t grbitish) {
+    std::int16_t crglpflW;
+    FLEET  *rglpflW[32];
+    std::int16_t iMax;
+    std::int16_t iMin;
+    std::int16_t i;
+    std::int16_t ifl;
+    FLEET  *lpfl;
+    std::int16_t grbit;
+    std::int16_t rgish[16];
+    FLEET  *lpflNextPass;
+    std::int16_t iflNextPass;
+
+    iMax = -1;
+    iMin = 16;
+    i = 0;
+    grbit = 1;
+    while (i < 16) {
+        if (grbitish & grbit) {
+            rgish[i] = 1;
+            if (i > iMax) {
+                iMax = i;
+            }
+            if (i < iMin) {
+                iMin = i;
+            }
+        } else {
+            rgish[i] = 0;
+        }
+        i++;
+        grbit *= 2;
+    }
+    iMax++;
+    if (iMax > 0) {
+        lpflNextPass = nullptr;
+        crglpflW = 0;
+        for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+            lpfl = app.state.rglpfl[ifl];
+            if (!app.state.rglpfl[ifl])
+                break;
+        NextPass:
+            if (lpfl->iPlayer == app.state.idPlayer) {
+                for (i = iMin; i < iMax && (lpfl->rgcsh[i] <= 0 || rgish[i] <= 0); i++) {
+                }
+                if (i != iMax && ColonyIO().pfnFleetMining(app, lpfl) != 4000) {
+                    for (i = 0; i < crglpflW && (rglpflW[i]->idPlanet != lpfl->idPlanet || rglpflW[i]->pt.x != lpfl->pt.x || rglpflW[i]->pt.y != lpfl->pt.y);
+                         i++) {
+                    }
+                    if (i < crglpflW) {
+                        Merge2Fleets(app, rglpflW[i], lpfl, 0);
+                    } else if (crglpflW != 32) {
+                        rglpflW[crglpflW++] = lpfl;
+                    } else if (!lpflNextPass) {
+                        lpflNextPass = lpfl;
+                        iflNextPass = ifl;
+                    }
+                }
+            }
+        }
+        if (lpflNextPass) {
+            lpfl = lpflNextPass;
+            lpflNextPass = nullptr;
+            ifl = iflNextPass;
+            crglpflW = 0;
+            goto NextPass;
+        }
+    }
+    return;
+}
+
+FLEET *LpflFindClosestEnum(APPSESSION &app, FLEET *lpfl, std::int16_t (*pfn)(APPSESSION &, FLEET *, FLEET *)) {
+    FLEET  *lpflT;
+    POINT16 pt;
+    std::int16_t dy;
+    std::int16_t ish;
+    std::int16_t dx;
+    FLEET  *lpflBest;
+    std::int32_t l;
+    std::int32_t lBest;
+
+    lBest = 10000000;
+    lpflBest = nullptr;
+    pt = lpfl->pt;
+    for (ish = 0; ish < app.state.cFleet; ish++) {
+        lpflT = app.state.rglpfl[ish];
+        if (!app.state.rglpfl[ish])
+            break;
+        dx = pt.x - lpflT->pt.x;
+        dy = pt.y - lpflT->pt.y;
+        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+        if (l < lBest && pfn(app, lpfl, lpflT) != 0) {
+            lpflBest = lpflT;
+            lBest = l;
+        }
+    }
+    return lpflBest;
+}
+
+PLANET *LpplFindClosestEnum(APPSESSION &app, PLANET *lppl, std::int16_t (*pfn)(APPSESSION &, PLANET *, PLANET *)) {
+    POINT16 pt;
+    std::int16_t dy;
+    PLANET *lpplTMac;
+    PLANET *lpplBest;
+    PLANET *lpplT;
+    std::int16_t dx;
+    std::int32_t l;
+    std::int32_t lBest;
+
+    lBest = 10000000;
+    lpplBest = nullptr;
+    pt = app.state.rgptPlan[lppl->id];
+    lpplT = app.state.lpPlanets;
+    lpplTMac = app.state.lpPlanets + app.state.cPlanet;
+    for (; lpplT < lpplTMac; lpplT++) {
+        dx = pt.x - app.state.rgptPlan[lpplT->id].x;
+        dy = pt.y - app.state.rgptPlan[lpplT->id].y;
+        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+        if (l < lBest && pfn(app, lppl, lpplT) != 0) {
+            lpplBest = lpplT;
+            lBest = l;
+        }
+    }
+    return lpplBest;
+}
+
+PLANET *LpplFindBestEnum(APPSESSION &app, PLANET *lppl, std::int16_t (*pfn)(APPSESSION &, PLANET *, PLANET *)) {
+    std::int16_t iBest;
+    POINT16 pt;
+    std::int16_t dy;
+    PLANET *lpplTMac;
+    PLANET *lpplBest;
+    PLANET *lpplT;
+    std::int16_t iCur;
+    std::int16_t dx;
+    std::int32_t l;
+    std::int32_t lBest;
+
+    iBest = 1;
+    lBest = 10000000;
+    lpplBest = nullptr;
+    pt = app.state.rgptPlan[lppl->id];
+    lpplT = app.state.lpPlanets;
+    lpplTMac = app.state.lpPlanets + app.state.cPlanet;
+    for (; lpplT < lpplTMac; lpplT++) {
+        dx = pt.x - app.state.rgptPlan[lpplT->id].x;
+        dy = pt.y - app.state.rgptPlan[lpplT->id].y;
+        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+        iCur = pfn(app, lppl, lpplT);
+        if (iCur > iBest || (iCur == iBest && l < lBest)) {
+            iBest = iCur;
+            lBest = l;
+            lpplBest = lpplT;
+        }
+    }
+    return lpplBest;
+}
+
+std::int16_t IdRandomPlanetNearby(APPSESSION &app, POINT16 pt, std::int16_t cDist, std::int16_t fAvoidStarbases) {
+    std::int16_t iChance;
+    std::int32_t lDistMax;
+    std::int32_t dy;
+    std::int16_t idBest;
+    std::int16_t i;
+    std::int32_t dx;
+    std::int16_t cExtraAttempts;
+    std::int32_t d2Cur;
+    PLANET *lppl;
+
+    cExtraAttempts = !fAvoidStarbases ? 0 : 2;
+LRetry:
+    lDistMax = static_cast<std::uint32_t>((cDist * cDist));
+    iChance = 1;
+    idBest = idplNone;
+    for (i = 0; i < app.state.game.cPlanMax; i++) {
+        dx = std::abs(pt.x - app.state.rgptPlan[i].x);
+        dy = std::abs(pt.y - app.state.rgptPlan[i].y);
+        d2Cur = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+        if (d2Cur <= lDistMax && RandomIO().pfnRandom(app, iChance++) == 0) {
+            idBest = i;
+        }
+    }
+    if (idBest != idplNone && cExtraAttempts-- > 0) {
+        lppl = LpplFromId(app, idBest);
+        if (lppl && lppl->fStarbase)
+            goto LRetry;
+    }
+    return idBest;
+}
+
+void ClearAiCurrentTask(APPSESSION &app, FLEET *lpfl, std::int16_t fChangeSel) {
+    if (fChangeSel) {
+        ChangeMainObjSel(app, grobjFleet, lpfl->id);
+    }
+    app.state.sel.fl.lpplord->rgord()[0].grTask = grTaskNone;
+    FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
+    return;
+}
+
+std::int16_t FEnumOurStarbase(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) {
+    if (lpplTest->iPlayer == app.state.idPlayer && lpplTest->fStarbase) {
+        return 1;
+    }
+    return 0;
+}
+
+std::int16_t FFleetMightHaveTeeth(APPSESSION &app, FLEET *lpfl) {
+    HUL    *lphul;
+    std::int16_t ishdef;
+
+    for (ishdef = 0; ishdef < 16; ishdef++) {
+        if (lpfl->rgcsh[ishdef] != 0) {
+            lphul = &app.state.rglpshdef[lpfl->iplr()][ishdef].hul;
+            if (FHullHasTeeth(lphul)) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+std::int16_t IdTargetScout(APPSESSION &app, FLEET *lpfl, FLEET *lpflAtk, FLEET *lpflEnemy, std::int16_t fOnlyHumans) {
+    FLEET  *lpflClosest;
+    FLEET  *lpflT;
+    std::int32_t lDistBest;
+    UNKNOWNPLANETRESULT unknownPlanet;
+    PLANET *lpplMac;
+    POINT16 pt;
+    std::int16_t dy;
+    PLANET *lppl;
+    std::int32_t lDist;
+    std::int16_t idClosest;
+    PLANET *lpplClosest;
+    std::int16_t dx;
+    FLEET  *lpflAtk2;
+    ORDER   ord;
+
+    lpflClosest = nullptr;
+    lpflT = lpflEnemy;
+    lDistBest = 1000000;
+    pt = lpfl->pt;
+    ord = {};
+    if (!FFleetMightHaveTeeth(app, lpfl))
+        goto LFindPlanet;
+    for (; lpflT; lpflT = lpflT->lpflNext) {
+        if (fOnlyHumans && app.state.rgplr[lpflT->iPlayer].fAi)
+            goto NextTarg;
+        for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord()[1].id != lpflT->id ||
+                                              lpflAtk2->lpplord->rgord()[1].grobj != grobjFleet);
+             lpflAtk2 = lpflAtk2->lpflNext) {
+        }
+        if (lpflAtk2 && RandomIO().pfnRandom(app, 3) == 0)
+            goto NextTarg;
+        dx = lpflT->pt.x - pt.x;
+        dy = lpflT->pt.y - pt.y;
+        lDist = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+        if (lDist < lDistBest) {
+            lDistBest = lDist;
+            lpflClosest = lpflT;
+        }
+    NextTarg:;
+    }
+    if (lDistBest < 32400) {
+        ord.pt = lpflClosest->pt;
+        ord.grobj = grobjFleet;
+        ord.id = lpflClosest->id;
+        goto ThwakSumthin;
+    }
+    if (lpflClosest) {
+        if (lpfl->rgwtMin[4] < static_cast<std::int32_t>((ProductionIO().pfnFleetStat(app, lpfl, 1) / 2)) && FMoveToNearestStarbase(app, lpfl, 0)) {
+            return 0;
+        }
+        pt = lpflClosest->pt;
+        lpplClosest = nullptr;
+        lDistBest = 1000000;
+        lppl = app.state.lpPlanets;
+        lpplMac = app.state.lpPlanets + app.state.cPlanet;
+        for (; lppl < lpplMac; lppl++) {
+            for (lpflAtk2 = lpflAtk; lpflAtk2 && (lpflAtk2 == lpfl || lpflAtk2->cord < 2 || lpflAtk2->lpplord->rgord()[1].id != lppl->id ||
+                                                  lpflAtk2->lpplord->rgord()[1].grobj != grobjPlanet);
+                 lpflAtk2 = lpflAtk2->lpflNext) {
+            }
+            if (!lpflAtk2) {
+                dx = app.state.rgptPlan[lppl->id].x - pt.x;
+                dy = app.state.rgptPlan[lppl->id].y - pt.y;
+                lDist = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                if (lDist < lDistBest) {
+                    lDistBest = lDist;
+                    lpplClosest = lppl;
+                }
+            }
+        }
+        if (lpplClosest && lpplClosest->id != lpfl->idPlanet) {
+            ord.pt = app.state.rgptPlan[lpplClosest->id];
+            ord.grobj = grobjPlanet;
+            ord.id = lpplClosest->id;
+            goto ThwakSumthin;
+        }
+    } else if (fOnlyHumans) {
+        return IdTargetScout(app, lpfl, lpflAtk, lpflEnemy, 0);
+    }
+LFindPlanet:
+    unknownPlanet = IdNearestUnknownPlanet(app, lpfl);
+    idClosest = unknownPlanet.idPlanet;
+    if (unknownPlanet.lpthWorm) {
+        ord.pt = unknownPlanet.lpthWorm->pt();
+        ord.grobj = grobjThing;
+        ord.id = unknownPlanet.lpthWorm->idFull();
+    } else {
+        if (idClosest == idplNone) {
+            if (app.state.rgplr[app.state.idPlayer].idPlanetHome == idplNone) {
+                idClosest = RandomIO().pfnRandom(app, app.state.game.cPlanMax);
+            } else {
+                lpplClosest = LpplFindBestEnum(app, LpplFromId(app, app.state.rgplr[app.state.idPlayer].idPlanetHome), FEnumCalcArmadaDest);
+                if (!lpplClosest) {
+                    idClosest = RandomIO().pfnRandom(app, app.state.game.cPlanMax);
+                } else {
+                    idClosest = lpplClosest->id;
+                }
+            }
+        }
+        ord.id = idClosest;
+        ord.grobj = grobjPlanet;
+        ord.pt = app.state.rgptPlan[idClosest];
+    }
+ThwakSumthin:
+    if (lpfl->cord > 1 && lpfl->lpplord->rgord()[1].grobj == grobjPlanet && ord.grobj == grobjPlanet) {
+        return -1;
+    }
+    if (ord.grobj == grobjPlanet) {
+        app.state.vlpbAiPlanet[ord.id * 16 + 15] = 4;
+    }
+    ord.grTask = grTaskNone;
+    ord.fValidTask = 1;
+    ord.iWarp = static_cast<std::uint16_t>(IFindIdealWarp(app, lpfl, 1));
+    if (!FMoveAiFleet(app, lpfl, &ord, 0)) {
+        return -1;
+    }
+    return 0;
+}
+
+void MarkPlanetsUnderAttack(APPSESSION &app) {
+    PLANET *lppl;
+    std::int16_t i;
+    std::int16_t ifl;
+    FLEET  *lpfl;
+    std::int16_t j;
+
+    for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+        lpfl = app.state.rglpfl[ifl];
+        if (!app.state.rglpfl[ifl])
+            break;
+        if (lpfl->iPlayer != app.state.idPlayer && lpfl->idPlanet != idPlanetDeepSpace) {
+            j = lpfl->iPlayer;
+            for (i = 0; i < 16 && (lpfl->rgcsh[i] <= 0 || static_cast<std::int16_t>(app.state.rglpshdef[j][i].hul.ihuldef) < ihuldefMiniBomber ||
+                                   static_cast<std::int16_t>(app.state.rglpshdef[j][i].hul.ihuldef) > ihuldefB52Bomber);
+                 i++) {
+            }
+            if (i != 16) {
+                lppl = LpplFromId(app, lpfl->idPlanet);
+                if (lppl->iPlayer == app.state.idPlayer) {
+                    app.state.vlpbAiPlanet[lppl->id * 16 + 8] = 1;
+                }
+            }
+        }
+    }
+    return;
+}
+
+void FixPlanetsUnderAttack(APPSESSION &app, std::span<PROD, 64> rgprod) {
+    PLANET *lppl;
+    std::int16_t ipl;
+
+    for (ipl = 0; ipl < app.state.vclpplAi; ipl++) {
+        lppl = app.state.vrglpplAi[ipl];
+        if (!app.state.vrglpplAi[ipl])
+            break;
+        if (app.state.vlpbAiPlanet[lppl->id * 16 + 8] != 0) {
+            QuickBuildDefenses(app, lppl, rgprod);
+        }
+    }
+    return;
+}
+
+void QuickBuildDefenses(APPSESSION &app, PLANET *lppl, std::span<PROD, 64> rgprod) {
+    std::int16_t cMax;
+    std::int16_t cAlch;
+    std::int16_t cCur;
+    std::int16_t i;
+    std::int16_t cRes;
+    std::int32_t lVal;
+    std::int16_t cDef;
+    std::int32_t rgRes[4];
+    PROD   *lpprod;
+
+    if (lppl->lpplprod) {
+        i = 0;
+        lpprod = lppl->lpplprod->rgprod();
+        while (i < lppl->lpplprod->iprodMac) {
+            if (lpprod->grobj == grobjPlanet && lpprod->iItem == mdIdleDefense) {
+                return;
+            }
+            i++;
+            lpprod++;
+        }
+    }
+    GetResourcesAvailable(app, lppl, rgRes);
+    if (rgRes[3] >= 50) {
+        ChangeMainObjSel(app, grobjPlanet, lppl->id);
+        ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
+        for (i = 0; i < app.state.cProdGlob && (app.state.pProdGlob[i].grobj != grobjPlanet || app.state.pProdGlob[i].iItem != mdIdleDefense || app.state.pProdGlob[i].cItem < 1); i++) {
+        }
+        if (i == app.state.cProdGlob) {
+            FinishProduction(app, 0);
+        } else {
+            cMax = app.state.pProdGlob[i].cItem;
+            cCur = 100;
+            for (i = 0; i < 3; i++) {
+                lVal = static_cast<std::int32_t>((rgRes[i] / 5));
+                if (lVal < cCur) {
+                    cCur = LOWORD(lVal);
+                }
+            }
+            cRes = LOWORD(static_cast<std::int32_t>((rgRes[3] / 25)));
+            if (cRes > 5) {
+                cRes -= cRes / 6;
+            }
+            rgRes[3] -= static_cast<std::int32_t>((rgRes[3] / 10));
+            if (cRes > cMax) {
+                cRes = cMax;
+            }
+            if (cRes > cCur) {
+                cAlch = LOWORD(static_cast<std::int32_t>(((rgRes[3] - static_cast<std::int16_t>(((RaceQueryIO().pfnGrbit(&app.state.rgplr[app.state.idPlayer], ibitRaceMineralAlchemy) == 0 ? 100 : 25) * cCur))) / 150)));
+                if (cAlch < 0) {
+                    cAlch = 0;
+                }
+                cDef = cCur + cAlch;
+                cAlch = 5 * cAlch;
+            } else {
+                cAlch = 0;
+                cDef = cRes;
+            }
+            if (cDef > 0) {
+                AddItemToQueue(app, mdIdleDefense, cDef, grobjPlanet, addItemFront);
+            }
+            if (cAlch > 0) {
+                AddItemToQueue(app, mdIdleAlchemy, cAlch, grobjPlanet, addItemFront);
+            }
+            FinishProduction(app, cDef > 0 || cAlch > 0);
+        }
+    }
+    return;
+}
+
+std::int16_t IdplFindClosestStarbase(APPSESSION &app, FLEET *lpfl, std::int16_t fBigOnes) {
+    POINT16 pt;
+    std::int16_t dy;
+    PLANET *lpplTMac;
+    PLANET *lpplBest;
+    PLANET *lpplT;
+    std::int16_t dx;
+    std::int32_t l;
+    std::int32_t lBest;
+
+    lBest = 10000000;
+    lpplBest = nullptr;
+    pt = lpfl->lpplord->rgord()[0].pt;
+    lpplT = app.state.lpPlanets;
+    lpplTMac = app.state.lpPlanets + app.state.cPlanet;
+    for (; lpplT < lpplTMac; lpplT++) {
+        dx = pt.x - app.state.rgptPlan[lpplT->id].x;
+        dy = pt.y - app.state.rgptPlan[lpplT->id].y;
+        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+        if (l < lBest && lpplT->iPlayer == app.state.idPlayer && lpplT->fStarbase && (!fBigOnes || lpplT->rgwtMin[3] > 250)) {
+            lpplBest = lpplT;
+            lBest = l;
+        }
+    }
+    if (!lpplBest) {
+        return idplNone;
+    }
+    return lpplBest->id;
+}
+
+std::int16_t FMoveToNearestStarbase(APPSESSION &app, FLEET *lpfl, std::int16_t fBigOnes) {
+    std::int16_t id;
+    ORDER   ord;
+
+    id = IdplFindClosestStarbase(app, lpfl, fBigOnes);
+    if (id == idplNone) {
+        return 0;
+    }
+    ord.id = id;
+    ord.grobj = grobjPlanet;
+    ord.pt = app.state.rgptPlan[id];
+    ord.grTask = grTaskNone;
+    ord.fValidTask = 1;
+    ord.iWarp = 4;
+    return FMoveAiFleet(app, lpfl, &ord, 0);
+}
+
+void MoveToNearestPlanetOrEnemy(APPSESSION &app, FLEET *lpfl, std::int16_t dEnemyRange) {
+    POINT16 pt;
+    std::int16_t id;
+    std::int16_t dy;
+    PLANET *lpplTMac;
+    PLANET *lpplBest;
+    PLANET *lpplT;
+    std::int16_t dx;
+    ORDER   ord;
+    std::int32_t l;
+    std::int32_t lBest;
+    SCAN    scan;
+
+    lBest = 10000000;
+    lpplBest = nullptr;
+    pt = lpfl->lpplord->rgord()[0].pt;
+    lpplT = app.state.lpPlanets;
+    lpplTMac = app.state.lpPlanets + app.state.cPlanet;
+    for (; lpplT < lpplTMac; lpplT++) {
+        dx = pt.x - app.state.rgptPlan[lpplT->id].x;
+        dy = pt.y - app.state.rgptPlan[lpplT->id].y;
+        l = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+        if (l < lBest && lpplT->iPlayer != app.state.idPlayer && lpplT->iPlayer != iplrNone) {
+            lpplBest = lpplT;
+            lBest = l;
+        }
+    }
+    if (lpplBest && lBest <= static_cast<std::int32_t>(static_cast<std::uint32_t>((dEnemyRange * dEnemyRange)))) {
+        id = lpplBest->id;
+    } else {
+        if (!FFindNearestObject(app, lpfl->pt, static_cast<GrobjClass>(grobjPlanet | mdNoRecurse), &scan)) {
+            return;
+        }
+        id = scan.idpl;
+    }
+    if (lpfl->idPlanet != id) {
+        ord.id = id;
+        ord.grobj = grobjPlanet;
+        ord.pt = app.state.rgptPlan[id];
+        ord.grTask = grTaskNone;
+        ord.fValidTask = 1;
+        ord.iWarp = 4;
+        FMoveAiFleet(app, lpfl, &ord, 0);
+    }
+    return;
+}
+
+void EnsureAiStarbaseDesigns(APPSESSION &app) {
+    std::uint16_t wTurnLast;
+    std::int16_t  iSetNew;
+    std::int16_t  i;
+    std::int16_t  iSetLast;
+
+    if (app.state.rglpshdefSB[app.state.idPlayer][2].fFree) {
+        FCreateAiStarbase(app, 2, 2, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+        FCreateAiStarbase(app, 4, 3, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+    }
+    if (app.state.rglpshdefSB[app.state.idPlayer][1].fFree) {
+        FCreateAiStarbase(app, 1, 1, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+    }
+    if (app.state.rglpshdefSB[app.state.idPlayer][3].fFree) {
+        FCreateAiStarbase(app, 3, 2, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+    }
+    if (app.state.game.turn >= 50) {
+        iSetLast = -1;
+        wTurnLast = 0;
+        for (i = 0; i <= 9; i += 2) {
+            if (i == 6) {
+                i--;
+            }
+            if (!app.state.rglpshdefSB[app.state.idPlayer][i].fFree && app.state.rglpshdefSB[app.state.idPlayer][i].turn >= wTurnLast) {
+                wTurnLast = app.state.rglpshdefSB[app.state.idPlayer][i].turn;
+                iSetLast = i;
+            }
+        }
+        if (iSetLast != -1 && static_cast<std::uint16_t>((wTurnLast + 40)) <= app.state.game.turn) {
+            iSetNew = iSetLast <= 4 ? 5 : 0;
+            for (i = iSetNew; i < iSetNew + 5; i += 2) {
+                if (!app.state.rglpshdefSB[app.state.idPlayer][i].fFree && app.state.rglpshdefSB[app.state.idPlayer][i].cExist > 0)
+                    goto LOrbital;
+            }
+            FCreateAiStarbase(app, iSetNew, 1, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+            FCreateAiStarbase(app, iSetNew + 2, 2, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+            FCreateAiStarbase(app, iSetNew + 4, 3, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+        }
+    LOrbital:
+        iSetLast = -1;
+        wTurnLast = 0;
+        for (i = 1; i < 9; i += 2) {
+            if (i == 5) {
+                i++;
+            }
+            if (!app.state.rglpshdefSB[app.state.idPlayer][i].fFree && app.state.rglpshdefSB[app.state.idPlayer][i].turn >= wTurnLast) {
+                wTurnLast = app.state.rglpshdefSB[app.state.idPlayer][i].turn;
+                iSetLast = i;
+            }
+        }
+        if (iSetLast != -1 && static_cast<std::uint16_t>((wTurnLast + 40)) <= app.state.game.turn) {
+            iSetNew = iSetLast <= 4 ? 6 : 1;
+            if ((app.state.rglpshdefSB[app.state.idPlayer][iSetNew].fFree || app.state.rglpshdefSB[app.state.idPlayer][iSetNew].cExist <= 0) &&
+                (app.state.rglpshdefSB[app.state.idPlayer][iSetNew + 2].fFree || app.state.rglpshdefSB[app.state.idPlayer][iSetNew + 2].cExist <= 0)) {
+                FCreateAiStarbase(app, iSetNew, 1, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+                FCreateAiStarbase(app, iSetNew + 2, 2, static_cast<AiStarbaseRecipe>(aiSbRecipeAuto), static_cast<isbhull>(isbhullAuto));
+            }
+        }
+    }
+    return;
+}
+
+void EnsureMacintiStarbaseDesigns(APPSESSION &app, std::span<std::uint8_t, 4> rgSB) {
+    std::int16_t k;
+    std::int16_t iOld;
+    std::int16_t cAge;
+    std::int16_t i;
+    std::int16_t j;
+    std::int16_t iNew;
+
+    rgSB[0] = 0;
+    for (i = 1; i <= 3; i++) {
+        if (app.state.rglpshdefSB[app.state.idPlayer][i].fFree || app.state.rglpshdefSB[app.state.idPlayer][i].cExist == 0) {
+            if (FCreateAiStarbase(app, i, i >= 3 ? 2 : 1, static_cast<AiStarbaseRecipe>(vrgSBMacAisb[i - 1]), static_cast<isbhull>(i))) {
+                rgSB[i] = 0;
+            } else {
+                rgSB[i] = 1;
+            }
+        } else {
+            cAge = app.state.game.turn - app.state.rglpshdefSB[app.state.idPlayer][i].turn;
+            if (cAge < 35) {
+                if (app.state.game.turn > 25 && i == 1 && app.state.rglpshdefSB[app.state.idPlayer][i].hul.chs != 8) {
+                    rgSB[i] = 3;
+                } else {
+                    rgSB[i] = 0;
+                }
+            } else if (cAge < 50) {
+                rgSB[i] = 2;
+            } else {
+                rgSB[i] = 3;
+            }
+        }
+    }
+    iOld = ishdefNone;
+    for (i = 1; i <= 3; i++) {
+        if (rgSB[i] >= 2 && (iOld == ishdefNone || static_cast<std::int16_t>(rgSB[i]) > rgSB[iOld] ||
+                             (rgSB[i] == rgSB[iOld] && app.state.rglpshdefSB[app.state.idPlayer][i].turn < app.state.rglpshdefSB[app.state.idPlayer][iOld].turn))) {
+            iOld = i;
+        }
+    }
+    for (i = 1; i <= 3; i++) {
+        if (rgSB[i] >= 2 && i != iOld) {
+            rgSB[i] = 0;
+        }
+    }
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 3 && (app.state.rglpshdefSB[app.state.idPlayer][3 * i + 4 + j].fFree || app.state.rglpshdefSB[app.state.idPlayer][3 * i + 4 + j].cExist <= 0); j++) {
+        }
+        if (j == 3) {
+            for (j = 0; j < 3; j++) {
+                for (k = 5; k >= 3 && FCreateAiStarbase(app, 3 * i + 4 + j, j + 1, static_cast<AiStarbaseRecipe>(vrgSBMacAisb[k]), static_cast<isbhull>(k - 1)) == 0; k--) {
+                }
+            }
+        }
+    }
+    for (i = 4; i < 10; i++) {
+        rgSB[i] = app.state.rglpshdefSB[app.state.idPlayer][i].fFree != 0;
+    }
+    if (app.state.rglpshdefSB[app.state.idPlayer][4].turn >= app.state.rglpshdefSB[app.state.idPlayer][7].turn) {
+        iNew = 4;
+        iOld = 7;
+    } else {
+        iNew = 7;
+        iOld = 4;
+    }
+    if (static_cast<std::uint16_t>((app.state.game.turn - app.state.rglpshdefSB[app.state.idPlayer][iOld].turn)) < 30) {
+        j = 2;
+    } else {
+        j = 3;
+    }
+    for (i = iOld; i < iOld + 3; i++) {
+        rgSB[i] = j;
+    }
+    i = app.state.rglpshdefSB[app.state.idPlayer][iNew].hul.ihuldef - ihuldefOrbitalFort;
+    if (i < 4) {
+        rgSB[3] = 2;
+        if (i < 3) {
+            rgSB[2] = 2;
+        }
+    }
+    return;
+}
+
+std::int16_t FCreateAiStarbase(APPSESSION &app, std::int16_t ishdef, std::int16_t iLevel, AiStarbaseRecipe aisb, isbhull isb) {
+    std::int16_t i;
+    SHDEF   shdef;
+    HS     *lphs;
+
+    if (aisb < aiSbRecipeSpaceStation) {
+        switch (ishdef) {
+        case 1:
+        case 3:
+        case 6:
+        case 8:
+            aisb = aiSbRecipeOrbitalFort;
+            isb = isbhullOrbitalFort;
+            if (iLevel != 2)
+                break;
+            iLevel++;
+            break;
+        default:
+            aisb = aiSbRecipeSpaceStation;
+            isb = isbhullSpaceStation;
+        }
+    }
+    if (!FCreateAiShdef(app, ishdefNone, static_cast<HulDef>(isb), std::span{vrgSBAip}.subspan(aisb))) {
+        return 0;
+    }
+    shdef = app.state.shdefBuild;
+    if (iLevel < 3) {
+        for (i = 0; i < shdef.hul.chs; i++) {
+            lphs = &shdef.hul.rghs[i];
+            if (lphs->cItem >= 4) {
+                lphs->cItem >>= 3 - iLevel;
+            } else if (iLevel <= 1 && app.state.rgplr[app.state.idPlayer].idAi != idAiCybertron && (lphs->grhst == hstSpecialSB || lphs->cItem > 1)) {
+                lphs->cItem += 0xff;
+            }
+        }
+    }
+    shdef.ishdef = ishdef + 16;
+    PickANameAndBmp(app, &shdef, idsGuardianAngel, 13, shdef.hul.ibmp);
+    return FChangeAiShdef(app, &shdef, ishdef + 16);
+}
+
+std::int16_t FAIFling(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail) {
+    WARPRESULT warp;
+    PLANET *lpplHit;
+    POINT16 pt;
+    std::int32_t dy;
+    std::int16_t iT;
+    std::int32_t d2;
+    std::int32_t dBigAssPacket;
+    std::int16_t i;
+    std::int16_t fTwoMAs;
+    std::int16_t iLevelBest;
+    PLANET *lpplBest;
+    std::int32_t dx;
+    std::int16_t cFound;
+    PLANET *lpplHitMac;
+    std::int32_t l;
+    PROD   *lpprod;
+    std::int16_t iKeep;
+
+    cFound = 0;
+    iLevelBest = -1;
+    if (app.state.rgplr[app.state.idPlayer].idAi == idAiCybertron) {
+        return 0;
+    }
+    i = 0;
+    lpprod = app.state.lpplProdGlob->rgprod();
+    while (i < app.state.lpplProdGlob->iprodMac) {
+        if (lpprod->grobj == grobjPlanet && lpprod->iItem >= iobjPacketIron && lpprod->iItem <= iobjPacketMixed) {
+            return 0;
+        }
+        i++;
+        lpprod++;
+    }
+    if (app.state.rgplr[app.state.idPlayer].lvlAi > lvlAiStandard && rgResAvail[0] + rgResAvail[1] + rgResAvail[2] > 3000 && lppl->fStarbase &&
+        (warp = ColonyIO().pfnWarp(app, lppl)).iWarp >= 10 && RandomIO().pfnRandom(app, 4) == 0) {
+        fTwoMAs = warp.fTwo;
+        pt = app.state.rgptPlan[lppl->id];
+        for (iT = 0; iT <= 2 && lppl->rgwtMin[iT] <= 12500; iT++) {
+        }
+        dBigAssPacket = vrgAiPacketDist[fTwoMAs];
+        if (iT <= 2) {
+            dBigAssPacket = static_cast<std::uint32_t>((dBigAssPacket * 3));
+        }
+        lpplHit = app.state.lpPlanets;
+        lpplHitMac = app.state.lpPlanets + app.state.cPlanet;
+        for (; lpplHit < lpplHitMac; lpplHit++) {
+            if (lpplHit->iPlayer != iplrNone && lpplHit->iPlayer != app.state.idPlayer && static_cast<std::uint16_t>((lpplHit->turn + 2)) >= app.state.game.turn &&
+                ((lpplHit->uDefGuess < 14 || lpplHit->uPopGuess < 750) && RaceQueryIO().pfnStat(&app.state.rgplr[lpplHit->iPlayer], rsMajorAdv) != raMacintosh) &&
+                (!lpplHit->fStarbase || RaceQueryIO().pfnStat(&app.state.rgplr[lpplHit->iPlayer], rsMajorAdv) != raMassAccel)) {
+                dx = static_cast<std::int16_t>((pt.x - app.state.rgptPlan[lpplHit->id].x));
+                dy = static_cast<std::int16_t>((pt.y - app.state.rgptPlan[lpplHit->id].y));
+                d2 = static_cast<std::uint32_t>((dx * dx)) + static_cast<std::uint32_t>((dy * dy));
+                if (d2 <= dBigAssPacket) {
+                    cFound++;
+                    if (RandomIO().pfnRandom(app, cFound) == 0) {
+                        iLevelBest = 13;
+                        lpplBest = lpplHit;
+                    }
+                }
+            }
+        }
+        if (iLevelBest >= 10) {
+            app.state.sel.pl.iWarpFling = iLevelBest - 4;
+            app.state.sel.pl.idFling = lpplBest->id + 1;
+            PlanetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.pl);
+            if (rgResAvail[2] > 20000 && RandomIO().pfnRandom(app, 3) != 0) {
+                AddItemToQueue(app, iobjPacketGerm, 80, grobjPlanet, addItemEnd);
+            }
+            if (rgResAvail[0] > 3000 && rgResAvail[1] > 4000 && rgResAvail[2] > 3000) {
+                AddItemToQueue(app, iobjPacketMixed, 30, grobjPlanet, addItemEnd);
+            } else if (rgResAvail[0] > 1500 && rgResAvail[1] > 2250 && rgResAvail[2] > 1500) {
+                AddItemToQueue(app, iobjPacketMixed, 15, grobjPlanet, addItemEnd);
+            } else {
+                for (iT = 0; iT < 3; iT++) {
+                    iKeep = iT == 1 ? 2500 : 1250;
+                    if (rgResAvail[iT] > iKeep) {
+                        l = static_cast<std::int32_t>(((rgResAvail[iT] - iKeep) / 200));
+                        if (25 < (l <= 1 ? 1 : l)) {
+                            l = 25;
+                        } else if (l <= 1) {
+                            l = 1;
+                        }
+                        AddItemToQueue(app, iT + 14, LOWORD(l), grobjPlanet, addItemEnd);
+                    }
+                }
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+std::int16_t IshdefAiSBLatestOF(APPSESSION &app) {
+    if (!app.state.rglpshdefSB[app.state.idPlayer][6].fFree && app.state.rglpshdefSB[app.state.idPlayer][6].turn > app.state.rglpshdefSB[app.state.idPlayer][1].turn) {
+        return 6;
+    }
+    return 1;
+}
+
+std::int16_t IshdefAiSBLatest(APPSESSION &app) {
+    if (!app.state.rglpshdefSB[app.state.idPlayer][5].fFree && app.state.rglpshdefSB[app.state.idPlayer][5].turn > app.state.rglpshdefSB[app.state.idPlayer]->turn) {
+        return 5;
+    }
+    return 0;
+}
+
+void QueueAiStarbases(APPSESSION &app, std::span<PROD, 64> rgprod, std::int16_t ishdefSBLatest) {
+    PLANET *lpplMac;
+    PLANET *lppl;
+    std::int16_t i;
+    PROD   *lpprod;
+
+    if (ishdefSBLatest != ishdefNone && app.state.rgplr[app.state.idPlayer].idAi != idAiMacinti &&
+        ((!app.state.gd.fTutorial && (app.state.game.lid != 9236297 || app.state.rgplr[app.state.idPlayer].idAi != idAiTurinDrone)) || app.state.game.turn <= 30)) {
+        lppl = app.state.lpPlanets;
+        lpplMac = app.state.lpPlanets + app.state.cPlanet;
+        for (; lppl < lpplMac; lppl++) {
+            if (app.state.rgplr[app.state.idPlayer].idAi == idAiCybertron) {
+                if (lppl->iPlayer != app.state.idPlayer)
+                    continue;
+                ishdefSBLatest = iBuildCyberStarbase(app, lppl);
+                if (ishdefSBLatest == ishdefNone)
+                    continue;
+            } else {
+                if (lppl->iPlayer != app.state.idPlayer || ((lppl->fStarbase && lppl->isb <= 9) || lppl->rgwtMin[3] < 80 || app.state.vlpbAiPlanet[lppl->id * 16 + 2] != 0))
+                    continue;
+                for (i = 0; i < AhvFromLp(app, app.state.vlpbAiData).cStarbase() && AhvFromLp(app, app.state.vlpbAiData).rgasb(i).idPlanet() != lppl->id; i++) {
+                }
+                if (i == AhvFromLp(app, app.state.vlpbAiData).cStarbase())
+                    continue;
+            }
+            ChangeMainObjSel(app, grobjPlanet, lppl->id);
+            ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
+            i = 0;
+            for (lpprod = app.state.lpplProdGlob->rgprod(); i < app.state.lpplProdGlob->iprodMac && (lpprod->grobj != grobjFleet || lpprod->iItem < iobjPacketGerm); lpprod++) {
+                i++;
+            }
+            if (i < app.state.lpplProdGlob->iprodMac) {
+                FinishProduction(app, 0);
+            } else {
+                AddItemToQueue(app, ishdefSBLatest + 16, 1, grobjFleet, addItemEnd);
+                FinishProduction(app, 1);
+            }
+        }
+    }
+    return;
+}
+
+std::int16_t FUpgradeAiStarbase(APPSESSION &app, PLANET *lppl, std::int16_t ishdefSBLatest) {
+    std::int16_t isbCur;
+    std::int16_t iDesigns;
+    std::int16_t i;
+    std::int16_t pctUpg;
+    std::int16_t isbNew;
+    PROD   *lpprod;
+    std::int16_t ishdef;
+
+    if (ishdefSBLatest == ishdefNone) {
+        return 0;
+    }
+    if (lppl->fStarbase) {
+        i = 0;
+        lpprod = app.state.lpplProdGlob->rgprod();
+        while (i < app.state.lpplProdGlob->iprodMac) {
+            if (lpprod->grobj == grobjFleet && lpprod->iItem >= iobjPacketGerm) {
+                return 0;
+            }
+            i++;
+            lpprod++;
+        }
+    }
+    if (app.state.rgplr[app.state.idPlayer].idAi == idAiMacinti) {
+        isbCur = lppl->isb;
+        if (app.state.vAiMacRecycleSB[isbCur] == 3) {
+        LDoMacUpgrade:
+            if (isbCur < 4) {
+                for (isbNew = isbCur + 1; isbNew < 9 && app.state.vAiMacRecycleSB[isbNew] != 0; isbNew++) {
+                }
+            } else {
+                isbNew = isbCur + 3;
+                if (isbNew >= 10) {
+                    isbNew -= 6;
+                }
+            }
+        LDoMacUpgrade2:
+            AddItemToQueue(app, isbNew + 16, 1, grobjFleet, addItemEnd);
+            return 1;
+        }
+        if (app.state.vAiMacRecycleSB[isbCur] == 2 && RandomIO().pfnRandom(app, 100) < 10)
+            goto LDoMacUpgrade;
+        if (isbCur >= 4 && isbCur != 6 && isbCur != 9 && RandomIO().pfnRandom(app, 100) < 8) {
+            isbNew = isbCur + 1;
+            goto LDoMacUpgrade2;
+        }
+        if (isbCur < 4) {
+            i = CapacityIO().pfnPctPlanetCapacity(app, lppl);
+            if (i > 15) {
+                i = (i - 15) * 6;
+                if (RandomIO().pfnRandom(app, 100) < i)
+                    goto LDoMacUpgrade;
+            }
+        }
+        return 0;
+    }
+    if (app.state.rgplr[app.state.idPlayer].idAi == idAiCybertron && app.state.game.turn < 40) {
+        return 0;
+    }
+    if (lppl->fStarbase) {
+        switch (lppl->isb) {
+        case 1:
+        case 3:
+        case 6:
+        case 8:
+            iDesigns = 2;
+            ishdefSBLatest = IshdefAiSBLatestOF(app);
+            break;
+        default:
+            iDesigns = 3;
+        }
+        if (lppl->isb < static_cast<std::uint16_t>(ishdefSBLatest) || lppl->isb > static_cast<std::uint16_t>((ishdefSBLatest + (iDesigns - 1) * 2))) {
+            pctUpg = app.state.game.turn - app.state.rglpshdefSB[app.state.idPlayer][ishdefSBLatest].turn - 10;
+            if (pctUpg < 0) {
+                pctUpg = 0;
+            } else if (pctUpg < 50) {
+                pctUpg >>= 1;
+            }
+            pctUpg += 5;
+            if (RandomIO().pfnRandom(app, 100) < pctUpg) {
+                switch (lppl->isb) {
+                case 1:
+                case 3:
+                case 6:
+                case 8:
+                    ishdef = ishdefSBLatest + lppl->isb % 5 - 1;
+                    break;
+                default:
+                    ishdef = ishdefSBLatest + lppl->isb % 5;
+                }
+                AddItemToQueue(app, ishdef + 16, 1, grobjFleet, addItemEnd);
+                return 1;
+            }
+        } else if (lppl->isb % 5 < (iDesigns - 1) * 2 && !app.state.rglpshdefSB[app.state.idPlayer][lppl->isb + 2].fFree && RandomIO().pfnRandom(app, 100) < 6) {
+            for (i = 0; i < 3; i++) {
+                if (lppl->rgwtMin[i] < 200) {
+                    return 0;
+                }
+            }
+            AddItemToQueue(app, lppl->isb + 18, 1, grobjFleet, addItemEnd);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+std::int16_t FQueueAiTerraforming(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
+    std::int16_t i;
+    std::int16_t j;
+    std::int16_t dEnv;
+    std::int32_t rgItemCost[4];
+    PROD   *lpprod;
+
+    if (app.state.rgplr[app.state.idPlayer].idAi == idAiCybertron) {
+        return 0;
+    }
+    if (lppl->rgwtMin[3] < 200) {
+        return 0;
+    }
+    i = 0;
+    lpprod = app.state.lpplProdGlob->rgprod();
+    while (i < app.state.lpplProdGlob->iprodMac) {
+        if (lpprod->grobj == grobjPlanet && lpprod->iItem == mdIdleTerraform) {
+            return 0;
+        }
+        i++;
+        lpprod++;
+    }
+    j = -1;
+    dEnv = 0;
+    for (i = 0; i < 3; i++) {
+        if (std::abs(lppl->rgEnvVar[i] - app.state.rgplr[app.state.idPlayer].rgEnvVar[i]) > dEnv) {
+            j = i;
+            dEnv = std::abs(lppl->rgEnvVar[i] - app.state.rgplr[app.state.idPlayer].rgEnvVar[i]);
+        }
+    }
+    if (j != -1) {
+        for (i = 0; i < app.state.cProdGlob; i++) {
+            if (app.state.pProdGlob[i].grobj == grobjPlanet && app.state.pProdGlob[i].iItem == mdIdleTerraform && app.state.pProdGlob[i].cItem >= 1) {
+                AddItemToQueue(app, app.state.pProdGlob[i].iItem, 4 >= static_cast<std::int32_t>(app.state.pProdGlob[i].cItem) ? app.state.pProdGlob[i].cItem : 4, grobjPlanet, addItemEnd);
+                app.state.pProdGlob[i].cItem = 0;
+                ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, std::span<std::int32_t, 4>{rgItemCost}, app.state.idPlayer, 1);
+                for (j = 0; j < 4; j++) {
+                    rgResCost[j] += static_cast<std::uint32_t>((rgItemCost[j] * (4 >= static_cast<std::int32_t>(app.state.pProdGlob[i].cItem) ? static_cast<std::int16_t>(app.state.pProdGlob[i].cItem) : 4)));
+                }
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+std::int16_t FQueueAiScanner(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
+    std::int16_t i;
+    std::int16_t j;
+    std::int32_t rgItemCost[4];
+    PROD   *lpprod;
+
+    i = 0;
+    lpprod = app.state.lpplProdGlob->rgprod();
+    while (i < app.state.lpplProdGlob->iprodMac) {
+        if (lpprod->grobj == grobjPlanet && lpprod->iItem >= iobjPlanetaryScannerFirst && lpprod->iItem <= iobjPlanetaryScannerSnooper620X) {
+            return 0;
+        }
+        i++;
+        lpprod++;
+    }
+    for (i = app.state.cProdGlob - 1; i >= 0 && (app.state.pProdGlob[i].grobj != grobjPlanet || app.state.pProdGlob[i].iItem < iobjPlanetaryScannerFirst ||
+                                       app.state.pProdGlob[i].iItem > iobjPlanetaryScannerSnooper620X);
+         i--) {
+    }
+    if (i >= 0) {
+        ProductionIO().pfnQuote(app, lppl, app.state.pProdGlob + i, std::span<std::int32_t, 4>{rgItemCost}, app.state.idPlayer, 1);
+        for (j = 0; j < 4 && (rgItemCost[j] <= 0 || rgItemCost[j] + rgResCost[j] <= rgResAvail[j]); j++) {
+        }
+        if (j == 4) {
+            AddItemToQueue(app, app.state.pProdGlob[i].iItem, 1, grobjPlanet, addItemEnd);
+            for (j = 0; j < 4; j++) {
+                rgResCost[j] += rgItemCost[j];
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+std::int16_t FQueueAiDefenses(APPSESSION &app, PLANET *lppl, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
+    std::int16_t i;
+    std::int16_t j;
+    PROD   *lpprod;
+
+    if (lppl->rgwtMin[3] < 1600 || static_cast<std::int32_t>((lppl->rgwtMin[3] / 80)) <= static_cast<std::int32_t>(lppl->cDefenses)) {
+        return 0;
+    }
+    i = 0;
+    lpprod = app.state.lpplProdGlob->rgprod();
+    while (i < app.state.lpplProdGlob->iprodMac) {
+        if (lpprod->grobj == grobjPlanet && lpprod->iItem == mdIdleDefense) {
+            return 0;
+        }
+        i++;
+        lpprod++;
+    }
+    for (i = 0; i < app.state.cProdGlob && (app.state.pProdGlob[i].grobj != grobjPlanet || app.state.pProdGlob[i].iItem != mdIdleDefense || app.state.pProdGlob[i].cItem < 1); i++) {
+    }
+    if (i < app.state.cProdGlob) {
+        j = app.state.pProdGlob[i].cItem;
+        if (j > 4) {
+            j = 4;
+        }
+        AddItemToQueue(app, mdIdleDefense, j, grobjPlanet, addItemEnd);
+        return 1;
+    }
+    return 0;
+}
+
+void HandleBasicAiTasks(APPSESSION &app, std::int16_t iroCur, std::span<PROD, 64> rgprod, std::int16_t ishdefSBLatest, std::span<std::int32_t, 4> rgResAvail, std::span<std::int32_t, 4> rgResCost) {
+    PLANET *lppl;
+    std::int16_t i;
+    std::int16_t ipl;
+    std::int16_t fWrite;
+
+    KeepFleetsMoving(app);
+    QueueAiStarbases(app, rgprod, ishdefSBLatest);
+    for (ipl = 0; ipl < app.state.vclpplAi; ipl++) {
+        lppl = app.state.vrglpplAi[ipl];
+        if (!app.state.vrglpplAi[ipl])
+            break;
+        if (app.state.rgplr[app.state.idPlayer].idAi == idAiRobotoid) {
+            if (lppl->rgwtMin[3] < 40)
+                continue;
+        } else if (lppl->rgwtMin[3] < 60 && app.state.vlpbAiPlanet[lppl->id * 16 + 2] == 0) {
+            continue;
+        }
+        GetResourcesAvailable(app, lppl, rgResAvail);
+        GetProdQCost(app, lppl, rgResCost);
+        if (app.state.rgplr[app.state.idPlayer].idAi != idAiMacinti) {
+            for (i = 0; i < 4 && rgResAvail[i] >= rgResCost[i]; i++) {
+            }
+            if (i < 3)
+                continue;
+        }
+        ChangeMainObjSel(app, grobjPlanet, lppl->id);
+        ProductionIO().pfnInitialize(app, std::span<PROD, 64>{rgprod});
+        fWrite = 0;
+        if (app.state.rgplr[app.state.idPlayer].idAi == idAiRobotoid || app.state.vlpbAiPlanet[lppl->id * 16 + 2] == 0) {
+            if (FUpgradeAiStarbase(app, lppl, ishdefSBLatest) || FAIFling(app, lppl, rgResAvail) || FQueueAiScanner(app, lppl, rgResAvail, rgResCost) ||
+                FQueueAiDefenses(app, lppl, rgResAvail, rgResCost)) {
+                fWrite = 1;
+            }
+        } else if (app.state.rgplr[app.state.idPlayer].idAi == idAiCybertron && FUpgradeAiStarbase(app, lppl, ishdefSBLatest)) {
+            fWrite = 1;
+        }
+        if (app.state.rgplr[app.state.idPlayer].idAi != idAiRobotoid && !fWrite && FQueueAiTerraforming(app, lppl, rgResAvail, rgResCost)) {
+            fWrite = 1;
+        }
+        FinishProduction(app, fWrite);
+    }
+    if (!app.state.game.fTutorial && app.state.game.turn >= static_cast<std::uint16_t>((10 * app.state.game.mdSize + 20))) {
+        FixPlanetsUnderAttack(app, rgprod);
+    }
+    AddMinesToBlockedQueues(app);
+    return;
+}
+
+void SplitOutShdefs(APPSESSION &app, std::span<std::uint8_t, 16> rgbIsh) {
+    std::int16_t iLast;
+    std::int16_t iFirst;
+    std::int16_t ifl;
+    std::int16_t i;
+    FLEET  *lpfl;
+    std::int16_t fUnmarked;
+    FLEET   flNew;
+    std::int16_t fMarked;
+    FLEET  *lpflNew;
+
+    iLast = -1;
+    iFirst = -1;
+    for (i = 0; i < 16; i++) {
+        if (rgbIsh[i] > 0) {
+            iLast = i;
+            if (iFirst == -1) {
+                iFirst = i;
+            }
+        }
+    }
+    if (iFirst == -1)
+        return;
+LTopOfLoop:
+    if (app.state.rgplr[app.state.idPlayer].cFleet > 500)
+        return;
+    for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+        lpfl = app.state.rglpfl[ifl];
+        if (!app.state.rglpfl[ifl])
+            break;
+        if (lpfl->iPlayer == app.state.idPlayer && !lpfl->fDead) {
+            fUnmarked = 0;
+            fMarked = 0;
+            for (i = 0; i < 16; i++) {
+                if (lpfl->rgcsh[i] > 0) {
+                    if (rgbIsh[i] != 0) {
+                        if (fUnmarked) {
+                        LDoTheSplit:
+                            ChangeMainObjSel(app, grobjFleet, lpfl->id);
+                            lpflNew = LpflNewSplit(app, &app.state.sel.fl);
+                            flNew = *lpflNew;
+                            for (i = 0; i < 16; i++) {
+                                if (rgbIsh[i] > 0) {
+                                    flNew.rgcsh[i] = app.state.sel.fl.rgcsh[i];
+                                    app.state.sel.fl.rgcsh[i] = 0;
+                                }
+                            }
+                            FleetTransferCargoBalance(app, &app.state.sel.fl, &flNew);
+                            FleetQueryIO().pfnLookup(app, idWriteBack, &app.state.sel.fl);
+                            FleetQueryIO().pfnLookup(app, idWriteBack, &flNew);
+                            goto LTopOfLoop;
+                        }
+                        fMarked = 1;
+                    } else {
+                        if (fMarked)
+                            goto LDoTheSplit;
+                        fUnmarked = 1;
+                    }
+                }
+            }
+        }
+    }
+}
+
+AISHDEFSTATUSRESULT CheckAiShdefStatus(APPSESSION &app, std::int16_t ishBeg, std::int16_t ishEnd, std::uint16_t cRecyclePeriod, std::span<std::uint8_t, 16> rgbOld) {
+    std::uint32_t cExist;
+    std::int16_t  i;
+    SHDEF    shdef;
+    AISHDEFSTATUSRESULT result;
+
+    result.ishdefLatest = ishdefNone;
+    cExist = 0;
+    for (i = ishBeg; i <= ishEnd; i++) {
+        if (!app.state.rgshdef[i].fFree) {
+            cExist += app.state.rgshdef[i].cExist;
+            if (result.ishdefLatest == ishdefNone || app.state.rgshdef[result.ishdefLatest].turn < app.state.rgshdef[i].turn) {
+                result.ishdefLatest = i;
+            }
+            if (static_cast<std::uint16_t>((app.state.game.turn - app.state.rgshdef[i].turn)) > cRecyclePeriod) {
+                if (app.state.rgshdef[i].cExist == 0) {
+                    shdef = app.state.rgshdef[i];
+                    shdef.fFree = 1;
+                    FChangeAiShdef(app, &shdef, i);
+                } else {
+                    rgbOld[i] = 1;
+                }
+            }
+        }
+    }
+    if (cExist > 32000) {
+        cExist = 32000;
+    }
+    result.cExist = static_cast<std::int16_t>(cExist);
+    return result;
+}
+
+void IncreaseAIMinefieldSizes(APPSESSION &app) {
+    THING  *lpth;
+    std::int32_t cMines;
+    THING  *lpthMac;
+
+    lpth = app.state.lpThings;
+    lpthMac = app.state.lpThings + app.state.cThing;
+    for (; lpth < lpthMac; lpth++) {
+        if (lpth->ith() == ithMinefield) {
+            cMines = static_cast<std::int32_t>((static_cast<double>(std::sqrt(static_cast<double>(lpth->thm().cMines()))) + 10.5));
+            { const auto cMinesForThing = (static_cast<std::uint32_t>((cMines * cMines))); auto &thForThing = *(lpth); thForThing.thm().SetCMines(cMinesForThing); }
+        }
+    }
+    return;
+}
+
+std::int16_t FFindBuddyAndJoinUp(APPSESSION &app, FLEET *lpfl, std::int16_t ishLo, std::int16_t ishHi, std::int32_t lMaxDist1, std::int32_t lMaxDist2) {
+    std::int32_t lDistBest;
+    std::int32_t lDist;
+    std::int16_t i;
+    std::int16_t ifl;
+    FLEET  *lpflOther;
+    FLEET  *lpflBest;
+    ORDER   ord;
+
+    lpflBest = nullptr;
+    lDistBest = 9999999;
+    for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+        lpflOther = app.state.rglpfl[ifl];
+        if (!app.state.rglpfl[ifl])
+            break;
+        if (lpflOther->iPlayer == app.state.idPlayer) {
+            if (lpflOther == lpfl)
+                break;
+            for (i = ishLo; i <= ishHi; i++) {
+                if (lpflOther->rgcsh[i] != 0) {
+                    lDist = LDistance2(lpfl->pt, lpflOther->pt);
+                    if (lDist < lDistBest) {
+                        lpflBest = lpflOther;
+                        lDistBest = lDist;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    if (lpflBest && (lDistBest <= static_cast<std::int32_t>(static_cast<std::uint32_t>((lMaxDist1 * lMaxDist1))) || (lDistBest <= static_cast<std::int32_t>(static_cast<std::uint32_t>((lMaxDist2 * lMaxDist2))) && RandomIO().pfnRandom(app, 2) != 0))) {
+        ClearAiCurrentTask(app, lpfl, 1);
+        ord.id = lpflBest->id;
+        ord.grobj = grobjFleet;
+        ord.pt = lpflBest->pt;
+        ord.grTask = grTaskNone;
+        ord.fValidTask = 1;
+        ord.iWarp = 6;
+        FMoveAiFleet(app, lpfl, &ord, 0);
+        return 1;
+    }
+    return 0;
+}
+
+std::int16_t FShouldPlanetBuildColonizer(APPSESSION &app, PLANET *lpplSrc) {
+    POINT16  pt;
+    std::int16_t  i;
+    std::int32_t  lCur;
+    std::uint8_t *lpb;
+    std::int32_t  lBest;
+
+    lBest = 10000000;
+    pt = app.state.rgptPlan[lpplSrc->id];
+    if (app.state.game.turn < 60) {
+        return 1;
+    }
+    lpb = app.state.vlpbAiPlanet + 13;
+    i = 0;
+    while (i < app.state.game.cPlanMax) {
+        if (*lpb == 0) {
+            lCur = LDistance2(pt, app.state.rgptPlan[i]);
+            if (lCur < lBest) {
+                lBest = lCur;
+            }
+        }
+        i++;
+        lpb += 16;
+    }
+    if (lBest > 122500 || (lBest > 90000 && RandomIO().pfnRandom(app, 2) != 0) || (lBest > 62500 && RandomIO().pfnRandom(app, 2) != 0)) {
+        return 0;
+    }
+    return 1;
+}
+
+void InitRandomPlanetList(APPSESSION &app) {
+    PLANET *lpplMac;
+    std::int16_t iT;
+    PLANET *lppl;
+    std::int16_t i;
+
+    app.state.vclpplAi = 0;
+    lppl = app.state.lpPlanets;
+    lpplMac = app.state.lpPlanets + app.state.cPlanet;
+    for (; lppl < lpplMac; lppl++) {
+        if (lppl->iPlayer == app.state.idPlayer) {
+            app.state.vrglpplAi[app.state.vclpplAi++] = lppl;
+        }
+    }
+    if (!app.state.gd.fTutorial) {
+        for (i = 0; i < app.state.vclpplAi - 1; i++) {
+            iT = RandomIO().pfnRandom(app, app.state.vclpplAi - i) + i;
+            lppl = app.state.vrglpplAi[i];
+            app.state.vrglpplAi[i] = app.state.vrglpplAi[iT];
+            app.state.vrglpplAi[iT] = lppl;
+        }
+    }
+    return;
+}

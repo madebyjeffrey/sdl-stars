@@ -1,9 +1,11 @@
 #ifndef STARS_DECOMPILED_NATIVEUI_H
 #define STARS_DECOMPILED_NATIVEUI_H
 
+#include <windows.h>
+#include "../platform/native.h"
 // The Windows interface's native port helpers. See docs/NATIVE-PORT.md.
 
-#include <stdint.h>
+#include <cstdint>
 #include <windows.h>
 
 // PointFrom16 widens a Stars point to a Win32 point.
@@ -14,45 +16,35 @@ static inline POINT PointFrom16(POINT16 pt) {
 
 // PointTo16 narrows a Win32 point to a Stars point.
 static inline POINT16 PointTo16(POINT pt) {
-    POINT16 out = {(int16_t)pt.x, (int16_t)pt.y};
+    POINT16 out = {static_cast<std::int16_t>(pt.x), static_cast<std::int16_t>(pt.y)};
     return out;
 }
 
+struct POINT16CONVERSIONRESULT {
+    bool fSuccess;
+    POINT16 pt;
+};
+
 // GetCursorPos16 stores the cursor position in a Stars point.
-static inline BOOL GetCursorPos16(POINT16 *ppt) {
+static inline POINT16CONVERSIONRESULT GetCursorPos16(BOOL (*pfnCursorPos)(LPPOINT) = win32::GetCursorPos) {
     // Callers still use the point when a backend cannot report its position.
     POINT pt = {0, 0};
-    BOOL  ret = GetCursorPos(&pt);
-    *ppt = PointTo16(pt);
-    return ret;
+    bool fSuccess = pfnCursorPos(&pt);
+    return {fSuccess, PointTo16(pt)};
 }
 
 // ScreenToClient16 converts a Stars point from screen to client coordinates.
-static inline BOOL ScreenToClient16(HWND hwnd, POINT16 *ppt) {
-    POINT pt = PointFrom16(*ppt);
-    BOOL  ret = ScreenToClient(hwnd, &pt);
-    *ppt = PointTo16(pt);
-    return ret;
+static inline POINT16CONVERSIONRESULT ScreenToClient16(HWND hwnd, POINT16 pt16) {
+    POINT pt = PointFrom16(pt16);
+    bool fSuccess = win32::ScreenToClient(hwnd, &pt);
+    return {fSuccess, PointTo16(pt)};
 }
 
 // ClientToScreen16 converts a Stars point from client to screen coordinates.
-static inline BOOL ClientToScreen16(HWND hwnd, POINT16 *ppt) {
-    POINT pt = PointFrom16(*ppt);
-    BOOL  ret = ClientToScreen(hwnd, &pt);
-    *ppt = PointTo16(pt);
-    return ret;
-}
-
-// MapWindowPoints16 maps c Stars points from one window's coordinates to
-// another's.
-static inline int MapWindowPoints16(HWND hwndFrom, HWND hwndTo, POINT16 *ppt, UINT c) {
-    int ret = 0;
-    for (UINT i = 0; i < c; i++) {
-        POINT pt = PointFrom16(ppt[i]);
-        ret = MapWindowPoints(hwndFrom, hwndTo, &pt, 1);
-        ppt[i] = PointTo16(pt);
-    }
-    return ret;
+static inline POINT16CONVERSIONRESULT ClientToScreen16(HWND hwnd, POINT16 pt16) {
+    POINT pt = PointFrom16(pt16);
+    bool fSuccess = win32::ClientToScreen(hwnd, &pt);
+    return {fSuccess, PointTo16(pt)};
 }
 
 // GetTextExtent measures text like Win16 GetTextExtent, which Win32 dropped:
@@ -61,13 +53,17 @@ DWORD GetTextExtent(HDC hdc, LPCSTR str, int len);
 
 // FrameWndProcDeferred is the frame window class's procedure; it wraps
 // FrameWndProc (see nativeui.c).
-LRESULT CALLBACK FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+LRESULT  FrameWndProcDeferred(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // FRouteMouseWheel sends wheel messages to the window under the cursor,
 // CWheelNotches gathers wheel deltas into notches and CWheelLines gives the
 // lines a notch scrolls (see nativeui.c).
-int16_t FRouteMouseWheel(MSG *pmsg);
-int16_t CWheelNotches(int16_t *pdWheel, int16_t dWheel);
-int16_t CWheelLines(int16_t cPage);
+std::int16_t FRouteMouseWheel(win32::MSG *pmsg);
+struct WHEELNOTCHESRESULT {
+    std::int16_t cNotches;
+    std::int16_t dRemainder;
+};
+WHEELNOTCHESRESULT CWheelNotches(std::int16_t dAccumulated, std::int16_t dWheel);
+std::int16_t CWheelLines(std::int16_t cPage);
 
 #endif

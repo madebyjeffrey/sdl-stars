@@ -1,8 +1,9 @@
 #ifndef STARS_DECOMPILED_TURN3_H
 #define STARS_DECOMPILED_TURN3_H
 
-#include <stdint.h>
+#include "common.h"
+#include <cstdint>
 
-void SatisfyOrders(int16_t iPass);
+void SatisfyOrders(APPSESSION &app, std::int16_t iPass);
 
 #endif

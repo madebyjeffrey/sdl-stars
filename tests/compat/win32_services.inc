@@ -1,0 +1,89 @@
+/* Shared SDK comparisons for the UI's narrow strings and CRT helpers. */
+#include <windows.h>
+#include <io.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <time.h>
+#ifndef _WIN32
+#include <stars_compat.h>
+#include <unistd.h>
+#else
+#include <process.h>
+#endif
+#define CHECK(f) do { if (!(f)) { fprintf(stderr, "line %d: %s\n", __LINE__, #f); return 1; } } while (0)
+
+int main(void) {
+    char sz[1024] = "Fleet #10", szPath[128], szFile[160], szDate[9], szTime[9];
+    FILE *fp;
+    DWORD idThread = GetCurrentThreadId();
+    int i, j, k, n, nExpected;
+    int64_t l, lAbs, lDiv, lRounded;
+    const int rgn[] = { -100000, -7, -3, -2, -1, 0, 1, 2, 3, 7, 100000 };
+
+    CHECK(idThread != 0 && GetCurrentThreadId() == idThread);
+    for (i = 0; i < (int)(sizeof(rgn) / sizeof(rgn[0])); i++)
+        for (j = 0; j < (int)(sizeof(rgn) / sizeof(rgn[0])); j++)
+            for (k = 0; k < (int)(sizeof(rgn) / sizeof(rgn[0])); k++) {
+                l = (int64_t)rgn[i] * rgn[j];
+                lAbs = l < 0 ? -l : l;
+                lDiv = rgn[k] < 0 ? -(int64_t)rgn[k] : rgn[k];
+                lRounded = lDiv ? (lAbs + lDiv / 2) / lDiv : 0;
+                if ((l < 0) != (rgn[k] < 0)) lRounded = -lRounded;
+                nExpected = !lDiv || lRounded <= std::numeric_limits<std::int32_t>::min() || lRounded > std::numeric_limits<std::int32_t>::max() ? -1 : (int)lRounded;
+                n = MulDiv(rgn[i], rgn[j], rgn[k]);
+                CHECK(n == nExpected);
+            }
+    CHECK(MulDiv(std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::max(), std::numeric_limits<std::int32_t>::max()) == std::numeric_limits<std::int32_t>::max());
+    CHECK(MulDiv(std::numeric_limits<std::int32_t>::min(), 1, 1) == -1);
+    CHECK(MulDiv(std::numeric_limits<std::int32_t>::min(), -1, 1) == -1);
+    CHECK(!strcmp(sz, "Fleet #10") && lstrcmpiA(sz, "FLEET #10") == 0);
+    CHECK(lstrcmpiA("a", "b") < 0 && lstrcmpiA("z", "a") > 0);
+#ifndef STARS_UI_SDL
+    CHECK(wsprintfA(sz, "%ld of %ldkT: %08lx %d %s %c %%", (LONG)-1234567890,
+                    (LONG)std::numeric_limits<std::int32_t>::max(), (DWORD)0x89abcdef, 17, "cargo", 'X') == 50);
+    CHECK(!strcmp(sz, "-1234567890 of 2147483647kT: 89abcdef 17 cargo X %"));
+    CHECK(wsprintfA(sz, "[%6.4d][%-5s][%#x][%hu]", 12, "ab", 42u, (WORD)1) > 0);
+    CHECK(!strcmp(sz, "[  0012][ab   ][0x2a][1]"));
+    CHECK(wsprintfA(sz, "%.3s %hd %lu", "fleet", (SHORT)-1, (DWORD)std::numeric_limits<std::uint32_t>::max()) > 0);
+    CHECK(!strcmp(sz, "fle -1 4294967295"));
+#endif
+    CHECK(_stricmp("Fleet", "FLEET") == 0 && _stricmp("a", "b") < 0);
+    CHECK(_strnicmp("Fleet one", "FLEET two", 5) == 0);
+    CHECK(_strnicmp("a", "b", 0) == 0);
+    memcpy(sz, "FL33T", sizeof("FL33T"));
+    CHECK(!strcmp(_strlwr(sz), "fl33t"));
+    CHECK(_strdate(szDate) == szDate && strlen(szDate) == 8 && szDate[2] == '/' && szDate[5] == '/');
+    CHECK(_strtime(szTime) == szTime && strlen(szTime) == 8 && szTime[2] == ':' && szTime[5] == ':');
+#ifdef _WIN32
+    CHECK(_getcwd(sz, sizeof(sz)) == sz && *sz);
+#else
+    CHECK(getcwd(sz, sizeof(sz)) == sz && *sz);
+#endif
+    snprintf(szPath, sizeof(szPath), "stars-compat-services-%lu", (unsigned long)idThread);
+    snprintf(szFile, sizeof(szFile), "%s/data", szPath);
+    CHECK(_access(szPath, 0) == -1);
+#ifdef _WIN32
+    CHECK(_mkdir(szPath) == 0 && _mkdir(szPath) == -1);
+#else
+    CHECK(mkdir(szPath, 0700) == 0 && mkdir(szPath, 0700) == -1);
+#endif
+    CHECK(_access(szPath, 0) == 0);
+    fp = fopen(szFile, "wb");
+    CHECK(fp && fwrite("test", 1, 4, fp) == 4 && fclose(fp) == 0);
+    CHECK(_access(szFile, 0) == 0 && _access(szFile, 2) == 0);
+    CHECK(remove(szFile) == 0);
+#ifdef _WIN32
+    CHECK(_rmdir(szPath) == 0);
+#else
+    CHECK(rmdir(szPath) == 0);
+    StarsCompatShutdown();
+#endif
+    puts("UI services: PASS (MulDiv, 32-bit formatting, strings, CRT paths/time)");
+    return 0;
+}

@@ -4,7 +4,7 @@ This milestone reaches **101/178 inventoried Win32 APIs (56.7%)**. The full
 Linux game client still needs drawing state, remaining geometry, child windows,
 controls, dialogs, menus and the other services in the implementation plan.
 
-The local C11 GDI implements `CreateRectRgn`, `SelectClipRgn`,
+The local C++20 GDI implements `CreateRectRgn`, `SelectClipRgn`,
 `IntersectClipRect` and `ExcludeClipRect`. Rectangle edges are left/top
 inclusive and right/bottom exclusive. Region handles use the existing GDI
 ownership and stale-handle protection. Creation normalizes reversed corners

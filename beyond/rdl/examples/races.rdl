@@ -1,0 +1,79 @@
+(* Illustrative point rules, not Stars! race-pricing formulas. *)
+
+import stars.schema
+import stars.prt
+
+component ImprovedFuelEfficiency : SecondaryRacialTrait {
+  name = "Improved Fuel Efficiency"
+  description = "Illustrative secondary trait; fuel mechanics are not modeled here."
+}
+
+trait improved_fuel_efficiency : secondary_racial_trait {
+  name = "Improved Fuel Efficiency";
+  point_cost = 10;
+  provides ImprovedFuelEfficiency
+}
+
+(* Baselines for these example designs; growth is a selected design setting. *)
+trait standard_population {
+  provides CarryingCapacity = 1_000_000
+  provides GrowthRate = 0.15
+}
+
+trait terran_identity {
+  provides RaceIdentity {
+    singularName = "Terrans";
+    pluralName = "Terrans";
+    sigil = 1;
+  }
+}
+
+trait settler_identity {
+  provides RaceIdentity {
+    singularName = "Settlers";
+    pluralName = "Settlers";
+    sigil = 2;
+  }
+}
+
+race terrans = {
+  description = """
+    An example race design.
+
+    Unicode text: café, 星.
+  """;
+  population = 25000;
+  traits = { terran_identity; standard_population; hyper_expansion; };
+  secondary = { improved_fuel_efficiency; };
+  gravity = 0.5 .. 2.0;
+  temperature = immune;
+  radiation = 20 .. 80;
+}
+
+race settlers = {
+  description = "A JOAT race without secondary traits.";
+  population = 18000;
+  traits = { settler_identity; standard_population; jack_of_all_trades; };
+  gravity = 0.8 .. 1.2;
+  temperature = -20 .. 80;
+  radiation = 10 .. 90;
+}
+
+object type planet = {
+  name : string;
+  owner : race option;
+}
+
+planet earth = {
+  name = "Earth";
+  owner = terrans;
+}
+
+query {
+  from r : race
+  order by r.population descending
+  select {
+    name = r.name;
+    points = r.habitability_points;
+  }
+}

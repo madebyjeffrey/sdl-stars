@@ -1,0 +1,113 @@
+import stars.rules.starting
+import stars.rules.economy
+
+(* parts.cpp:32..405, research.cpp:100. The catalog carries source symbols,
+   tech vectors and base costs. Trait gating never substitutes for technology
+   or Mystery Trader acquisition. No iplrNone catalog-mode bypass here. *)
+object type CatalogPart = {
+  symbol: string; name: string; category: string; index: integer;
+  requirements: TechVector;
+  ironium: integer; boranium: integer; germanium: integer; resources: integer;
+}
+type EquipmentEligibility = {
+  race: Race;
+  part: CatalogPart;
+  technology: TechVector;
+  trader_acquisitions: string set;
+  derive exclusive_prt: integer =
+    if Set.contains self.part.symbol {"iengineSettlersDelight"; "ihuldefMiniColonyShip"; "ihuldefMetaMorph"; "ispecialEFluxCapacitor"} then 0
+    else if Set.contains self.part.symbol {"ishieldShadowShield"; "ihuldefRogue"; "ihuldefStealthBomber"; "iarmorDepletedNeutronium"; "ispecialETransportCloaking"; "ispecialEUltraStealthCloak"; "iscannerChameleonScanner"; "iscannerPickPocketScanner"; "iscannerRobberBaronScanner"} then 1
+    else if Set.contains self.part.symbol {"ihuldefDreadnought"; "ihuldefBattleCruiser"; "ibeamBlunderbuss"; "ibeamGatlingNeutrinoCannon"} then 2
+    else if Set.contains self.part.symbol {"iminingOrbitalAdjuster"; "ibombRetroBomb"} then 3
+    else if Set.contains self.part.symbol {"ihuldefFuelTransport"; "ihuldefSuperFreighter"; "ishieldCrobySharmor"; "iarmorFieldedKelarium"; "ispecialEJammer10"; "ispecialEJammer50"; "ispecialETachyonDetector"; "ibeamMiniGun"} then 4
+    else if Set.contains self.part.symbol {"ihuldefMiniMineLayer"; "ihuldefSuperMineLayer"; "ispecialEEnergyDampener"; "iminesMineDispenser40"; "iminesMineDispenser80"; "iminesMineDispenser130"; "iminesHeavyDispenser50"; "iminesHeavyDispenser110"; "iminesHeavyDispenser200"; "iminesSpeedTrap30"; "iminesSpeedTrap50"} then 5
+    else if Set.contains self.part.symbol {"ispecialSBMassDriver5"; "ispecialSBMassDriver6"; "ispecialSBSuperDriver8"; "ispecialSBSuperDriver9"; "ispecialSBUltraDriver11"; "ispecialSBUltraDriver12"; "ispecialSBUltraDriver13"} then 6
+    else if Set.contains self.part.symbol {"ispecialEAntiMatterGenerator"; "ispecialSBStargateAny300"; "ispecialSBStargate100Any"; "ispecialSBStargateAny800"; "ispecialSBStargateAnyAny"} then 7
+    else if Set.contains self.part.symbol {"isbhullDeathStar"; "ispecialMOrbitalConstructionModule"} then 8 else -1;
+  derive trader_required: bool = Set.contains self.part.symbol {
+    "ibeamMultiContainedMunition"; "itorpAntiMatterTorpedo"; "iarmorMegaPolyShell"; "ishieldLangstonShell"; "ibombHushABoom";
+    "iminingAlienMiner"; "iengineEnigmaPulsar"; "ihuldefMiniMorph"; "ispecialEMultiFunctionPod"; "ispecialMMultiCargoPod"; "ispecialMJumpGate"; "iplanetaryGenesisDevice";
+  };
+  derive trait_allowed: bool = (self.exclusive_prt = -1 || self.race.prt_id = self.exclusive_prt)
+    && (self.part.symbol != "iminesSpeedTrap20" || self.race.prt_id = 4 || self.race.prt_id = 5)
+    && (self.race.prt_id != 0 || self.part.category != "base_special" || self.part.index > 6)
+    && (self.race.prt_id != 2 || not (Set.contains self.part.symbol {"iminesMineDispenser50"; "iplanetaryLaserBattery"; "iplanetaryPlanetaryShield"; "iplanetaryNeutronShield"}))
+    && (self.race.prt_id != 4 || not (Set.contains self.part.symbol {"ibombSmartBomb"; "ibombNeutronBomb"; "ibombEnrichedNeutronBomb"; "ibombPeerlessBomb"; "ibombAnnihilatorBomb"}))
+    && (self.race.prt_id != 8 || not (Set.contains self.part.symbol {"ispecialMColonizationModule"; "iplanetaryViewer50"; "iplanetaryViewer90"; "iplanetaryScoper150"; "iplanetaryScoper220"; "iplanetaryScoper280"; "iplanetarySnooper320X"; "iplanetarySnooper400X"; "iplanetarySnooper500X"; "iplanetarySnooper620X"; "iplanetarySDI"; "iplanetaryMissileBattery"; "iplanetaryLaserBattery"; "iplanetaryPlanetaryShield"; "iplanetaryNeutronShield"}))
+    && (not (Set.contains self.part.symbol {"iengineFuelMizer"; "iengineGalaxyScoop"}) || self.race.ife)
+    && (self.part.symbol != "iengineInterspace10" || self.race.nrse)
+    && (not self.race.nrse || not (Set.contains self.part.symbol {"iengineRadiatingHydroRamScoop"; "iengineSubGalacticFuelScoop"; "iengineTransGalacticFuelScoop"; "iengineTransGalacticSuperScoop"; "iengineTransGalacticMizerScoop"; "iengineGalaxyScoop"}))
+    && (not (Set.contains self.part.symbol {"ihuldefMidgetMiner"; "ihuldefMiner"; "ihuldefUltraMiner"; "iminingRoboMidgetMiner"; "iminingRoboUltraMiner"}) || self.race.arm)
+    && (not self.race.obrm || not (Set.contains self.part.symbol {"ihuldefMidgetMiner"; "ihuldefMiner"; "ihuldefMaxiMiner"; "ihuldefUltraMiner"; "iminingRoboMidgetMiner"; "iminingRoboMiner"; "iminingRoboMaxiMiner"; "iminingRoboSuperMiner"; "iminingRoboUltraMiner"}))
+    && (not (Set.contains self.part.symbol {"isbhullSpaceDock"; "isbhullUltraStation"}) || self.race.isb)
+    && (not self.race.nas || not (Set.contains self.part.symbol {"iscannerFerretScanner"; "iscannerDolphinScanner"; "iscannerElephantScanner"; "iplanetarySnooper320X"; "iplanetarySnooper400X"; "iplanetarySnooper500X"; "iplanetarySnooper620X"}))
+    && (self.part.category != "terra" || self.part.index >= 8 || self.race.tt);
+  derive technology_allowed: bool = self.technology.energy >= self.part.requirements.energy
+    && self.technology.weapons >= self.part.requirements.weapons && self.technology.propulsion >= self.part.requirements.propulsion
+    && self.technology.construction >= self.part.requirements.construction && self.technology.electronics >= self.part.requirements.electronics
+    && self.technology.biotechnology >= self.part.requirements.biotechnology;
+  derive trader_allowed: bool = not self.trader_required || Set.contains self.part.symbol self.trader_acquisitions;
+  derive eligible: bool = self.trait_allowed && self.technology_allowed && self.trader_allowed;
+  derive excess: integer =
+    let r = self.part.requirements in let t = self.technology in
+    let minimum = min (min (if r.energy > 0 then t.energy - r.energy else 100) (if r.weapons > 0 then t.weapons - r.weapons else 100))
+      (min (min (if r.propulsion > 0 then t.propulsion - r.propulsion else 100) (if r.construction > 0 then t.construction - r.construction else 100))
+      (min (if r.electronics > 0 then t.electronics - r.electronics else 100) (if r.biotechnology > 0 then t.biotechnology - r.biotechnology else 100))) in
+    if r.total > 0 then minimum else min (min t.energy t.weapons) (min (min t.propulsion t.construction) (min t.electronics t.biotechnology));
+}
+(* UI mountability is separate from lookup eligibility. buildui.cpp:895. *)
+type EquipmentMount = {
+  part: CatalogPart;
+  hull: string;
+  noncombat_hull: bool;
+  derive permitted: bool = (self.part.symbol != "iengineSettlersDelight" || self.hull = "ihuldefMiniColonyShip")
+    && (self.part.symbol != "ispecialMOrbitalConstructionModule" || self.hull = "ihuldefColonyShip")
+    && (self.part.symbol != "ispecialETransportCloaking" || self.noncombat_hull);
+}
+type StartingSlot = { slot: integer; category: string; part_index: integer; quantity: integer; }
+object type StartingTemplate = {
+  index: integer; starbase: bool; name: string; hull: string; slots: StartingSlot set;
+}
+
+(* Evaluate all four cost channels using one catalog item and tech snapshot.
+   Bypass BET policy remains explicit because the source leaves a local unset. *)
+type EquipmentCost = {
+  eligibility: EquipmentEligibility;
+  suppress_bet: bool = false;
+  bypass_decision_made: bool = false;
+  bypass_excess: integer = 0;
+  derive category: string = if Set.contains self.eligibility.part.category {"beam"; "torpedo"; "bomb"} then "weapon"
+    else if self.eligibility.part.category = "engine" then "engine"
+    else if self.eligibility.part.category = "terra" then "terra"
+    else if self.eligibility.part.category = "base_special" && self.eligibility.part.index <= 6 then "gate" else "normal";
+  derive bypass: bool = self.eligibility.part.category = "terra" ||
+    (self.eligibility.part.category = "planetary" && self.eligibility.part.index <= 13);
+  derive ironium: integer = (PartCost { race = self.eligibility.race;
+    cost = self.eligibility.part.ironium; excess_tech = self.eligibility.excess;
+    has_tech_requirement = self.eligibility.part.requirements.total > 0;
+    category = self.category; resource_channel = false;
+    bypass_miniaturization = self.bypass; bypass_decision_made = self.bypass_decision_made;
+    bypass_excess = self.bypass_excess; suppress_bet = self.suppress_bet;
+  }).final_cost;
+  derive boranium: integer = (PartCost { race = self.eligibility.race;
+    cost = self.eligibility.part.boranium; excess_tech = self.eligibility.excess;
+    has_tech_requirement = self.eligibility.part.requirements.total > 0;
+    category = self.category; resource_channel = false;
+    bypass_miniaturization = self.bypass; bypass_decision_made = self.bypass_decision_made;
+    bypass_excess = self.bypass_excess; suppress_bet = self.suppress_bet;
+  }).final_cost;
+  derive germanium: integer = (PartCost { race = self.eligibility.race;
+    cost = self.eligibility.part.germanium; excess_tech = self.eligibility.excess;
+    has_tech_requirement = self.eligibility.part.requirements.total > 0;
+    category = self.category; resource_channel = false;
+    bypass_miniaturization = self.bypass; bypass_decision_made = self.bypass_decision_made;
+    bypass_excess = self.bypass_excess; suppress_bet = self.suppress_bet;
+  }).final_cost;
+  derive resources: integer = (PartCost { race = self.eligibility.race;
+    cost = self.eligibility.part.resources; excess_tech = self.eligibility.excess;
+    has_tech_requirement = self.eligibility.part.requirements.total > 0;
+    category = self.category; resource_channel = true;
+    bypass_miniaturization = self.bypass; bypass_decision_made = self.bypass_decision_made;
+    bypass_excess = self.bypass_excess; suppress_bet = self.suppress_bet;
+  }).final_cost;
+}

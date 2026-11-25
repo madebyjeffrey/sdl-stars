@@ -19,12 +19,12 @@ for i, row in enumerate(origin['fonts']):
     data = (source / row['file']).read_bytes()
     if len(data) != row['size'] or hashlib.sha256(data).hexdigest() != row['sha256']:
         raise SystemExit(f"Font checksum mismatch: {row['file']}")
-    lines.append(f'static const BYTE rgbFont{i}[] = {{')
+    lines.append(f'static constinit const BYTE rgbFont{i}[] = {{')
     for offset in range(0, len(data), 32):
         lines.append('    ' + ','.join(f'0x{b:02x}' for b in data[offset:offset + 32]) + ',')
     lines.append('};')
     rows.append(f'    {{rgbFont{i}, sizeof(rgbFont{i})}},')
-lines.append('const COMPATFONTDATA rgCompatFontData[12] = {')
+lines.append('constinit const COMPATFONTDATA rgCompatFontData[12] = {')
 lines.extend(rows)
 lines.append('};')
 destination.parent.mkdir(parents=True, exist_ok=True)

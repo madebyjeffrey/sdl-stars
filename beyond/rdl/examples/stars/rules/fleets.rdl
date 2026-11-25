@@ -1,0 +1,154 @@
+import stars.design
+
+(* ship.cpp:402; turn.cpp:1254,1371. Caller supplies the engine table entry
+   for the selected warp BEFORE cargo/fleet fuel-use aggregation. *)
+type FleetFuel = {
+  race: Race;
+  engine_table_entry: integer;
+  requested_warp: integer;
+  movement_pass: integer = 0;
+  ordinary_movement_order: bool = true;
+  balk_draw: integer = 9;
+  current_fuel: integer;
+  fuel_capacity: integer;
+  friendly_cargo_base: bool = false;
+  fuel_transport_ships: integer = 0;
+  super_fuel_transport_ships: integer = 0;
+  antimatter_generators: integer = 0;
+  require self.engine_table_entry >= 0 && self.balk_draw >= 0 && self.balk_draw < 10;
+  require self.current_fuel >= 0 && self.fuel_capacity >= self.current_fuel;
+  derive effective_entry: integer = self.engine_table_entry - (if self.race.ife then 15 * self.engine_table_entry / 100 else 0);
+  derive balks: bool = self.race.ce && self.movement_pass = 0 && self.ordinary_movement_order
+    && self.requested_warp > 6 && self.requested_warp != 11 && self.balk_draw = 0;
+  derive annual_fuel: integer = if self.friendly_cargo_base then self.fuel_capacity else
+    min self.fuel_capacity (self.current_fuel + 200 * (self.fuel_transport_ships + self.super_fuel_transport_ships) + 50 * self.antimatter_generators);
+}
+type DesignCapacity = {
+  hull_cargo: integer; hull_fuel: integer;
+  cargo_pods: integer = 0; super_cargo_pods: integer = 0; multi_cargo_pods: integer = 0;
+  fuel_tanks: integer = 0; super_fuel_tanks: integer = 0; antimatter_generators: integer = 0;
+  derive cargo: integer = self.hull_cargo + 50 * self.cargo_pods + 100 * self.super_cargo_pods + 250 * self.multi_cargo_pods;
+  derive fuel: integer = self.hull_fuel + 250 * self.fuel_tanks + 500 * self.super_fuel_tanks + 200 * self.antimatter_generators;
+}
+(* ship2.cpp:169,73. Destination range is intentionally absent from damage.
+   Unlimited source range is -1; unlimited mass is -1. Empty mass excludes cargo. *)
+type GateJump = {
+  race: Race;
+  source_range: integer;
+  source_mass: integer;
+  destination_mass: integer;
+  distance: integer;
+  empty_mass: integer;
+  source_permitted: bool = true;
+  destination_permitted: bool = true;
+  foreign_source: bool = false;
+  cargo_colonists: integer = 0;
+  jumpgate_source: bool = false;
+  vanish_draw: integer = 99;
+  require self.source_range = -1 || self.source_range > 0;
+  require self.source_mass = -1 || self.source_mass > 0;
+  require self.destination_mass = -1 || self.destination_mass > 0;
+  require self.distance >= 0 && self.empty_mass >= 0 && self.vanish_draw >= 0 && self.vanish_draw < 100;
+  derive range: integer = if self.source_range = -1 then 8000 else self.source_range;
+  derive hard_status: integer = if self.distance > 5 * self.range then -1
+    else if (self.source_mass > 0 && self.empty_mass > 5 * self.source_mass)
+      || (self.destination_mass > 0 && self.empty_mass > 5 * self.destination_mass) then -2 else 1;
+  derive range_survival: integer = if self.distance <= self.range then 10000 else (5 * self.range - self.distance) * 2500 / self.range;
+  derive source_survival: integer = if self.source_mass < 0 || self.empty_mass <= self.source_mass then self.range_survival
+    else self.range_survival * ((5 * self.source_mass - self.empty_mass) * 2500 / self.source_mass) / 10000;
+  derive survival: integer = if self.destination_mass < 0 || self.empty_mass <= self.destination_mass then self.source_survival
+    else self.source_survival * ((5 * self.destination_mass - self.empty_mass) * 2500 / self.destination_mass) / 10000;
+  derive status: integer = if self.hard_status < 0 then self.hard_status else if self.range_survival <= 0 || (self.source_mass > 0 && self.empty_mass >= 5 * self.source_mass)
+    || (self.destination_mass > 0 && self.empty_mass >= 5 * self.destination_mass) then 0 else 1;
+  derive damage_percent: integer = if self.status <= 0 then 100 else (10000 - self.survival) / 100;
+  derive usable: bool = self.source_permitted && self.destination_permitted && self.status > 0
+    && (self.race.prt_id = 7 || self.jumpgate_source || not self.foreign_source || self.cargo_colonists = 0);
+  derive retain_cargo: bool = self.race.prt_id = 7 || self.jumpgate_source;
+  derive vanish_percent: integer = if self.race.prt_id = 7 then 0 else self.damage_percent / 3;
+  derive vanishes: bool = self.damage_percent = 100 || self.vanish_draw < self.vanish_percent;
+  derive armor_damage_units: integer = self.damage_percent * 5;
+}
+
+(* turn.cpp:17,1799; turn2.cpp:1896; ship2.cpp:535. Type 0/1/2 =
+   standard/heavy/speedbump. effective_warp is derived from actual distance. *)
+type MineTraversal = {
+  race: Race;
+  type_id: integer;
+  effective_warp: integer;
+  own_or_friend_field: bool = false;
+  require self.type_id >= 0 && self.type_id <= 2;
+  derive expertise: integer = if self.race.prt_id = 5 then 2 else if self.race.prt_id = 1 then 1 else 0;
+  derive baseline_safe_warp: integer = if self.type_id = 0 then 4 else if self.type_id = 1 then 6 else 5;
+  derive safe_warp: integer = self.baseline_safe_warp + self.expertise;
+  derive hit_per_thousand_per_distance: integer = if self.own_or_friend_field then 0 else
+    max 0 (self.effective_warp - self.safe_warp) * (if self.type_id = 0 then 3 else if self.type_id = 1 then 10 else 35);
+}
+type MineHit = {
+  type_id: integer;
+  ships: integer;
+  engines_per_ship: integer;
+  any_scoop_in_fleet: bool;
+  fleet_minimum_extra: integer = 0;
+  shields: integer;
+  require self.type_id >= 0 && self.type_id <= 2 && self.ships >= 0 && self.engines_per_ship > 0 && self.shields >= 0;
+  derive per_ship: integer = if self.type_id = 2 then 0 else if self.type_id = 1
+    then (if self.any_scoop_in_fleet then 600 else 500) else (if self.any_scoop_in_fleet then 125 else 100);
+  derive homogeneous_fleet_minimum: integer = if self.type_id = 2 then 0 else if self.type_id = 1
+    then (if self.any_scoop_in_fleet then 2500 else 2000) else (if self.any_scoop_in_fleet then 600 else 500);
+  derive incoming: integer = if self.type_id = 2 then 0 else (self.ships * self.per_ship + self.fleet_minimum_extra) * self.engines_per_ship;
+  derive shield_damage: integer = min self.shields (self.incoming / 2);
+  derive armor_damage: integer = self.incoming - self.shield_damage;
+}
+type MineLaying = {
+  race: Race;
+  per_ship_dispenser_sum: integer;
+  multi_contained_munitions: integer = 0;
+  standard_mines: bool = true;
+  specialist_hull: bool = false;
+  ships: integer;
+  moved: bool = false;
+  require self.per_ship_dispenser_sum >= 0 && self.ships >= 0 && self.multi_contained_munitions >= 0;
+  derive nominal: integer = min 100000000 ((self.per_ship_dispenser_sum + (if self.standard_mines then 4 * self.multi_contained_munitions else 0))
+    * (if self.specialist_hull then 2 else 1) * self.ships * 10);
+  derive laid: integer = if not self.moved then self.nominal else if self.race.prt_id = 5 then self.nominal / 2 else 0;
+}
+type MineDecay = {
+  owner: Race;
+  type_id: integer;
+  mines: integer;
+  planet_count: integer;
+  detonate: bool = false;
+  require self.type_id >= 0 && self.type_id <= 2 && self.mines >= 0 && self.planet_count >= 0;
+  derive percent: integer = min 50 (2 + self.planet_count * (if self.owner.prt_id = 5 then 1 else 4)) + (if self.detonate then 25 else 0);
+  derive lost: integer = min self.mines (max (if self.type_id = 2 then 0 else 10) (max self.percent (self.mines * self.percent / 100)));
+  derive remaining: integer = self.mines - self.lost;
+  derive detonation_ui_enabled: bool = self.owner.prt_id = 5 && self.type_id = 0;
+}
+type MineDetonation = {
+  field_owner_is_fleet_owner: bool;
+  specialist_mine_layer_hull: bool;
+  already_hit_this_pass: bool = false;
+  stored_detonate_flag: bool;
+  inside_radius: bool;
+  derive affected: bool = self.stored_detonate_flag && self.inside_radius && not self.already_hit_this_pass
+    && not (self.field_owner_is_fleet_owner && self.specialist_mine_layer_hull);
+}
+
+type MineTravelDistance = {
+  distance: integer;
+  require self.distance >= 0;
+  derive effective_warp: integer = max 3 (ceil (sqrt (real (max 0 (self.distance - 1)))));
+}
+type FleetMineMinimum = {
+  type_id: integer;
+  total_ships: integer;
+  any_scoop_in_fleet: bool;
+  first_affected_design: bool = true;
+  require self.type_id >= 0 && self.type_id <= 2 && self.total_ships >= 0;
+  derive per_ship: integer = if self.type_id = 2 then 0 else if self.type_id = 1
+    then (if self.any_scoop_in_fleet then 600 else 500) else (if self.any_scoop_in_fleet then 125 else 100);
+  derive fleet_minimum: integer = if self.type_id = 2 then 0 else if self.type_id = 1
+    then (if self.any_scoop_in_fleet then 2500 else 2000) else (if self.any_scoop_in_fleet then 600 else 500);
+  derive extra: integer = if not self.first_affected_design || self.total_ships >= 5 then 0
+    else max 0 (self.fleet_minimum - self.per_ship * self.total_ships);
+}

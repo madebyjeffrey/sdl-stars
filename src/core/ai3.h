@@ -1,17 +1,23 @@
 #ifndef STARS_DECOMPILED_AI3_H
 #define STARS_DECOMPILED_AI3_H
 
-#include <stdint.h>
+#include "common.h"
+#include <cstdint>
+
+struct MACWARFLEETPOTENCYRESULT {
+    bool fPotent;
+    std::int16_t cEquiv;
+};
 
 extern MacintiRecipe vrgMacIshAip[];
-extern uint8_t       vrgMacAip[];
-extern uint8_t       vrgAiMacintiResOrder[];
+extern std::uint8_t       vrgMacAip[cvrgMacAip];
+extern std::uint8_t       vrgAiMacintiResOrder[];
 
-void    DoMacintiAiTurn(PROD *rgprod);
-void    EnsureMacintiShdefs();
-int16_t FRetargetMiner(FLEET *lpfl);
-int16_t IdTargetMacFreighter(FLEET *lpfl);
-void    TargetMacArmada(FLEET *lpfl);
-int16_t FPotentMacWarFleet(FLEET *lpfl, int16_t *pcEquiv);
+void    DoMacintiAiTurn(APPSESSION &app, std::span<PROD, 64> rgprod);
+void    EnsureMacintiShdefs(APPSESSION &app);
+std::int16_t FRetargetMiner(APPSESSION &app, FLEET *lpfl);
+std::int16_t IdTargetMacFreighter(APPSESSION &app, FLEET *lpfl);
+void    TargetMacArmada(APPSESSION &app, FLEET *lpfl);
+MACWARFLEETPOTENCYRESULT FPotentMacWarFleet(APPSESSION &app, FLEET *lpfl);
 
 #endif

@@ -15,12 +15,12 @@ existing [M08 resource word](M08-colony-economy.md) and
 [M09 production forecast](M09-production-forecast.md). S01 codecs retain native
 signed reinterpretation; S06 retains actual player/planet storage and lifetimes.
 
-Source: [research.c](../src/core/research.c) `GetTechLevelCost`,
+Source: [research.cpp](../src/core/research.cpp) `GetTechLevelCost`,
 `CostOfDevelopingItem`, `ProjectedResearchSpending`;
-[race.c](../src/core/race.c) `GetRaceStat`;
+[race.cpp](../src/core/race.cpp) `GetRaceStat`;
 [structs.h](../src/core/structs.h) `PLAYER`, `PLANET`, `PLPROD`;
-[researchui.c](../src/ui/researchui.c) budget refresh and component requirements;
-[thing.c](../src/core/thing.c) trader quote use. The
+[researchui.cpp](../src/ui/researchui.cpp) budget refresh and component requirements;
+[thing.cpp](../src/core/thing.cpp) trader quote use. The
 [collection record](README.md#research-quote-and-preview-continuation) records
 actual verification and remaining scope.
 

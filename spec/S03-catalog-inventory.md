@@ -101,36 +101,36 @@ these files are not automatically simulation rules.
 | [text/textgen.py](../text/textgen.py) | Generator/schema or complete embedded rule/helper inputs | `362d37b1d06399ee5077c5ec3f93fc20679e8a45ed7ea1803cfd74b136fa8470` |
 | [src/core/structs.h](../src/core/structs.h) | Generator/schema or complete embedded rule/helper inputs | `8d409fe0ca3fa2c4839d0da7b637137de4fbdfd47cf9ffd0e69c3093a1e53784` |
 | [src/core/enums.h](../src/core/enums.h) | Generator/schema or complete embedded rule/helper inputs | `893c48788739e0a8756c4b44c27d30421ca27e329f55c95c8619773c9f9df751` |
-| [src/core/ai.c](../src/core/ai.c) | Generator/schema or complete embedded rule/helper inputs | `c7bf95857c1a33dae187349bbcf44ed9fa249a5e999b2a8972cad8218d35ed6a` |
-| [src/core/ai2.c](../src/core/ai2.c) | Generator/schema or complete embedded rule/helper inputs | `202b1f10d17dcaefe87a134fbae1ae0941d6c59efcdd93248d294a9c541716a4` |
-| [src/core/ai3.c](../src/core/ai3.c) | Generator/schema or complete embedded rule/helper inputs | `d3c1e25b7efac63e73866e57c5ae0f94ae846bb49bdd2281d7c6fc6624bd846c` |
-| [src/core/ai4.c](../src/core/ai4.c) | Generator/schema or complete embedded rule/helper inputs | `dee73fb37714adcdf110c666022493c826fb79d712c8c658b2bedfc9b038d83d` |
-| [src/core/aiutil.c](../src/core/aiutil.c) | `vrgAiPacketDist`, `vrgSBMacAisb` | `b4cb14532ddafe573af8692df1bcf04e5da540a50121b9bfd8cb55fb355776e9` |
-| [src/core/battle.c](../src/core/battle.c) | `rgbrcStart` | `23a3efa2f5315b7578383684b986af4619247bb9ed364ad380b76851295681f9` |
-| [src/core/build.c](../src/core/build.c) | `rggrbitPartsSB`, `rgidsPartsSB`, `rggrbitParts`, `rgidsParts`, `rghstCat`, `rgidsCat` | `0a3616399471070676711d7ade2aa848dc8e83493cccd9e58849c337f960fc3b` |
-| [src/core/create.c](../src/core/create.c) | `vrgvcMax`, `rgNG3Width`, `vrgWormholeMin`, `vrgWormholeVar` | `056b4359797451662676430b3c89802a1039e3d22da51ee7fbb886c90a73d4b8` |
-| [src/core/file.c](../src/core/file.c) | `mpishdefishTutor` | `49c405afdd0fc83d43c256ccab409459d65340e7b2795c4c115ef443e813a085` |
-| [src/core/globals.c](../src/core/globals.c) | `rgplr`, `rgptPlan`, `rgshdef`, `vrgZipProd`, `bitTbl`, `rgcompstrlower`, `rgcsxPlr`, `rgidPlan`, `rglPopMac`, `rglRandStack`, `mphtcbAlloc`, `bitfMsgFiltered`, `bitfMsgSent`, `rgTechBattle`, `rgTechTrader`, `rgcbtlplan`, `vrgAiArmadaPotency`, `vrgAiCyberArmadaPotency`, `vrgplrTypeNew`, `rgOut`, `vrgZip` | `52bef5be86fdbc28a6df4760695483f3066eee7cf147aa76b098872568184bce` |
-| [src/core/log.c](../src/core/log.c) | Generator/schema or complete embedded rule/helper inputs | `181b44ce193bd7a583d49d04cf03249d7c94fa873f43e7dd39e35e250078bb71` |
-| [src/core/memory.c](../src/core/memory.c) | Generator/schema or complete embedded rule/helper inputs | `23ab059c33108a15553d254f4de20c357fd84aecf4b51986bc769d9bd36d3e03` |
-| [src/core/mine.c](../src/core/mine.c) | Generator/schema or complete embedded rule/helper inputs | `cef3158ce6f32b4e95b574739530a05d2076df7d1a351f2e9a0a80694c42a973` |
-| [src/core/msg.c](../src/core/msg.c) | Generator/schema or complete embedded rule/helper inputs | `c3cc3f964d1ca9ae23ac1594413bbf489e829eb88a4362451a8ce84ade04b684` |
-| [src/core/parts.c](../src/core/parts.c) | Generator/schema or complete embedded rule/helper inputs | `e6e88a589ca264d876f543b7ec38ee3ced7dfd27c12e880d544d5f84816f7cf6` |
-| [src/core/planet.c](../src/core/planet.c) | Generator/schema or complete embedded rule/helper inputs | `38095150971a9f6e36eb78729c5a05a655488326a20ed3b8ac84efa38c73d39d` |
-| [src/core/produce.c](../src/core/produce.c) | Generator/schema or complete embedded rule/helper inputs | `4ad7e3d9bb146cf76a298ff29b0953893f8c91cdd0c3dab2b7afe7283e61c59b` |
-| [src/core/race.c](../src/core/race.c) | `rgRacePrimaryTrait`, `rgRW3Spacing`, `rgRaceAdvDisPts`, `rgRW3IStat`, `rgRaceDisEnvPts`, `rgRW3Width`, `rgRaceStatMax`, `rgRaceStatMin` | `3e26b2f96456f116d8993ee22a36542b08f537e1cf2aa8787ba30c3015e87078` |
-| [src/core/report.c](../src/core/report.c) | `mpicolgrbitBU` | `ad35e9dc1cd1f444242d6cfef5d41385bd5ed48c8fff375d8fa33129b1040ae1` |
-| [src/core/research.c](../src/core/research.c) | `rggrbitBrParts`, `rglTechCost` | `50069cfa3416be91b1d6f2697fbbf705456969d50c17d5c2cc6ed30a5d3d2680` |
-| [src/core/save.c](../src/core/save.c) | Generator/schema or complete embedded rule/helper inputs | `c4ed598262ce8f739b8b92bffd4fe601e2e7c8d2e41a213287a4ffe0978ccc68` |
-| [src/core/ship.c](../src/core/ship.c) | Generator/schema or complete embedded rule/helper inputs | `04520619ff350264c76277ffc9bf3691425e422e12a34ab4983f22dbfa5bee03` |
-| [src/core/ship2.c](../src/core/ship2.c) | Generator/schema or complete embedded rule/helper inputs | `c90d695e7d47651dede28f203a5dc4658bd6285b435f5b4fcc726df8f449b13f` |
-| [src/core/strings.c](../src/core/strings.c) | Generator/schema or complete embedded rule/helper inputs | `68248f8bd500e1331d779d02f6a20b44075a2d2d2e63aad8118b08dd9ee15630` |
-| [src/core/thing.c](../src/core/thing.c) | Generator/schema or complete embedded rule/helper inputs | `5725edbce3def9812ab71beb9e000cde2d9d9d8501d321292dfa9520ab0b75bb` |
-| [src/core/turn.c](../src/core/turn.c) | `rgpctMineHit`, `rgiWarpSafe`, `rgrgdmgMinMine`, `rgrgdmgMine` | `97c2a23f5c73414c5da4d6c29266b6b0a3d75aab3af343a284ad171a27119c3d` |
-| [src/core/turn2.c](../src/core/turn2.c) | Generator/schema or complete embedded rule/helper inputs | `d7c70df8ec93f6b12f99ce1b87020bbfc00e28526740814304259e6580a85d76` |
-| [src/core/turn3.c](../src/core/turn3.c) | Generator/schema or complete embedded rule/helper inputs | `35993824dbee869affd59de8e25f3908824b0d91ff612a127cb536dd1b1cdcf7` |
-| [src/core/util.c](../src/core/util.c) | `rgcrDrawStars2b`, `rgcrDrawStars2a`, `rgcrDrawStars`, `rgDSDivCnt2`, `rgDSDivCnt`, `vrgbTachyon` | `020e8e8cab8e664c052a3460eb7dd1459fb47e2bf5d448767de663a29776a8d0` |
-| [src/core/utilgen.c](../src/core/utilgen.c) | `rgPrimes` | `ad599b43a9c7dd9ff47b15b4de61936eb5415f71204a6d9521f6c353ecb45589` |
+| [src/core/ai.cpp](../src/core/ai.cpp) | Generator/schema or complete embedded rule/helper inputs | `c7bf95857c1a33dae187349bbcf44ed9fa249a5e999b2a8972cad8218d35ed6a` |
+| [src/core/ai2.cpp](../src/core/ai2.cpp) | Generator/schema or complete embedded rule/helper inputs | `202b1f10d17dcaefe87a134fbae1ae0941d6c59efcdd93248d294a9c541716a4` |
+| [src/core/ai3.cpp](../src/core/ai3.cpp) | Generator/schema or complete embedded rule/helper inputs | `d3c1e25b7efac63e73866e57c5ae0f94ae846bb49bdd2281d7c6fc6624bd846c` |
+| [src/core/ai4.cpp](../src/core/ai4.cpp) | Generator/schema or complete embedded rule/helper inputs | `dee73fb37714adcdf110c666022493c826fb79d712c8c658b2bedfc9b038d83d` |
+| [src/core/aiutil.cpp](../src/core/aiutil.cpp) | `vrgAiPacketDist`, `vrgSBMacAisb` | `b4cb14532ddafe573af8692df1bcf04e5da540a50121b9bfd8cb55fb355776e9` |
+| [src/core/battle.cpp](../src/core/battle.cpp) | `rgbrcStart` | `23a3efa2f5315b7578383684b986af4619247bb9ed364ad380b76851295681f9` |
+| [src/core/build.cpp](../src/core/build.cpp) | `rggrbitPartsSB`, `rgidsPartsSB`, `rggrbitParts`, `rgidsParts`, `rghstCat`, `rgidsCat` | `0a3616399471070676711d7ade2aa848dc8e83493cccd9e58849c337f960fc3b` |
+| [src/core/create.cpp](../src/core/create.cpp) | `vrgvcMax`, `rgNG3Width`, `vrgWormholeMin`, `vrgWormholeVar` | `056b4359797451662676430b3c89802a1039e3d22da51ee7fbb886c90a73d4b8` |
+| [src/core/file.cpp](../src/core/file.cpp) | `mpishdefishTutor` | `49c405afdd0fc83d43c256ccab409459d65340e7b2795c4c115ef443e813a085` |
+| [src/core/globals.cpp](../src/core/globals.cpp) | `rgplr`, `rgptPlan`, `rgshdef`, `vrgZipProd`, `bitTbl`, `rgcompstrlower`, `rgcsxPlr`, `rgidPlan`, `rglPopMac`, `rglRandStack`, `mphtcbAlloc`, `bitfMsgFiltered`, `bitfMsgSent`, `rgTechBattle`, `rgTechTrader`, `rgcbtlplan`, `vrgAiArmadaPotency`, `vrgAiCyberArmadaPotency`, `vrgplrTypeNew`, `rgOut`, `vrgZip` | `52bef5be86fdbc28a6df4760695483f3066eee7cf147aa76b098872568184bce` |
+| [src/core/log.cpp](../src/core/log.cpp) | Generator/schema or complete embedded rule/helper inputs | `181b44ce193bd7a583d49d04cf03249d7c94fa873f43e7dd39e35e250078bb71` |
+| [src/core/memory.cpp](../src/core/memory.cpp) | Generator/schema or complete embedded rule/helper inputs | `23ab059c33108a15553d254f4de20c357fd84aecf4b51986bc769d9bd36d3e03` |
+| [src/core/mine.cpp](../src/core/mine.cpp) | Generator/schema or complete embedded rule/helper inputs | `cef3158ce6f32b4e95b574739530a05d2076df7d1a351f2e9a0a80694c42a973` |
+| [src/core/msg.cpp](../src/core/msg.cpp) | Generator/schema or complete embedded rule/helper inputs | `c3cc3f964d1ca9ae23ac1594413bbf489e829eb88a4362451a8ce84ade04b684` |
+| [src/core/parts.cpp](../src/core/parts.cpp) | Generator/schema or complete embedded rule/helper inputs | `e6e88a589ca264d876f543b7ec38ee3ced7dfd27c12e880d544d5f84816f7cf6` |
+| [src/core/planet.cpp](../src/core/planet.cpp) | Generator/schema or complete embedded rule/helper inputs | `38095150971a9f6e36eb78729c5a05a655488326a20ed3b8ac84efa38c73d39d` |
+| [src/core/produce.cpp](../src/core/produce.cpp) | Generator/schema or complete embedded rule/helper inputs | `4ad7e3d9bb146cf76a298ff29b0953893f8c91cdd0c3dab2b7afe7283e61c59b` |
+| [src/core/race.cpp](../src/core/race.cpp) | `rgRacePrimaryTrait`, `rgRW3Spacing`, `rgRaceAdvDisPts`, `rgRW3IStat`, `rgRaceDisEnvPts`, `rgRW3Width`, `rgRaceStatMax`, `rgRaceStatMin` | `3e26b2f96456f116d8993ee22a36542b08f537e1cf2aa8787ba30c3015e87078` |
+| [src/core/report.cpp](../src/core/report.cpp) | `mpicolgrbitBU` | `ad35e9dc1cd1f444242d6cfef5d41385bd5ed48c8fff375d8fa33129b1040ae1` |
+| [src/core/research.cpp](../src/core/research.cpp) | `rggrbitBrParts`, `rglTechCost` | `50069cfa3416be91b1d6f2697fbbf705456969d50c17d5c2cc6ed30a5d3d2680` |
+| [src/core/save.cpp](../src/core/save.cpp) | Generator/schema or complete embedded rule/helper inputs | `c4ed598262ce8f739b8b92bffd4fe601e2e7c8d2e41a213287a4ffe0978ccc68` |
+| [src/core/ship.cpp](../src/core/ship.cpp) | Generator/schema or complete embedded rule/helper inputs | `04520619ff350264c76277ffc9bf3691425e422e12a34ab4983f22dbfa5bee03` |
+| [src/core/ship2.cpp](../src/core/ship2.cpp) | Generator/schema or complete embedded rule/helper inputs | `c90d695e7d47651dede28f203a5dc4658bd6285b435f5b4fcc726df8f449b13f` |
+| [src/core/strings.cpp](../src/core/strings.cpp) | Generator/schema or complete embedded rule/helper inputs | `68248f8bd500e1331d779d02f6a20b44075a2d2d2e63aad8118b08dd9ee15630` |
+| [src/core/thing.cpp](../src/core/thing.cpp) | Generator/schema or complete embedded rule/helper inputs | `5725edbce3def9812ab71beb9e000cde2d9d9d8501d321292dfa9520ab0b75bb` |
+| [src/core/turn.cpp](../src/core/turn.cpp) | `rgpctMineHit`, `rgiWarpSafe`, `rgrgdmgMinMine`, `rgrgdmgMine` | `97c2a23f5c73414c5da4d6c29266b6b0a3d75aab3af343a284ad171a27119c3d` |
+| [src/core/turn2.cpp](../src/core/turn2.cpp) | Generator/schema or complete embedded rule/helper inputs | `d7c70df8ec93f6b12f99ce1b87020bbfc00e28526740814304259e6580a85d76` |
+| [src/core/turn3.cpp](../src/core/turn3.cpp) | Generator/schema or complete embedded rule/helper inputs | `35993824dbee869affd59de8e25f3908824b0d91ff612a127cb536dd1b1cdcf7` |
+| [src/core/util.cpp](../src/core/util.cpp) | `rgcrDrawStars2b`, `rgcrDrawStars2a`, `rgcrDrawStars`, `rgDSDivCnt2`, `rgDSDivCnt`, `vrgbTachyon` | `020e8e8cab8e664c052a3460eb7dd1459fb47e2bf5d448767de663a29776a8d0` |
+| [src/core/utilgen.cpp](../src/core/utilgen.cpp) | `rgPrimes` | `ad599b43a9c7dd9ff47b15b4de61936eb5415f71204a6d9521f6c353ecb45589` |
 
 ## Focused acceptance and evidence
 

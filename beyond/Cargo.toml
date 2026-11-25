@@ -1,0 +1,36 @@
+[workspace]
+members = [
+    "scars/scars-ui",
+    "scars/scars-ui-macros",
+    "scars/scars-window",
+    "society-prototype",
+]
+exclude = ["rdl"]
+resolver = "3"
+
+[workspace.dependencies]
+skia-safe = { version = "0.157.0", default-features = false, features = [
+    "binary-cache", "ganesh", "textlayout", "embed-icudtl", "svg", "jpeg", "webp",
+] }
+
+# Keep native rendering and scrolling responsive in developer builds.
+[profile.dev.package.skia-bindings]
+opt-level = 3
+
+[profile.dev.package.scars-ui]
+opt-level = 2
+
+[profile.dev.package.rdl]
+opt-level = 2
+
+[profile.dev.package.society-prototype]
+opt-level = 2
+
+[profile.dev]
+strip = "none"
+
+[profile.test]
+strip = "none"
+
+[profile.release]
+strip = "none"

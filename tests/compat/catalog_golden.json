@@ -1,0 +1,226 @@
+{
+  "rghuldef": {
+    "bytes": 4576,
+    "sha256": "b99aea4f694d0d7bb3af550e41aca17f8351fc36033458b52540b92d2eb6421a"
+  },
+  "rgshdefSBT": {
+    "bytes": 588,
+    "sha256": "82a857abe7c342d2541339a5b84a75f6bcfe9ced10cc4bd7909d573cfd2dcc32"
+  },
+  "rgshdefT": {
+    "bytes": 3234,
+    "sha256": "13dd5ea9d8e4e083595cf80c1476465d5d2dc7a08a4e276310dd853a60dbb754"
+  },
+  "rghuldefSB": {
+    "bytes": 715,
+    "sha256": "eac90a16364ab79e00f689d5c670cff96fcca9486dfd353abcd8a75d8d800390"
+  },
+  "rgengine": {
+    "bytes": 1248,
+    "sha256": "411ffaf6ff9731d04591645c0a800be846bf2b4114f94eb3a36d54ea352a8f43"
+  },
+  "rgarmor": {
+    "bytes": 648,
+    "sha256": "790db562a194d0e02a28b47452fdfa5209e0dce7d15582a57fac7c5f43b575de"
+  },
+  "rgscanner": {
+    "bytes": 896,
+    "sha256": "520f361b5e6f21cbc9ec3bb2ecb59eabcd42f60c252d596d45d20d46d944ce4f"
+  },
+  "rgshield": {
+    "bytes": 540,
+    "sha256": "b4f1bb690978b52e330a27a19855e1b05b546294d0f8e805f147b92b3311946b"
+  },
+  "rgspecialE": {
+    "bytes": 918,
+    "sha256": "712886ca3af5d47f962b8a85cd812d1c32679eaac852fac7cbf7348ecb4050eb"
+  },
+  "rgspecialM": {
+    "bytes": 594,
+    "sha256": "638be87517dff1dacb2eb19dfebcf7fe6b32ede87a25f06af14bc9ddb9bfc7eb"
+  },
+  "rgmines": {
+    "bytes": 540,
+    "sha256": "59b911c5f5a38cfe1e7420248e83280700149e634243ce05a3d559e7370a843d"
+  },
+  "rgmining": {
+    "bytes": 432,
+    "sha256": "c4d43547be3135a8bc35edd2caa0f6af035cfb798f4ce9e28dffd4ed6ace9067"
+  },
+  "rgplanetary": {
+    "bytes": 810,
+    "sha256": "6343df41622b5201ce60092608ac029bc52c781a06dfe25c8a9494e979dcb2a0"
+  },
+  "rgterra": {
+    "bytes": 1080,
+    "sha256": "23b5eef1cdb436419f06b8cf873fdaeab069862b45b7f5155ef65398e558391b"
+  },
+  "rgbomb": {
+    "bytes": 870,
+    "sha256": "bad0bff89b7f73e2a34784b5bba00f2f7ddf61b9af30fe8f6470f514c80bc166"
+  },
+  "rgtorp": {
+    "bytes": 720,
+    "sha256": "fe82bee3bf38fca4421229343e9017dee8375b2500fbd7830f8d7aa3f9d5fcfa"
+  },
+  "rgbeam": {
+    "bytes": 1440,
+    "sha256": "30983f68312c8c4eddd217c599f379180de1fff56c7c29b8b75e9d53533f5faf"
+  },
+  "rgspecialSB": {
+    "bytes": 896,
+    "sha256": "aa371985c95e3ceb0d1df68a1b8755bd279d043c9cb0534d0e022ba7544df104"
+  },
+  "rgbtlplanT": {
+    "bytes": 180,
+    "sha256": "20a53b752614ec11ea996557fdb7d4dd61b1af1562a794210204aad23535700b"
+  },
+  "vrgplrDef": {
+    "bytes": 1344,
+    "sha256": "196bdfed5c515f42065740fc210cf49838d2509fb1c6276663f1489435c0fd65"
+  },
+  "vrgplrComp": {
+    "bytes": 4608,
+    "sha256": "a1360d09c2264018a26c43efe41be46fa172635cd58dbb88438d9540c9091d3c"
+  },
+  "vrgcAiParts": {
+    "bytes": 45,
+    "sha256": "a71c41dcbb9de865ddfc0f46c9c56d221aed24049e4302ffeb08ad98d0ff207c"
+  },
+  "vrgAiParts": {
+    "bytes": 300,
+    "sha256": "7dc98b499a8afe910be27b6e5a32de7c8748adbcc0af84038bb5e80f35c8e689"
+  },
+  "vrgAiRobotoidResOrder": {
+    "bytes": 36,
+    "sha256": "82f8a04b7007b28fcd603e75ff991bdd0f1363239b65d6f95fd714397cd22e43"
+  },
+  "vrgAiTurinDroneResOrder": {
+    "bytes": 31,
+    "sha256": "eb4c9d4d42186a20fc48c7e4b9ba23a3fdea9ac286f6b20f0ee1f4e02deb24e0"
+  },
+  "vrgAiISResOrder": {
+    "bytes": 18,
+    "sha256": "01ca4954bf1f0a0d49b968fe4d5b4ab7a5009fa5d1fdd064be172dd5f54c1571"
+  },
+  "vrgAiMacintiResOrder": {
+    "bytes": 8,
+    "sha256": "56876669b978989a97065f82e37db9667e8fac55f29a44d920374768a99e2ebc"
+  },
+  "vrgAiCybertronResOrder": {
+    "bytes": 42,
+    "sha256": "6a75d11a328c792512b3282732ecb3b54a8978c2f221451686e37549c820ab2c"
+  },
+  "vrgTDAip": {
+    "bytes": 141,
+    "sha256": "f887def1582051a15182ace793af1e7e8d4bdd10f28b36fd1a7261331a184b06"
+  },
+  "vrgTDIshAip": {
+    "bytes": 19,
+    "sha256": "d2dcafaafb83dd78b2cfa6a3f960ba609661ff9e24730e4e0d998f8b6007d383"
+  },
+  "vrgRobAip": {
+    "bytes": 301,
+    "sha256": "a9bafc68b4d7949f357196c84dcac4175b07cce856d5a3e04025bc1d263406b6"
+  },
+  "vrgRobIshAip": {
+    "bytes": 76,
+    "sha256": "06ea4aa8eb4b9b8a4cd7c92012079e1f8be877eaeeb43ca656528f10cdd5794d"
+  },
+  "vrgISAip": {
+    "bytes": 182,
+    "sha256": "82cfa9b424c1b2c5385008ef3bca907fb96575b68029db1f4a7e6c53e4d04c12"
+  },
+  "vrgISIshAip": {
+    "bytes": 19,
+    "sha256": "e5b6ca01133ef97c7c02ddb097edc40d6f6a8b6d29d6a4ea3a39a014ad179ff2"
+  },
+  "vrgMacAip": {
+    "bytes": 248,
+    "sha256": "58552d347d79c8a2066d6c3388896f234a10d2c62d27e38a35ca567c2da05d0b"
+  },
+  "vrgMacIshAip": {
+    "bytes": 62,
+    "sha256": "388b3a329277d2fb8d27842018a3ccbb8096a75d5447710dec5ea8b3f1afa8e7"
+  },
+  "vrgCyberAip": {
+    "bytes": 301,
+    "sha256": "d34d16f6374a92ab3b5f07872f5c8b0e2e82b2a422d75d1a70a59375dbe806b9"
+  },
+  "vrgCyberIshAip": {
+    "bytes": 72,
+    "sha256": "29423b4610ee2e0b935b3069f6d4d78bb07c224b061868f9b7a22eeba66d1fb0"
+  },
+  "vrgSBAip": {
+    "bytes": 85,
+    "sha256": "b8519d3be48c4dd340b684c121c1cc68a91a1c7cf0d4e9ef20d59502fdd5f3c0"
+  },
+  "acSTR": {
+    "bytes": 1516,
+    "sha256": "73b4bc49dec71c6d933ad89e49bf7bb87e1a9bc9f295f711029267177cac40fc"
+  },
+  "aSTRCmpr": {
+    "bytes": 30952,
+    "sha256": "ff872df7e98708eb2ba9055b8612f3df713f2f29e4472ecc38f97509c8482113"
+  },
+  "aiSTRChunkOffset": {
+    "bytes": 48,
+    "sha256": "dab3fbd074bc08cca13eac087d35b94118a5894c2f14ff4f5bda469f750c65c9"
+  },
+  "rgSTRLookupTable": {
+    "bytes": 88,
+    "sha256": "78c6f7d6a818a0df18ba438e35e8a379509bc6d77aa18ecb8a1fd1f69e8f4ca5"
+  },
+  "rgcMsgArgs": {
+    "bytes": 387,
+    "sha256": "c0f766d23b0ba9a595f685bdb7f74d396889d6a560c0c95b696de698b3b87c14"
+  },
+  "acMSG": {
+    "bytes": 387,
+    "sha256": "d671abe1ca188e211dc412b83760f076457414c0936a7840fc627d6e24ab7510"
+  },
+  "aMSGCmpr": {
+    "bytes": 22213,
+    "sha256": "85d81caccd7a55d4b461d260ff6a177c238828c7146361611ae36ce5a76a64f7"
+  },
+  "aiMSGChunkOffset": {
+    "bytes": 14,
+    "sha256": "158fe8e9032ccaa9b52bd7a78f84ebd77a0c1f95599ed065f02da5f9f0b6b7ae"
+  },
+  "rgMSGLookupTable": {
+    "bytes": 71,
+    "sha256": "b671e3b90b2f1ab06cabf5b3462a00aaddd0b56d7db05c0b6d16718d2df18eda"
+  },
+  "acPN": {
+    "bytes": 999,
+    "sha256": "acc7ec4aa7865706c2efe562e8414954c6abdc57dcdda0fd357daacc195885fc"
+  },
+  "aPNCmpr": {
+    "bytes": 4099,
+    "sha256": "a367f39d2376399b8a14b01b19849ffaa54fc3c692cf1be0f00725d26a805350"
+  },
+  "aiPNChunkOffset": {
+    "bytes": 32,
+    "sha256": "38f7f5ffc45d37229d380031c0db869f4b8c3c6f5039838c7a35a7d01bf5e192"
+  },
+  "rgPNLookupTable": {
+    "bytes": 52,
+    "sha256": "f14823d67f5bc1e271cd370df6ae4ed1c145383f848785890393009bdc3a265e"
+  },
+  "acTUT": {
+    "bytes": 640,
+    "sha256": "75970fe3744ae424c78412445d01edbc9878cbc224f4ec6a1422f1f8711fd072"
+  },
+  "aTUTCmpr": {
+    "bytes": 22323,
+    "sha256": "cccc40935644cbd293d27a3e5f4332711135941c485a31f1322be0d2f10fe5f8"
+  },
+  "aiTUTChunkOffset": {
+    "bytes": 20,
+    "sha256": "1659a7dfeb9bd3358ccfe454d57f26340d4c8794c87eecda8dff041bc328f93a"
+  },
+  "rgTUTLookupTable": {
+    "bytes": 76,
+    "sha256": "b33fb7ae2f804570a34883c4868e9457c942ee85b24c484d859a964723cf37e4"
+  }
+}

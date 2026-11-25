@@ -2,11 +2,16 @@
 
 The extended source is now pinned to pre-migration commit
 `3c67394973aacf6b0bf24d0a302f42b50a87bfa0` through `precision_reference.py`.
-The production game is migrating to binary64 intermediates; these historical
+The production game uses binary64 intermediates; these historical
 comparisons remain available and require an x86 extended-precision oracle.
 References to “current source” below describe the original experiments before
 the migration. The immutable reference keeps their casts, operation order and
-witnesses reproducible after production casts are replaced.
+witnesses reproducible after production casts are replaced. Headers, catalogs and
+generators are materialized from that same revision, including full source trees
+for `precision-turns`; no current C++ headers or build files enter the C oracle.
+`--generated-dir` is a deprecated compatibility argument and is ignored. Darwin
+arm64 compiles x86 executables through Rosetta; the original format/control-state
+check still rejects an unsuitable oracle. Other platforms require an x86 compiler.
 
 `make precision` compares every explicit `long double` intermediate in the
 production C files against the same expression with `double` intermediates.

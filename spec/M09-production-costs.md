@@ -9,8 +9,8 @@ numeric `GetProductionCosts` caller over explicit native pricing inputs.
 [Verification](README.md#production-cost-vector-continuation) records proof,
 source comparison, handbook and repository results.
 
-Sources: [produce.c](../src/core/produce.c) `GetProductionCosts`;
-[util.c](../src/core/util.c) `GetTrueHullCost`; [race.c](../src/core/race.c)
+Sources: [produce.cpp](../src/core/produce.cpp) `GetProductionCosts`;
+[util.cpp](../src/core/util.cpp) `GetTrueHullCost`; [race.cpp](../src/core/race.cpp)
 `GetRaceStat`, `GetRaceGrbit`; [structs.h](../src/core/structs.h) `HUL`, `HS`,
 `PROD`, `PLANETARY`, `PLAYER`; [enums.h](../src/core/enums.h) `ProdItemType`.
 [M11](M11-ship-and-starbase-design.md#6-coverage-inventory-evidence-and-open-decisions)

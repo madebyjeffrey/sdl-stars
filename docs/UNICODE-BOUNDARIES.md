@@ -17,7 +17,7 @@ The 2.8 branch retains its historical compatibility contract.
 | Catalogs and data | UTF-8 source text becomes UTF-8 bytes in generated C/compressed tables. IDs, arithmetic ranges and part numbering remain stable. Shipped `±` and `©` retain their characters. |
 | Resources | The resource source declares UTF-8. Native dialog/menu UTF-16 payloads decode strictly to UTF-8, including surrogate pairs. |
 | Controls and clipboard | All controls use UTF-8. SDL text events deliver Unicode scalar values. Paste, composition and setters validate text; selection, deletion, bounded copies and wrapping respect code-point boundaries. Edit offsets/capacities remain byte counts. Case styles change ASCII only. |
-| Drawing and inspection | Window and memory DCs measure/draw UTF-8 through FreeType, with bounded fallback caching. Captions, JSON inspection and PDF titles use the same text. Snapshot `fUtf8Text` remains an always-true compatibility field. |
+| Drawing and inspection | Window and memory DCs measure/draw UTF-8 through FreeType, with bounded fallback caching. Captions, JSON inspection and PDF titles use the same text. Hierarchy snapshots own class and title values as UTF-8 strings. |
 | Files | New writes use BOF format 2.85, which identifies UTF-8. Game, turn, history and orders readers report older and newer BOF versions distinctly; malformed headers report corruption. The race-design importer alone accepts 2.49–2.84 files, parses bounded CP1252 name fields (including pre-2.55 singular-only records), verifies framing/checksum before conversion, and asks before shortening a UTF-8 name to its 31-byte field. Protected legacy races require a confirmed replacement password before save or direct New Game use; the new hash is derived from the accepted UTF-8 credential. Record layouts, widths and sizes stay unchanged; compressed payloads remain binary. |
 | Passwords | UTF-8 bytes feed the original signed-byte/modulo-32-bit hash directly. ASCII hashes stay unchanged; historical non-ASCII hashes are intentionally incompatible. The password buffer accepts at most 15 UTF-8 bytes. |
 | Settings | `StarsUtf8.ini` starts fresh, without old settings migration. Writes identify UTF-8 with a BOM; readers validate UTF-8, support the BOM and copy complete code points. Paths, password text, font faces, preset names and numeric preferences are retained. ASCII order prefixes remain encoded order data. The host's explicit `--ini` uses UTF-8 too. |
@@ -26,10 +26,11 @@ The 2.8 branch retains its historical compatibility contract.
 | Tutorial | All three count-prefixed tutorial streams use 2.85. The original 2.60 battle event headers are converted to the current layout in place, preserving framing/encryption. `tests/savecli/cmd/utf8-tutorial` records that offline asset conversion. Loaded names/designs/fleets/battle plans in all 38 turn snapshots were verified ASCII. |
 
 `encoding.c` owns strict UTF-8 validation, bounded copying, resource UTF-16
-conversion and the race importer's CP1252-to-UTF-8 conversion. `native.c` owns
-game filesystem operations. The C-compatible C++17 `filesystem.h` bridge supplies
-strict UTF-8 filesystem operations for portable test fixtures, without SDK types
-or C++ exceptions crossing its interface. The SDL wrapper owns rendering and
+conversion and the race importer's CP1252-to-UTF-8 conversion. `native.c` forwards game file operations to the native C++20
+`fileio.h` service, which also owns application streams, native path conversion
+and directory traversal for host and desktop callers. The `filesystem.h` bridge
+supplies portable fixture directories. Neither interface exposes SDK types or
+propagates service exceptions: failures retain their existing return/error contracts. The SDL wrapper owns rendering and
 controls. No general
 legacy code-page heuristic or substitution is used. Popup separator sentinels
 and compressed/hash bytes are binary protocol representations, not decoded text.

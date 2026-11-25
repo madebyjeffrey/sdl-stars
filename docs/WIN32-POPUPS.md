@@ -112,6 +112,6 @@ The fresh Windows tutorial run `dist/scaffold/tutorial/20261010T231900.117928Z`
 remains failing at year 2407, page 24, instruction 186 after 94 actions. It times
 out querying the observer, and Wine reports `free(): invalid next size (fast)`.
 It passes instruction 166. The Windows executable does not link this SDL popup
-implementation. See the [tutorial report](../tests/scaffold/tutorial/README.md)
+implementation. See the [tutorial report](../tests/reference/win32-tutorial/README.md)
 for earlier native Wine/X11 failure-stack evidence. The full tutorial must pass
 before final client completion.

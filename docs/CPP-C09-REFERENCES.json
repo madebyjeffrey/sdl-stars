@@ -1,0 +1,245 @@
+{
+  "parent": "381d61a78b22aae662c9c0fead1bdc9883e7e447",
+  "precision_reference": "3c67394973aacf6b0bf24d0a302f42b50a87bfa0",
+  "policy": "CPP-POLICY.md",
+  "inputs": [
+    {
+      "path": "compat/win32/src/filedialog_cocoa.mm",
+      "sha256": "0e0182e326147330ee84d297a22e8686019b39e9b2ef58c46d785d8b2e019af7"
+    },
+    {
+      "path": "tests/compat/archived_tutorial_types.cpp",
+      "sha256": "73f36960a165fb3c05d589033d7a2c843cb406f66cfca87bbfe90cab4e6d5754"
+    },
+    {
+      "path": "tests/compat/mesa_rtasm_lifetime.c",
+      "sha256": "1c758b76a51cc3b75a8deca4a655893433f0342f172e2f4f487605773c7e4216"
+    },
+    {
+      "path": "tests/compat/popup_payload_reference.c",
+      "sha256": "891ab3eaa82bf54ad4ded9ecaf9539745ca70233f5caafdef1fd2a3ea2405c60"
+    },
+    {
+      "path": "tests/compat/record_layout.c",
+      "sha256": "fb5f698c45621792136a66ff34baf6030310d389ca6e9b3dcf994baf50f5ca03"
+    },
+    {
+      "path": "tests/compat/win32_client_popup_cocoa.mm",
+      "sha256": "279132fd3f11a0f0aeef465fc482814b2a4e2a213b166f878df3e26ec53ebf70"
+    },
+    {
+      "path": "tests/compat/win32_client_quit_cocoa.mm",
+      "sha256": "1ed09c0df06a5e65977c96c94c7c6537ab38068622f923c380b1e06c7e107612"
+    },
+    {
+      "path": "tests/reference/cpp-a/README.md",
+      "sha256": "35849628f0d8616361a0db5f3f68d270cc7abc18ff73babf6c71e9ffd443f6ef"
+    },
+    {
+      "path": "tests/reference/cpp-a/common.h",
+      "sha256": "cbc5cad9cdf6630328cd79a4821c1b44de754ecf045a61a6c569ee8429dc5b7b"
+    },
+    {
+      "path": "tests/reference/cpp-a/dataids.h",
+      "sha256": "27d6a79830ae8417da7660b7d8f6a3ccafce1c2e46fe166e6d3d0e7ed54032ca"
+    },
+    {
+      "path": "tests/reference/cpp-a/encoding.h",
+      "sha256": "a0d5b5ea9ae7048976b19203a46d7f718b257d1840d964b1d25101f82b57d826"
+    },
+    {
+      "path": "tests/reference/cpp-a/enums.h",
+      "sha256": "fc9cce4bd37832ee2f5db6660435084e6bc1e8e8b4c1686b527081029793d58e"
+    },
+    {
+      "path": "tests/reference/cpp-a/fileio.h",
+      "sha256": "1453f74380522904c41041c3d6eea858f0b43dea539c11a53e7466c8eac14b67"
+    },
+    {
+      "path": "tests/reference/cpp-a/native.h",
+      "sha256": "f4e3bf44d5e00b3881596b36ba069743fd75d28c1310a6f3d467c965a811b2f0"
+    },
+    {
+      "path": "tests/reference/cpp-a/nativeui.h",
+      "sha256": "f77eda125d2e732b5d95f29faecd7e38566013dab4ca28d40944e1f96eb43000"
+    },
+    {
+      "path": "tests/reference/cpp-a/structs.h",
+      "sha256": "4713999e085661d5fab5d4808114c31d27ddf99c55a98812d84f40a2fdd0ab8b"
+    },
+    {
+      "path": "tests/reference/cpp-a/textids.h",
+      "sha256": "de2688a0dcfed340d801ddca2a91ff2638edf74235fb76496c22e016fbf86570"
+    },
+    {
+      "path": "tests/reference/sdk/nativeui_points.c",
+      "sha256": "c0a96aae87b2ad8e5ae0a12fec44b16bff1fc4c0069772b6e079ecb32dcc047e"
+    },
+    {
+      "path": "tests/reference/sdk/win32_abi.c",
+      "sha256": "d133b3fac800e059a5aa04bae6ff40898079adae2f6102a43f9313671b96157c"
+    },
+    {
+      "path": "tests/reference/sdk/win32_attention.c",
+      "sha256": "2c51cf4b32172f92e9443329d4d7e74a9dcc65056077cd1bbd54ed8ea3078586"
+    },
+    {
+      "path": "tests/reference/sdk/win32_bitmap.c",
+      "sha256": "7ab0e2208b8a42dc1cfbb91ae755bff2a8fd8ece2c3f4dd46acf3c0742e137b9"
+    },
+    {
+      "path": "tests/reference/sdk/win32_capture.c",
+      "sha256": "2446c64511d90823a3d0b0f711cbc29cd4d864926036683707531a5a04ca0a10"
+    },
+    {
+      "path": "tests/reference/sdk/win32_children.c",
+      "sha256": "01ac90404417070caee3256da637e93a9ec1affe75b6eabbb6be1aeb5ffa67aa"
+    },
+    {
+      "path": "tests/reference/sdk/win32_combo.c",
+      "sha256": "6999a3fe372ead96c7b21f6fc902ba497c01c6eca196ff930cdaab964b0fa2f0"
+    },
+    {
+      "path": "tests/reference/sdk/win32_controls.c",
+      "sha256": "cf71f93d1e58d47766832b42266e36a99f5349c952ec920641d1e117243f2d8a"
+    },
+    {
+      "path": "tests/reference/sdk/win32_desktop.c",
+      "sha256": "eb8e3ee140758ef289ae54db19d2e855c4d4efdd8c210557395fb8da52273c8b"
+    },
+    {
+      "path": "tests/reference/sdk/win32_dialog.c",
+      "sha256": "7e090ecba5d035c0576d63748cf99e6dfcb905930d459bcc92a4ae9dcae59bce"
+    },
+    {
+      "path": "tests/reference/sdk/win32_dib.c",
+      "sha256": "f34958157da94b2e577716f0c4243df1756904258c0893531d6f7bb36285cc30"
+    },
+    {
+      "path": "tests/reference/sdk/win32_drawing_state.c",
+      "sha256": "82bed46e6e2e518f532f65db22a9084bb9343959afcadf5fe8a0ad604bea582a"
+    },
+    {
+      "path": "tests/reference/sdk/win32_edit.c",
+      "sha256": "c542356283899e4c23a2cd52098908a9ff5a602c916676ae9e05c8e49f2b3f35"
+    },
+    {
+      "path": "tests/reference/sdk/win32_file.c",
+      "sha256": "103f69bd62289499dc0dd234de9a679e3c50b723155747aed1327a39812866f5"
+    },
+    {
+      "path": "tests/reference/sdk/win32_filedialog.c",
+      "sha256": "8e2e9d1b8b13bc03951d0cc4e9c822781637c1216d583e4d8e0f6d867bf5833a"
+    },
+    {
+      "path": "tests/reference/sdk/win32_font.c",
+      "sha256": "7b87642c786792a4c2ea4c4c24696a4f1574e534a201006c3457f3992a7e09f1"
+    },
+    {
+      "path": "tests/reference/sdk/win32_gdi_reference.c",
+      "sha256": "edc82506528280020fd68a8cb2116bb06551ae52d851e22e57e74d67b4c355d1"
+    },
+    {
+      "path": "tests/reference/sdk/win32_geometry.c",
+      "sha256": "7a2a3c2a3f0290654ce56ecb67014bfbeca46df18845dcacf21bca033c0aa92b"
+    },
+    {
+      "path": "tests/reference/sdk/win32_images.c",
+      "sha256": "832e6195ae8ca8b1522196d7facfb4ea952c69afc433b18e626733e933c062cd"
+    },
+    {
+      "path": "tests/reference/sdk/win32_input.c",
+      "sha256": "668a88a5f6a039f8fb47f33bf35fb52729f80ccf24e77ff81e776c3b6121dabd"
+    },
+    {
+      "path": "tests/reference/sdk/win32_list.c",
+      "sha256": "0d8a9b66b630bcf53d1ff24bb6c661247e6ebadbc496a91044afdaee36b39f54"
+    },
+    {
+      "path": "tests/reference/sdk/win32_memory.c",
+      "sha256": "492d56d1f9534adec1cd370933cda3b7ab45b2dd87c8e22421e4f3e414a474a5"
+    },
+    {
+      "path": "tests/reference/sdk/win32_menu.c",
+      "sha256": "58098cfdf926c290b6be6b95093310ee95f31ee01f359dca1663a087799e2081"
+    },
+    {
+      "path": "tests/reference/sdk/win32_menubar.c",
+      "sha256": "0d466738a817c0ab0e34c92cf53cd9626f7c6d3667ad30d98303a35ef4bb62af"
+    },
+    {
+      "path": "tests/reference/sdk/win32_messagebox.c",
+      "sha256": "bb0ad60b45e30562733652156ca5bd6a9338fd28ee535e61fb41e98f47679e40"
+    },
+    {
+      "path": "tests/reference/sdk/win32_palette.c",
+      "sha256": "6e334a53cca832846a012d30b9c28746d6c8bb29bf8df22f30905a3a7a284f1e"
+    },
+    {
+      "path": "tests/reference/sdk/win32_popup.c",
+      "sha256": "e874cb3290ab5f65e4449218ac74ac1dbfe288cb29939da183adc1ea2dab020a"
+    },
+    {
+      "path": "tests/reference/sdk/win32_position.c",
+      "sha256": "574a867a41097da3a33113850fd6fc0cda4e3c714f747f1e03bc95becd1c68fd"
+    },
+    {
+      "path": "tests/reference/sdk/win32_profile.c",
+      "sha256": "63f097f1128181a4142e7763af4a0df7faecf51f7567019da15b92b2ef8ccdbe"
+    },
+    {
+      "path": "tests/reference/sdk/win32_regions.c",
+      "sha256": "83793eb78fb1262e285d7156de8390f9a1068928edf0085efd5118d0ceebcafe"
+    },
+    {
+      "path": "tests/reference/sdk/win32_runtime.c",
+      "sha256": "a243fafc1d6033d48cdb8a71403618d478fe6e1d2508c5ae85fb5b1258b5d727"
+    },
+    {
+      "path": "tests/reference/sdk/win32_scroll.c",
+      "sha256": "1ad372d08da29875d7f08fd3dbca250b8768ed8741db62d657fb4402fec9fad9"
+    },
+    {
+      "path": "tests/reference/sdk/win32_scrollwindow.c",
+      "sha256": "4973f7c7465f2c4fd9daf25d9d861f639e09c8bbac02f092958ae9199cc5bf05"
+    },
+    {
+      "path": "tests/reference/sdk/win32_services.c",
+      "sha256": "df85aeefa14cf36641a5afd705a559d58ba440367a52c918bcd45ed616e5067c"
+    },
+    {
+      "path": "tests/reference/sdk/win32_state.c",
+      "sha256": "83af294c9129c5998144daae42f862c30ab0ba0738c6abd302bd762f31157449"
+    },
+    {
+      "path": "tests/reference/sdk/win32_timers.c",
+      "sha256": "5d44660a571d65d51611adae61f86eed214c4cf4c18f3a791015ce1deeee87bc"
+    },
+    {
+      "path": "tests/reference/sdk/win32_toolbar.c",
+      "sha256": "9ff2bdf283c42e856956f00bf937da25879b21142d6cdfd72188dfb2799451c3"
+    },
+    {
+      "path": "tests/reference/sdk/win32_ui_resources.c",
+      "sha256": "e36419bc41e7210a701c541aae1693c7ae9f89296543125a4178053a19b66a85"
+    },
+    {
+      "path": "tests/reference/win32-tutorial/observer.c",
+      "sha256": "e457e1ff0852524518f65ab658e57711edc9d05957269e8ec4eabc0287cf6932"
+    },
+    {
+      "path": "tests/scaffold/precision_probe.c",
+      "sha256": "b4170bac323ce94b42e23f9fb5096d51c49bac659d1ba67727bc5c30c8f04f7a"
+    },
+    {
+      "path": "tests/scaffold/precision_race.c",
+      "sha256": "89ffb35d41559a258b41e9baf8afadadb9158423f9ddc86aa03bfc930d35f584"
+    }
+  ],
+  "native_sdk_diagnostics": {
+    "inventory": "tests/reference/sdk/diagnostics.json",
+    "findings": "docs/CPP-C09-SDK-FINDINGS.md",
+    "follow_up": "https://github.com/madebyjeffrey/sdl-stars/issues/78",
+    "policy": "Execute all original assertions; retain raw results; only 19 exact unchanged/hash-pinned behavior or automation probes are diagnostic. All other checks and missing/skipped execution remain gates."
+  }
+}

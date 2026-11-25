@@ -7,9 +7,17 @@ import sys
 import tempfile
 
 
-def snapshot(directory):
-    return {p.relative_to(directory): p.read_bytes()
-            for p in directory.rglob('*') if p.is_file()}
+def snapshot(directory, optional_locks=()):
+    entries = {}
+    for path in directory.rglob('*'):
+        assert not path.is_symlink(), path
+        entries[path.relative_to(directory)] = None if path.is_dir() else path.read_bytes()
+    for lock in optional_locks:
+        if entries.get(lock) == b'':
+            del entries[lock]
+            del entries[lock.parent]
+            del entries[lock.parent.parent]
+    return entries
 
 
 def session_settings(directory):
@@ -49,8 +57,10 @@ def run(executable, mode):
             backup.mkdir()
             (backup / (stem + '.m1')).write_bytes(b'backup turn')
             (root / 'host-state').write_bytes(b'host state')
+        # Opening a managed game may create its empty per-family lock.
+        selected_lock = Path('save-transactions/selected-game/lock')
+        other_lock = Path('save-transactions/other-game/lock')
         source_before = snapshot(source)
-        selected_before = snapshot(selected)
         other_before = snapshot(other)
         settings.joinpath('StarsUtf8.ini').write_text(
             f'[Files]\nFile1={selected / "selected-game.m1"}\nFile2={other / "other-game.m1"}\n',
@@ -63,9 +73,11 @@ def run(executable, mode):
         env.pop('STARS_CLIENT_CONTINUE', None)
         subprocess.run([str(executable)], cwd=work, env=env, check=True, timeout=45)
         assert snapshot(source) == source_before
-        assert snapshot(other) == other_before
+        assert snapshot(other, [other_lock]) == other_before
+        catalog_locks = [Path(selected.name) / selected_lock, Path(other.name) / other_lock]
         if mode == 'confirm':
-            assert not selected.exists()
+            remaining = {path: data for path, data in catalog_before.items() if path.parts[0] != selected.name}
+            assert snapshot(games, catalog_locks) == remaining
             ini = (settings / 'StarsUtf8.ini').read_text(encoding='utf-8')
             assert 'File1=' in ini and f'File1={other / "other-game.m1"}' not in ini
             assert f'File2={other / "other-game.m1"}' in ini
@@ -73,15 +85,10 @@ def run(executable, mode):
                                STARS_CLIENT_EXPECT_CONTINUE_DISABLED='1')
             restart_env.pop('STARS_CLIENT_GAME_DELETE_MODE')
             subprocess.run([str(executable)], cwd=work, env=restart_env, check=True, timeout=45)
-        elif mode == 'cancel':
-            assert snapshot(selected) == selected_before
-            assert snapshot(games) == catalog_before
-            assert session_settings(settings) == session_settings_before
         else:
-            assert selected.is_dir()
-            assert (selected / 'selected-game.m1').read_bytes() == selected_before[Path('selected-game.m1')]
-            ini = (settings / 'StarsUtf8.ini').read_text(encoding='utf-8')
-            assert f'File1={selected / "selected-game.m1"}' in ini
+            # The injected failure stops at the first file removal.
+            assert snapshot(games, catalog_locks) == catalog_before
+            assert session_settings(settings) == session_settings_before
         print(f'{mode}: selected managed game deletion workflow passed')
 
 

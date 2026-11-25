@@ -2,7 +2,7 @@
 
 This milestone reaches **108/178 inventoried Win32 APIs (60.7%)**. It adds
 `GetROP2`, `SetROP2`, `SetWindowOrgEx`, `SetBrushOrgEx`, `SetPixel`, `FrameRect`
-and `CreatePatternBrush`. These are local C11 implementations; the retained
+and `CreatePatternBrush`. These are local C++20 implementations; the retained
 Free API reference remains unmodified and uncompiled.
 
 ## Supported behavior

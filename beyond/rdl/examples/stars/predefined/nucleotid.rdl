@@ -1,0 +1,33 @@
+(* Generated from data/races/predefined.yaml by tools/generate_stars_presets.py. *)
+import stars.settings
+
+Race nucleotid = {
+  name = "Nucleotid";
+  plural_name = "Nucleotids";
+  source_index = 3;
+  portrait(25)
+  gravity(immune)
+  temperature(12, 88)
+  radiation(0, 100)
+  growth(10)
+  population_efficiency(900)
+  factory_output(10)
+  factory_cost(10)
+  factory_operation(10)
+  mine_output(10)
+  mine_cost(15)
+  mine_operation(5)
+  energy_research(expensive)
+  weapons_research(expensive)
+  propulsion_research(expensive)
+  construction_research(expensive)
+  electronics_research(expensive)
+  biotechnology_research(expensive)
+  research_allocation(15)
+  leftover_points(factories)
+  standard_capacity
+  super_stealth
+  higher_starting_technology
+  lrt_arm
+  lrt_isb
+}

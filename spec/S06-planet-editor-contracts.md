@@ -10,10 +10,10 @@ copying, allocation outcomes, native entry dispatch and write-call ordering.
 [Collection verification](README.md#planet-editor-copy-and-write-back-continuation)
 records actual proof, source-fixture and repository checks.
 
-Sources: [util.c](../src/core/util.c) `FDupPlanet`, `FLookupPlanet`, `LpplFromId`;
-[memory.c](../src/core/memory.c) `LpplAlloc`, `LpplReAlloc`, `FreePl`;
+Sources: [util.cpp](../src/core/util.cpp) `FDupPlanet`, `FLookupPlanet`, `LpplFromId`;
+[memory.cpp](../src/core/memory.cpp) `LpplAlloc`, `LpplReAlloc`, `FreePl`;
 [structs.h](../src/core/structs.h) `PLANET`, `PL`, `PLPROD`, `PROD`;
-[log.c](../src/core/log.c) `LogChangePlanet`; [produce.c](../src/core/produce.c)
+[log.cpp](../src/core/log.cpp) `LogChangePlanet`; [produce.cpp](../src/core/produce.cpp)
 `FinishProduction`. This specifies caller/queue effects, not the full log,
 heap allocator, tutorial or session-lifetime implementation.
 

@@ -16,13 +16,13 @@ reusing [native part availability](M11-part-availability.md),
 [Collection evidence](README.md#design-buildability-continuation) records checks.
 No gameplay, import policy, record layout or runtime validation change is proposed.
 
-Sources: [util.c](../src/core/util.c) `FCanBuildShdef`;
-[parts.c](../src/core/parts.c) `FLookupPart`, `TechStatus`;
-[research.c](../src/core/research.c) `FShouldPartBeHidden`;
-[race.c](../src/core/race.c) the actual primary/bit getters;
+Sources: [util.cpp](../src/core/util.cpp) `FCanBuildShdef`;
+[parts.cpp](../src/core/parts.cpp) `FLookupPart`, `TechStatus`;
+[research.cpp](../src/core/research.cpp) `FShouldPartBeHidden`;
+[race.cpp](../src/core/race.cpp) the actual primary/bit getters;
 [structs.h](../src/core/structs.h) `SHDEF`, `HUL`, `HS`, `PART`, `PLAYER`.
-Call sites include [turn2.c](../src/core/turn2.c) `FBuildObject` and
-[turn.c](../src/core/turn.c) annual design checks. UI browse/copy/edit paths retain
+Call sites include [turn2.cpp](../src/core/turn2.cpp) `FBuildObject` and
+[turn.cpp](../src/core/turn.cpp) annual design checks. UI browse/copy/edit paths retain
 their own M11 context/knowledge/focus/keyboard/accessibility qualification. The
 helper is synchronous, has no cancellation or user prompt, and has no agreed
 performance budget beyond the modeled traversal bound.

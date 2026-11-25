@@ -1,0 +1,809 @@
+#include "common.h"
+#include "appstate.h"
+#include "text_io.h"
+#include "colony_io.h"
+#include "planet_query_io.h"
+#include "research_io.h"
+#include "part_query_io.h"
+#include "alert_io.h"
+#include "capacity_io.h"
+#include "record_io.h"
+
+std::uint16_t mpicolgrbitBU[12] = {255, 255, 255, 255, 255, 255, 255, 8, 16, 32, 64, 128};
+
+// Report labels may come from catalog values, game fields or work storage.
+// Copy at this boundary so callers retain one value through sorting/drawing.
+static REPORTTEXTRESULT SzReportText(std::string_view sz) {
+    REPORTTEXTRESULT szResult{};
+    szResult.cch = static_cast<std::int16_t>(CchCopyUtf8Prefix(std::span{szResult.sz}, sz));
+    return szResult;
+}
+
+static REPORTTEXTRESULT SzReportLabel(std::string_view sz) {
+    return SzReportText(sz);
+}
+
+REPORTTEXTRESULT PszGetDestName(APPSESSION &app, FLEET *lpfl, HDC hdc) {
+    std::array<char, 360> szLocation{};
+    std::int16_t i;
+    ORDER   ord;
+
+    ord = lpfl->lpplord->rgord()[0];
+    if (lpfl->cord <= 1)
+        goto LNoDest;
+
+    if (ord.fValidTask) {
+        switch (ord.grTask) {
+        case grTaskXfer:
+            for (i = 0; i < 5; i++) {
+                if (ord.txp.rgia[i].iAction() == iActionWaitPercent)
+                    goto LDelayed;
+            }
+            break;
+        case grTaskColonize:
+            if (ord.grobj != grobjPlanet)
+                break;
+            goto LNoDest;
+        case grTaskMerge:
+        case grTaskScrap:
+            goto LNoDest;
+        case grTaskLayMines:
+        LDelayed:
+            if (hdc) {
+                SetHdcTextColor(hdc, 127);
+            }
+            return SzReportText(TextIO().pfnCompressed(app, idsDelayed).data());
+        default:
+            break;
+        }
+    }
+    ord = lpfl->lpplord->rgord()[1];
+    szLocation = PszGetLocName(app, static_cast<GrobjClass>(ord.grobj), ord.id, ord.pt.x, ord.pt.y);
+    return SzReportText(szLocation.data());
+
+LNoDest:
+    return SzReportText(app.state.szDblDash);
+}
+
+std::int16_t FDestIsWP0(FLEET *lpfl) {
+    std::int16_t i;
+    ORDER   ord;
+
+    ord = lpfl->lpplord->rgord()[0];
+    if (lpfl->cord > 1) {
+        if (ord.fValidTask) {
+            switch (ord.grTask) {
+            case grTaskXfer:
+                for (i = 0; i < 5; i++) {
+                    if (ord.txp.rgia[i].iAction() == iActionWaitPercent) {
+                        return 1;
+                    }
+                }
+                return 0;
+            case grTaskColonize:
+                if (ord.grobj != grobjPlanet)
+                    break;
+                /* fallthrough */
+            case grTaskMerge:
+            case grTaskScrap:
+            case grTaskLayMines:
+                return 1;
+            }
+        }
+        return 0;
+    }
+    return 1;
+}
+
+FLEETETARESULT PszGetETA(APPSESSION &app, HDC hdc, FLEET *lpfl) {
+    POINT16 pt;
+    std::int16_t c;
+    std::int16_t i;
+    ORDER   ord;
+    char   *psz;
+    REPORTTEXTRESULT szLabel;
+
+    ord = lpfl->lpplord->rgord()[0];
+    pt = ord.pt;
+    if (lpfl->cord > 1) {
+        if (ord.fValidTask) {
+            switch (ord.grTask) {
+            case grTaskXfer:
+                for (i = 0; i < 5; i++) {
+                    if (ord.txp.rgia[i].iAction() == iActionWaitPercent)
+                        goto LNoETA;
+                }
+                break;
+            case grTaskColonize:
+                if (ord.grobj == grobjPlanet)
+                    goto LNoETA;
+            default:
+                break;
+            case grTaskMerge:
+            case grTaskScrap:
+            case grTaskLayMines:
+                goto LNoETA;
+            }
+        }
+        ord = lpfl->lpplord->rgord()[1];
+        CchGetETA(app, hdc, lpfl, app.state.szWork, 1, 1);
+        if (hdc && EstFuelUse(app, lpfl, 0, ord.iWarp, -1, 0) > lpfl->rgwtMin[4]) {
+            SetHdcTextColor(hdc, 0xff);
+        }
+        psz = app.state.szWork;
+        c = 0;
+        for (; *psz >= '0' && *psz <= '9'; psz++) {
+            c = 10 * c + (*psz - '0');
+        }
+        if (c == 0) {
+            c = 32000;
+        }
+        szLabel = SzReportText(std::string_view{app.state.szWork, static_cast<std::size_t>(c)});
+        return {szLabel.sz, c, szLabel.cch};
+    }
+LNoETA:
+    szLabel = SzReportText(app.state.szDblDash);
+    return {szLabel.sz, 0, szLabel.cch};
+}
+
+TASKNAMERESULT PszGetTaskName(APPSESSION &app, FLEET *lpfl) {
+    std::array<char, cchCatalogText> szCatalogPsz{};
+    std::int16_t        icr;
+    StringId       ids;
+    XferActionType opOrd;
+    std::int16_t        iZip;
+    std::int16_t        i;
+    ORDER          ord;
+    std::int16_t        fPercent;
+    std::size_t cch;
+    char          *psz;
+    char          *pchEnd;
+
+    icr = -1;
+    ord = lpfl->lpplord->rgord()[0];
+    if (ord.fValidTask) {
+        switch (ord.grTask) {
+        case grTaskXfer:
+            for (i = 0; i < 4; i++) {
+                if (ord.txp.rgia[i].iAction() == iActionWaitPercent)
+                    goto LShowTask;
+            }
+            break;
+        case grTaskColonize:
+        case grTaskMerge:
+        case grTaskScrap:
+        case grTaskLayMines:
+        case grTaskAutoRoute:
+            goto LShowTask;
+        }
+    }
+    if (lpfl->cord > 1) {
+        ord = lpfl->lpplord->rgord()[1];
+    }
+LShowTask:
+    if (ord.fValidTask) {
+        ids = static_cast<StringId>(idsTaskHere + ord.grTask);
+        switch (ord.grTask) {
+        case grTaskXfer:
+            for (i = 0; i < 4; i++) {
+                if (app.state.vrgZip[i].fValid && std::memcmp(&app.state.vrgZip[i], &ord.txp, 10) == 0)
+                    return {SzReportLabel(app.state.vrgZip[i].szName), icr};
+            }
+            ids = idsAction;
+            iZip = -1;
+            if (ord.txp.rgia[4].iAction() == iActionLoadDunnage &&
+                (ord.txp.rgia[3].iAction() == iActionNone || (ord.txp.rgia[3].iAction() == iActionUnloadAll && ord.txp.rgia[0].iAction() == iActionUnloadAll))) {
+                opOrd = static_cast<XferActionType>(ord.txp.rgia[0].iAction());
+                switch (opOrd) {
+                default:
+                    break;
+                case iActionLoadAll:
+                case iActionUnloadAll:
+                case iActionWaitPercent:
+                    for (i = 1; i < 3 && ord.txp.rgia[i].iAction() == opOrd; i++) {
+                    }
+                    if (i == 3) {
+                        switch (opOrd) {
+                        default:
+                            break;
+                        case iActionLoadAll:
+                            iZip = 0;
+                            break;
+                        case iActionUnloadAll:
+                            iZip = 1;
+                            break;
+                        case iActionWaitPercent:
+                            iZip = 2;
+                        }
+                        return {SzReportLabel(app.state.rgszZipOrder[iZip]), icr};
+                    }
+                }
+            }
+            for (i = 4; i >= 0; i--) {
+                opOrd = static_cast<XferActionType>(ord.txp.rgia[i].iAction());
+                if (idsAction + static_cast<int>(opOrd) > static_cast<std::int16_t>(ids)) {
+                    ids = static_cast<StringId>(idsAction + static_cast<int>(opOrd));
+                    icr = i;
+                }
+            }
+            if (ids == idsAction) {
+                return {SzReportLabel(TextIO().pfnCompressed(app, idsTransport).data()), icr};
+            }
+            opOrd = static_cast<XferActionType>(ord.txp.rgia[icr].iAction());
+            fPercent = 0;
+            switch (opOrd) {
+            case iActionLoadDunnage:
+                if (icr == 4) {
+                    ids = idsLoadOptimal;
+                }
+                /* fallthrough */
+            case iActionLoadAll:
+            case iActionUnloadAll:
+                return {SzReportLabel(TextIO().pfnCompressed(app, ids).data()), icr};
+            case iActionFillPercent:
+            case iActionWaitPercent:
+                fPercent = 1;
+                /* fallthrough */
+            case iActionUnloadExact:
+            case iActionSetAmount:
+            case iActionSetWaypoint:
+                szCatalogPsz = TextIO().pfnCompressed(app, ids);
+                psz = szCatalogPsz.data();
+                pchEnd = std::find(szCatalogPsz.begin(), szCatalogPsz.end(), 0);
+                cch = static_cast<std::size_t>(pchEnd - szCatalogPsz.begin());
+                if (pchEnd == szCatalogPsz.end() || cch < 3) return {SzReportLabel(psz), icr};
+                psz[cch - 3] = 0;
+                if (fPercent) {
+                    CchSprintf(app.state.szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
+                } else {
+                    CchSprintf(app.state.szWork, icr == 4 ? "%s %dmg" : "%s %dkT", psz, ord.txp.rgia[icr].cQuan());
+                }
+                return {SzReportLabel(app.state.szWork), icr};
+            default:
+                return {SzReportLabel(app.state.szDblDash), icr};
+            }
+        case grTaskLayMines:
+            if (ord.tlm().cTime < 5) {
+                CchSprintf(app.state.szWork, "%s  %dy", TextIO().pfnCompressed(app, ids).data(), ord.tlm().cTime + 1);
+            } else {
+                TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
+            }
+            return {SzReportLabel(app.state.szWork), icr};
+        case grTaskPatrol:
+            if (ord.tptl().iDist < 11) {
+                CchSprintf(app.state.szWork, "%s  %dly", TextIO().pfnCompressed(app, ids).data(), (ord.tptl().iDist + 1) * 50);
+            } else {
+                TextIO().pfnCchGetString(app, ids, std::span{app.state.szWork});
+            }
+            return {SzReportLabel(app.state.szWork), icr};
+        case grTaskAutoRoute:
+        default:
+            return {SzReportLabel(TextIO().pfnCompressed(app, ids).data()), icr};
+        }
+    }
+    return {SzReportLabel(app.state.szDblDash), icr};
+}
+
+void DumpUniverse(APPSESSION &app) {
+    StringId ids;
+    std::int16_t  i;
+    std::int16_t  fOpen;
+    std::int16_t  fSuccess;
+    std::int16_t  fSilentSav;
+    std::int16_t  cch;
+
+    fSilentSav = app.state.fFileErrSilent;
+    fSuccess = 1;
+    fOpen = 0;
+    if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone) {
+        fSuccess = 0;
+        goto DisplayStatus;
+    } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
+            app.state.fFileErrSilent = 1;
+            CchSprintf(app.state.szWork, "%s.map", app.state.szBase);
+            RecordIO().pfnStreamOpen(app, app.state.szWork, mdCreate);
+            fOpen = 1;
+            RgToStream(app, std::as_bytes(std::span{"#\tX\tY\tName\r\n"}).first(12));
+            for (i = 0; i < app.state.game.cPlanMax; i++) {
+                cch = CchSprintf(app.state.szWork, "%d\t%d\t%d\t%s\r\n", i + 1, app.state.rgptPlan[i].x, app.state.rgptPlan[i].y, PszGetCompressedPlanet(app, app.state.rgidPlan[i]).data());
+                RgToStream(app, std::as_bytes(std::span{app.state.szWork}).first(static_cast<std::size_t>(cch)));
+            }
+            RecordIO().pfnStreamClose(app);
+        } catch (const StarsError &) {
+            if (fOpen) {
+                RecordIO().pfnStreamClose(app);
+            }
+            app.state.fFileErrSilent = fSilentSav;
+            fSuccess = 0;
+            goto DisplayStatus;
+        }
+    }
+DisplayStatus:
+    ids = !fSuccess ? idsUnableWriteUniverseDefinitionSMapOperation : idsUniverseDefinitionHasSuccessfullyWrittenSMap;
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids).data(), app.state.szBase);
+    if (fSuccess) {
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
+    } else {
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
+    }
+    app.state.fFileErrSilent = fSilentSav;
+    return;
+}
+
+void DumpPlanets(APPSESSION &app) {
+    std::array<char, 360> szDisplayLabel{};
+    PLANET  *lpplMac;
+    StringId ids;
+    PLANET  *lppl;
+    char     szFile[256];
+    char     szForm[256];
+    std::int16_t  j;
+    std::int16_t  i;
+    std::int16_t  fOpen;
+    std::int16_t  fSuccess;
+    std::int16_t  fSilentSav;
+    char    *psz;
+    std::int16_t  cch;
+    std::size_t cchForm;
+    std::int32_t  l;
+    float    pct;
+    std::int32_t  rgl[4];
+    PART     part;
+
+    fSilentSav = app.state.fFileErrSilent;
+    fSuccess = 1;
+    fOpen = 0;
+    if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone) {
+        fSuccess = 0;
+        goto DisplayStatus;
+    } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
+            app.state.fFileErrSilent = 1;
+            if (app.state.gd.fPerPlayerDumps) {
+                CchSprintf(szFile, "%s.p%d", app.state.szBase, app.state.idPlayer + 1);
+            } else {
+                CchSprintf(szFile, "%s.pla", app.state.szBase);
+            }
+            RecordIO().pfnStreamOpen(app, szFile, mdCreate);
+            fOpen = 1;
+            j = app.state.gd.fPerPlayerDumps + 2;
+            for (i = 0; i < j; i++) {
+                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsPlanetNameOwnerStarbaseTypeReportAge + i), std::span{szForm});
+                for (psz = szForm; *psz != 0; psz++) {
+                    if (*psz == '*') {
+                        *psz = '\t';
+                    }
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch)));
+                if (i == j - 1) {
+                    RgToStream(app, std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2)));
+                }
+            }
+            lppl = app.state.lpPlanets;
+            lpplMac = app.state.lpPlanets + app.state.cPlanet;
+            for (; lppl < lpplMac; lppl++) {
+                cchForm = CchCopyUtf8Prefix(std::span{szForm}, PszGetCompressedPlanet(app, app.state.rgidPlan[lppl->id]).data());
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                szForm[0] = '\t';
+                if (lppl->iPlayer == iplrNone) {
+                    cchForm = 1;
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(1)));
+                } else {
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlayerName(app, lppl->iPlayer, 1, 0, 0, 0, nullptr).view());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                }
+                if (lppl->iPlayer == iplrNone || !lppl->fStarbase) {
+                    cch = 1;
+                } else {
+                    cch = static_cast<std::int16_t>(1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), app.state.rglpshdefSB[lppl->iPlayer][lppl->isb].hul.szClass));
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch)));
+                cchForm = 1 + static_cast<std::size_t>(CchSprintf(std::span{szForm}.subspan(1), "%d", app.state.game.turn - lppl->turn));
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                szForm[1] = 0;
+                cchForm = 1;
+                if (lppl->det == detAll) {
+                    cchForm += CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, static_cast<std::uint32_t>((lppl->rgwtMin[3] * 100))).data());
+                } else if (lppl->iPlayer != iplrNone && lppl->det >= detSome) {
+                    l = static_cast<std::uint32_t>((lppl->uPopGuess * 400));
+                    cchForm += CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                if (lppl->det < detSome) {
+                    szForm[1] = 0;
+                    cchForm = 1;
+                } else {
+                    i = PlanetQueryIO().pfnDesirability(app, lppl, app.state.idPlayer);
+                    cchForm = 1 + static_cast<std::size_t>(CchSprintf(std::span{szForm}.subspan(1), app.state.PCTDPCTPCT, i));
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                szForm[1] = 0;
+                cchForm = 1;
+                if (lppl->det == detAll) {
+                    szDisplayLabel = PszProdQueueTop(app, lppl, nullptr);
+                    cchForm += CchCopyUtf8Prefix(std::span{szForm}.subspan(1), szDisplayLabel.data());
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                if (lppl->det == detAll) {
+                    pct = CalcPctSurvive(app, lppl).pct;
+                    pct = static_cast<float>((static_cast<double>(1.0) - pct));
+                    cchForm = 1 + static_cast<std::size_t>(CchSprintf(std::span{szForm}.subspan(1), "%ld\t%ld\t%d.%d%%", static_cast<std::int32_t>(lppl->cMines), static_cast<std::int32_t>(lppl->cFactories), LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))),
+                               LOWORD(static_cast<std::int32_t>(((pct - static_cast<double>(static_cast<std::int16_t>(LOWORD(static_cast<std::int32_t>((static_cast<double>(pct) * 100))))) / 100.0) * 10000)))));
+                } else {
+                    szForm[2] = '\t';
+                    szForm[1] = '\t';
+                    szForm[3] = 0;
+                    cchForm = 3;
+                    if (app.state.gd.fPerPlayerDumps && lppl->uDefGuess != 0) {
+                        cch = CchSprintf(std::span{szForm}.subspan(3), "%d%%", lppl->uDefGuess * 6 + 3);
+                        szForm[cch + 3] = 0;
+                        cchForm += static_cast<std::size_t>(cch);
+                    }
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                szForm[1] = 0;
+                cchForm = 1;
+                for (i = 0; i < 3; i++) {
+                    if (lppl->det >= detSome) {
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, lppl->rgwtMin[i]).data());
+                    }
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                }
+                szForm[1] = 0;
+                cchForm = 1;
+                for (i = 0; i < 3; i++) {
+                    if (lppl->det >= detMore) {
+                        ColonyIO().pfnEstimateMining(app, lppl, std::span{rgl}.first<3>(), -1, 0);
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, rgl[i]).data());
+                    }
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                }
+                szForm[1] = 0;
+                cchForm = 1;
+                for (i = 0; i < 3; i++) {
+                    if (lppl->det >= detSome) {
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lppl->rgMinConc[i]).data());
+                    }
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                }
+                cchForm = 1;
+                if (lppl->det == detAll) {
+                    cchForm += CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, ResearchIO().pfnResources(app, lppl, app.state.idPlayer)).data());
+                } else {
+                    szForm[1] = 0;
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                if (app.state.gd.fPerPlayerDumps) {
+                    if (lppl->det >= detSome) {
+                        for (i = 0; i < 3; i++) {
+                            cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVar[i]).view());
+                            RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                        }
+                        for (i = 0; i < 3; i++) {
+                            cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszCalcEnvVar(app, static_cast<EnvType>(i), lppl->rgEnvVarOrig[i]).view());
+                            RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                        }
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, PctPlanetOptValue(app, lppl, app.state.idPlayer)).data());
+                        cchForm += CchAppendUtf8Prefix(std::span{szForm}.subspan(1), "%");
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    } else {
+                        szForm[1] = 0;
+                        cchForm = 1;
+                        for (i = 0; i < 7; i++) {
+                            RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(1)));
+                        }
+                    }
+                    if (lppl->det == detAll) {
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, CapacityIO().pfnPctPlanetCapacity(app, lppl)).data());
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                        const auto scannerRange = GetPlanetScannerRange(app, lppl);
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, scannerRange.dRange).data());
+                        i = scannerRange.dDeep;
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                        if (lppl->idFling == 0) {
+                            i = 0;
+                            szForm[1] = 0;
+                            cchForm = 1;
+                        } else {
+                            i = lppl->iWarpFling + 4;
+                            cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idFling - 1).data());
+                        }
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                        if (lppl->idRoute == 0) {
+                            szForm[1] = 0;
+                            cchForm = 1;
+                        } else {
+                            cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), TextIO().pfnPlanetName(app, lppl->idRoute - 1).data());
+                        }
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                        if (lppl->fStarbase) {
+                            i = IStargateFromLppl(app, lppl);
+                            if (i != -1) {
+                                part.hs.grhst = hstSpecialSB;
+                                part.hs.iItem = i;
+                                PartQueryIO().pfnLookup(app, &part);
+                                cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, part.pspecialsb()->grAbility2).data());
+                                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                                cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, part.pspecialsb()->grAbility).data());
+                                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                            }
+                        } else {
+                            i = -1;
+                        }
+                        if (i == -1) {
+                            RgToStream(app, std::as_bytes(std::span{"\t0\t0"}).first(4));
+                        }
+                        if (lppl->fStarbase) {
+                            i = lppl->pctDp;
+                        } else {
+                            i = 0;
+                        }
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    }
+                }
+                RgToStream(app, std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2)));
+            }
+            RecordIO().pfnStreamClose(app);
+        } catch (const StarsError &) {
+            if (fOpen) {
+                RecordIO().pfnStreamClose(app);
+            }
+            app.state.fFileErrSilent = fSilentSav;
+            fSuccess = 0;
+            goto DisplayStatus;
+        }
+    }
+DisplayStatus:
+    ids = !fSuccess ? idsUnableWritePlanetInformationSOperationTerminated : idsKnownPlanetInformationHasSuccessfullyWrittenS;
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids).data(), szFile);
+    if (fSuccess) {
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
+    } else {
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
+    }
+    app.state.fFileErrSilent = fSilentSav;
+    return;
+}
+
+void DumpFleets(APPSESSION &app) {
+    SCANNERRANGERESULT scannerRange;
+    std::array<char, 360> szObjectName{};
+    std::int16_t  iplr;
+    StringId ids;
+    char     szFile[256];
+    char     szForm[256];
+    std::int16_t  ifl;
+    FLEET   *lpfl;
+    std::int16_t  j;
+    std::int16_t  i;
+    std::int16_t  fOpen;
+    std::int16_t  fSuccess;
+    std::int16_t  fSilentSav;
+    char    *psz;
+    std::int16_t  cch;
+    std::size_t cchForm;
+    std::int32_t  l;
+
+    fSilentSav = app.state.fFileErrSilent;
+    fSuccess = 1;
+    fOpen = 0;
+    iplr = app.state.idPlayer;
+    if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone) {
+        fSuccess = 0;
+        goto DisplayStatus;
+    } else {
+        StarsRecoveryScope scopeRecovery;
+        try {
+            app.state.fFileErrSilent = 1;
+            if (app.state.gd.fPerPlayerDumps) {
+                CchSprintf(szFile, "%s.f%d", app.state.szBase, app.state.idPlayer + 1);
+            } else {
+                CchSprintf(szFile, "%s.fle", app.state.szBase);
+            }
+            RecordIO().pfnStreamOpen(app, szFile, mdCreate);
+            fOpen = 1;
+            j = app.state.gd.fPerPlayerDumps + 2;
+            for (i = 0; i < j; i++) {
+                cch = TextIO().pfnCchGetString(app, static_cast<StringId>(idsFleetNameXYPlanetDestinationBattle + i), std::span{szForm});
+                for (psz = szForm; *psz != 0; psz++) {
+                    if (*psz == '*') {
+                        *psz = '\t';
+                    }
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(static_cast<std::size_t>(cch)));
+                if (i == j - 1) {
+                    RgToStream(app, std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2)));
+                }
+            }
+            iplr = app.state.idPlayer;
+            for (ifl = 0; ifl < app.state.cFleet; ifl++) {
+                lpfl = app.state.rglpfl[ifl];
+                if (!app.state.rglpfl[ifl])
+                    break;
+                app.state.idPlayer = iplrNone;
+                szObjectName = PszGetFleetName(app, lpfl->id);
+                psz = szObjectName.data();
+                app.state.idPlayer = iplr;
+                cchForm = static_cast<std::size_t>(std::find(szObjectName.begin(), szObjectName.end(), 0) - szObjectName.begin());
+                RgToStream(app, std::as_bytes(std::span{szObjectName}.first(cchForm)));
+                szForm[0] = '\t';
+                cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->pt.x).data());
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->pt.y).data());
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                if (lpfl->idPlanet == idPlanetDeepSpace) {
+                    cchForm = 1;
+                } else {
+                    szObjectName = TextIO().pfnPlanetName(app, lpfl->idPlanet).rgch;
+                    psz = szObjectName.data();
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), psz);
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                if (lpfl->det == detAll) {
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetDestName(app, lpfl, nullptr).view());
+                } else if (app.state.gd.fPerPlayerDumps && lpfl->det < detAll && lpfl->fdirValid()) {
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->dirFltX()).data());
+                    cchForm += CchAppendUtf8Prefix(std::span{szForm}.subspan(1), ".");
+                    cchForm += CchAppendUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->dirFltY()).data());
+                } else {
+                    szForm[1] = 0;
+                    cchForm = 1;
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                if (app.state.rglpbtlplan[lpfl->iplr()]) {
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), app.state.rglpbtlplan[lpfl->iplr()][lpfl->iplan].szName);
+                } else {
+                    szForm[1] = 0;
+                    cchForm = 1;
+                }
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                l = 0;
+                for (i = 0; i < 16; i++) {
+                    l += lpfl->rgcsh[i];
+                }
+                cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());
+                RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                for (i = 0; i < 5; i++) {
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, lpfl->rgwtMin[i]).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                }
+                if (app.state.gd.fPerPlayerDumps) {
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, lpfl->iPlayer + 1).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    if (lpfl->cord > 1) {
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetETA(app, nullptr, lpfl).sz.data());
+                    } else {
+                        szForm[1] = '0';
+                        szForm[2] = 0;
+                        cchForm = 2;
+                    }
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    if (lpfl->cord >= 2) {
+                        i = lpfl->lpplord->rgord()[1].iWarp;
+                    } else if (lpfl->det < detAll && lpfl->fdirValid()) {
+                        i = lpfl->iwarpFlt();
+                    } else {
+                        i = 0;
+                    }
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, WtFromLpfl(app, lpfl)).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, PctCloakFromLpfl(app, lpfl)).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    scannerRange = GetFleetScannerRange(app, lpfl);
+                    j = scannerRange.dRange;
+                    i = scannerRange.dPlanRange;
+                    if (j == -1) {
+                        j = 0;
+                    }
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, j).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromInt(app, i).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    if (lpfl->det == detAll) {
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszGetTaskName(app, lpfl).sz.view());
+                    } else {
+                        szForm[1] = 0;
+                        cchForm = 1;
+                    }
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, ColonyIO().pfnFleetMining(app, lpfl)).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, CMineSweepFromLpfl(app, lpfl)).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, CLayMinesFromLpfl(app, lpfl, mineAll, ishdefAll)).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, PctTerraFromLpfl(app, lpfl)).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    l = 0;
+                    for (i = 0; i < 16; i++) {
+                        if (lpfl->rgcsh[i] != 0) {
+                            j = PartQueryIO().pfnHull(app.state.rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory;
+                            if (j <= 1 || j >= 6) {
+                                l += lpfl->rgcsh[i];
+                            }
+                        }
+                    }
+                    cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());
+                    RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    for (j = 2; j < 6; j++) {
+                        l = 0;
+                        for (i = 0; i < 16; i++) {
+                            if (lpfl->rgcsh[i] != 0 && PartQueryIO().pfnHull(app.state.rglpshdef[lpfl->iPlayer][i].hul.ihuldef)->imdCategory == j) {
+                                l += lpfl->rgcsh[i];
+                            }
+                        }
+                        cchForm = 1 + CchCopyUtf8Prefix(std::span{szForm}.subspan(1), PszFromLong(app, l).data());
+                        RgToStream(app, std::as_bytes(std::span{szForm}).first(cchForm));
+                    }
+                }
+                RgToStream(app, std::as_bytes(std::span{app.state.szCRLF}).first(static_cast<std::size_t>(2)));
+            }
+            RecordIO().pfnStreamClose(app);
+        } catch (const StarsError &) {
+            if (fOpen) {
+                RecordIO().pfnStreamClose(app);
+            }
+            app.state.fFileErrSilent = fSilentSav;
+            fSuccess = 0;
+            goto DisplayStatus;
+        }
+    }
+DisplayStatus:
+    ids = !fSuccess ? idsUnableWriteFleetInformationSOperationTerminated : idsKnownFleetInformationHasSuccessfullyWrittenS;
+    CchSprintf(app.state.szWork, TextIO().pfnCompressed(app, ids).data(), szFile);
+    if (fSuccess) {
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONASTERISK);
+    } else {
+        AlertIO().pfnAlertSz(app, app.state.szWork, win32::MB_ICONHAND);
+    }
+    app.state.fFileErrSilent = fSilentSav;
+    return;
+}
+
+// FDumpCmdLineGame writes the dumps a command line asks for (-dm, -dp, -df)
+// from the player turn file it names (szBase), as the Windows game does
+// when it opens the file (FOpenGame): universe, then planets, then fleets.
+// It returns FALSE if the file isn't a player's turn file it can load.
+std::int16_t FDumpCmdLineGame(APPSESSION &app) {
+    char  szFile[256];
+    char *pchDot;
+    char *pchDir;
+
+    CchCopyUtf8(std::span{szFile}, app.state.szBase);
+    pchDot = std::strrchr(szFile, '.');
+    pchDir = std::strrchr(szFile, chDirSep);
+    if (!pchDot || (pchDir && pchDir > pchDot)) {
+        return 0;
+    }
+    *pchDot = 0;
+    DestroyCurGame(app);
+    CchCopyUtf8(std::span{app.state.szBase}, szFile);
+    app.state.fFileErrSilent = 1;
+    if (!FLoadGame(app, szFile, pchDot + 1)) {
+        return 0;
+    }
+    app.state.fFileErrSilent = 0;
+    if (app.state.game.lid == 0 || app.state.idPlayer == iplrNone) {
+        return 0;
+    }
+    if (app.state.ini.fDumpMap) {
+        DumpUniverse(app);
+    }
+    if (app.state.ini.fDumpPlanets) {
+        DumpPlanets(app);
+    }
+    if (app.state.ini.fDumpFleets) {
+        DumpFleets(app);
+    }
+    return 1;
+}

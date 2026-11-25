@@ -133,9 +133,9 @@ not an axiom that a write succeeds.
 
 ### 3.1 Select and open a player turn
 
-Sources: [libraryui.c](../src/ui/libraryui.c) `FSelectLibraryGame`,
-`FContinueLibraryGame`, `RememberLibraryGame`; [mdi.c](../src/ui/mdi.c)
-`FOpenGame`; [file.c](../src/core/file.c) `FLoadGame`.
+Sources: [libraryui.cpp](../src/ui/libraryui.cpp) `FSelectLibraryGame`,
+`FContinueLibraryGame`, `RememberLibraryGame`; [mdi.cpp](../src/ui/mdi.cpp)
+`FOpenGame`; [file.cpp](../src/core/file.cpp) `FLoadGame`.
 
 Games lists available players with their individual years. Selection must name
 an available player in 0..15 (`FSelectPlayer`); `PlayerSuffix` maps to 1..16.
@@ -184,9 +184,9 @@ screen; the prior session is not restored. See S01 for exact validation gaps.
 
 ### 3.2 Authenticate and change a password
 
-Sources: [utilgen.c](../src/core/utilgen.c) `FCheckPassword`, `LSaltFromSz`;
-[utilgenui.c](../src/ui/utilgenui.c) `PasswordDlg`, `NewPasswordDlg`;
-[log.c](../src/core/log.c) `FRunLogRecord`.
+Sources: [utilgen.cpp](../src/core/utilgen.cpp) `FCheckPassword`, `LSaltFromSz`;
+[utilgenui.cpp](../src/ui/utilgenui.cpp) `PasswordDlg`, `NewPasswordDlg`;
+[log.cpp](../src/core/log.cpp) `FRunLogRecord`.
 
 `PasswordAllowed` preserves the check order: zero hash, matching cached hash,
 AI mode, or a nonempty matching default password permits access. Otherwise
@@ -208,7 +208,7 @@ orders. Host password changes write the host file immediately and belong to M17.
 
 ### 3.3 Edit pending orders
 
-Sources: [log.c](../src/core/log.c) `WriteMemRt`, `CancelMemRt`, `DirtyGame`,
+Sources: [log.cpp](../src/core/log.cpp) `WriteMemRt`, `CancelMemRt`, `DirtyGame`,
 `FRunLogFile`; [S01 orders](S01-game-file-orders.md).
 
 Gameplay editors update working state and log commands; M06 does not create a
@@ -239,10 +239,10 @@ explicit generation; it is a validated boundary, not a claim about that reader.
 
 ### 3.4 Save, submit and leave
 
-Sources: [fileui.c](../src/ui/fileui.c) `AskSaveDialog`, `FCanLeaveCurrentGame`,
-`PromptSaveGame`; [mdi.c](../src/ui/mdi.c) `CommandHandler`;
-[log.c](../src/core/log.c) `FWriteLogFile`, `FWriteHistFile`;
-[save.c](../src/core/save.c) `WriteBOF`.
+Sources: [fileui.cpp](../src/ui/fileui.cpp) `AskSaveDialog`, `FCanLeaveCurrentGame`,
+`PromptSaveGame`; [mdi.cpp](../src/ui/mdi.cpp) `CommandHandler`;
+[log.cpp](../src/core/log.cpp) `FWriteLogFile`, `FWriteHistFile`;
+[save.cpp](../src/core/save.cpp) `WriteBOF`.
 
 Save writes `.xN` and then `.hN`; it normally does not rewrite `.mN`. Save sets
 submission intent false; Save & Submit sets it true. The orders writer may first
@@ -272,7 +272,7 @@ contract; callers must not generalize the return-to-library behavior.
 
 ### 4.1 Export Orders
 
-Source: [libraryui.c](../src/ui/libraryui.c) `FExportLibraryOrders`.
+Source: [libraryui.cpp](../src/ui/libraryui.cpp) `FExportLibraryOrders`.
 
 Requires an initialized library, loaded planets, nonzero game identity, valid
 active player and managed path. Suggest the exchange basename and `.x(player+1)`;
@@ -297,7 +297,7 @@ Whole-game export and its older prompt path remain M01/S01 responsibilities.
 
 ### 4.2 Import an incoming player turn
 
-Sources: [libraryui.c](../src/ui/libraryui.c) `FImportSubsequentTurn`,
+Sources: [libraryui.cpp](../src/ui/libraryui.cpp) `FImportSubsequentTurn`,
 `FReplaceConflictingLibraryTurn`, `FImportConflictingTurnAsCopy`;
 [S01 external workflows](S01-game-file-external.md).
 
@@ -323,8 +323,8 @@ publishes disk state; it does not itself reload an active in-memory player turn.
 
 ### 4.3 Detect and load a new turn
 
-Sources: [file.c](../src/core/file.c) `FNewTurnAvail`; [mdi.c](../src/ui/mdi.c)
-`CommandHandler`, `HostTimerProc`, frame `WM_SYSCOMMAND`; [save.c](../src/core/save.c)
+Sources: [file.cpp](../src/core/file.cpp) `FNewTurnAvail`; [mdi.cpp](../src/ui/mdi.cpp)
+`CommandHandler`, `HostTimerProc`, frame `WM_SYSCOMMAND`; [save.cpp](../src/core/save.cpp)
 `FMarkFile`.
 
 `FNewTurnAvail` temporarily sets `game.turn=0`, silently opens the player turn
@@ -424,11 +424,11 @@ where a reliable future interface would need richer errors or stronger policy.
 | Password command saved and current turn reopened | Old snapshot credential remains until host generation applies tag 36. |
 | Failure after destroying old session | Return failure/title as applicable; do not promise restoration of old allocations or edits. |
 
-Source test evidence: [startup workflow harness](../tests/compat/win32_client_startup.c)
+Source test evidence: [startup workflow harness](../tests/compat/win32_client_startup.cpp)
 and [workflow runner](../tests/compat/run_newgame.py) contain cancel/switch
 Save/Don't Save/Submit, injected orders/history failures, Continue, later-turn,
-and conflict/backup cases. [test_log.c](../tests/unit/test_log.c),
-[test_save.c](../tests/unit/test_save.c) and [test_native_files.c](../tests/unit/test_native_files.c)
+and conflict/backup cases. [test_log.cpp](../tests/unit/test_log.cpp),
+[test_save.cpp](../tests/unit/test_save.cpp) and [test_native_files.cpp](../tests/unit/test_native_files.cpp)
 exercise persistence helpers. Existence of a case is not a claim that it ran.
 
 ### Checks performed on 2026-10-24
@@ -545,10 +545,10 @@ Trace: [open](#31-select-and-open-a-player-turn), [edit](#33-edit-pending-orders
 [save/submit](#34-save-submit-and-leave), [export](#41-export-orders),
 [M07 navigation](M07-galaxy-map-and-navigation.md),
 [S01 orders](S01-game-file-orders.md), [canonical session contracts](M06-session-specification.dfy).
-Evidence: [mdi.c](../src/ui/mdi.c) `FOpenGame`, [file.c](../src/core/file.c)
-`FLoadGame`, [log.c](../src/core/log.c) `WriteMemRt`,
-[fileui.c](../src/ui/fileui.c) `FCanLeaveCurrentGame`,
-[libraryui.c](../src/ui/libraryui.c) `FExportLibraryOrders`.
+Evidence: [mdi.cpp](../src/ui/mdi.cpp) `FOpenGame`, [file.cpp](../src/core/file.cpp)
+`FLoadGame`, [log.cpp](../src/core/log.cpp) `WriteMemRt`,
+[fileui.cpp](../src/ui/fileui.cpp) `FCanLeaveCurrentGame`,
+[libraryui.cpp](../src/ui/libraryui.cpp) `FExportLibraryOrders`.
 Goals: [M06-US01](#m06-us01), [US02](#m06-us02), [US03](#m06-us03).
 
 ```mermaid

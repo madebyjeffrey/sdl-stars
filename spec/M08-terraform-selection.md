@@ -21,11 +21,11 @@ preserves widths around its canonical `DesireExpr` and S04 evaluation.
 Stories/criteria remain at the module entries. No runtime, format,
 catalog, saved-design or baseline change is made.
 
-Sources: [planet.c](../src/core/planet.c) `FCanTerraformLppl`, `IBestTerraform`,
-`PctPlanetDesirability`; [turn2.c](../src/core/turn2.c) `IBestRemoteTerra`,
-`FBuildObject`; [parts.c](../src/core/parts.c) `FLookupPart`, `TechStatus`;
-[research.c](../src/core/research.c) hidden-part rules;
-[race.c](../src/core/race.c) getters;
+Sources: [planet.cpp](../src/core/planet.cpp) `FCanTerraformLppl`, `IBestTerraform`,
+`PctPlanetDesirability`; [turn2.cpp](../src/core/turn2.cpp) `IBestRemoteTerra`,
+`FBuildObject`; [parts.cpp](../src/core/parts.cpp) `FLookupPart`, `TechStatus`;
+[research.cpp](../src/core/research.cpp) hidden-part rules;
+[race.cpp](../src/core/race.cpp) getters;
 [structs.h](../src/core/structs.h) PLANET/PLAYER/PART/TERRA;
 [terraformers](../data/parts/terraformers.yaml). The
 [collection evidence](README.md#terraforming-selection-continuation) records actual checks.

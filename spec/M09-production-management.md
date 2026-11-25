@@ -84,8 +84,8 @@ capabilities and object-creation failures have distinct outcomes.
 
 ### 3.1 Open, edit and close
 
-Evidence: [produce.c](../src/core/produce.c), `InitProduction`,
-`FinishProduction`; [produceui.c](../src/ui/produceui.c),
+Evidence: [produce.cpp](../src/core/produce.cpp), `InitProduction`,
+`FinishProduction`; [produceui.cpp](../src/ui/produceui.cpp),
 `ChangeProduction`, `ProductionDlg` / `ProdCommandHandler`. Models: `Row`, `Fits`, `Quantum`, `AddCount`, `Availability`,
 `CanInsert`, `Remove`, `Swap`, `Editor`, `Finish`.
 
@@ -131,7 +131,7 @@ The inputs identify actual getters and fields: signed 16-bit `CMaxFactories`,
 installed counts; 5-bit scanner; 4-bit base index (must be <10 when a base is
 installed); unsigned 16-bit design mass and construction capacity; design
 free/gift flags; availability result and primary trait. These values are supplied
-projections from [planet.c](../src/core/planet.c), `FLookupPart`, hull lookup and live design arrays.
+projections from [planet.cpp](../src/core/planet.cpp), `FLookupPart`, hull lookup and live design arrays.
 Their full calculation/reference/lifetime refinement remains M08/M11/M19/S03/S06
 work. The model does not replace those rules with independently invented formulas.
 
@@ -168,7 +168,7 @@ catalogue entries. A missing source selection does nothing. It copies the raw
 source row and requests 1 normally, 10 with Shift, 100 with Control, or 1020 with
 both (`Quantum`); modifier requests cap to available count. It decrements finite
 availability immediately, before locating a merge, checking row limits or
-reallocating through [memory.c](../src/core/memory.c). Availability 1023 remains unlimited. Invalid supplied source ranks
+reallocating through [memory.cpp](../src/core/memory.cpp). Availability 1023 remains unlimited. Invalid supplied source ranks
 can select an inactive allocated entry; a no-modifier request from its zero
 count wraps availability to 1023. A physical index beyond the catalogue is an
 explicit undefined access boundary. Neither is a normal list selection.
@@ -227,7 +227,7 @@ distinct saved/working ownership, header access and native lifetime evidence.
 | Direct Clear | The colony-pane button first requires YES from its confirmation. `ChangeProduction(TRUE)` then bypasses initializer and modal setup/cleanup, assigns `fSuccess=1` and uses the same finish path. With the expected null working global it installs no queue and leaves research unchanged; it does **not** force a nonnull stale working pointer to null before finishing. Valid entry/global state is a caller obligation. |
 | Allocation escape | Free a nonnull working queue, null the global, end a live production dialog with result zero, then zero the handle/clear `fDlgUp`, alert, restore the previous allocation-error environment and return FALSE. This does not restore research or reverse an earlier commit. If the escape occurs after transfer to the selected queue, the global is already null and recovery does not free that transferred pointer. |
 
-`FLookupPlanet` in [util.c](../src/core/util.c) is not an atomic assignment: its write path logs changes,
+`FLookupPlanet` in [util.cpp](../src/core/util.cpp) is not an atomic assignment: its write path logs changes,
 allocates/copies the persistent queue and can call the tutorial; its selected
 read path uses `FDupPlanet`. The [S06 planet editor companion](S06-planet-editor-contracts.md)
 now specifies queue/prefix copying, entry dispatch and allocation effects, with
@@ -354,7 +354,7 @@ Ampersands in accepted names are doubled for radio-label display (`EscapeLabel`)
 | `Slot` / `Stored` | `ZIPPRODQ`: 13 name bytes with a NUL, normalized boolean flags, count 0–12 and all twelve native packed words. Names and nonempty localized fallbacks are bounded to twelve non-NUL bytes before copying; malformed buffers, oversized localized defaults and arbitrary raw flag bytes are outside this adapter domain. |
 | Allocation / dialog outcomes | Supplied success or escape and signed dialog result; proof does not establish actual heap, rendering or event-loop outcomes. `Apply` includes the full allocated buffer and modulo-256 headers; `Clear` retains the active row prefix without reallocating. |
 
-[Source-extracted checks](../tests/spec/check_production_presets_source.py)
+[Linked production checks](../tests/spec/check_production_presets_source.py)
 compile the current command blocks, customization snapshot, display/button
 helpers, allocation header code and native structs. Controlled GUI/localization
 and allocation doubles check 13,140 assertions, including all 3,328 pairs of
@@ -380,7 +380,7 @@ M11 quote inputs, including source widths, mixed player contexts and the
 no-default incoming-buffer path. The older scalar rules below are arithmetic
 projections; they do not imply native equivalence outside their no-wrap domains.
 
-Evidence: `GetProductionCosts`, `EstimateItemProdSched` in [produce.c](../src/core/produce.c).
+Evidence: `GetProductionCosts`, `EstimateItemProdSched` in [produce.cpp](../src/core/produce.cpp).
 Models: `AlchemyCost`, `TerraformCost`, `ChangedHullCost`, `ChangedSlotCost`,
 `BaseCost`; M11 part/hull pricing. Integer divisions and their order are retained.
 
@@ -418,7 +418,7 @@ fleet flags have explicit [effect boundaries](M09-production-forecast.md#local-c
 
 ### 3.4 Host execution and paid progress
 
-Evidence: [turn2.c](../src/core/turn2.c), `Produce`, `CBuildProdItem`,
+Evidence: [turn2.cpp](../src/core/turn2.cpp), `Produce`, `CBuildProdItem`,
 `FBuildObject`; models `Research`, `Paid`, `Charge`, `DimensionPercent`,
 `Progress`, `CanComplete`, `Result`.
 
@@ -455,11 +455,11 @@ All criteria below describe Observed behavior, including current limitations.
 | --- | --- | --- | --- |
 | <a id="m09-ac01"></a>M09-AC01 / US01 | Given an available item, when adding with Shift+Control, then request 1020 subject to availability/merge caps; a new row at 40 is refused after finite availability decrement. | `Quantum`, `CanInsert`, `Availability`; `ProductionDlg` / `ProdCommandHandler` | Editor `Add` vectors/source fixtures cover merge/refusal and pre-limit availability effects; real UI/focus qualification Open. |
 | <a id="m09-ac02"></a>M09-AC02 / US01 | Given two neighboring queue rows, when moving one past the other, then preserve the row multiset and swap their priority. | `Swap`; `ProductionDlg` / `ProdCommandHandler` | `SwapKeepsRows`; ordinary queue workflow harness. |
-| <a id="m09-ac03"></a>M09-AC03 / US01 | Given a copied queue and changed research flag, when ordinary Cancel runs, then restore the original queue/flag; Accept installs the copy. | `Finish`, lifecycle `Step`; `FinishProduction` | `CancelRestores`, `CancelKeepsSelected`, source-extracted pointer/research cases. Post-tutorial mutation and allocation escapes are separate boundaries (§3.1.4). |
+| <a id="m09-ac03"></a>M09-AC03 / US01 | Given a copied queue and changed research flag, when ordinary Cancel runs, then restore the original queue/flag; Accept installs the copy. | `Finish`, lifecycle `Step`; `FinishProduction` | `CancelRestores`, `CancelKeepsSelected`, linked production pointer/research cases. Post-tutorial mutation and allocation escapes are separate boundaries (§3.1.4). |
 | <a id="m09-ac04"></a>M09-AC04 / US02 | Given changed-base dimension 100 and old 80, when costing the changed hull, then intermediate cost is 60; discounted base dimension 101 resolves to 41. | `ChangedHullCost`, `BaseCost`, native `ChangedHull`/`Ship`; [cost contract](M09-production-costs.md) | Scalar/native vectors and source comparisons. Full M11 quote extraction remains Open; native wrap cases are separately specified. |
 | <a id="m09-ac05"></a>M09-AC05 / US02 | Given work unfinished through year 99, when estimating, then use sentinel 100 for the unfinished end; keep the local-copy contract separate from helper/global effects. | `Step`, `VisitBound`; [forecast contract](M09-production-forecast.md); `EstimateItemProdSched` | Checked horizon/shape rules and actual-body fixtures; helper purity is conditional and global side effects remain explicit. |
-| <a id="m09-ac06"></a>M09-AC06 / US03 | Given manual and automatic queue rows, when importing a preset, then retain manual work and replace allowed automatic policy; custom-preset Cancel restores the template snapshot. | `Retained`, `Appended`, `Apply`, `FinishCustom`; `ProductionDlg` / `ProdCommandHandler` | `PresetVectors`, `SnapshotKeepsFifth`; source-extracted preset checks. Dirty state/fifth slot are outside rollback. |
-| <a id="m09-ac07"></a>M09-AC07 / US04 | Given edits to colony A, when Next commits A then colony B is cancelled, then A remains committed and B restores its own prior state. | `Navigate`, `NavigationCommitsFirst`; §3.1.4 | Source-extracted A-commit/B-cancel and post-commit initialization-escape fixtures with explicit lookup/selection doubles. S06 now checks native read/write queue-copy effects; full logging/selection refinement remains E09-1. |
+| <a id="m09-ac06"></a>M09-AC06 / US03 | Given manual and automatic queue rows, when importing a preset, then retain manual work and replace allowed automatic policy; custom-preset Cancel restores the template snapshot. | `Retained`, `Appended`, `Apply`, `FinishCustom`; `ProductionDlg` / `ProdCommandHandler` | `PresetVectors`, `SnapshotKeepsFifth`; linked production preset checks. Dirty state/fifth slot are outside rollback. |
+| <a id="m09-ac07"></a>M09-AC07 / US04 | Given edits to colony A, when Next commits A then colony B is cancelled, then A remains committed and B restores its own prior state. | `Navigate`, `NavigationCommitsFirst`; §3.1.4 | Linked production A-commit/B-cancel and post-commit initialization-escape fixtures with explicit lookup/selection doubles. S06 now checks native read/write queue-copy effects; full logging/selection refinement remains E09-1. |
 | <a id="m09-ac08"></a>M09-AC08 / US05 | Given costs [10,100], availability [5,40] and no progress, when calculating partial progress, then the limit is 40%; charges use each dimension's integer paid difference. | `Progress`, `Charge`; `CBuildProdItem` | Vectors, `ChargeTelescopes`; full-loop refinement Open. |
 | <a id="m09-ac09"></a>M09-AC09 / US03, US05 | Given mineral-blocked automatic work without alchemy and no completed item, when classifying its outcome, then use NoneAuto; ordinary new partial progress yields BlockedDiff. | `Result`; `CBuildProdItem` | Vectors/source; auto-order combinations Open. |
 | <a id="m09-ac10"></a>M09-AC10 / US05 | Given spent construction cost and a subsequent object-creation rejection, when the host reports failure, then do not claim the cost was refunded. | E09-4; `Produce`, `FBuildObject` | [Actual Produce/builder fixtures](../tests/spec/check_host_production_source.py) retain charges after controlled rejection; [actual application fixtures](../tests/spec/check_construction_effects_source.py) now cover the exact 512-fleet failure branch with a full roster. The [actual eligibility integration](../tests/spec/check_construction_buildability_source.py) also composes the real checker, availability and catalog bodies through Produce for that post-charge failure. Saved-game failure regression and full object/helper refinement remain Open. |
@@ -468,7 +468,7 @@ All criteria below describe Observed behavior, including current limitations.
 | <a id="m09-ac13"></a>M09-AC13 / US03 | Given a custom slot, when cancelling its nested rename, then preserve the payload but set dirty; cancelling the outer customization restores only the first four slots. | `Edit`, `FinishCustom`, `DirtyAfterCustom`; `ZipProdDlg`, `ProductionDlg` | Checked vectors/general snapshot property and native fixtures; real modal integration remains Open. |
 | <a id="m09-ac14"></a>M09-AC14 / US03 | Given thirteen automatic rows interspersed with manual work, when copying to a preset, then retain the first twelve automatic rows; a shorter copy leaves inactive packed storage unchanged. | `Capture`, `CopyPolicy`, `CopyKeepsInactive`; `ZipProdDlg` | General suffix property plus native capture-limit/tail fixtures. |
 | <a id="m09-ac15"></a>M09-AC15 / US01, US03 | Given successful availability release followed by allocation escape, when production cleanup runs, then free the working queue/end the dialog and return FALSE without restoring research. | `AllocationEscape`, `AllocationRecovery`; `ChangeProduction` | Native injected-longjmp/recovery fixture and formal vectors; actual memory exhaustion is not simulated. |
-| <a id="m09-ac16"></a>M09-AC16 / US03 | Given an invalid or empty slot, when listing it, then show the automatic-orders placeholder; otherwise suppress quantity for alchemy or count 1, and escape name ampersands for radio labels. | `Display`, `Labels`, `EscapeLabel`; `FillZipProdLB`, `ZipProdDlg` | Formal and source-extracted label vectors; localized rendering and screen-reader qualification Open. |
+| <a id="m09-ac16"></a>M09-AC16 / US03 | Given an invalid or empty slot, when listing it, then show the automatic-orders placeholder; otherwise suppress quantity for alchemy or count 1, and escape name ampersands for radio labels. | `Display`, `Labels`, `EscapeLabel`; `FillZipProdLB`, `ZipProdDlg` | Formal and linked production label vectors; localized rendering and screen-reader qualification Open. |
 | <a id="m09-ac17"></a>M09-AC17 / US01 | Given current capabilities, when building availability, then preserve ship/base/planetary/automatic order and native count widths; defense amount 1024 becomes a present zero-count row. | `Catalog`, `Installation`; `InitProduction` | Checked catalogue size/row bounds and native ordering/trait/width fixtures; getter derivation/refinement remains explicit. |
 | <a id="m09-ac18"></a>M09-AC18 / US01 | Given an unavailable row followed by a count-10 factory row with availability 1, when sanitizing, then the moved active row may remain 10 while the old physical row becomes 1. Stop formal interpretation before any overlapping memcpy. | `Sanitize`; `InitProduction` | Formal/native defined-case witness and guarded overlap-range fixtures; no claimed runtime recovery or UI reproduction. |
 | <a id="m09-ac19"></a>M09-AC19 / US01 | Given selected row A followed by B, when adding C matching neither, then insert after A; matching B merges into B, and header selection inserts/merges at the start. | `Destination`, `Locate`, `Add`; `ProdCommandHandler` | Checked vectors and native header/selected/absent-selection cases. |
@@ -486,7 +486,7 @@ All criteria below describe Observed behavior, including current limitations.
 | <a id="m09-ac31"></a>M09-AC31 / US02 | Given a known four-word quote, nonzero single-item mode preserves it even for count zero; quantity mode multiplies all four dimensions modulo 2^32. | `Cost`, `Scale`, `ScaleIdentity` in [native costs](dafny/M09-costs.dfy); `GetProductionCosts`. | General scale properties, width witnesses and [source matrix](../tests/spec/check_production_cost_source.py); actual quote extraction remains E09-2. |
 | <a id="m09-ac32"></a>M09-AC32 / US02 | Given an existing same-hull base, subtract the signed bare-hull quote, then credit only paired occupied slots through the old base's slot bound in source order. | `Ship`, `Slots`; [design calculation](M09-production-costs.md#design-costs-and-ordered-base-credits). | Checked vector/monotonicity contracts and deterministic multi-slot source cases. Above-16 slot bounds are undefined-domain markers, not native errors. |
 | <a id="m09-ac33"></a>M09-AC33 / US02 | Given raw new/old totals 65535 on different base hulls, the native intermediate is 32767, while the unbounded scalar projection is 32768. | `ChangedHull`; native signed half-old/difference narrowing. | Formal witness and all-word changed-hull source cases; no replacement of stored design costs. |
-| <a id="m09-ac34"></a>M09-AC34 / US02 | Given paired slots, narrow signed quote products and the 3/7 or 2/8 factors before division; apply each unsigned credit without increasing the remaining total. | `SlotCost`, `Credit`, `NativeCreditEquivalent`, `Slots`; [source](../src/core/produce.c). | General native-credit equivalence and monotonic pass; 65,536-word × match/count matrices in [source fixtures](../tests/spec/check_production_cost_source.py). |
+| <a id="m09-ac34"></a>M09-AC34 / US02 | Given paired slots, narrow signed quote products and the 3/7 or 2/8 factors before division; apply each unsigned credit without increasing the remaining total. | `SlotCost`, `Credit`, `NativeCreditEquivalent`, `Slots`; [source](../src/core/produce.cpp). | General native-credit equivalence and monotonic pass; 65,536-word × match/count matrices in [source fixtures](../tests/spec/check_production_cost_source.py). |
 | <a id="m09-ac35"></a>M09-AC35 / US02 | Given different colony and pricing players, packet/Claim Adjuster behavior uses colony primary trait; factory/mine costs, Total Terraforming, Inner Strength and base ISB/AR use pricing-player data. | `Inputs`, `Planetary`, `Ship`; [context table](M09-production-costs.md#planetary-costs-and-player-contexts). | Native cross-player trait/tutorial matrix and source race accessors; live owner/pricing identities remain an adapter obligation. |
 | <a id="m09-ac36"></a>M09-AC36 / US02 | Given a free valid design, return four zeros before part quotation; invalid roster/current-base/slot accesses remain outside the defined native result domain. | `Ship`, native early return and explicit marker cases. | Formal index marker and native free-design/zero-quote fixtures; no new validation or error handling claimed. |
 | <a id="m09-ac37"></a>M09-AC37 / US02 | Given an unhandled item and an initialized output buffer, preserve those unit words and apply requested quantity; other nonfleet categories follow the same planetary switch. | `Planetary`, `Cost`; [quantity and observations](M09-production-costs.md#quantity-and-observations). | Native all-item/nonfleet cases and checked unknown-item vectors. Indeterminate input-buffer outcomes remain undefined. |
@@ -543,8 +543,8 @@ All criteria below describe Observed behavior, including current limitations.
 | E09-3 | Forecast copy preparation, full controller, native budget/query arithmetic, partial/row order, post-build state, output aliasing and cleanup now have checked contracts/native fixtures. M08/M19 now specify native capacity/resources/installations/growth and numeric handoffs. The full numeric mining/depletion/AR remote loop now has [M19 contracts](M19-mining-and-depletion.md); source/copied-state/helper frames, builder termination/refinement, pointer/heap frames and presentation remain open. GAP-15 copy extents and GAP-16 RNG/live-fleet/message effects are explicit. | M09/M08/M12/M19/S04/S06/S05; [forecast companion](M09-production-forecast.md) names each missing adapter and caller-context qualification. No global purity or end-to-end simulation claim. |
 | E09-4 | The complete CBuild numeric/control step relation now covers native caps, paid amounts, cumulative blocks, alchemy retries, partials and caller/status/message publication. Alchemy termination over declared game inputs, complete native helper/pointer/callback/object refinement, annual/planet loop state and failure frames remain open. Applied family algorithms and physical queue invalidation now have M19/M10/M09 contracts. Host entry/resource, manual validation, row removal/prepend and post-application routing now have checked caller contracts. | M09/M18/M19; [builder contract](M09-production-builder.md), checked transition/accounting properties and native differential vectors; [host execution companion](M09-production-execution.md), complete callback/Produce/FBuildObject state and real fleet-capacity/auto-policy integration scenarios. |
 
-Evidence: named functions above; [Continue workflow harness](../tests/compat/win32_client_startup.c)
-for ordinary production commit/cancel/reopen; [turn2 tests](../tests/unit/test_turn2.c)
+Evidence: named functions above; [Continue workflow harness](../tests/compat/win32_client_startup.cpp)
+for ordinary production commit/cancel/reopen; [turn2 tests](../tests/unit/test_turn2.cpp)
 for population-score timing, not a general production test suite; broad native
 regression and partial tutorial. Runtime results are recorded in the linked
 collection run, independently of formal proofs.

@@ -15,11 +15,11 @@ DISTRIBUTION = ("B" * 40, "Developer ID Application: Test (TEAM)")
 HEADER = '''#ifndef STARS_VERSION_H
 #define STARS_VERSION_H
 
-#define STARS_VERSION_MAJOR 2
-#define STARS_VERSION_MINOR 9
-#define STARS_VERSION_PATCH 0
-#define STARS_VERSION_BUILD 41
-#define STARS_VERSION_STRING "2.9.0-dev.41+g1234567.dirty"
+inline constexpr int STARS_VERSION_MAJOR = 2;
+inline constexpr int STARS_VERSION_MINOR = 9;
+inline constexpr int STARS_VERSION_PATCH = 0;
+inline constexpr int STARS_VERSION_BUILD = 41;
+inline constexpr char STARS_VERSION_STRING[] = "2.9.0-dev.41+g1234567.dirty";
 #endif
 '''
 

@@ -1,21 +1,31 @@
 #ifndef STARS_DECOMPILED_VCR_H
 #define STARS_DECOMPILED_VCR_H
 
-#include <stdint.h>
+#include "win.h"
+#include "battleviews.h"
+#include <cstdint>
+#include <optional>
 #include <windows.h>
 
-void             BattleVCR(int16_t iBattle);
-BTLDATA         *BtlDataGet(int16_t i);
-int32_t          CBattleUnits(BTLDATA *lpbd, BattleUnitFlags grbitBU);
-int32_t          CBattleKills(BTLDATA *lpbd, int16_t fOurDead);
-int32_t          LdpFromItokDv(int16_t itok, DV *lpdv);
-int16_t          SetVCRBoard(int16_t iStep);
-INT_PTR CALLBACK VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-void             GetVCRStats(int16_t itok, int32_t *pdpArmor, DV *pdv, int32_t *pdpShields, int16_t *pcsh);
-void             DrawVCR(HDC hdc, int16_t iStart, int16_t iEnd);
-void             Delay(int16_t ctick);
-void             AnimateAttack(HDC hdc);
-int16_t          PopupVCRMenu(HWND hwnd, int16_t x, int16_t y, uint8_t brc);
-void             EnableVCRButtons();
+struct VCRSTATS {
+    std::int32_t dpArmor;
+    DV dv;
+    std::int32_t dpShields;
+    std::int16_t csh;
+};
+
+void             BattleVCR(APPSESSION &app, std::int16_t iBattle);
+std::optional<NATIVEBATTLEDATAVIEW> BtlDataGet(APPSESSION &app, std::int16_t i);
+std::int32_t          CBattleUnits(APPSESSION &app, NATIVEBATTLEDATAVIEW bdv, BattleUnitFlags grbitBU);
+std::int32_t          CBattleKills(APPSESSION &app, NATIVEBATTLEDATAVIEW bdv, bool fOurDead);
+std::int32_t          LdpFromItokDv(APPSESSION &app, std::int16_t itok, DV dv);
+std::int16_t          SetVCRBoard(APPSESSION &app, std::int16_t iStep);
+INT_PTR  VCRDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+VCRSTATS         GetVCRStats(APPSESSION &app, std::int16_t itok);
+void             DrawVCR(APPSESSION &app, HDC hdc, std::int16_t iStart, std::int16_t iEnd);
+void             Delay(std::int16_t ctick);
+void             AnimateAttack(APPSESSION &app, HDC hdc);
+std::int16_t          PopupVCRMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::uint8_t brc);
+void             EnableVCRButtons(APPSESSION &app);
 
 #endif

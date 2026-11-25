@@ -1,14 +1,15 @@
 #ifndef STARS_DECOMPILED_RESEARCHUI_H
 #define STARS_DECOMPILED_RESEARCHUI_H
 
-#include <stdint.h>
+#include "win.h"
+#include <cstdint>
 #include <windows.h>
 
-INT_PTR CALLBACK ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-void             DrawResearchDlg(HWND hwnd, HDC hdc, RECT *prc, int16_t grbitDraw);
-int16_t          FTrackResearchDlg(HWND hwnd, int16_t x, int16_t y, int16_t fkb);
-INT_PTR CALLBACK BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT CALLBACK BrowserWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-void             DisplayComponentInfo(HDC hdc, int16_t dx, int16_t dy, PART *ppart);
+INT_PTR  ResearchDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+void             DrawResearchDlg(APPSESSION &app, HWND hwnd, HDC hdc, RECT *prc, std::int16_t grbitDraw);
+std::int16_t          FTrackResearchDlg(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t y, std::int16_t fkb);
+INT_PTR  BrowserDlg(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT  BrowserWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+void             DisplayComponentInfo(APPSESSION &app, HDC hdc, std::int16_t dx, std::int16_t dy, PART *ppart);
 
 #endif

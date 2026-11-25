@@ -48,7 +48,7 @@ def choose_identity(found, requested):
 
 
 def version_info(header):
-    values = dict(re.findall(r'^#define STARS_VERSION_(\w+)[ \t]+([^\r\n]+)$', header, re.M))
+    values = dict(re.findall(r'^inline constexpr (?:int|char) STARS_VERSION_(\w+)(?:\[\])? = ([^\r\n]+);$', header, re.M))
     try:
         major, minor, patch, build = [int(values[name]) for name in ("MAJOR", "MINOR", "PATCH", "BUILD")]
         text = values["STRING"].strip('"')

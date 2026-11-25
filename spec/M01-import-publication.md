@@ -17,7 +17,7 @@ ordinary control flow after admission and choice. Its `Later`, `ConflictReplace`
 replies. [Collection evidence](README.md#m01-import-publication-and-recovery)
 records executed checks. No game code, format, catalog or baseline is changed.
 
-Sources: [libraryui.c](../src/ui/libraryui.c) `FImportSubsequentTurn`,
+Sources: [libraryui.cpp](../src/ui/libraryui.cpp) `FImportSubsequentTurn`,
 `FReplaceConflictingLibraryTurn`, `FImportConflictingTurnAsCopy`,
 `FImportLibraryGame`, `FCopyNativeFileExclusive`, `FCopyNativeFileContents`,
 `FInspectImportFile`, `FCreateLibraryGameStage`, `FStageConflictingTurn`,
@@ -191,7 +191,7 @@ backend may not produce.
 Validation, recursive copy/backup/cleanup and native I/O are scripted providers;
 these cases establish controller behavior under their stated receipts, not full
 filesystem integration or C refinement of the complete helper family. Separately,
-48 additional cases execute extracted `FCopyNativeFileContents` and
+48 additional cases execute linked `FCopyNativeFileContents` and
 `FCopyNativeFileExclusive` over empty, one-byte and 8192-byte chunk boundaries,
 existing-target preservation with EEXIST, and missing sources. The first 15
 use ordinary stdio. Another 33 inject read/error/write/close/removal results into
@@ -199,7 +199,9 @@ the actual copy loop, checking retained byte prefixes, full-copy remnants,
 source preservation and errno restoration. These are scripted I/O failures;
 actual OS fault delivery and other native platforms remain qualification gaps.
 
-Remaining owners: M01/S01 family enumeration and exact validation fields; S04
+Remaining owners: M01/S01 complete family lexing, duplicate-member handling,
+enumeration/admission, BOF/record parsing and byte-to-inspection/probe-field mapping;
+M01 full host-orders, duplicate/rename/delete/export controllers and helper composition; S04
 native path aliases, copy/write/close/delete/rename failures and concurrent/crash
 qualification; M06 pending-session reloading and save handoffs; M01/S05 native
 UI and recovery-path discoverability. GAP-09 retains the wider M02/M05/M06/M17/M18

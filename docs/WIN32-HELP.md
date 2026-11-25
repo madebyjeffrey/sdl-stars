@@ -22,7 +22,7 @@ error; unsupported commands/names, missing or invalid assets, failed export and
 launcher failures also return errors. Desktop launch acceptance does not prove
 page rendering.
 
-Current [adapter tests](../tests/compat/win32_help.c) capture launches and cover
+Current [adapter tests](../tests/compat/win32_help.cpp) capture launches and cover
 the generated numeric mappings, contents, Unicode paths, rejected filenames,
 missing assets, corrupt stamp/HTML bundle and launch failures. See
 [M16](../spec/M16-tutorial-and-help.md) for the source-backed workflow, model

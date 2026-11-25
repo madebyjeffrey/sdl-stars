@@ -90,7 +90,7 @@ module M04Race {
     fCredentials: bool,fSave: bool): Exit
     requires 0<=page<6
   {
-    if fReadOnly then Stay(page) else if points<0 then Stay(page)
+    if fReadOnly then Failure else if points<0 then Stay(page)
     else if !fCredentials then Stay(0) else if fDontWrite then Success(false)
     else if !fSave then Stay(0) else Success(true)
   }
@@ -127,6 +127,7 @@ module M04Race {
     assert FAxis(Axis(10,10,11),true);
     assert FAxis(Axis(10,10,10),false) && !FAxis(Axis(10,10,10),true);
     assert Finish(4,false,true,0,true,false)==Success(false);
+    assert Finish(4,true,true,0,true,true)==Failure;
     assert Finish(4,false,false,-1,true,true)==Stay(4);
     assert Finish(4,false,false,0,false,true)==Stay(0);
   }

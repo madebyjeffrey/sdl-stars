@@ -1,0 +1,483 @@
+import schema
+import prt
+import lrt
+
+(* Habitat coordinates use the source's integer 0..100 scale. Immunity is
+   explicit; no physical-unit approximation is used in calculations. *)
+type HabitatAxis = {
+  lower: integer;
+  preferred: integer;
+  upper: integer;
+  require (self.lower = -1 && self.preferred = -1 && self.upper = -1)
+    || (self.lower >= 0 && self.upper <= 100 && self.lower < self.preferred
+        && self.preferred < self.upper
+        && self.preferred = self.lower + (self.upper - self.lower) / 2);
+  derive immune: bool = self.lower = -1;
+}
+type Habitability = {
+  gravity: HabitatAxis;
+  temperature: HabitatAxis;
+  radiation: HabitatAxis;
+}
+type Economy = {
+  population_divisor: integer;
+  factory_output: integer;
+  factory_cost: integer;
+  factory_operation: integer;
+  mine_output: integer;
+  mine_cost: integer;
+  mine_operation: integer;
+  require self.population_divisor >= 7 && self.population_divisor <= 25;
+  require self.factory_output >= 5 && self.factory_output <= 15;
+  require self.factory_cost >= 5 && self.factory_cost <= 25;
+  require self.factory_operation >= 5 && self.factory_operation <= 25;
+  require self.mine_output >= 5 && self.mine_output <= 25;
+  require self.mine_cost >= 2 && self.mine_cost <= 15;
+  require self.mine_operation >= 5 && self.mine_operation <= 25;
+}
+type TechVector = {
+  energy: integer; weapons: integer; propulsion: integer;
+  construction: integer; electronics: integer; biotechnology: integer;
+  require self.energy >= 0 && self.weapons >= 0 && self.propulsion >= 0
+    && self.construction >= 0 && self.electronics >= 0 && self.biotechnology >= 0;
+  derive total: integer = self.energy + self.weapons + self.propulsion
+    + self.construction + self.electronics + self.biotechnology;
+}
+type ResearchPreferences = {
+  costs: TechVector;
+  allocation_percent: integer;
+  require self.costs.energy <= 2 && self.costs.weapons <= 2 && self.costs.propulsion <= 2
+    && self.costs.construction <= 2 && self.costs.electronics <= 2 && self.costs.biotechnology <= 2;
+  require self.allocation_percent >= 0 && self.allocation_percent <= 100;
+}
+type DesignSettings = {
+  source_index: integer;
+  portrait: integer;
+  selected_growth: integer;
+  leftover_allocation: integer;
+  require self.portrait >= 0 && self.portrait <= 31;
+  require self.selected_growth >= 1 && self.selected_growth <= 20;
+  require self.leftover_allocation >= 0 && self.leftover_allocation <= 6;
+}
+(* Each selectable design property has its own component. Aggregates below
+   are read-only views for calculations, assembled from these independent choices. *)
+component GravityTolerance { range: HabitatAxis; }
+component TemperatureTolerance { range: HabitatAxis; }
+component RadiationTolerance { range: HabitatAxis; }
+component PopulationResourceDivisor: integer { require self >= 7 && self <= 25 }
+component FactoryOutput: integer { require self >= 5 && self <= 15 }
+component FactoryCost: integer { require self >= 5 && self <= 25 }
+component FactoryOperationLimit: integer { require self >= 5 && self <= 25 }
+component MineOutput: integer { require self >= 5 && self <= 25 }
+component MineCost: integer { require self >= 2 && self <= 15 }
+component MineOperationLimit: integer { require self >= 5 && self <= 25 }
+component SelectedGrowth: integer { require self >= 1 && self <= 20 }
+component Portrait: integer { require self >= 0 && self <= 31 }
+component LeftoverAllocation: integer { require self >= 0 && self <= 6 }
+component ResearchAllocationPercent: integer { require self >= 0 && self <= 100 }
+component EnergyResearchCost: integer { require self >= 0 && self <= 2 }
+component WeaponsResearchCost: integer { require self >= 0 && self <= 2 }
+component PropulsionResearchCost: integer { require self >= 0 && self <= 2 }
+component ConstructionResearchCost: integer { require self >= 0 && self <= 2 }
+component ElectronicsResearchCost: integer { require self >= 0 && self <= 2 }
+component BiotechnologyResearchCost: integer { require self >= 0 && self <= 2 }
+
+component HigherStartingTechnology {}
+component CheaperFactories {}
+trait higher_starting_technology { provides HigherStartingTechnology }
+trait cheaper_factories { provides CheaperFactories }
+trait standard_capacity { provides CarryingCapacity = 1_000_000 }
+
+object type Race = {
+  requires one GravityTolerance
+  requires one TemperatureTolerance
+  requires one RadiationTolerance
+  requires one PopulationResourceDivisor
+  requires one FactoryOutput
+  requires one FactoryCost
+  requires one FactoryOperationLimit
+  requires one MineOutput
+  requires one MineCost
+  requires one MineOperationLimit
+  requires one SelectedGrowth
+  requires one Portrait
+  requires one LeftoverAllocation
+  requires one ResearchAllocationPercent
+  requires one EnergyResearchCost
+  requires one WeaponsResearchCost
+  requires one PropulsionResearchCost
+  requires one ConstructionResearchCost
+  requires one ElectronicsResearchCost
+  requires one BiotechnologyResearchCost
+  requires one PrimaryRacialTrait
+  allows many SecondaryRacialTrait
+  requires one CarryingCapacity
+  requires one GrowthRate
+  allows one HigherStartingTechnology
+  allows one CheaperFactories
+  name: string;
+  plural_name: string;
+  source_index: integer = -1;
+  derive RaceIdentity: RaceIdentity = RaceIdentity {
+    singularName = self.name; pluralName = self.plural_name; sigil = self.Portrait;
+  };
+  derive DesignSettings: DesignSettings = DesignSettings {
+    source_index = self.source_index; portrait = self.Portrait;
+    selected_growth = self.SelectedGrowth; leftover_allocation = self.LeftoverAllocation;
+  };
+  derive Habitability: Habitability = Habitability {
+    gravity = self.GravityTolerance.range;
+    temperature = self.TemperatureTolerance.range;
+    radiation = self.RadiationTolerance.range;
+  };
+  derive Economy: Economy = Economy {
+    population_divisor = self.PopulationResourceDivisor;
+    factory_output = self.FactoryOutput; factory_cost = self.FactoryCost;
+    factory_operation = self.FactoryOperationLimit;
+    mine_output = self.MineOutput; mine_cost = self.MineCost;
+    mine_operation = self.MineOperationLimit;
+  };
+  derive ResearchPreferences: ResearchPreferences = ResearchPreferences {
+    costs = {
+      energy = self.EnergyResearchCost; weapons = self.WeaponsResearchCost;
+      propulsion = self.PropulsionResearchCost; construction = self.ConstructionResearchCost;
+      electronics = self.ElectronicsResearchCost; biotechnology = self.BiotechnologyResearchCost;
+    };
+    allocation_percent = self.ResearchAllocationPercent;
+  };
+  derive prt_id: integer = self.PrimaryRacialTrait.source_id;
+  derive ife: bool = Set.contains (LrtImprovedFuelEfficiency {}) self.SecondaryRacialTrait;
+  derive tt: bool = Set.contains (LrtTotalTerraforming {}) self.SecondaryRacialTrait;
+  derive arm: bool = Set.contains (LrtAdvancedRemoteMining {}) self.SecondaryRacialTrait;
+  derive isb: bool = Set.contains (LrtImprovedStarbases {}) self.SecondaryRacialTrait;
+  derive gr: bool = Set.contains (LrtGeneralizedResearch {}) self.SecondaryRacialTrait;
+  derive ur: bool = Set.contains (LrtUltimateRecycling {}) self.SecondaryRacialTrait;
+  derive ma: bool = Set.contains (LrtMineralAlchemy {}) self.SecondaryRacialTrait;
+  derive nrse: bool = Set.contains (LrtNoRamScoopEngines {}) self.SecondaryRacialTrait;
+  derive ce: bool = Set.contains (LrtCheapEngines {}) self.SecondaryRacialTrait;
+  derive obrm: bool = Set.contains (LrtOnlyBasicRemoteMining {}) self.SecondaryRacialTrait;
+  derive nas: bool = Set.contains (LrtNoAdvancedScanners {}) self.SecondaryRacialTrait;
+  derive lsp: bool = Set.contains (LrtLowStartingPopulation {}) self.SecondaryRacialTrait;
+  derive bet: bool = Set.contains (LrtBleedingEdgeTechnology {}) self.SecondaryRacialTrait;
+  derive rs: bool = Set.contains (LrtRegeneratingShields {}) self.SecondaryRacialTrait;
+  derive cheap_factories: bool = self.CheaperFactories != none;
+  derive higher_starting_tech: bool = self.HigherStartingTechnology != none;
+  derive lrt_mask: integer = (if self.ife then 1 else 0)
+    + (if self.tt then 2 else 0)
+    + (if self.arm then 4 else 0)
+    + (if self.isb then 8 else 0)
+    + (if self.gr then 16 else 0)
+    + (if self.ur then 32 else 0)
+    + (if self.ma then 64 else 0)
+    + (if self.nrse then 128 else 0)
+    + (if self.ce then 256 else 0)
+    + (if self.obrm then 512 else 0)
+    + (if self.nas then 1024 else 0)
+    + (if self.lsp then 2048 else 0)
+    + (if self.bet then 4096 else 0)
+    + (if self.rs then 8192 else 0);
+  derive lrt_count: integer = (if self.ife then 1 else 0)
+    + (if self.tt then 1 else 0)
+    + (if self.arm then 1 else 0)
+    + (if self.isb then 1 else 0)
+    + (if self.gr then 1 else 0)
+    + (if self.ur then 1 else 0)
+    + (if self.ma then 1 else 0)
+    + (if self.nrse then 1 else 0)
+    + (if self.ce then 1 else 0)
+    + (if self.obrm then 1 else 0)
+    + (if self.nas then 1 else 0)
+    + (if self.lsp then 1 else 0)
+    + (if self.bet then 1 else 0)
+    + (if self.rs then 1 else 0);
+  derive lrt_adjustment: integer = (if self.ife then -235 else 0)
+    + (if self.tt then -25 else 0)
+    + (if self.arm then -159 else 0)
+    + (if self.isb then -201 else 0)
+    + (if self.gr then 40 else 0)
+    + (if self.ur then -240 else 0)
+    + (if self.ma then -155 else 0)
+    + (if self.nrse then 160 else 0)
+    + (if self.ce then 240 else 0)
+    + (if self.obrm then 255 else 0)
+    + (if self.nas then 325 else 0)
+    + (if self.lsp then 180 else 0)
+    + (if self.bet then 70 else 0)
+    + (if self.rs then 30 else 0);
+  derive lrt_positive_count: integer = (if self.gr then 1 else 0)
+    + (if self.nrse then 1 else 0)
+    + (if self.ce then 1 else 0)
+    + (if self.obrm then 1 else 0)
+    + (if self.nas then 1 else 0)
+    + (if self.lsp then 1 else 0)
+    + (if self.bet then 1 else 0)
+    + (if self.rs then 1 else 0);
+  derive lrt_negative_count: integer = self.lrt_count - self.lrt_positive_count;
+  derive flag_mask: integer = self.lrt_mask + (if self.higher_starting_tech then 536870912 else 0) + (if self.cheap_factories then 2147483648 else 0);
+  derive effective_growth_percent: integer = self.DesignSettings.selected_growth * (if self.prt_id = 0 then 2 else 1);
+  derive points: integer = (WizardPricing { race = self; }).advantage_points;
+  require abs (self.GrowthRate - real self.effective_growth_percent / 100.0) < 0.000000001;
+}
+
+(* The Random preset is a request to CreateRandomRace, not a seventh fixed PRT.
+   Keep its seed parameters inspectable without presenting them as final rules. *)
+object type RandomRaceTemplate = {
+  requires one GravityTolerance
+  requires one TemperatureTolerance
+  requires one RadiationTolerance
+  requires one PopulationResourceDivisor
+  requires one FactoryOutput
+  requires one FactoryCost
+  requires one FactoryOperationLimit
+  requires one MineOutput
+  requires one MineCost
+  requires one MineOperationLimit
+  requires one SelectedGrowth
+  requires one Portrait
+  requires one LeftoverAllocation
+  requires one ResearchAllocationPercent
+  requires one EnergyResearchCost
+  requires one WeaponsResearchCost
+  requires one PropulsionResearchCost
+  requires one ConstructionResearchCost
+  requires one ElectronicsResearchCost
+  requires one BiotechnologyResearchCost
+  name: string;
+  plural_name: string;
+  source_index: integer = -1;
+  derive RaceIdentity: RaceIdentity = RaceIdentity {
+    singularName = self.name; pluralName = self.plural_name; sigil = self.Portrait;
+  };
+  derive DesignSettings: DesignSettings = DesignSettings {
+    source_index = self.source_index; portrait = self.Portrait;
+    selected_growth = self.SelectedGrowth; leftover_allocation = self.LeftoverAllocation;
+  };
+  derive Habitability: Habitability = Habitability {
+    gravity = self.GravityTolerance.range;
+    temperature = self.TemperatureTolerance.range;
+    radiation = self.RadiationTolerance.range;
+  };
+  derive Economy: Economy = Economy {
+    population_divisor = self.PopulationResourceDivisor;
+    factory_output = self.FactoryOutput; factory_cost = self.FactoryCost;
+    factory_operation = self.FactoryOperationLimit;
+    mine_output = self.MineOutput; mine_cost = self.MineCost;
+    mine_operation = self.MineOperationLimit;
+  };
+  derive ResearchPreferences: ResearchPreferences = ResearchPreferences {
+    costs = {
+      energy = self.EnergyResearchCost; weapons = self.WeaponsResearchCost;
+      propulsion = self.PropulsionResearchCost; construction = self.ConstructionResearchCost;
+      electronics = self.ElectronicsResearchCost; biotechnology = self.BiotechnologyResearchCost;
+    };
+    allocation_percent = self.ResearchAllocationPercent;
+  };
+  derive flag_mask: integer = 1073741824;
+  derive placeholder_prt_id: integer = 0;
+  derive generate_before_play: bool = true;
+  derive maximum_mutation_attempts: integer = 251;
+  derive fallback_check_number: integer = 252;
+  derive fallback: string = "Humanoid, preserving the incoming singular name";
+}
+
+(* Shared habitat and pricing definitions live with Race so importing one
+   design includes its points calculation without a circular module import. *)
+(* planet.cpp:380. Each axis carries the incoming integer modifier so rounding
+   happens after EACH axis, in gravity/temperature/radiation order. *)
+type HabitatEvaluation = {
+  tolerance: HabitatAxis;
+  environment: integer;
+  modifier: integer = 10000;
+  require self.environment >= 0 && self.environment <= 100;
+  derive distance: integer = abs (self.environment - self.tolerance.preferred);
+  derive side: integer = if self.environment < self.tolerance.preferred
+    then self.tolerance.preferred - self.tolerance.lower
+    else self.tolerance.upper - self.tolerance.preferred;
+  derive red: integer = if self.tolerance.immune then 0
+    else max 0 (min 15 (max (self.tolerance.lower - self.environment) (self.environment - self.tolerance.upper)));
+  derive positive: integer = if self.tolerance.immune then 10000 else if self.red > 0 then 0
+    else let v = 100 - 100 * self.distance / self.side in v * v;
+  derive next_modifier: integer =
+    if self.tolerance.immune || self.red > 0 || 2 * self.distance <= self.side then self.modifier
+    else self.modifier * (3 * self.side - 2 * self.distance) / (2 * self.side);
+}
+type PlanetHabitat = {
+  race: Race;
+  gravity: integer;
+  temperature: integer;
+  radiation: integer;
+  derive g: HabitatEvaluation = HabitatEvaluation { tolerance = self.race.Habitability.gravity; environment = self.gravity; };
+  derive t: HabitatEvaluation = HabitatEvaluation { tolerance = self.race.Habitability.temperature; environment = self.temperature; modifier = self.g.next_modifier; };
+  derive r: HabitatEvaluation = HabitatEvaluation { tolerance = self.race.Habitability.radiation; environment = self.radiation; modifier = self.t.next_modifier; };
+  derive percent: integer =
+    let red = self.g.red + self.t.red + self.r.red in
+    if red > 0 then -red else
+    int (sqrt (real (self.g.positive + self.t.positive + self.r.positive) / 3.0) + 0.9) * self.r.next_modifier / 10000;
+}
+
+(* race.cpp:337. Eleven indexed samples preserve duplicate coordinates and
+   the source's ordered integer radiation / binary64 temperature/gravity sums. *)
+object type HabitatSampleIndex = { index: integer; }
+object type HabitatStage = { index: integer; weight: integer; }
+type HabitatSampleAxis = {
+  tolerance: HabitatAxis;
+  allowance: integer;
+  index: integer;
+  derive base: integer = if self.tolerance.immune then 50 else max 0 (self.tolerance.lower - self.allowance);
+  derive span: integer = if self.tolerance.immune then 11 else min 100 (self.tolerance.upper + self.allowance) - self.base;
+  derive raw: integer = if self.tolerance.immune then 50 else self.base + self.index * self.span / 10;
+  derive residual: integer = if self.allowance = 0 || self.tolerance.immune then 0 else
+    let d = self.tolerance.preferred - self.raw in
+    if abs d <= self.allowance then 0 else if d < 0 then d + self.allowance else d - self.allowance;
+  derive environment: integer = if self.allowance = 0 || self.tolerance.immune then self.raw else self.tolerance.preferred - self.residual;
+}
+type HabitatIntegralRow = {
+  race: Race;
+  allowance: integer;
+  weight: integer;
+  gravity: HabitatSampleAxis;
+  temperature: HabitatSampleAxis;
+  derive sum: integer = List.sum (query {
+    from k: HabitatSampleIndex
+    where not self.race.Habitability.radiation.immune || k.index = 0
+    order by k.index ascending
+    select
+      let r = HabitatSampleAxis { tolerance = self.race.Habitability.radiation; allowance = self.allowance; index = k.index; } in
+      let d = (PlanetHabitat { race = self.race; gravity = self.gravity.environment; temperature = self.temperature.environment; radiation = r.environment; }).percent in
+      let residual = self.gravity.residual + self.temperature.residual + r.residual in
+      let d = if residual > self.allowance then max 0 (d - (residual - self.allowance)) else d in
+      self.weight * d * d
+  });
+  derive scaled: integer = let r = HabitatSampleAxis { tolerance = self.race.Habitability.radiation; allowance = self.allowance; index = 0; } in
+    if self.race.Habitability.radiation.immune then self.sum * 11 else self.sum * r.span / 100;
+}
+type HabitatIntegralPlane = {
+  race: Race;
+  allowance: integer;
+  weight: integer;
+  gravity: HabitatSampleAxis;
+  derive sum: real = List.sum (query {
+    from j: HabitatSampleIndex
+    where not self.race.Habitability.temperature.immune || j.index = 0
+    order by j.index ascending
+    select real (HabitatIntegralRow { race = self.race; allowance = self.allowance; weight = self.weight;
+      gravity = self.gravity;
+      temperature = HabitatSampleAxis { tolerance = self.race.Habitability.temperature; allowance = self.allowance; index = j.index; };
+    }).scaled
+  });
+  derive scaled: real = let t = HabitatSampleAxis { tolerance = self.race.Habitability.temperature; allowance = self.allowance; index = 0; } in
+    if self.race.Habitability.temperature.immune then self.sum * 11.0 else self.sum * real t.span / 100.0;
+}
+type HabitatIntegralStage = {
+  race: Race;
+  allowance: integer;
+  weight: integer;
+  derive sum: real = List.sum (query {
+    from i: HabitatSampleIndex
+    where not self.race.Habitability.gravity.immune || i.index = 0
+    order by i.index ascending
+    select (HabitatIntegralPlane { race = self.race; allowance = self.allowance; weight = self.weight;
+      gravity = HabitatSampleAxis { tolerance = self.race.Habitability.gravity; allowance = self.allowance; index = i.index; };
+    }).scaled
+  });
+  derive scaled: real = let g = HabitatSampleAxis { tolerance = self.race.Habitability.gravity; allowance = self.allowance; index = 0; } in
+    if self.race.Habitability.gravity.immune then self.sum * 11.0 else self.sum * real g.span / 100.0;
+}
+type IntegratedHabitability = {
+  race: Race;
+  derive integral: real = List.sum (query {
+    from s: HabitatStage
+    order by s.index ascending
+    select (HabitatIntegralStage { race = self.race; weight = s.weight;
+      allowance = if s.index = 0 then 0 else if s.index = 1 then (if self.race.tt then 8 else 5) else (if self.race.tt then 17 else 15);
+    }).scaled
+  });
+  derive innate: integer = int (self.integral / 10.0 + 0.5);
+}
+
+(* race.cpp:105. Only valid, normalized inputs enter Race. No per-term
+   display rounding; the final signed-16 conversion follows division by three. *)
+type WizardPricing = {
+  race: Race;
+  derive innate: integer = (IntegratedHabitability { race = self.race; }).innate;
+  derive immune_count: integer = (if self.race.Habitability.gravity.immune then 1 else 0)
+    + (if self.race.Habitability.temperature.immune then 1 else 0)
+    + (if self.race.Habitability.radiation.immune then 1 else 0);
+  derive growth_credit: integer = let g = self.race.DesignSettings.selected_growth in
+    if g <= 5 then (6 - g) * 4200 else if g = 6 then 3600 else if g = 7 then 2250
+    else if g = 8 then 600 else if g = 9 then 225 else 0;
+  derive spread: integer = let g = self.race.DesignSettings.selected_growth in
+    if g <= 5 then g else if g <= 13 then 2 * (g - 5) + 5 else if g < 20 then 3 * (g - 13) + 21 else 45;
+  derive habitat_charge: integer = (self.innate / 2000) * self.spread / 24;
+  derive center_credit: integer =
+    (if self.race.Habitability.gravity.immune then 0 else 4 * abs (self.race.Habitability.gravity.preferred - 50))
+    + (if self.race.Habitability.temperature.immune then 0 else 4 * abs (self.race.Habitability.temperature.preferred - 50))
+    + (if self.race.Habitability.radiation.immune then 0 else 4 * abs (self.race.Habitability.radiation.preferred - 50));
+  derive factory_growth_charge: integer = let e = self.race.Economy in
+    if e.factory_operation <= 10 && e.factory_output <= 10 then 0 else
+    max 1 (e.factory_operation - 9) * max 1 (e.factory_output - 9)
+      * (if self.race.prt_id = 0 then 3 else 2) * self.race.DesignSettings.selected_growth / (if self.immune_count >= 2 then 2 else 9);
+  derive population_adjustment: integer = let e = self.race.Economy.population_divisor in
+    if e = 7 then -2400 else if e = 8 then -1260 else if e = 9 then -600 else max 0 ((e - 10) * 120);
+  derive factory_adjustment: integer = let e = self.race.Economy in
+    let a = 10 - e.factory_output in let b = 10 - e.factory_cost in let c = 10 - e.factory_operation in
+    let q = (if a > 0 then 100 * a else 121 * a) + (if b < 0 then -55 * b else -60 * b * b)
+      + (if c > 0 then 40 * c else 35 * c) in
+    let q = if q > 700 then 700 + (q - 700) / 3 else q in
+    q - (if c <= -7 && c >= -11 then (-6 - c) * 30 else if c <= -12 && c >= -14 then (-12 - c) * 45 + 225 else if c <= -15 then 360 else 0)
+      - (if a <= -3 then (-2 - a) * 60 else 0) - (if self.race.cheap_factories then 175 else 0);
+  derive mine_adjustment: integer = let e = self.race.Economy in
+    let a = 10 - e.mine_output in let b = 3 - e.mine_cost in let c = 10 - e.mine_operation in
+    (if a > 0 then 100 * a else 169 * a) + (if b <= 0 then -65 * b + 80 else -360) + (if c > 0 then 40 * c else 35 * c);
+  derive lrt_count_charge: integer = let n = self.race.lrt_count in let p = self.race.lrt_positive_count in let m = self.race.lrt_negative_count in
+    (if n > 4 then 10 * n * (n - 4) else 0) + max 0 (60 * (p - m - 3)) + max 0 (40 * (m - p - 3));
+  derive nas_charge: integer = if not self.race.nas then 0 else if self.race.prt_id = 6 then 280 else if self.race.prt_id = 1 then 200 else if self.race.prt_id = 9 then 40 else 0;
+  derive research_adjustment: integer = let n = self.race.ResearchPreferences.costs.total - 6 in
+    if n > 0 then -130 * n * n + (if n = 6 then 1430 else if n = 5 then 520 else 0)
+    else if n = 0 then 0 else
+      (if n = -1 then 150 else if n = -2 then 330 else if n = -3 then 540 else if n = -4 then 780 else if n = -5 then 1050 else 1380)
+        - (if n < -4 && self.race.Economy.population_divisor < 10 then 190 else 0);
+  derive internal_points: integer = 1650 + self.growth_credit - self.habitat_charge + self.center_credit
+    - (if self.immune_count > 1 then 150 else 0) - self.factory_growth_charge + self.population_adjustment
+    + (if self.race.prt_id = 8 then 210 else self.factory_adjustment + self.mine_adjustment)
+    - self.race.PrimaryRacialTrait.base_points + self.race.lrt_adjustment - self.lrt_count_charge - self.nas_charge
+    + self.research_adjustment - (if self.race.higher_starting_tech then 180 else 0)
+    - (if self.race.prt_id = 8 && self.race.ResearchPreferences.costs.energy = 2 then 100 else 0);
+  derive advantage_points: integer = let n = self.internal_points / 3 in ((n + 32768) % 65536 + 65536) % 65536 - 32768;
+}
+
+(* DrawRace2 display estimate has inclusive weighted G/T and a width-only R.
+   This closed-form prefix sum equals the source's small integer loop. *)
+type HabitatWeightPrefix = {
+  coordinate: integer;
+  derive sum: integer = if self.coordinate < 0 then 0 else if self.coordinate < 10 then self.coordinate * (self.coordinate + 1) / 2
+    else if self.coordinate < 90 then 45 + 10 * (self.coordinate - 9)
+    else let n = self.coordinate - 89 in 845 + 11 * n - n * (n + 1) / 2;
+}
+type HabitablePlanetEstimate = {
+  race: Race;
+  derive gravity_weight: integer = if self.race.Habitability.gravity.immune then 900 else
+    (HabitatWeightPrefix { coordinate = self.race.Habitability.gravity.upper; }).sum
+      - (HabitatWeightPrefix { coordinate = self.race.Habitability.gravity.lower - 1; }).sum;
+  derive temperature_weight: integer = if self.race.Habitability.temperature.immune then 900 else
+    (HabitatWeightPrefix { coordinate = self.race.Habitability.temperature.upper; }).sum
+      - (HabitatWeightPrefix { coordinate = self.race.Habitability.temperature.lower - 1; }).sum;
+  derive gravity_factor: integer = if self.race.Habitability.gravity.immune || self.race.Habitability.gravity.upper - self.race.Habitability.gravity.lower = 100 then 100 else self.gravity_weight / 9;
+  derive gt_factor: integer = if self.race.Habitability.temperature.immune || self.race.Habitability.temperature.upper - self.race.Habitability.temperature.lower = 100 then self.gravity_factor * 100 else self.gravity_factor * self.temperature_weight / 9;
+  derive product: integer = max 1 (self.gt_factor * (if self.race.Habitability.radiation.immune then 100 else self.race.Habitability.radiation.upper - self.race.Habitability.radiation.lower));
+  derive one_in: integer = (1000000 + self.product / 2) / self.product;
+}
+HabitatSampleIndex habitat_sample_00 = { index = 0; }
+HabitatSampleIndex habitat_sample_01 = { index = 1; }
+HabitatSampleIndex habitat_sample_02 = { index = 2; }
+HabitatSampleIndex habitat_sample_03 = { index = 3; }
+HabitatSampleIndex habitat_sample_04 = { index = 4; }
+HabitatSampleIndex habitat_sample_05 = { index = 5; }
+HabitatSampleIndex habitat_sample_06 = { index = 6; }
+HabitatSampleIndex habitat_sample_07 = { index = 7; }
+HabitatSampleIndex habitat_sample_08 = { index = 8; }
+HabitatSampleIndex habitat_sample_09 = { index = 9; }
+HabitatSampleIndex habitat_sample_10 = { index = 10; }
+HabitatStage habitat_stage_0 = { index = 0; weight = 7; }
+HabitatStage habitat_stage_1 = { index = 1; weight = 5; }
+HabitatStage habitat_stage_2 = { index = 2; weight = 6; }

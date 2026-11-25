@@ -14,6 +14,25 @@ def files(directory, metadata=True):
             if p.is_file() and (metadata or p.name != '.library')}
 
 
+def exportable(snapshot):
+    return {p: data for p, data in snapshot.items()
+            if p != Path('.library') and 'save-transactions' not in p.parts}
+
+
+def check_export(directory, expected):
+    assert not list(directory.rglob('save-transactions'))
+    assert files(directory) == expected
+
+
+def check_zip_export(path, expected):
+    with zipfile.ZipFile(path) as archive:
+        members = archive.infolist()
+        paths = [Path(member.filename) for member in members]
+        assert all('save-transactions' not in relative.parts for relative in paths)
+        assert len(paths) == len(set(paths))
+        assert {relative: archive.read(member) for relative, member in zip(paths, members)} == expected
+
+
 def main():
     executable = Path(sys.argv[1]).resolve()
     fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai2/checkpoints/000'
@@ -38,10 +57,15 @@ def main():
         # callback; the real window message performs the copy.
         parent = work / 'export'
         parent.mkdir()
+        # Exercise the export boundary even on builds that create locks lazily.
+        for root in (managed, managed / 'backup.000'):
+            control = root / 'save-transactions/managed-copy'
+            control.mkdir(parents=True, exist_ok=True)
+            (control / 'lock').touch(exist_ok=True)
         before = files(managed)
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(parent))
         exported = parent / 'managed-copy'
-        assert files(exported) == {p: data for p, data in before.items() if p.name != '.library'}
+        check_export(exported, exportable(before))
         assert files(managed) == before
 
         # Canceling the chooser must not save a dirty loaded game or publish
@@ -62,7 +86,7 @@ def main():
             STARS_CLIENT_EXPORT_ACTION='save', STARS_CLIENT_EXPORT_RESEARCH='4')
         saved = saved_parent / 'managed-copy'
         assert (managed / 'managed-copy.x1').is_file() and (managed / 'managed-copy.h1').is_file()
-        assert files(saved) == files(managed, metadata=False)
+        check_export(saved, exportable(files(managed)))
         assert not ((saved / 'managed-copy.x1').read_bytes()[17] & 1)
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(saved_parent),
             STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_RESEARCH='4',
@@ -93,7 +117,8 @@ def main():
         assert all((submitted / ('managed-copy' + ext)).is_file()
                    for ext in ('.xy', '.hst', '.m1', '.m2', '.x1', '.x2', '.h1', '.h2'))
         assert (submitted / 'backup.000/managed-copy.m1').read_bytes() == (backup / 'exchange.m1').read_bytes()
-        assert files(submitted) == files(managed, metadata=False)
+        submitted_files = exportable(files(managed))
+        check_export(submitted, submitted_files)
         # RTBOF's submitted flag is bit 8 at offset 0x0e after its record header.
         assert (submitted / 'managed-copy.x2').read_bytes()[17] & 1
         for player, research in ((0, 4), (1, 5)):
@@ -108,7 +133,7 @@ def main():
         before = files(managed, metadata=False)
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(discarded_parent),
             STARS_CLIENT_EXPORT_ACTION='discard', STARS_CLIENT_EXPORT_RESEARCH='2')
-        assert files(discarded_parent / 'managed-copy') == before
+        check_export(discarded_parent / 'managed-copy', exportable(before))
         assert files(managed, metadata=False) == before
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(discarded_parent),
             STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_RESEARCH='4',
@@ -162,7 +187,7 @@ def main():
         reimport_work = work / 'reimport'
         run(executable, reimport_work, STARS_CLIENT_IMPORT_SOURCE=str(submitted), STARS_CLIENT_IMPORT_NAME='managed-copy')
         reimported = reimport_work / 'library/Games/managed-copy'
-        assert files(reimported, metadata=False) == files(submitted)
+        assert exportable(files(reimported)) == submitted_files
         for player, research in ((0, 4), (1, 5)):
             run(executable, reimport_work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_PARENT=str(submitted_parent),
                 STARS_CLIENT_EXPORT_ACTION='verify', STARS_CLIENT_EXPORT_PLAYER=str(player),
@@ -172,12 +197,11 @@ def main():
         # importing it uses the same validation and managed-game workflow.
         zip_path = work / 'managed-copy.zip'
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(zip_path))
-        with zipfile.ZipFile(zip_path) as archive:
-            assert {Path(name): archive.read(name) for name in archive.namelist()} == files(managed, metadata=False)
+        check_zip_export(zip_path, exportable(files(managed)))
         zip_reimport_work = work / 'zip-reimport'
         run(executable, zip_reimport_work, STARS_CLIENT_IMPORT_SOURCE=str(zip_path), STARS_CLIENT_IMPORT_NAME='managed-copy')
         zip_reimported = zip_reimport_work / 'library/Games/managed-copy'
-        assert files(zip_reimported, metadata=False) == files(managed, metadata=False)
+        assert exportable(files(zip_reimported)) == exportable(files(managed))
         run(executable, zip_reimport_work, STARS_CLIENT_EXPORT_GAME='managed-copy',
             STARS_CLIENT_EXPORT_PARENT=str(submitted_parent), STARS_CLIENT_EXPORT_ACTION='verify',
             STARS_CLIENT_EXPORT_PLAYER='1', STARS_CLIENT_EXPORT_RESEARCH='5',
@@ -185,11 +209,11 @@ def main():
 
         compressed_zip = work / 'compressed.zip'
         with zipfile.ZipFile(compressed_zip, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
-            for relative, data in files(managed, metadata=False).items():
+            for relative, data in exportable(files(managed)).items():
                 archive.writestr(relative.as_posix(), data)
         compressed_work = work / 'compressed-reimport'
         run(executable, compressed_work, STARS_CLIENT_IMPORT_SOURCE=str(compressed_zip), STARS_CLIENT_IMPORT_NAME='managed-copy')
-        assert files(compressed_work / 'library/Games/managed-copy', metadata=False) == files(managed, metadata=False)
+        assert exportable(files(compressed_work / 'library/Games/managed-copy')) == exportable(files(managed))
 
         # A canceled ZIP destination and a pre-existing destination preserve
         # the managed game and leave the selected output untouched.
@@ -271,8 +295,7 @@ def main():
         dirty_zip = work / 'dirty-saved.zip'
         run(executable, work, STARS_CLIENT_EXPORT_GAME='managed-copy', STARS_CLIENT_EXPORT_ZIP=str(dirty_zip),
             STARS_CLIENT_EXPORT_ACTION='save', STARS_CLIENT_EXPORT_RESEARCH='1')
-        with zipfile.ZipFile(dirty_zip) as archive:
-            assert {Path(name): archive.read(name) for name in archive.namelist()} == files(managed, metadata=False)
+        check_zip_export(dirty_zip, exportable(files(managed)))
         dirty_work = work / 'dirty-zip-reimport'
         run(executable, dirty_work, STARS_CLIENT_IMPORT_SOURCE=str(dirty_zip), STARS_CLIENT_IMPORT_NAME='managed-copy')
         dirty_game = dirty_work / 'library/Games/managed-copy/managed-copy.m1'

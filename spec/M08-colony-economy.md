@@ -22,12 +22,12 @@ The older formulas remain normal-domain projections; their physical filenames
 and existing IDs do not create another gameplay owner or a universal native
 width guarantee. The new contracts supply native reads, casts and boundaries.
 
-Sources: [planet.c](../src/core/planet.c) `CalcPlanetMaxPop`, `CMaxMines`,
+Sources: [planet.cpp](../src/core/planet.cpp) `CalcPlanetMaxPop`, `CMaxMines`,
 `CMaxFactories`, both corresponding `CMaxOperable*`, `CMinesOperating`,
 `CFactoriesOperating`, `CMaxDefenses`, `CMaxOperableDefenses`,
-`CResourcesAtPlanet`, `PctPlanetCapacity`; [util.c](../src/core/util.c)
-`ChgPopFromPlanet`; [race.c](../src/core/race.c) `GetRaceStat`, `GetRaceGrbit`,
-`PctTrueMaxGrowth`; [globals.c](../src/core/globals.c) `rglPopMac`;
+`CResourcesAtPlanet`, `PctPlanetCapacity`; [util.cpp](../src/core/util.cpp)
+`ChgPopFromPlanet`; [race.cpp](../src/core/race.cpp) `GetRaceStat`, `GetRaceGrbit`,
+`PctTrueMaxGrowth`; [globals.cpp](../src/core/globals.cpp) `rglPopMac`;
 [structs.h](../src/core/structs.h) native `PLANET`/`PLAYER`/`HUL`.
 [Verification](README.md#native-colony-economy-continuation) records actual
 proof, source comparison and repository results.

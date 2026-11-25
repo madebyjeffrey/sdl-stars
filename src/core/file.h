@@ -1,29 +1,39 @@
 #ifndef STARS_DECOMPILED_FILE_H
 #define STARS_DECOMPILED_FILE_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include "common.h"
+#include <cstdint>
+#include <optional>
+#include <span>
+#include <string_view>
+#include <cstddef>
 
 extern char mpishdefishTutor[6];
 
-int16_t FReadUserString(const uint8_t *lpb, size_t cb, char *psz, size_t cchMax, size_t *pcbRead);
-int16_t FReadShDef(RTSHDEF *lprt, SHDEF *lpshdef, int16_t iplrLoad, size_t cb);
-void    ReadRtPlr(PLAYER *pplr, uint8_t *pbIn, size_t cb);
-int16_t FLoadGame(char *pszFileName, char *pszExt);
-int16_t FReadPlanet(int16_t iPlayer, PLANET *lppl, int16_t fHistory, int16_t fPreInited);
-int16_t FReadFleet(FLEET *lpfl);
-int16_t UnpackBattlePlan(uint8_t *lpb, BTLPLAN *lpbtlplan, int16_t iplan, size_t cb);
-void    UpdateBattleRecords();
-void    DestroyCurGame();
-void    FileError(StringId ids);
-void    GetFileStatus(int16_t dt, int16_t iPlayer);
-int16_t FOpenFile(DtFileType dt, int16_t iPlayer, int16_t md);
-int16_t FNewTurnAvail(int16_t idPlayer);
-int16_t FCheckFile(DtFileType dt, int16_t iPlayer, MdMark md);
-void    ReadRt();
-int16_t FBadFileError(StringId ids);
-void    StreamOpen(char *szFile, MdOpenFlags mdOpen);
-void    StreamClose();
-void    RgFromStream(void *rg, uint16_t cb);
+// Success returns record bytes consumed, including its marker/terminator.
+std::optional<std::size_t> FReadUserString(APPSESSION &app, std::span<const std::byte> lpb, std::span<char> psz);
+std::int16_t FReadShDef(APPSESSION &app, std::span<const std::uint8_t> rgbRecord, SHDEF *lpshdef, std::int16_t iplrLoad);
+void    ReadRtPlr(APPSESSION &app, PLAYER *pplr, std::span<std::uint8_t> rgbRecord);
+std::int16_t FLoadGame(APPSESSION &app, std::string_view pszFileName, std::string_view pszExt);
+std::int16_t FReadPlanet(APPSESSION &app, std::int16_t iPlayer, PLANET *lppl, std::int16_t fHistory, std::int16_t fPreInited);
+std::int16_t FReadFleet(APPSESSION &app, FLEET *lpfl);
+std::optional<BTLPLAN> UnpackBattlePlan(APPSESSION &app, std::span<const std::uint8_t> rgbRecord, std::int16_t iplan);
+void    UpdateBattleRecords(APPSESSION &app);
+void    DestroyCurGame(APPSESSION &app);
+void    FileError(APPSESSION &app, StringId ids);
+void    GetFileStatus(APPSESSION &app, std::int16_t dt, std::int16_t iPlayer);
+std::int16_t FOpenFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std::int16_t md);
+std::int16_t FNewTurnAvail(APPSESSION &app, std::int16_t idPlayer);
+std::int16_t FCheckFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdMark md);
+// Peek a bounded tutorial header or complete encoded record without advancing.
+// Truncated memory sources report the same corrupt-file error as short file IO.
+HDR     HdrMemStream(APPSESSION &app);
+std::span<const std::byte> RgMemStreamRecord(APPSESSION &app);
+void    ReadRt(APPSESSION &app);
+std::int16_t FBadFileError(StringId ids);
+void    StreamOpen(APPSESSION &app, std::string_view szFile, MdOpenFlags mdOpen);
+void    StreamClose(APPSESSION &app);
+void    RgFromStream(APPSESSION &app, std::span<std::byte> rg);
+
 
 #endif

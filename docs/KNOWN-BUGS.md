@@ -17,6 +17,248 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Scanner location label overflows its stack buffer — fixed on develop
+
+`DrawScannerSBar` appended a location name of up to 359 UTF-8 bytes to the
+distance/unit/connector in a 100-byte local array. The actual parent paint
+call reproduces a stack-buffer overflow in `strcat` under ASan. The local
+owner now fits all four source budgets, the separator search is bounded,
+and catalog writes and location appends carry their destination capacities.
+Complete names are retained for drawing; the existing screen clip decides
+what is visible. Tests compare actual narrow/wide status-bar pixels with an
+independently assembled reference label, including long UTF-8 names and
+maximum catalog values. No record size or game rule changes; regenerating
+and comparing the native baseline moved no checkpoint.
+
+## Generated startup filename overflows the file-dialog buffer — fixed on develop
+
+`FOpenGame` generated a `.hst` path in the 360-byte session work buffer, then
+copied it into a 256-byte local dialog buffer without checking its length. A
+maximum-length basename can exceed that local capacity. The path now passes
+through strict bounded UTF-8 staging and is rejected before extension parsing
+or file I/O when it does not fit. An actual file-workflow test covers this
+boundary; fitting startup paths and game behavior remain unchanged.
+
+## Race filename changed across callbacks — fixed on develop
+
+`FWasRaceFile` borrowed its filename until the end of loading, including after
+file and password callbacks. An actual parent test loads a valid race while
+the open callback changes Work/Base: the filename cache becomes the callback's
+replacement text. The failure branch also copied an arbitrary path into the
+360-byte work buffer. A readonly input view is now admitted as complete UTF-8
+and owned locally before I/O. The full path survives callbacks and reaches the
+open; only diagnostic staging uses a bounded complete UTF-8 prefix. Record
+widths, race checksums, conversion and password behavior remain unchanged.
+Regenerating and comparing the native baseline moved no checkpoint.
+
+## Blank new-game title overflows its field — fixed on develop
+
+`NewGameDlg` used an unbounded basename copy when the title edit was empty.
+The source allows 255 UTF-8 bytes while the saved title holds 31 plus NUL.
+An actual parent dialog test reproduces the overflow with a 33-byte name.
+The fallback now keeps a complete UTF-8 prefix within the title's own span;
+the filename and record layout remain intact. Tests exercise fitting and
+oversize names, multibyte boundaries, unchanged adjacent state, entered text
+and cancellation. No native regression checkpoint moved.
+
+## Game-file inputs staged before validation — fixed on develop
+
+`FLoadGame` and `FWriteLogFile` copied unvalidated input into `szBase[256]`.
+The writer could also append a production-template record before discovering
+that its filename was unusable. Actual parent tests observe malformed UTF-8
+reaching the open/create callbacks after staging. Local whole-input snapshots
+now precede those effects and remain stable when callbacks change shared text.
+The loader validates its host/player extension with a bounded integer parser
+before any loading; unsupported tags, zero/out-of-range slots, overflow,
+trailing data and embedded NUL fail early. Its normalized family name is owned
+for later orders and MRU use, avoiding dependence on the caller's buffer.
+Actual orders/reload tests cover external and shared inputs, overlapping name
+and extension storage and supplied suffixes. Record widths and game rules stay;
+regenerating and comparing the native baseline moved no checkpoint.
+
+## Definition filename changed by logging — fixed on develop
+
+`GenNewGameFromFile` borrowed its input from the caller, then reused `szBase`
+and `szWork` for logging before opening that input. The command-line caller
+passes `szBase`, so removing its extension changed the filename being opened.
+A work-buffer input could likewise become version text. The actual parent
+tests capture the shortened filename and fail a complete game-creation case.
+The function now accepts a sized readonly view and owns a snapshot before
+logging. Its display prefix is independent of the complete I/O filename;
+logging stems must fit their actual field. Extensionless names are admitted
+without a null-pointer write, and directory dots are kept in the path.
+Tests cover the three input owners, bounded slices, invalid text, long inputs,
+actual creation/reload and unchanged definition bytes. Saved widths, game
+rules and native regression checkpoints remain unchanged.
+
+## Report-file path capacity — fixed on develop
+
+`ClearFile` and `OutputSz` staged report filenames in 256-byte arrays even
+though `szBase` alone can hold 255 UTF-8 bytes. Adding a dot and extension
+overflowed the clearer and truncated the writer's filename. Actual parent
+tests reproduce a two-byte ASan stack overflow in `ClearFile` and a missing
+complete `.log` path from `OutputSz`. Both now use one optional owned path
+whose capacity includes the complete basename, dot, longest extension and
+terminator. Its storage stays on the stack because reports also run from
+allocation-error alerts. The extension table is an immutable typed constant;
+report text now enters through a sized readonly view. Existing extension
+selection, header/append behavior, saved widths and game rules remain.
+
+## Turn-backup path capacity — fixed on develop
+
+`FGenerateTurn` joined the backup directory, basename and extension inside a
+256-byte local array; it also appended extensions to `szBase[256]` itself.
+`CreateBackupDir` used another fixed 256-byte shared buffer. A valid basename
+could therefore exceed either destination after these joins. The actual parent
+sanitizer-built turn test reports index 257 outside `char[256]` for a 250-byte
+UTF-8 basename. The directory helper now returns an owned path, and generation
+holds separate complete current/backup filenames without changing the session
+basename. Extension capacity is reserved before rotation. Tests exercise the
+250/255-byte basename boundary, binary backup contents and all directory naming
+branches. File-operation order, unsubmitted-turn copy behavior, saved widths and
+generated turn contents remain unchanged; no native checkpoint moved.
+
+## Failed file-size queries masquerade as byte counts — fixed on develop
+
+`file.cpp`, `FLoadGame`: the EOF check compared `CbFileSize` and `LSeekFile`
+directly, so two failed queries returning `-1` looked like a successful match.
+A real loader fixture closes the `.m1` token at its final EOF and reproduces a
+successful return from the parent. The loader now rejects either unavailable
+size or negative position before comparing values. `CbFileSize` and its token
+service return optional full-width counts; all callers preserve zero/failure
+separately. `StarsCopyFile` also rejects a failed query before its tail range,
+where the old `LOWORD(-1)` could exceed the 2048-byte buffer. New copy tests
+check full multi-chunk binary output and metadata-failure cleanup. No valid
+record bytes, field widths or turn-generation rule changes.
+
+## Batch file size wraps through a signed lowword — fixed on develop
+
+`turn.cpp`, `FSetUpBatchProcessing`: the file size was narrowed to `int16_t`
+before allocation, reading and end-pointer calculation. A 65600-byte real-file
+reference was read as 64 bytes; lengths at the signed boundary could also put
+the end pointer before the allocation. The loader now obtains a full optional
+64-bit size from its open token and reads an exactly sized session-owned string.
+The original cursor/end debug names are retained as bounded indices; no game
+arena or narrowed count backs the list. Tests cover 32768, 65536 and 65600 bytes,
+complete byte retention, invalid size queries and actual two-game execution.
+Only transient batch storage changes; no saved width or game rule changes.
+
+## Batch filename line truncation and unchecked copies — fixed on develop
+
+`turn.cpp`, `FSetUpBatchProcessing`/`FRunCmdLine`: both filename loops assumed
+CRLF and blindly wrote `pch[-1] = 0`, dropping a real filename byte on LF input
+or the final line. They also tested the source byte before its end and did not
+carry the destination capacity. A shared bounded line view now consumes LF,
+optional CR and a final unterminated line, then uses the command path's strict
+UTF-8/byte-budget validation. Blank or invalid names stop processing without
+copying beyond the path. Real tests reproduce the LF truncation and exercise
+both initial and later names through two generated games, with rejection of a
+later overlong path. The separate batch-size wrapping repair is recorded above.
+
+## Memory-backed records lack source bounds — fixed on develop
+
+`file.cpp`, `ReadRtHeader`/`RgFromStream`, and tutorial loops in `log.cpp`/
+`logui.cpp` advanced an unbounded byte pointer. A readable-guard fixture
+reproduces copying beyond each logical source prefix without an error. The
+session cursor now carries a readonly remaining span, including an explicit
+active-but-empty state. Short reads publish only available bytes before the
+same corrupt-file error as file IO. Record skipping validates the complete
+header/payload before advancement; tutorial resources return sized readonly
+spans, and failure releases the cursor and any created output file. Existing
+valid replay bytes, encryption boundaries and saved layouts are unchanged.
+
+## Text append length wraps at 64 KiB — fixed on main
+
+`utilgen.cpp`, `OutputFileString`: casting `strlen` to `uint16_t` discarded
+complete 65536-byte blocks before appending. Real file tests reproduce failures
+at 65536, 65537 and 131073 bytes against the old implementation. A readonly text
+view now carries its full byte count into the native write service; create/seek/
+close order and existing short output remain unchanged. This changes no game
+record or turn-generation result.
+
+## Late library folder results — fixed on main
+
+`libraryui.c`/`mdi.c`: import/export chooser callbacks copied a path and posted
+it through a borrowed HWND; only the receiving handler freed it. Window closure,
+dropped messages or handler failure could retain the allocation, and HWND reuse
+could route a late result into a new runtime. The callbacks now capture monotonic
+logical IDs on the UI thread and transfer one-shot payloads whose dispatch owns
+the path through nested dialogs. Generic cancellation/restart fixtures and the
+actual library import workflows pass; no file-format or host results move.
+
+## Abandoned asynchronous post records — fixed on main
+
+`message.c`/`input.c`: a worker allocated its SDL user-event record and only the
+main-thread consumer released it. Shutdown could discard the event before that
+consumer ran. The registry now owns accepted records, with a separate producer
+reference while SDL filters run; cancellation releases them without dereferencing
+stale event pointers. Owned payloads survive nested dispatch and release on
+rejection, dropped delivery or shutdown. Permanent allocation/filter/race/stale-ID
+fixtures pass functionally, under native leaks and with sanitizers. This changes
+no game files or host results.
+
+## Cleanup while handling a primary exception — fixed on main
+
+`errors.cpp`: checking only `std::uncaught_exceptions()` prevented replacement
+while a C++ exception unwound, but a catch handler has no uncaught exception.
+Its cleanup callback could therefore leave a secondary error pending. A named
+primary-error scope now covers those handlers and final failure cleanup. The
+real exception fixture checks both suppressed secondary capture and preservation
+of the first already-pending error. Both regression baselines remain unchanged.
+
+## Failed bitmap conversion storage — fixed on main
+
+`utilgenui.c`: after successful reallocation, a rejected `GetDIBits` conversion
+returned without releasing its global-memory block. The wrapper registry kept
+the block reachable, so a leak detector alone could miss it. Scoped owners now
+release the block and restore native drawing state on failure or unwinding.
+An unsupported RLE conversion checks the registry count before and after; a
+controlled build that releases ownership on that return fails this assertion.
+Both regressions retain 519 matches, 25 accepted warnings and no differences
+through turn 150.
+
+## Native bitmap query size — fixed on main
+
+`utilgenui.c`: `DibFromBitmap` requested a 14-byte Win16 `BITMAP` from the
+native wrapper, which requires the full native structure. The rejected query
+left dimensions uninitialized. It now requests `sizeof(bm)`; the actual
+converter fixture checks a 2-by-2, 32-bit image and its sixteen pixel bytes.
+Desktop and host each retain all 519 baseline matches through turn 150, with
+25 accepted warnings and no differences, errors or skipped inputs.
+
+## Transfer dialog borrowed frame — fixed on main
+
+`shipui.c`: `TransferStuff` published its stack `xfer` through `pxfer` but did
+not restore the old pointer on return. Failed object lookup also left
+`mdXferDlg` installed; nested calls could overwrite the outer frame/mode.
+A scoped restoration now covers every return and exception. A real rejected
+lookup fixture checks both outer values, while desktop/host regressions remain
+519 matches with the same 25 accepted warnings and no differences or skips.
+
+## Mystery Trader movement message state — fixed on main
+
+`turn.c`: `MoveThings` previously tested `idm` after the no-course-change branch
+without first assigning it. The THING view migration exposed this undefined
+read in optimized macOS builds: the first native checkpoint difference was
+`noai`, turn 50, `game.hst`, record 156, with the trader's position changed while
+its destination and speed matched. Initializing the movement pass to `idmNone`
+restores the existing baseline: desktop and host each match all 519 files through
+turn 150, with the same 25 accepted unused-storage warnings and no differences.
+A movement fixture covers
+an unchanged course with a fixed random seed. Full migration qualification is
+recorded in [the implementation ledger](CPP-B-IMPLEMENTATION.md).
+
+## Race habitat growth hit test — fixed
+
+The Race Wizard has five hit rectangles for each of three habitat axes, followed
+by the growth arrows at indices 15 and 16. `IrcRaceDlgHitTest` previously
+consulted a fourth immunity value for either arrow. It now checks immunity
+only for the first 15 rectangles. The SDL race dialog test exercises growth in
+both directions, including with all three axes immune.
+
+The [historical M04 fixture](../spec/M04-wizard-controller.md#habitat-growth-hit-test-boundary)
+records the earlier behavior (GAP-27).
+
 ## Production editor queue sanitization — located on main
 
 `produce.c`: `InitProduction` removes an unavailable copied queue row with
@@ -143,6 +385,148 @@ sentinel (-1). Host part lookup has no player race or technology restrictions.
 when writing an empty EOF record. `PtToScan` replaces negative signed shifts
 with multiplication, preserving scanner scaling and rounding.
 
+## Record writer scratch overflow — fixed on develop
+
+`save.cpp`, `WriteRt`: a separate length and payload pointer allowed more
+than the 1024-byte scratch array to be copied before framing. A real 1025-byte
+BOF test changed scratch bytes and encryption seeds and published a record,
+without reporting failure. The readonly span API now rejects that request
+through the existing write-error alert and StarsError before those effects.
+Payloads of 1024 bytes retain their existing physical write and ten-bit header
+wrapping; normal bytes, record widths and turn generation are unchanged.
+
+## Scaled numeric label rounding — fixed on develop
+
+`utilgen.cpp`, `PszFromLongK`: million rounding added 500000 in signed 32-bit
+arithmetic before dividing and applying the 999M clamp. Debug builds displayed
+2146983648 as `-2147M` and 2147483647 as `-2146M`; the optimized Release build
+happened to produce the intended `999M`. The addition now uses a 64-bit
+intermediate before returning to the same 32-bit value and clamp. Literal
+boundary tests cover the last safe input, its successor and the signed maximum.
+This changes only the overflowing numeric display, without turn generation or
+file-format effects.
+
+## Title bitmap lifetime — fixed on develop
+
+`HdibLoadBigResource` allocates a writable `GMEM_FIXED` copy, but `TitleWndProc`
+passed it to the no-op `FreeResource` before clearing its only application
+reference. The copy remained allocated until runtime shutdown. Destruction now
+uses `GlobalFree`. A native-port test checks the live allocation count before
+creation and after repeated destruction. Rendering and host results are unchanged.
+
+## Tutorial resource cleanup — fixed on develop
+
+`FWriteTutorialMFile` passed immutable module resource bytes to `GlobalUnlock`,
+which replaced the prior error with `ERROR_INVALID_HANDLE`; `FreeResource` did
+nothing. Its failed-output path also left `vlpMemStream` active. The function
+now clears the borrowed stream without heap-release calls. A resource-skip and
+injected disk-full test cover the error state and subsequent stream selection.
+Recorded tutorial bytes, save records and host results are unchanged.
+
+## Fleet-name admission and replacement — fixed on develop
+
+`LogChangeName` accepted names beyond the reader's 31-byte UTF-8 budget and
+freed the current name before copying or allocating its replacement. A 32-byte
+ASCII name could be written successfully and then rejected by log replay;
+borrowed input could refer to freed storage, and allocation failure invalidated
+the old owner. The function now takes a readonly text view, validates/stages
+it before replacement and uses the existing typed resize service. The actual
+UI and fixture callers check its success result. Rejected input and failed
+name allocation/resize leave the fleet name and log unchanged. Tests cover
+both allocation paths, malformed/overlong text, non-NUL slices, aliases, empty
+clears and the maximum raw UTF-8 wire image. Valid compression budgets, record
+widths and host results are unchanged; log-append failure effects remain as before.
+
+## Catalog scratch aliases — fixed on develop
+
+`PszGetCompressedString` decoded every lookup into the same state buffer.
+Keeping a returned pointer across another lookup, or using two lookups in
+one format call, could replace the first label. It now returns an initialized
+256-byte array by value without allocation. All 512 production consumers and
+the actual typed text providers use the owned result. Retained local pointers,
+button trackers and popup menus have named owners; active popup text uses its
+UI-owned buffer. `PszGetDestName` and `PszGetTaskName` return owned report labels
+on every path so catalog pointers cannot escape through those services. The
+obsolete catalog scratch/cache state is removed. An independent canonical-text
+hash checks all 1,516 current IDs, including empty IDs, and ownership tests cover
+consecutive/same-call lookups and retained report labels. Catalog bytes, record
+layouts and turn results are unchanged.
+
+## Player-name scratch aliases — fixed on develop
+
+`PszPlayerName` returned `app.state.szWork` for every lookup. A later lookup
+overwrote an earlier result, and `DrawHostDialog2` formatted into that same
+storage while borrowing its player-name argument, losing the label. The
+function now returns an initialized `std::array<char, 50>` by value without
+allocating. All 33 production callers and the actual text witness provider use
+the owned result. Message/drawing consumers retain local owners; the three
+callers that append in shared work storage copy the name there explicitly.
+Regression tests reproduce both former aliases and verify retained grammar,
+UTF-8 and maximum stored-name text. Record layouts and turn results are unchanged.
+
+## Saved-name staging capacity — fixed on develop
+
+`WriteRtPlr`, `WriteRtShDef` and `WriteBattlePlan` copied fixed names with
+unbounded string operations; the ship-design writer also accepted an output
+cursor without its capacity. Unterminated in-memory names could read past their
+field or overwrite staging storage. Names now require an in-field terminator,
+valid UTF-8 and the existing 31-byte budget. Encoding and stream publication
+are separate: `CbEncodeRtShDef` returns an optional byte count and leaves the
+provided span unchanged on failure; failed encoding cannot publish a partial
+design-change log. Capacity/sentinel and actual decoder tests cover empty,
+compressed and maximum raw names. Valid wire bytes, compression budget and both
+regression baselines remain unchanged. The legacy-import fixture writes its
+CP1252 reference bytes independently of the UTF-8 application writer.
+
+## Display-copy destination capacity — fixed on develop
+
+`SetMsgTitle`, `ReadIniSettings`, report-field staging and drawing/name helpers
+used `strcpy`/`strcat` without carrying destination capacities. Display and
+fixed-label sites now copy or append complete UTF-8 prefixes into array or
+explicit tail spans. The audit accounts for all 169 migrated sites and freezes
+remaining raw-copy spellings while path, wire-storage and owned-result work
+continues. Copy/append tests cover every short capacity, non-NUL source views,
+overlap and unterminated destinations. Fitting text and both game baselines
+remain unchanged; the separate temperature-label repair accounts for the live
+report golden change.
+
+## History-menu row capacity — fixed on develop
+
+`ScoreXDlg` divides the shared work buffer into eight 40-byte history labels,
+but its catalog append received all bytes remaining in the buffer. An oversized
+column label could cross its row and the next row could overwrite its terminator.
+Both the copy and catalog append now use the logical row span. The actual menu
+builder is tested with long multibyte labels, row-end sentinels and the unused
+tail of the work buffer. Fitting labels, save records and host results are unchanged.
+
+## Temperature-label encoding — fixed on develop
+
+`PszCalcEnvVar` used `%c` with 186 for the `º` in a temperature unit,
+producing a single CP1252 byte inside UTF-8 application text. Drawing and
+bounded UTF-8 copies could reject or stop at that byte. It now emits UTF-8
+`ºC`, preserving the character and every numeric value. All 101 temperature
+values are checked for valid UTF-8, and live report goldens use the same bytes.
+Save records and both turn-generation baselines remain unchanged.
+
+## Formatter destination capacity — fixed on develop
+
+`CchSprintf` and SDL `wsprintfA` passed a constant 1024-byte capacity to the
+CRT even when a caller supplied a smaller array or a tail slice. Both now take
+destination spans. The production-line and ETA helpers carry their caller's
+capacity, and array-tail calls retain only the actual remaining capacity.
+Undersized-output tests check adjacent sentinel bytes, empty and one-byte
+destinations, and truncation within a multibyte UTF-8 code point. Output that
+fits, saved records and host results are unchanged.
+
+## Catalog-copy destination capacity — fixed on develop
+
+`CchGetString` copied a catalog entry without receiving the destination size.
+It now takes a span and truncates only between complete UTF-8 code points.
+Caller helpers and injected text providers carry the same capacity. History
+headings also handle empty copies and remove a whole final code point; mutable
+`RightTextOut` array/span calls retain their replacement behavior, while borrowed
+text remains untouched. Catalog bytes, file records and host results are unchanged.
+
 ## Habitat-page stack corruption — fixed on main
 
 `raceui.c`: `DrawRace2` copied `idsCanExpect1DPlanetsWillHabitable`
@@ -220,7 +604,7 @@ last seen. 2.6j RC3 ("fleets that split up ... will all be chased down", in
 [26JFIN.txt](26JFIN.txt)) first tries only fleets no other pursuer has taken,
 spreading pursuers over the pieces. The jrc4 binary (`0008:497a`) dropped
 that pass again: every pursuer takes the heaviest matching fleet. 2.8
-follows jrc4 (`tests/unit/test_util.c`).
+follows jrc4 (`tests/unit/test_util.cpp`).
 
 ### Profitable Scrapping — different here
 
@@ -265,7 +649,7 @@ planet state rather than using the production total. WP1 loading can therefore
 lower the published resource score after resources were already produced;
 WP0 unloading next year restores population before production.
 
-**2.8:** confirmed by `tests/unit/test_turn2.c`: two freighters loading
+**2.8:** confirmed by `tests/unit/test_turn2.cpp`: two freighters loading
 50 kT of colonists at a homeworld after production cut the published
 resources from 38 to 33. `Produce` now records each planet's population
 and owner when it finishes, and `CalcPlayerScore` scores a planet with
@@ -283,7 +667,7 @@ farther along a north/south route. The source supports a vertical intersection
 bug, but does not justify a universal immunity when the starting point is
 already inside a field. The list reports a JRC4 fix.
 
-**2.8:** confirmed by `tests/unit/test_utilgen.c` (a vertical route through
+**2.8:** confirmed by `tests/unit/test_utilgen.cpp` (a vertical route through
 a field's center found no intersection) and fixed: a vertical route's
 closest point is level with the field's center (`yI = ptC.y`).
 
@@ -296,7 +680,7 @@ calculation, and there is no obvious blanket horizontal speed-bump exemption.
 The reported east/west-only defect is not yet isolated. The list reports a
 JRC4 fix; do not equate this report with the vertical projection defect above.
 
-**2.8:** `tests/unit/test_turn.c` sends a warp 9 fleet 81 ly east, west,
+**2.8:** `tests/unit/test_turn.cpp` sends a warp 9 fleet 81 ly east, west,
 north and south through another player's speed bump field; it is stopped
 in every direction. Whatever the report saw may have been the vertical
 projection defect, fixed above, or something since changed.
@@ -312,7 +696,7 @@ colonist transfer from an enemy planet. This differs from the intended manual
 transfer restrictions. The list reports a JRC4 fix and a caveat about zip orders
 that include population loading.
 
-**2.8:** confirmed by `tests/unit/test_turn3.c`: a freighter with a Robber
+**2.8:** confirmed by `tests/unit/test_turn3.cpp`: a freighter with a Robber
 Baron scanner loaded 10 kT of colonists from an enemy homeworld by waypoint
 order. The binary's string table has "attempted to shanghai colonists ...
 The attempt was unsuccessful" and the matching fuel message, but never sends
@@ -346,7 +730,7 @@ This supports retaining cheap partial work when the design becomes expensive.
 The delete-and-recreate UltraStation variant depends on builder-close timing
 and remains unconfirmed.
 
-**2.8:** confirmed by `tests/unit/test_log.c`: a starbase design half built
+**2.8:** confirmed by `tests/unit/test_log.cpp`: a starbase design half built
 at a colony kept its 50% when the design was replaced. The host's replay
 of a design change or deletion (`FRunLogRecord`) now clears the progress
 of every queued item of that design on the player's planets, which also
@@ -368,7 +752,7 @@ remainder was lost in space" messages) is never filled: `FRunLogRecord`
 only reaches the code that adds to it for a zero quantity, which it skips.
 Transfers to other players are delivered during replay instead.
 
-**2.8:** confirmed by `tests/unit/test_log.c`: 100 kT of ironium sent from
+**2.8:** confirmed by `tests/unit/test_log.cpp`: 100 kT of ironium sent from
 a homeworld to an AI ship with a 10 kT hold left the ship with 10 kT and
 the planet 100 kT poorer. What doesn't fit now goes back to the source,
 as the "unable to transfer" message says.
@@ -398,7 +782,7 @@ This is integer overflow rather than an identified overwrite of a buffer.
 The reported Space Dock/ISB combination supplies the large armor slot; ISB is
 not an explicit condition in this arithmetic.
 
-**2.8:** confirmed by `tests/unit/test_util.c`: an RS Space Dock with 24
+**2.8:** confirmed by `tests/unit/test_util.cpp`: an RS Space Dock with 24
 Superlatanium had 51018 dp instead of 18250. `dpT` is now 32-bit.
 
 ### ISB Trumps IT Gate Scanning — fixed in 2.8
@@ -415,7 +799,7 @@ the range/visibility arithmetic explains why gate types behave differently.
 **2.8:** the same product appears in all four cloaked-starbase checks
 (`SetVisPFFleets`, two in `SetVisPFPlanets`, `SetVisPFThings`), so any
 scanner range above about 463 ly could fail against a cloaked starbase, not
-only gates. `tests/unit/test_save.c` showed a 600 ly penetrating scanner
+only gates. `tests/unit/test_save.cpp` showed a 600 ly penetrating scanner
 100 ly away only obscuring a starbase with `lVisible` 9000 while seeing one
 with 2500. The product is now 64-bit.
 
@@ -430,7 +814,7 @@ memory beyond the array to be modified. The current `NATIVE` repair uses
 `CplrBattle`, but the supplied precise highest/lowest-player friendly-fire
 scenario has not been reproduced under the repaired code.
 
-**2.8:** `tests/unit/test_battle.c` gives a starbase's default plan one
+**2.8:** `tests/unit/test_battle.cpp` gives a starbase's default plan one
 target player, with a friend of the owner and the target in orbit, for all
 six ways to cast three players in those roles. The starbase attacks only
 its target, and nobody attacks the friend or is attacked by it.
@@ -444,7 +828,7 @@ Gating sets the traveling fleet's `fNoHeal`. WP1 merging precedes healing.
 propagating the deleted source fleet's `fNoHeal`. `HealShips` tests the surviving
 fleet's flag, so a stationary destination can repair the newly merged ships.
 
-**2.8:** confirmed by `tests/unit/test_ship.c`: a damaged fleet marked
+**2.8:** confirmed by `tests/unit/test_ship.cpp`: a damaged fleet marked
 `fNoHeal` merged into another healed fully in `HealShips`. `Merge2Fleets`
 now marks the surviving fleet `fNoHeal` when the merged fleet was.
 
@@ -469,7 +853,7 @@ the owner's Mini Mine Layer and Super Mine Layer hulls from its own explosions.
 Consequently an immune encounter can consume the fleet's one explosion check.
 The exact player-number ordering depends on the `lpThings` traversal order.
 
-**2.8:** confirmed by `tests/unit/test_turn2.c`: a mine layer inside its
+**2.8:** confirmed by `tests/unit/test_turn2.cpp`: a mine layer inside its
 owner's detonating field and another player's took no damage. A fleet
 immune to a detonation is no longer marked `fBombed`, so the next
 detonating field still checks it. The same test found that any detonation
@@ -485,7 +869,7 @@ colonization modules without checking `cItem > 0`. An empty slot retaining its
 module identity can therefore qualify. `FColonizer` is a separate hull-based
 classification and is not proof that the host requires an installed module.
 
-**2.8:** confirmed by `tests/unit/test_turn3.c`: a copy of the colony ship
+**2.8:** confirmed by `tests/unit/test_turn3.cpp`: a copy of the colony ship
 with its module count set to 0 still colonized. The check now requires
 `cItem > 0`.
 
@@ -504,7 +888,7 @@ and the checksum no longer matches. Only a save where the old name was
 longer at the same position is affected. TotalHost rejects these files and
 can rewrite their checksum; see [TOTALHOST.md](TOTALHOST.md).
 
-**2.8:** confirmed by `tests/unit/test_race.c`: a race saved after "Bos"
+**2.8:** confirmed by `tests/unit/test_race.cpp`: a race saved after "Bos"
 was written over "Longnames" failed `FWasRaceFile`. `IRaceChecksum` now
 checksums a copy with the names zeroed after their terminators, as
 `ReadRtPlr` restores them. Files with a bad checksum still fail to load.
@@ -519,7 +903,7 @@ the resulting player data. `GenerateWorld` calls `CreateRandomRace` when
 the reported failure to clear the random setting after deselection has not
 been demonstrated. The supplied report also notes a failed reproduction.
 
-**2.8:** confirmed by `tests/unit/test_race.c`. The Random template is
+**2.8:** confirmed by `tests/unit/test_race.cpp`. The Random template is
 only `ibitRaceAIPlayer`. Leaving the wizard's first page copies the chosen
 template into the race, but with Custom chosen it keeps the race being
 edited, so a race that had been Random kept the bit through every later
@@ -538,7 +922,7 @@ Other stated limits are represented by the 512-fleet checks, 16 ship-design
 and 10 base-design slots, and battle token admission described above; the
 complete 512-minefield allocation limit has not been audited here.
 
-**2.8:** confirmed by `tests/unit/test_ship.c`. A waypoint merge of 32000
+**2.8:** confirmed by `tests/unit/test_ship.cpp`. A waypoint merge of 32000
 and 1000 ships of a design left -32536, and merging all fleets at a
 location (`FFleetMergeAll`, the client's Merge and its log replay) clamped
 the count to 32766 and lost the rest. `Merge2Fleets` now moves only the
@@ -610,7 +994,7 @@ mechanism by which an earlier-processed secondary pursuer can stop its main
 pursuer. The reported ID ordering and own-race restriction need a scenario
 test before being treated as universal constraints.
 
-**2.8:** confirmed by `tests/unit/test_turn.c`: with A chasing B and B
+**2.8:** confirmed by `tests/unit/test_turn.cpp`: with A chasing B and B
 chasing C, all starting together, B never left the start. A pursuer that
 catches a fleet still on its own pursuit now keeps following it with the
 rest of its move, and the caught fleet finishes its pursuit.
@@ -674,3 +1058,15 @@ stored/returned text and SDL native titles, validating creation and title
 changes. Scanner JSON export also validates and preserves the same bytes,
 without the old CP1252 mapping. Tests cover title changes, Unicode snapshot
 names, JSON escaping and malformed text rejection.
+
+## Ship-design clone name bounds — fixed on develop
+
+`MakeNewName` inspected the three bytes before a trailing terminator without
+first checking the name length. Cloning an empty name, `)` or `1)` could read
+before `HUL.szClass`. The actual sanitizer-built UI test reproduces a one-byte
+stack-field underflow on the empty name. Its new fixed 32-byte view also stops
+an unterminated field from reaching the pixel-fitting helper. Suffix recognition
+uses ASCII digit bounds; valid UTF-8 continuation bytes never enter `isdigit`.
+The existing ` (2)` append, single-digit stepping (including `9` to `0`), screen
+fitting and saved field width remain. Native checkpoints are unchanged; this
+does not change turn generation.

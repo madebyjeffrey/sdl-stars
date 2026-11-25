@@ -8,8 +8,8 @@ multi-byte values are little-endian; unaligned values are valid. No native
 pointer, alignment padding or compiler enum layout defines a new disk field.
 
 Primary evidence: [structs.h](../src/core/structs.h),
-[enums.h](../src/core/enums.h), [save.c](../src/core/save.c),
-[file.c](../src/core/file.c), [utilgen.c](../src/core/utilgen.c).
+[enums.h](../src/core/enums.h), [save.cpp](../src/core/save.cpp),
+[file.cpp](../src/core/file.cpp), [utilgen.cpp](../src/core/utilgen.cpp).
 The layouts below follow the writer/readers' actual slicing and packing, not
 `sizeof(PLANET)` or another pointer-bearing native struct.
 
@@ -133,7 +133,7 @@ Do not confuse canonical required fields with uniformly enforced validation.
 ### 3.1 XOR stream
 
 Evidence: `SetFileXorStream`, `LGetNextFileXor`, `XorFileBuf` in
-[utilgen.c](../src/core/utilgen.c). Use these exact first 64 entries of
+[utilgen.cpp](../src/core/utilgen.cpp). Use these exact first 64 entries of
 `rgPrimes`; the literal **279** is intentional for compatibility despite the
 array's name:
 
@@ -368,7 +368,7 @@ Order matters. `pct` is carried production progress; legal changes and refunds
 belong to M09 and [log replay](S01-game-file-orders.md). Neither a PLPROD pointer
 nor allocation capacity is saved.
 
-The in-memory adapter is separate: `FLoadGame` in [file.c](../src/core/file.c)
+The in-memory adapter is separate: `FLoadGame` in [file.cpp](../src/core/file.cpp)
 allocates `payloadBytes/4 + 2` rows and stores the used count in an eight-bit
 header. The [S06 copy contract](S06-planet-editor-contracts.md#header-wrap-and-defined-domain-boundaries)
 records why 254/255 used rows can leave maximum header 0/1, affecting later
@@ -500,7 +500,7 @@ and target 8 as well, so its upper-bound checks are not exact enum validation.
 
 ### Catalog messages (`rtMsg`)
 
-Evidence: [msg.c](../src/core/msg.c) `WritePlayerMessages`, `ReadPlayerMessages`.
+Evidence: [msg.cpp](../src/core/msg.cpp) `WritePlayerMessages`, `ReadPlayerMessages`.
 A payload concatenates message entries. Each begins u16 `iMsg` bits 0–8 and
 `grWord` bits 9–15, followed by u16 `wGoto`. The number of parameters is
 `rgcMsgArgs[iMsg]` from the generated message catalog. For each parameter in
@@ -612,14 +612,14 @@ not by a subtype byte inside each record.
   i16 starbase count at 2, then 20-byte AISTARBASE entries: i16 planet, i16
   freighter count, eight i16 fleet IDs. Capacity is 64 entries; active length
   is `4+20*cStarbase`. Slots beyond each freighter count are unused storage.
-  `ValidateStarbaseHistory` in [aiutil.c](../src/core/aiutil.c) repairs/rebuilds
+  `ValidateStarbaseHistory` in [aiutil.cpp](../src/core/aiutil.cpp) repairs/rebuilds
   history from current ownership rather than treating every historical entry
   as authoritative.
 - Cybertron uses u16 length followed by one u16 CYBERINFO per universe planet.
   Length is `2+2*game.cPlanMax`. Bits: last packet direction 0–2, built colony
   3, launched packet 4, packet target 5–6, needs scan packet 7, unused 8–15.
   Temporary CYBERINFOTEMP and later scratch regions in its allocation are not
-  included. Evidence: `DoCyberAiTurn` in [ai4.c](../src/core/ai4.c).
+  included. Evidence: `DoCyberAiTurn` in [ai4.cpp](../src/core/ai4.cpp).
 - Macinti/Maid do not introduce a third emitted structured history layout in
   the inspected AI dispatch. Initial two-byte empty memory is omitted.
 
@@ -639,8 +639,8 @@ on 2026-10-25. Trace: [S01-REC-AC01](#s01-rec-ac01),
 [framing](#1-framing-and-tag-inventory), [BOF](#2-bof),
 [stream/text](#3-stream-transform-and-text), [canonical contracts](S01-game-file-contracts.dfy)
 `Header`, `Frame`, `ReadRecord`, `Bof`; [record fields](dafny/S01-records.dfy)
-`Field`, `FLayout`. Evidence: [utilgen.c](../src/core/utilgen.c) `ReadRt`, `WriteRt`;
-[save.c](../src/core/save.c) `WriteBOF`; [structs.h](../src/core/structs.h) `HDR`.
+`Field`, `FLayout`. Evidence: [utilgen.cpp](../src/core/utilgen.cpp) `ReadRt`, `WriteRt`;
+[save.cpp](../src/core/save.cpp) `WriteBOF`; [structs.h](../src/core/structs.h) `HDR`.
 
 ```mermaid
 classDiagram
@@ -699,3 +699,16 @@ remnants; failed restoration can leave the incoming target and a recovery copy.
 M01-AC16–21 connect these outcomes to actor goals. S01 retains exact framing,
 metadata and admission mapping; S04 retains real path and filesystem semantics.
 These are observed boundaries, not changes to format or approved guarantees.
+
+
+## Race comparison and staged-save handoff
+
+The [M02 native companion](M02-native-state-and-save.md) separates the exact
+128-byte compared prefix and terminated names from captured 192-byte memory and
+S01 serialized records. `fLearned` is ignored by comparison but remains in the
+checksum; partial `WriteRtPlr` output is not the entire compared prefix. A dead
+candidate has detail set to detAll before encoding and checksum. M02 uses the
+existing canonical S01 header/checksum for EOF after that mutation, and models
+escaping writes separately from ordinary FALSE. Successful replacement alone
+does not prove that an arbitrary raw design will decode successfully. S01/M04/S06
+retain admitted-input, codec and full round-trip qualification.

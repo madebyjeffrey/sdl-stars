@@ -21,11 +21,11 @@ prevent an object. It is not another definition of successful construction.
 [Collection evidence](README.md#construction-eligibility-integration-continuation)
 records actual checks. No runtime behavior, file-format or policy change is made.
 
-Sources: [turn2.c](../src/core/turn2.c) `FBuildObject`, `Produce`, `CreateShip`;
-[util.c](../src/core/util.c) `FCanBuildShdef`;
-[parts.c](../src/core/parts.c) `FLookupPart`, `TechStatus`, `LphuldefFromId`,
-`LphuldefSBFromId`; [research.c](../src/core/research.c) hidden-part logic;
-[race.c](../src/core/race.c) race getters; [file.c](../src/core/file.c)
+Sources: [turn2.cpp](../src/core/turn2.cpp) `FBuildObject`, `Produce`, `CreateShip`;
+[util.cpp](../src/core/util.cpp) `FCanBuildShdef`;
+[parts.cpp](../src/core/parts.cpp) `FLookupPart`, `TechStatus`, `LphuldefFromId`,
+`LphuldefSBFromId`; [research.cpp](../src/core/research.cpp) hidden-part logic;
+[race.cpp](../src/core/race.cpp) race getters; [file.cpp](../src/core/file.cpp)
 `FReadShDef`; native structures and fresh S03 catalogs.
 
 ## Interface and projected state

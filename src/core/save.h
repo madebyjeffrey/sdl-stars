@@ -1,31 +1,41 @@
 #ifndef STARS_DECOMPILED_SAVE_H
 #define STARS_DECOMPILED_SAVE_H
 
-#include <stdint.h>
+#include "common.h"
+#include <cstdint>
+#include <optional>
 
-void    WriteOrders(FLEET *lpfl);
-void    WriteRtPlr(PLAYER *pplr, uint8_t *pbStore);
-void    WriteRtShDef(SHDEF *lpshdef, uint8_t **ppbStore);
-int16_t FWriteDataFile(char *pszFileBase, int16_t iPlayer, int16_t fAppend);
-int16_t FAppendFile(int16_t iPlayer);
-void    WriteBattles(int16_t iPlayer);
-void    WritePlanet(PLANET *lppl, RecordType rt, int16_t fHistory);
-void    WriteFleet(FLEET *lpfl);
-void    WriteRtString(char *lpsz);
-void    MarkFleet(FLEET *lpfl, DetType det);
-void    WriteBattlePlan(BTLPLAN *lpbtlplan, int16_t fLog);
-void    MarkPlanet(PLANET *lppl, int16_t iPlr, DetType det);
-void    SetSzWorkFromDt(DtFileType dt, int16_t iPlayer);
-int16_t FCreateFile(DtFileType dt, int16_t iPlayer, char *szForceName);
-void    WriteBOF(int16_t iPlayer, int16_t dt, int16_t fMulti);
-int16_t FMarkFile(DtFileType dt, int16_t iPlayer, MdMark mdMark, int16_t f);
-void    WriteRt(RecordType rt, int16_t cb, void *rg);
-void    RgToStream(void *rg, uint16_t cb);
-void    SetVisiblePlanFleet(int16_t iPlr);
-void    SetVisPFInit(int16_t iPlr);
-void    SetVisPFFleets(int16_t iPlr);
-void    SetVisPFPlanets(int16_t iPlr);
-void    SetVisPFThings(int16_t iPlr);
-void    SetVisPFFinish(int16_t iPlr);
+void    WriteOrders(APPSESSION &app, FLEET *lpfl);
+void    WriteRtPlr(APPSESSION &app, PLAYER *pplr);
+// Encoding borrows the destination for this call and leaves it unchanged on
+// failure. A successful byte count excludes unused staging bytes.
+std::optional<std::size_t> CbEncodeRtShDef(APPSESSION &app, const SHDEF *lpshdef, std::span<std::byte> rgbOut);
+void    WriteRtShDef(APPSESSION &app, SHDEF *lpshdef);
+std::int16_t FWriteDataFile(APPSESSION &app, std::string_view pszFileBase, std::int16_t iPlayer, std::int16_t fAppend);
+std::int16_t FAppendFile(APPSESSION &app, std::int16_t iPlayer);
+void    WriteBattles(APPSESSION &app, std::int16_t iPlayer);
+void    WritePlanet(APPSESSION &app, PLANET *lppl, RecordType rt, std::int16_t fHistory);
+void    WriteFleet(APPSESSION &app, FLEET *lpfl);
+void    WriteRtString(APPSESSION &app, std::string_view szName);
+void    MarkFleet(APPSESSION &app, FLEET *lpfl, DetType det);
+void    WriteBattlePlan(APPSESSION &app, BTLPLAN *lpbtlplan, std::int16_t fLog);
+void    MarkPlanet(APPSESSION &app, PLANET *lppl, std::int16_t iPlr, DetType det);
+void    SetSzWorkFromDt(APPSESSION &app, DtFileType dt, std::int16_t iPlayer);
+std::int16_t FCreateFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, std::optional<std::string_view> szForceName);
+void    WriteBOF(APPSESSION &app, std::int16_t iPlayer, std::int16_t dt, std::int16_t fMulti);
+std::int16_t FMarkFile(APPSESSION &app, DtFileType dt, std::int16_t iPlayer, MdMark mdMark, std::int16_t f);
+// Payloads above 1024 bytes fail before scratch/seed changes or publication.
+void    WriteRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rg);
+void    WriteRtEof(APPSESSION &app, std::uint16_t w);
+void    WriteRtThing(APPSESSION &app, const THING *pth);
+void    WriteRtScore(APPSESSION &app, const SCOREX *psx);
+void    RgToStream(APPSESSION &app, std::span<const std::byte> rg);
+void    SetVisiblePlanFleet(APPSESSION &app, std::int16_t iPlr);
+void    SetVisPFInit(APPSESSION &app, std::int16_t iPlr);
+void    SetVisPFFleets(APPSESSION &app, std::int16_t iPlr);
+void    SetVisPFPlanets(APPSESSION &app, std::int16_t iPlr);
+void    SetVisPFThings(APPSESSION &app, std::int16_t iPlr);
+void    SetVisPFFinish(APPSESSION &app, std::int16_t iPlr);
+
 
 #endif

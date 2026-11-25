@@ -2,7 +2,7 @@
 
 Part of [S01](S01-game-file-formats.md); byte notation and codecs are in
 [Binary records](S01-game-file-records.md). Evidence is
-[log.c](../src/core/log.c), especially `WriteMemRt`, `FWriteLogFile`,
+[log.cpp](../src/core/log.cpp), especially `WriteMemRt`, `FWriteLogFile`,
 `FLoadLogFile`, `FCheckLogFile`, `FRunLogFile` and `FRunLogRecord`, with
 [structs.h](../src/core/structs.h) supplying the fixed-width field overlays.
 
@@ -220,7 +220,7 @@ on 2026-10-25. Trace: [story-linked requirements](#story-linked-requirements),
 [replay boundaries](#4-identity-replay-and-failure),
 [canonical specification](S01-game-file-specification.dfy): `FOrdersFor`,
 `OrdersData`, `FOrdersFile`; [shared target keys](S06-shared-game-state.md#21-identity-domains-and-adapters).
-Evidence: [log.c](../src/core/log.c) `FWriteLogFile`, `FLoadLogFile`,
+Evidence: [log.cpp](../src/core/log.cpp) `FWriteLogFile`, `FLoadLogFile`,
 `FRunLogFile`, `FRunLogRecord`, `WriteMemRt`.
 
 ```mermaid

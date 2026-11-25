@@ -23,11 +23,11 @@ The existing `stars-compat-smoke` still tests SDL GPU/software rendering.
 Useful breakpoints:
 
 - `RegisterClassA`, `CreateWindowExA`, `DestroyCompatWindow` in
-  `compat/win32/src/window.c`.
+  `compat/win32/src/window.cpp`.
 - `PeekMessageA`, `SendMessageA`, `DispatchMessageA` in
-  `compat/win32/src/message.c`.
-- `CompatRouteEvent` in `compat/win32/src/input.c`.
-- `TestWndProc` in `tests/compat/win32_windows.c`.
+  `compat/win32/src/message.cpp`.
+- `CompatRouteEvent` in `compat/win32/src/input.cpp`.
+- `TestWndProc` in `tests/compat/win32_windows.cpp`.
 
 Use program arguments `--self-test` for the automated test. For a headless
 CLion run, set environment variable `SDL_VIDEODRIVER=dummy` in that run
@@ -48,7 +48,7 @@ xvfb-run -a env SDL_VIDEODRIVER=x11 \
 
 ## Implemented subset
 
-The library continues to use our ABI-checked headers and C11 adaptations of
+The library continues to use our ABI-checked headers and C++20 adaptations of
 Free API, with its MIT attribution retained. The unmodified upstream source
 reference and SHA-256 records are unchanged.
 
