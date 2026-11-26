@@ -22,6 +22,9 @@ produce different results from a 2.6j host for the same turn.
 - Fleet reports show the current fuel wait instead of the next waypoint's
   task while the fleet is waiting for fuel (#104).
 
+- **Host results:** Cybertron skips offensive mineral-packet targets marked
+  Friend by the sender (#105).
+
 - Clearing a game's report now preserves dots in its directory path and
   removes the intended `.chk` file (#98).
 

@@ -72,4 +72,51 @@ static void test_cyber_keeps_latest_sb_defender(void) {
     TEST_CHECK_(CshDesign(app, iplrCyber, ishSBDefend) == 1, "defenders %ld", (long)CshDesign(app, iplrCyber, ishSBDefend));
 }
 
-TEST_LIST = {{"Cybertron keeps its latest starbase defender", test_cyber_keeps_latest_sb_defender}, {NULL, NULL}};
+static void test_cyber_packet_respects_diplomacy(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+    const char *rgszAi[] = {"#5 4"};
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("cyber_packet_diplomacy", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 2089, rgszAi, 1));
+    TEST_ASSERT(FStarsTestLoadHost(app));
+    auto *lpplSrc = LpplStarsTestHomeworld(app, iplrCyber);
+    auto *lpplTest = LpplStarsTestHomeworld(app, 0);
+    TEST_ASSERT(lpplSrc && lpplTest);
+    app.state.idPlayer = iplrCyber;
+    app.state.rgptPlan[lpplTest->id] = app.state.rgptPlan[lpplSrc->id];
+    ++app.state.rgptPlan[lpplTest->id].x;
+    lpplTest->fStarbase = false;
+    lpplTest->uPopGuess = 10;
+    lpplTest->uDefGuess = 0;
+    const std::size_t ibMinerals = 4 * app.state.game.cPlanMax + 2;
+    const std::size_t cbAi = ibMinerals + sizeof(std::int32_t);
+    app.state.vlpbAiData = LpAlloc<std::uint8_t>(app, cbAi, htMisc);
+    TEST_ASSERT(app.state.vlpbAiData);
+    std::fill_n(app.state.vlpbAiData, cbAi, 0);
+    MivFromLp(app, app.state.vlpbAiData + ibMinerals).SetValue(12000);
+
+    const struct { std::int8_t mdSrc; std::int8_t mdDst; bool fEligible; const char *psz; } rgCases[] = {
+        {2, 0, true, "enemy colony qualifies"},
+        {0, 1, true, "incoming Friend declaration leaves a neutral colony eligible"},
+        {1, 2, false, "sender's Friend declaration excludes the colony"},
+        {1, 1, false, "mutual Friend colony is excluded"},
+    };
+    for (const auto &cs : rgCases) {
+        app.state.rgplr[iplrCyber].rgmdRelation[0] = cs.mdSrc;
+        app.state.rgplr[0].rgmdRelation[iplrCyber] = cs.mdDst;
+        TEST_CHECK_(bool(FEnumPktAttack(app, lpplSrc, lpplTest)) == cs.fEligible, "%s", cs.psz);
+    }
+    FreeLp(app, app.state.vlpbAiData, htMisc);
+    app.state.vlpbAiData = nullptr;
+}
+
+TEST_LIST = {{"Cybertron keeps its latest starbase defender", test_cyber_keeps_latest_sb_defender},
+             {"Cybertron respects the sender's packet diplomacy", test_cyber_packet_respects_diplomacy},
+             {NULL, NULL}};

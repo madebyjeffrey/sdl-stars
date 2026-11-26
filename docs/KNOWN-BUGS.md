@@ -17,6 +17,13 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Cybertron offensive packets target friends — fixed
+
+`FEnumPktAttack` considered friendly colonies for offensive mineral packets.
+The selector now excludes colonies whose owner the sender marks Friend.
+The regression checks unilateral and mutual Friend declarations and verifies
+that neutral and enemy colonies remain eligible (#105).
+
 ## Scanner location label overflows its stack buffer — fixed on develop
 
 `DrawScannerSBar` appended a location name of up to 359 UTF-8 bytes to the
