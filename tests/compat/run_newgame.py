@@ -269,8 +269,44 @@ def check_recent_startup(executable):
                         assert 'RecentImportChoice=' + choice in text
 
 
+def check_failed_creation(executable):
+    for failure, journal in (('universe', 'none'), ('host', 'none'), ('universe', 'empty'),
+                             ('host', 'empty'), ('host', 'recoverable')):
+        with tempfile.TemporaryDirectory(prefix='stars-failed-creation-') as directory:
+            work = Path(directory)
+            games = work / 'library/Games'
+            prior = games / 'playable' / 'playable.xy'
+            run(executable, work, STARS_CLIENT_NEW_GAME=str(prior), STARS_CLIENT_LIBRARY_NAME='playable')
+            before = {p: p.read_bytes() for p in prior.parent.iterdir() if p.is_file()}
+            target = games / 'failed-game'
+            choices = dict(STARS_CLIENT_NEW_GAME=str(target / 'failed-game.xy'),
+                           STARS_CLIENT_LIBRARY_NAME='failed-game')
+            fault = dict(STARS_CLIENT_LIBRARY_FAIL_WRITE=failure)
+            if journal != 'none':
+                fault['STARS_CLIENT_LIBRARY_FAIL_JOURNAL'] = journal
+            run(executable, work, **choices, **fault)
+            assert not (target / '.library').exists()
+            assert all(p.read_bytes() == content for p, content in before.items())
+            run(executable, work, STARS_CLIENT_LIBRARY_OPEN='playable')
+            if journal == 'recoverable':
+                recovery = target / 'save-transactions/failed-game/transaction'
+                assert (recovery / 'old/failed-game.xy').read_text() == 'saved universe'
+                assert (recovery / 'ready').is_file()
+                assert (target / 'failed-game.xy').is_file()
+            else:
+                leftovers = sorted(str(p.relative_to(target)) for p in target.rglob('*'))
+                run(executable, work, **choices)
+                run(executable, work, STARS_CLIENT_LIBRARY_OPEN='failed-game')
+                assert not leftovers, leftovers
+                assert not (target / 'save-transactions').exists()
+                assert {p.name for p in games.iterdir()} == {'failed-game', 'playable'}
+
+
 def main():
     executable = Path(sys.argv[1]).resolve()
+    if sys.argv[2:] == ['--create-failure']:
+        check_failed_creation(executable)
+        return 0
     check_first_player_turn(executable)
     check_import_transaction(executable)
     check_backup_import(executable)
@@ -333,12 +369,6 @@ def main():
                     assert (games / derived / '.library').is_file()
                     if title == 'GAME':
                         assert not list((games / 'gAmE').iterdir())
-            if not all_pages and name == 'fresh-game':
-                for failure in ('universe', 'host'):
-                    run(executable, work, STARS_CLIENT_NEW_GAME=str(games / 'failed-game' / 'failed-game.xy'),
-                        STARS_CLIENT_LIBRARY_NAME='failed-game', STARS_CLIENT_LIBRARY_FAIL_WRITE=failure)
-                    assert not (games / 'failed-game').exists()
-                    run(executable, work, STARS_CLIENT_LIBRARY_OPEN=name)
 
     with tempfile.TemporaryDirectory(prefix='stars-native-library-root-') as directory:
         work = Path(directory)

@@ -400,6 +400,9 @@ creation chooses a unique portable name, all generated files stay within that
 managed folder, and the startup Games list reopens committed entries after
 restart. SDL supplies platform application-data roots (including XDG on Linux);
 metadata and test storage remain separate from legacy records.
+New Game releases its reserved name after a failed universe or host write.
+The client verifies same-title retry, reopening the separate existing game,
+and preservation of a journal with recoverable files (#96).
 Startup shows the library directly, without prompting to import recent files or
 copying them automatically. Existing migration-choice settings are ignored;
 explicit Import and external-file opening retain their managed-copy workflows.

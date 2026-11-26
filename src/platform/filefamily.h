@@ -16,5 +16,7 @@ public:
     bool Rollback() noexcept;
     bool Commit() noexcept;
 };
+// The New Game wizard exclusively reserved this unpublished directory.
+bool FDiscardNativeNewGame(std::string_view szDirectory, std::string_view szName) noexcept;
 bool FCopyNativeFileDurable(std::string_view szSource, std::string_view szTarget) noexcept;
 #endif
