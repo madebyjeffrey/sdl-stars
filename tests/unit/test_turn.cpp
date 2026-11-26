@@ -7,7 +7,10 @@
 
 #include "stars_test.h"
 #include "filefamily.h"
+#include "random_io.h"
 #include "record_io.h"
+#include "turn_io.h"
+#include <utility>
 #include <vector>
 
 static std::string szDefinitionOpened;
@@ -711,7 +714,72 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
     TEST_CHECK(lpth->tht().ptDest().x() == 2000 && lpth->tht().ptDest().y() == 1200);
 }
 
+static std::vector<std::pair<std::int16_t, MessageId>> rgPacketNotices;
+
+static std::int16_t CapturePacketNotice(APPSESSION &, std::int16_t iplr, MessageId idm, MsgGoto, std::int16_t,
+                                        std::int16_t, std::int16_t, std::int16_t, std::int16_t, std::int16_t, std::int16_t) {
+    if (idm >= idmMineralPacketHasPermanentlyDefault && idm <= idmMineralPacketHas2)
+        rgPacketNotices.emplace_back(iplr, idm);
+    return 1;
+}
+
+static std::int16_t TerraformingRoll(APPSESSION &, std::int16_t c) {
+    return c == 200 || c == 10 ? 0 : c - 1;
+}
+
+static void test_MoveThings_packet_terraform_notices(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("packet-terraform-notices", szDir, sizeof(szDir)));
+    const std::string szRace = std::string(szDir) + szDirSep + "human.r1";
+    const char *rgszPlayer[] = {szRace.c_str()};
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, rgszPlayer, 1));
+    TEST_ASSERT(FStarsTestLoadHost(app));
+    auto *lppl = LpplStarsTestHomeworld(app, 1);
+    TEST_ASSERT(lppl);
+    SetRaceStat(&app.state.rgplr[0], rsMajorAdv, raMassAccel);
+    std::ranges::fill(app.state.rgplr[0].rgTech, 26);
+    app.state.rgplr[0].rgEnvVarMin[0] = 30;
+    app.state.rgplr[0].rgEnvVar[0] = 50;
+    lppl->fStarbase = false;
+    lppl->cDefenses = 0;
+    lppl->rgwtMin[3] = 100000;
+    lppl->rgEnvVarOrig[0] = lppl->rgEnvVar[0] = 60;
+    while (app.state.cThing != 0) FreeLpth(app, app.state.lpThings);
+    auto *lpth = LpthNew(app, 0, ithMineralPacket);
+    TEST_ASSERT(lpth);
+    lpth->pt().Set(app.state.rgptPlan[lppl->id]);
+    lpth->thp().SetIdPlanet(lppl->id);
+    lpth->thp().SetIWarp(7);
+    lpth->thp().SetRgwtMin(0, 100);
+    lpth->thp().SetWtMax(100);
+
+    RANDOMIO randomIO = RandomIO();
+    randomIO.pfnRandom = TerraformingRoll;
+    RANDOMIOSCOPE randomScope(randomIO);
+    TURNIO turnIO = TurnIO();
+    turnIO.pfnMessage = CapturePacketNotice;
+    TURNIOSCOPE turnScope(turnIO);
+    rgPacketNotices.clear();
+    MoveThings(app, 0);
+
+    TEST_CHECK(lppl->iPlayer == 1 && lppl->rgEnvVarOrig[0] == 59 && lppl->rgEnvVar[0] == 59);
+    const std::vector<std::pair<std::int16_t, MessageId>> rgExpected = {
+        {0, idmMineralPacketHasPermanentlyDefault}, {1, idmMineralPacketHasPermanentlyDefault2},
+        {0, idmMineralPacketHas}, {1, idmMineralPacketHas2},
+    };
+    TEST_CHECK(rgPacketNotices == rgExpected);
+}
+
 TEST_LIST = {{"batch command iterates owned LF paths and stops on invalid names", test_BatchRun_games}, {"batch input preserves names and full file sizes", test_BatchInput_contract}, {"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
+             {"packet terraforming notifies the sender and the colony owner", test_MoveThings_packet_terraform_notices},
              {"conditional batch advances only the game with submitted orders", test_BatchRun_conditional_orders},
              {"conditional hosting waits for a current submission after stale redelivery", test_ConditionalHost_stale_orders},
              {"definition filename survives logging and shared-buffer aliases", test_DefinitionFilename_logging},

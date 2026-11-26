@@ -24,6 +24,12 @@ The selector now excludes colonies whose owner the sender marks Friend.
 The regression checks unilateral and mutual Friend declarations and verifies
 that neutral and enemy colonies remain eligible (#105).
 
+## Packet terraforming misroutes the colony owner's notice — fixed
+
+`MoveThings` sent both versions of the terraforming notice to the packet
+sender. For a foreign colony, the colony owner now receives the recipient
+version. The regression tests both permanent and temporary changes (#110).
+
 ## Scanner location label overflows its stack buffer — fixed on develop
 
 `DrawScannerSBar` appended a location name of up to 359 UTF-8 bytes to the
