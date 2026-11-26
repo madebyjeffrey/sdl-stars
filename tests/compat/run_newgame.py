@@ -191,7 +191,7 @@ def check_snapshot_path_limit(executable):
 def check_failed_switch_save(executable):
     fixture = Path(__file__).parents[1] / 'scaffold/fixtures/regression/native/oneai2/checkpoints/000'
     for choice in ('save', 'submit'):
-        for failure in ('orders', 'history'):
+        for failure in ('orders', 'history', 'history-write'):
             with tempfile.TemporaryDirectory(prefix='stars-failed-switch-save-') as directory:
                 work = Path(directory)
                 source = work / 'exchange'
@@ -205,8 +205,11 @@ def check_failed_switch_save(executable):
                     STARS_CLIENT_EXPECT_SWITCHED_PLAYER='1', STARS_CLIENT_SWITCH_CHOICE=choice,
                     STARS_CLIENT_SWITCH_FAIL_SAVE=failure)
                 managed = work / 'library/Games/save-failure'
-                assert (managed / 'save-failure.x2').is_file()
+                orders = (managed / 'save-failure.x2').read_bytes()
                 assert (managed / 'save-failure.h2').is_file()
+                # The BOF flags follow the two-byte record header and 14 payload bytes.
+                assert len(orders) >= 18
+                assert bool(int.from_bytes(orders[16:18], 'little') & 0x100) == (choice == 'submit')
 
 
 def check_uppercase_imports(executable):

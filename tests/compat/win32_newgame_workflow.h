@@ -42,6 +42,15 @@ int16_t StarsTest_FCreateFile(APPSESSION &app, DtFileType dt, int16_t iplr, std:
     return fCreated;
 }
 
+void StarsTest_WriteRt(APPSESSION &app, RecordType rt, std::span<const std::byte> rgb) {
+    WriteRt(app, rt, rgb);
+    if (fFailSwitchHistoryWrite && rt == rtHistHdr) {
+        fFailSwitchHistoryWrite = false;
+        FileError(app, idsErrorWritingFile);
+        StarsThrowError(starsErrorFile, idsErrorWritingFile);
+    }
+}
+
 static BOOL FCheckNewGameWorkflow(APPSESSION &app) {
     HWND hwndDialog = NULL, hwnd;
     DLGPROC lpfn;
