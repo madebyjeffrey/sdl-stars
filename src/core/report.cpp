@@ -247,19 +247,22 @@ LShowTask:
             case iActionLoadExact:
             case iActionUnloadExact:
             case iActionSetAmount:
-            case iActionSetWaypoint:
+            case iActionSetWaypoint: {
                 szCatalogPsz = TextIO().pfnCompressed(app, ids);
                 psz = szCatalogPsz.data();
                 pchEnd = std::find(szCatalogPsz.begin(), szCatalogPsz.end(), 0);
                 cch = static_cast<std::size_t>(pchEnd - szCatalogPsz.begin());
-                if (pchEnd == szCatalogPsz.end() || cch < 3) return {SzReportLabel(psz), icr};
-                psz[cch - 3] = 0;
+                const std::string_view szAction{psz, cch};
+                const std::string_view szSuffix = fPercent ? " %..." : "...";
+                if (pchEnd == szCatalogPsz.end() || !szAction.ends_with(szSuffix)) return {SzReportLabel(szAction), icr};
+                psz[cch - szSuffix.size()] = 0;
                 if (fPercent) {
                     CchSprintf(app.state.szWork, "%s %d%%", psz, ord.txp.rgia[icr].cQuan());
                 } else {
                     CchSprintf(app.state.szWork, icr == 4 ? "%s %dmg" : "%s %dkT", psz, ord.txp.rgia[icr].cQuan());
                 }
                 return {SzReportLabel(app.state.szWork), icr};
+            }
             default:
                 return {SzReportLabel(app.state.szDblDash), icr};
             }

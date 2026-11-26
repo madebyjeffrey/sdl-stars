@@ -536,6 +536,13 @@ Timeline test selects charts with both the pointer and keyboard (#99).
 a dash. It now uses the same formatting as Unload Exactly. The report tests
 check amounts in kT for cargo and mg for fuel (#102).
 
+## Fleet report transport percentages include an extra percent sign — fixed
+
+`PszGetTaskName` removed the dots from the catalog prompt but retained its
+percent placeholder. The formatter now removes the full ` %...` suffix
+before appending the selected percentage. The report tests cover both
+Fill Up to and Wait for (#103).
+
 ## Temperature-label encoding — fixed on develop
 
 `PszCalcEnvVar` used `%c` with 186 for the `º` in a temperature unit,

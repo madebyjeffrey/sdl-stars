@@ -16,6 +16,9 @@ produce different results from a 2.6j host for the same turn.
 - Fleet reports show the quantity and units for Load Exactly transport orders
   (#102).
 
+- Fleet reports show the selected percentage once for Fill Up to and Wait for
+  transport orders (#103).
+
 - Clearing a game's report now preserves dots in its directory path and
   removes the intended `.chk` file (#98).
 

@@ -57,6 +57,18 @@ static void test_ReportLabels_owned_results(void) {
         TEST_CHECK(szLoadTask.icr == i);
         TEST_CHECK(szLoadTask.sz.view() == (i == 4 ? "Load Exactly 16mg" : "Load Exactly 42kT"));
     }
+    const struct { int icr; XferActionType action; int cQuan; const char *psz; } rgPercent[] = {
+        {0, iActionFillPercent, 42, "Fill Up to 42%"},
+        {2, iActionWaitPercent, 75, "Wait for 75%"},
+    };
+    for (const auto &cs : rgPercent) {
+        storage.rgord[0].txp = {};
+        storage.rgord[0].txp.rgia[cs.icr].SetIAction(cs.action);
+        storage.rgord[0].txp.rgia[cs.icr].SetCQuan(cs.cQuan);
+        const auto szPercent = PszGetTaskName(app, &fl);
+        TEST_CHECK(szPercent.icr == cs.icr);
+        TEST_CHECK_(szPercent.sz.view() == cs.psz, "got [%s] instead of [%s]", szPercent.sz.data(), cs.psz);
+    }
 }
 
 static std::int16_t etaLabelFirst, etaLabelLast;
