@@ -14,7 +14,7 @@ static void NotifyEdit(HWND hwnd, UINT code) {
     if (lp && lp->hwndParent) win32::SendMessageA(lp->hwndParent, win32::WM_COMMAND, win32::MAKEWPARAM(lp->idChild, code), reinterpret_cast<LPARAM>(hwnd));
 }
 
-static void SyncEditScroll(HWND hwnd);
+static void SyncEditScroll(HWND hwnd, bool fRedraw = true);
 
 void CompatEditComposition(HWND hwnd, const char *pszUtf, int ich, int cch) {
     char *psz;
@@ -310,7 +310,7 @@ static int CyEdit(HWND hwnd) {
     return StarsMax(1, tm.tmHeight);
 }
 
-static void SyncEditScroll(HWND hwnd) {
+static void SyncEditScroll(HWND hwnd, bool fRedraw) {
     SCROLLINFO si = {sizeof(si), win32::SIF_RANGE | win32::SIF_PAGE | win32::SIF_POS, 0, 0, 0, 0, 0};
     RECT rc;
     HDC hdc;
@@ -324,7 +324,7 @@ static void SyncEditScroll(HWND hwnd) {
     if (hwnd->fEditV) {
         si.nMax = static_cast<int>(IEditLine(hwnd, cch)); si.nPage = static_cast<UINT>((((1) > ((rc.bottom - rc.top) / cy)) ? (1) : ((rc.bottom - rc.top) / cy)));
         si.nPos = hwnd->yEditScroll / cy;
-        hwnd->yEditScroll = win32::SetScrollInfo(hwnd, win32::SB_VERT, &si, 1) * cy;
+        hwnd->yEditScroll = win32::SetScrollInfo(hwnd, win32::SB_VERT, &si, fRedraw) * cy;
         if (!win32::IsWindow(hwnd)) return;
     }
     if (hwnd->fEditH) {
@@ -339,7 +339,7 @@ static void SyncEditScroll(HWND hwnd) {
             win32::ReleaseDC(hwnd, hdc);
         }
         si.nMax = StarsMax(0, cxMax - 1); si.nPage = static_cast<UINT>(StarsMax(1, rc.right - rc.left)); si.nPos = hwnd->xEditScroll;
-        hwnd->xEditScroll = win32::SetScrollInfo(hwnd, win32::SB_HORZ, &si, 1);
+        hwnd->xEditScroll = win32::SetScrollInfo(hwnd, win32::SB_HORZ, &si, fRedraw);
         if (!win32::IsWindow(hwnd)) return;
     }
 }
@@ -435,7 +435,8 @@ static void PaintEdit(HWND hwnd) {
     }
     if ((hwnd->dwStyle & win32::ES_MULTILINE) && (hwnd->dwStyle & (win32::ES_AUTOHSCROLL | win32::WS_HSCROLL))) cxShift = hwnd->xEditScroll;
     hwnd->xEditScroll = cxShift;
-    SyncEditScroll(hwnd);
+    // Reinvalidating the edit from its own paint starves queued timers.
+    SyncEditScroll(hwnd, false);
     if (!win32::IsWindow(hwnd)) return;
     for (ich = 0; ich <= cch; ich = ichNext) {
         ichEnd = hwnd->dwStyle & win32::ES_MULTILINE ? IchLineEnd(hwnd, ich) : cch;

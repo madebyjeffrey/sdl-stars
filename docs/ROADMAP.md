@@ -704,6 +704,11 @@ destination dragging and waypoint-list deletion restore the original order.
 Multiple route legs, Ctrl gestures and customized presets remain unqualified. Combined workflow
 qualification exposed paint starvation from empty scrollbar geometry; the
 handler now validates pending paint even for zero-width/height controls.
+The private message viewer now settles after opening a long message.
+Window placement compares the full extent, including scrollbar space, and
+an edit repaint updates scrollbar ranges without requesting another edit
+paint. The SDL edit test covers unchanged placement, scroll position, and
+paint completion (#97).
 Low-height fleet-panel reachability still needs layout qualification. Split
 qualification exposed misaligned packed-button rectangles; drawing and tracking
 now copy those rectangles before native access without widening records.
