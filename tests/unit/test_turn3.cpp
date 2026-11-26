@@ -189,7 +189,57 @@ static void test_steal_colonists_refused(void) {
     TEST_CHECK_(wt == 0, "colonists %ld kT", (long)wt);
 }
 
+static void test_planet_transport_requires_orbit(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char    szDir[cbTestPath];
+    int16_t ihs;
+    int16_t ish;
+    int32_t wtColonists;
+    PLANET *lppl;
+    FLEET  *lpflOrbit;
+    FLEET  *lpflDeep;
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("planet_transport_requires_orbit", szDir, sizeof(szDir)));
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, nullptr, 0));
+    TEST_ASSERT(FStarsTestLoadHost(app));
+    lppl = LpplStarsTestHomeworld(app, 0);
+    TEST_ASSERT(lppl);
+    wtColonists = lppl->rgwtMin[3];
+    ish = IshColonyDesign(app, 0, &ihs);
+    TEST_ASSERT(ish >= 0);
+
+    lpflOrbit = LpflStarsTestAddFleet(app, 0, lppl->id, ish, 1);
+    TEST_ASSERT(lpflOrbit);
+    lpflDeep = LpflStarsTestAddFleet(app, 0, lppl->id, ish, 1);
+    TEST_ASSERT(lpflDeep);
+    TEST_ASSERT(lpflOrbit->id < lpflDeep->id);
+    for (FLEET *lpfl : {lpflOrbit, lpflDeep}) {
+        lpfl->rgwtMin[3] = 10;
+        ORDER &ord = lpfl->lpplord->rgord()[0];
+        ord.grTask = grTaskXfer;
+        ord.fValidTask = 1;
+        ord.txp.rgia[3].SetIAction(iActionUnloadAll);
+    }
+    // The preceding fleet leaves a valid planet in the transport loop's scratch record.
+    lpflDeep->idPlanet = idPlanetDeepSpace;
+    lpflDeep->pt.x += 1;
+
+    SatisfyOrders(app, 1);
+
+    TEST_CHECK(lpflOrbit->rgwtMin[3] == 0);
+    TEST_CHECK(lpflDeep->rgwtMin[3] == 10);
+    TEST_CHECK(lppl->rgwtMin[3] == wtColonists + 10);
+    TEST_CHECK(lpflDeep->lpplord->rgord()[0].grTask == grTaskNone);
+}
+
 TEST_LIST = {{"colonize", test_colonize}, {"colonize needs a colonization module", test_colonize_needs_module},
              {"steal minerals", test_steal_minerals},
              {"steal colonists refused", test_steal_colonists_refused},
+             {"planet transport requires orbit", test_planet_transport_requires_orbit},
              {NULL, NULL}};
