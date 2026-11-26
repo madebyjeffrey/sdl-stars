@@ -183,6 +183,25 @@ static void test_ETALabel_contract(void) {
         TEST_CHECK(etaBlocked.view() == "-- " && etaBlocked.cYears == 0 && etaBlocked.cch == 3);
         TEST_CHECK(std::string_view(app.state.szWork) == "Never");
     }
+    storage.rgord[1].fValidTask = 1;
+    storage.rgord[1].grTask = grTaskPatrol;
+    storage.rgord[1].tptl().iDist = 2;
+    storage.rgord[1].iWarp = 5;
+    storage.rgord[0].grTask = grTaskXfer;
+    for (int i = 0; i < 5; ++i) {
+        auto &ia = storage.rgord[0].txp.rgia[i];
+        ia.SetIAction(iActionWaitPercent);
+        ia.SetCQuan(60);
+        TEST_CHECK(FDestIsWP0(&fl));
+        TEST_CHECK(PszGetDestName(app, &fl, nullptr).view() == "(Delayed)");
+        const auto eta = PszGetETA(app, nullptr, &fl);
+        TEST_CHECK(eta.view() == "-- " && eta.cYears == 0);
+        const auto szWait = PszGetTaskName(app, &fl);
+        TEST_CHECK_(szWait.icr == i && szWait.sz.view() == "Wait for 60%", "cargo slot %d: got [%s]", i, szWait.sz.data());
+        ia = {};
+    }
+    TEST_CHECK(!FDestIsWP0(&fl) && PszGetETA(app, nullptr, &fl).cYears == 4);
+    TEST_CHECK(PszGetTaskName(app, &fl).sz.view() == "Patrol  150ly");
     TEST_CHECK(std::string_view(szETA.sz.data()) == "4y");
 }
 

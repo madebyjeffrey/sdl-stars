@@ -543,6 +543,13 @@ percent placeholder. The formatter now removes the full ` %...` suffix
 before appending the selected percentage. The report tests cover both
 Fill Up to and Wait for (#103).
 
+## Fleet report skips the current fuel wait — fixed
+
+`PszGetTaskName` checked the first four cargo slots for waits and skipped
+fuel. It now uses `FDestIsWP0` to select the current transport waypoint.
+The report tests check Task, Destination, and ETA for waits in all five
+cargo slots followed by a patrol (#104).
+
 ## Temperature-label encoding — fixed on develop
 
 `PszCalcEnvVar` used `%c` with 186 for the `º` in a temperature unit,

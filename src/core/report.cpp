@@ -164,10 +164,8 @@ TASKNAMERESULT PszGetTaskName(APPSESSION &app, FLEET *lpfl) {
     if (ord.fValidTask) {
         switch (ord.grTask) {
         case grTaskXfer:
-            for (i = 0; i < 4; i++) {
-                if (ord.txp.rgia[i].iAction() == iActionWaitPercent)
-                    goto LShowTask;
-            }
+            if (FDestIsWP0(lpfl))
+                goto LShowTask;
             break;
         case grTaskColonize:
         case grTaskMerge:
