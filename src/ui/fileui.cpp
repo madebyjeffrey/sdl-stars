@@ -7,6 +7,8 @@
 #include "text_io.h"
 #include "record_io.h"
 #include "desktop_choice_io.h"
+#include "filefamily.h"
+#include "fileio.h"
 
 INT_PTR  AskSaveDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     APPSESSION &app = AppCompatCallbackContext();
@@ -46,9 +48,36 @@ void PromptSaveGame(APPSESSION &app) {
     return;
 }
 
+static bool FWritePlayerFiles(APPSESSION &app) {
+    const auto iPlayer = app.state.idPlayer;
+    SetSzWorkFromDt(app, dtLog, iPlayer);
+    {
+        NATIVEFAMILY family(app.state.szBase);
+        if (family) {
+            if (FWriteLogFile(app, app.state.szBase, iPlayer) && FWriteHistFile(app, iPlayer)) {
+                if (family.Commit()) return true;
+            } else if (family.Rollback()) {
+                // The failing writer has already reported its error.
+                return false;
+            }
+        } else {
+            // A blocked destination can prevent the journal from starting.
+            // Report that path, with the orders path as the default.
+            for (const auto dt : {dtHist, dtLog}) {
+                SetSzWorkFromDt(app, dt, iPlayer);
+                const auto info = IGetNativeFileInfo(app.state.szWork, NATIVELINKMODE::inspect);
+                if (info && !info->fRegular) break;
+            }
+        }
+    }
+    FileError(app, idsErrorWritingFile);
+    return false;
+}
+
 std::int16_t FCanLeaveCurrentGame(APPSESSION &app) {
     std::int16_t fRet;
     std::int16_t fSubmitSav;
+    std::int16_t fWriteTurnNumSav;
 
     if (app.state.idPlayer == iplrNone || !app.state.game.fDirty) return 1;
     fRet = ControlIO().pfnDialogBox(app.lpui->hInst, !app.state.game.fSinglePlr ? win32::MAKEINTRESOURCE(IDD_SAVE_TURN1) : win32::MAKEINTRESOURCE(IDD_SAVE_TURN2),
@@ -56,9 +85,11 @@ std::int16_t FCanLeaveCurrentGame(APPSESSION &app) {
     if (fRet == 0 || fRet == -2) return 0;
     if (fRet == 1 || fRet == -1) {
         fSubmitSav = app.state.gd.fSubmit;
+        fWriteTurnNumSav = app.state.gd.fWriteTurnNum;
         app.state.gd.fSubmit = fRet == -1;
-        if (!FWriteLogFile(app, app.state.szBase, app.state.idPlayer) || !FWriteHistFile(app, app.state.idPlayer)) {
+        if (!FWritePlayerFiles(app)) {
             app.state.gd.fSubmit = fSubmitSav;
+            app.state.gd.fWriteTurnNum = fWriteTurnNumSav;
             /* The orders writer clears dirty before the history save. */
             RecordIO().pfnDirtyGame(app, 1);
             return 0;

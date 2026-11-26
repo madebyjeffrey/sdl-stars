@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Return to Library now saves orders and history together. Previously a
+  history write failure could leave new orders on disk. A failed Save or
+  Save & Submit preserves the active player and edits for retry (#95).
+
 - Conditional hosting (`-t`) loads each game before checking its submitted
   orders. Batch entries with outstanding human orders stay at their current
   turn. A host-file load failure exits with status 2.

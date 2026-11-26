@@ -127,7 +127,9 @@ static BOOL FTestLibraryTimestamp(APPSESSION &app, long long *plPlayed) {
 
 static BOOL fChecked, fPassed;
 static BOOL fSwitchCancelSent;
-static int cSwitchLogWrites, cSwitchHistoryWrites;
+static int cSwitchLogWrites, cSwitchHistoryWrites, cSwitchFailureAlerts;
+static bool fFailSwitchHistoryWrite;
+static std::string szSwitchFailureAlert;
 static int cAlerts;
 static BOOL fConflictRestoreAlert;
 static UINT_PTR idTimer;
@@ -1560,7 +1562,11 @@ int16_t StarsTest_AlertSz(APPSESSION &, std::string_view sz, int16_t mbType) {
     fprintf(stderr, "Startup alert: %s\n", szText.c_str());
     cAlerts++;
     if (PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST")) return IDOK;
-    if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE") || PszCompatEnvironment("STARS_CLIENT_SWITCH_FAIL_SAVE")) return IDOK;
+    if (PszCompatEnvironment("STARS_CLIENT_SWITCH_FAIL_SAVE")) {
+        szSwitchFailureAlert = szText;
+        return IDOK;
+    }
+    if (PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE")) return IDOK;
     if (PszCompatEnvironment("STARS_CLIENT_IMPORT_INVALID_EXPECTED")) {
         fChecked = 1;
         fPassed = 1;
@@ -2890,7 +2896,6 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
             int fSave = !strcmp(pszChoice, "save") || !strcmp(pszChoice, "submit");
             int fSubmit = !strcmp(pszChoice, "submit");
             if (iStage != 21) {
-                char szBlocked[256];
                 int16_t idPlayerBefore = app.state.idPlayer;
                 int16_t iResearch = (app.state.rgplr[app.state.idPlayer].iTechNow() + 1) % 6;
                 PLANET *lpPlanetsBefore = app.state.lpPlanets;
@@ -2899,22 +2904,36 @@ static void  CheckStartup(HWND hwnd, UINT msg, UINT_PTR id, DWORD dwTime) {
                     // loop. Let its workflow timer finish before starting again.
                     if (iWorkflow != 0) return;
                     if (!FRunWorkflow(app, 1, iResearch)) goto LDone;
-                    SetSzWorkFromDt(app, !strcmp(pszFailure, "orders") ? dtLog : dtHist, app.state.idPlayer);
-                    strcpy(szBlocked, app.state.szWork);
-                    if (!SDL_CreateDirectory(szBlocked)) goto LDone;
+                    const bool fLateFailure = !strcmp(pszFailure, "history-write");
+                    SetSzWorkFromDt(app, !strcmp(pszFailure, "orders") ? dtLog : dtHist, idPlayerBefore);
+                    const std::string szBlocked{app.state.szWork};
+                    if (!fLateFailure && !SDL_CreateDirectory(szBlocked.c_str())) goto LDone;
+                    fFailSwitchHistoryWrite = fLateFailure;
                     app.state.game.fDirty = 1;
                     app.state.gd.fSubmit = 0;
+                    app.state.gd.fWriteTurnNum = 0;
                     ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
                     if (win32::IsWindow(app.lpui->hwndTitle) || app.state.lpPlanets != lpPlanetsBefore || app.state.idPlayer != idPlayerBefore ||
-                        !app.state.game.fDirty || app.state.gd.fSubmit || app.state.rgplr[app.state.idPlayer].iTechNow() != iResearch || cAlerts != 2)
+                        !app.state.game.fDirty || app.state.gd.fSubmit || app.state.rgplr[idPlayerBefore].iTechNow() != iResearch ||
+                        szSwitchFailureAlert.find(szBlocked) == std::string::npos || fFailSwitchHistoryWrite)
                         goto LDone;
-                    if (RemoveNativePath(szBlocked) != 0) goto LDone;
+                    cSwitchFailureAlerts = cAlerts;
+                    if (!fLateFailure && RemoveNativePath(szBlocked.c_str()) != 0) goto LDone;
+                    for (const auto dt : {dtLog, dtHist}) {
+                        SetSzWorkFromDt(app, dt, idPlayerBefore);
+                        if (FFileExists(app.state.szWork)) {
+                            fprintf(stderr, "Failed save left a partially published player file: %s\n", app.state.szWork);
+                            goto LDone;
+                        }
+                    }
+                    if (app.state.gd.fWriteTurnNum) goto LDone;
                     puts("Failed save preserves the active player and pending research; retrying the save");
+                } else {
+                    app.state.game.fDirty = 1;
+                    app.state.gd.fSubmit = 0;
                 }
                 cSwitchLogWrites = 0;
                 cSwitchHistoryWrites = 0;
-                app.state.game.fDirty = 1;
-                app.state.gd.fSubmit = 0;
                 ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_FILE_RETURN_TO_TITLE, 0);
                 if (!win32::IsWindow(app.lpui->hwndTitle) || app.state.idPlayer != iplrNone || app.state.game.fDirty ||
                     cSwitchLogWrites != fSave || cSwitchHistoryWrites != fSave || app.state.gd.fSubmit != fSubmit)
@@ -3230,6 +3249,7 @@ int main(void) {
     DESKTOPCHOICEIOSCOPE workflowScope(io_workflow);
     RECORDIO io_newgame;
     io_newgame.pfnFCreateFile = StarsTest_FCreateFile;
+    io_newgame.pfnWriteRt = StarsTest_WriteRt;
     RECORDIOSCOPE newGameScope(io_newgame);
 
     NATIVEPUBLISHIO io;
@@ -3263,7 +3283,8 @@ int main(void) {
            cAlerts == (PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE") &&
                        !strcmp(PszCompatEnvironment("STARS_CLIENT_GAME_DELETE_MODE"), "failure") ? 1 :
                        PszCompatEnvironment("STARS_CLIENT_HOST_LIBRARY_TEST") ? 5 :
-                       PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE") || PszCompatEnvironment("STARS_CLIENT_SWITCH_FAIL_SAVE") ? 2 :
+                       PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_WRITE") ? 2 :
+                       PszCompatEnvironment("STARS_CLIENT_SWITCH_FAIL_SAVE") ? cSwitchFailureAlerts :
                        PszCompatEnvironment("STARS_CLIENT_EXPORT_EXPECTED") ? 1 :
                        PszCompatEnvironment("STARS_CLIENT_IMPORT_INVALID_EXPECTED") ? 1 :
                        PszCompatEnvironment("STARS_CLIENT_IMPORT_UPDATE_EXPECTED") &&
