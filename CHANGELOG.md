@@ -6,6 +6,9 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Clearing a game's report now preserves dots in its directory path and
+  removes the intended `.chk` file (#98).
+
 - The message pane stays responsive when a long private message needs a
   scrollbar. Repainting the edit preserves its scroll position (#97).
 

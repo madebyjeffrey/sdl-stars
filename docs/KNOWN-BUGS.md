@@ -104,6 +104,10 @@ allocation-error alerts. The extension table is an immutable typed constant;
 report text now enters through a sized readonly view. Existing extension
 selection, header/append behavior, saved widths and game rules remain.
 
+`ClearFile` now finds the extension in the final path component. An extensionless
+game in a dotted directory keeps its full basename when locating the report,
+leaving any neighboring report intact (#98).
+
 ## Turn-backup path capacity — fixed on develop
 
 `FGenerateTurn` joined the backup directory, basename and extension inside a
