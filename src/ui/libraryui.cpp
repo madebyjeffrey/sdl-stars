@@ -32,6 +32,7 @@
 #include <vector>
 #include "libraryzip.h"
 #include "filesystem.h"
+#include "filefamily.h"
 
 /* Desktop metadata is deliberately outside the legacy game records. A folder
  * is listed only after its complete generated family and metadata are saved. */
@@ -546,15 +547,6 @@ static std::int16_t FWriteLibraryMetadataValues(std::string_view pszDir, std::st
     cch = CchSnprintf(std::span{szTemp, sizeof(szTemp)}, "%s%s.library.tmp", pszDir, szDirSep);
     if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szTemp)) return 0;
     return ReplaceNativeFile(szTemp, szFile) == 0;
-}
-
-static bool RemovePendingFile(APPSESSION &app, std::string_view pszFile) {
-    char szFile[256];
-    const int cch = CchSnprintf(std::span{szFile, sizeof(szFile)}, "%s%s%s", app.lpui->szLibraryPending.data(), szDirSep, pszFile);
-    if (cch <= 0 || static_cast<std::size_t>(cch) >= sizeof(szFile)) return false;
-    /* Failed generation can leave an empty directory at a file destination. */
-    RemoveNativePath(szFile);
-    return true;
 }
 
 static std::optional<HDR> FReadLibraryHdr(NATIVEFILE *pf) {
@@ -3032,8 +3024,7 @@ std::int16_t FFinishLibraryGame(APPSESSION &app, HWND hwnd, std::int16_t fGenera
     }
     if (fGenerated) fGenerated = FWriteLibraryMetadata(app, app.lpui->szLibraryPending.data(), app.lpui->szLibraryName.data(), app.state.idPlayer);
     if (!fGenerated) {
-        FNativeEnumerateDirectory(app, app.lpui->szLibraryPending.data(), RemovePendingFile);
-        RemoveNativePath(app.lpui->szLibraryPending.data());
+        FDiscardNativeNewGame(app.lpui->szLibraryPending.data(), app.lpui->szLibraryName.data());
         CchCopyUtf8Prefix(std::span{szMessage}, TextIO().pfnCompressed(app, idsLibraryStorageFailed).data());
         CompatChoiceIO().pfnMessageBoxA(win32::IsWindow(hwnd) ? hwnd : app.lpui->hwndFrame, szMessage, TextIO().pfnCompressed(app, idsLibraryGames).data(), win32::MB_OK | win32::MB_ICONHAND);
     }

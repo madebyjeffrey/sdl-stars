@@ -6,6 +6,10 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- New Game releases the library name after a failed initial write, including
+  when the failed creation leaves a save journal with no previous game files.
+  Journals with recoverable data are preserved (#96).
+
 - Return to Library now saves orders and history together. Previously a
   history write failure could leave new orders on disk. A failed Save or
   Save & Submit preserves the active player and edits for retry (#95).

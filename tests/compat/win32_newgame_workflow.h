@@ -31,6 +31,17 @@ int16_t StarsTest_FCreateFile(APPSESSION &app, DtFileType dt, int16_t iplr, std:
     DtFileType dtFailure = pszFailure && !strcmp(pszFailure, "host") ? dtHost : dtXY;
     int16_t fCreated;
     if (fCreatingGame && dt == dtFailure && pszFailure) {
+        if (const char *pszJournal = PszCompatEnvironment("STARS_CLIENT_LIBRARY_FAIL_JOURNAL")) {
+            // Match the journal left when a blocked destination also prevents rollback.
+            const std::string szControl = std::string(app.lpui->szLibraryPending.data()) + "/save-transactions/failed-game";
+            const std::string szJournal = szControl + "/transaction";
+            const std::string szOld = szJournal + "/old";
+            if (!SDL_CreateDirectory(szOld.c_str()) ||
+                !FTestWriteFile((szControl + "/lock").c_str(), "") ||
+                !FTestWriteFile((szJournal + "/ready").c_str(), "sdl-stars-family-1\n")) return 0;
+            if (!strcmp(pszJournal, "recoverable") &&
+                !FTestWriteFile((szOld + "/failed-game.xy").c_str(), "saved universe")) return 0;
+        }
         SetSzWorkFromDt(app, dt, iplr);
         if (!SDL_CreateDirectory(app.state.szWork)) return 0;
     }

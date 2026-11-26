@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <set>
 #include <span>
 #include <stdexcept>
@@ -26,6 +27,23 @@ std::string Fold(std::string sz) {
         if (ch >= 'A' && ch <= 'Z')
             ch += 'a' - 'A';
     return sz;
+}
+fs::path NativeFamilyDirectory(fs::path path) {
+#ifdef _WIN32
+    // Journal names include the stem twice and can exceed the legacy path limit.
+    const auto szPath = path.make_preferred().native();
+    if (!szPath.starts_with(LR"(\\?\)")) {
+        path = szPath.starts_with(LR"(\\)")
+            ? LR"(\\?\UNC\)" + szPath.substr(2)
+            : LR"(\\?\)" + szPath;
+    }
+#endif
+    return path;
+}
+std::optional<NATIVEFILEINFO> InspectFamilyPath(const fs::path &path) {
+    const auto info = IGetNativeFileInfo(SzFromUtf8(path.u8string()), NATIVELINKMODE::inspect);
+    Require(info ? !info->fLink : errno == ENOENT);
+    return info;
 }
 bool Extension(std::string sz) {
     sz = Fold(std::move(sz));
@@ -248,17 +266,7 @@ NATIVEFAMILY::NATIVEFAMILY(std::string_view szBase) noexcept {
         // would redirect a later write outside the locked family.
         Require(!stem.empty() && Text(stem).find('.') == std::string::npos);
         auto state = std::make_unique<NATIVEFAMILYSTATE>();
-        state->parent = fs::canonical(path.has_parent_path() ? path.parent_path() : fs::path("."));
-#ifdef _WIN32
-        // Journal names include the family stem twice. Use native extended paths
-        // even when the corresponding game files fit in the legacy path limit.
-        const auto szParent = state->parent.make_preferred().native();
-        if (!szParent.starts_with(LR"(\\?\)")) {
-            state->parent = szParent.starts_with(LR"(\\)")
-                                ? LR"(\\?\UNC\)" + szParent.substr(2)
-                                : LR"(\\?\)" + szParent;
-        }
-#endif
+        state->parent = NativeFamilyDirectory(fs::canonical(path.has_parent_path() ? path.parent_path() : fs::path(".")));
         state->base = state->parent / stem;
         const auto control = state->parent / "save-transactions" / stem;
         Require(!fs::is_symlink(control.parent_path()) && !fs::is_symlink(control));
@@ -298,6 +306,74 @@ bool NATIVEFAMILY::Commit() noexcept {
         if (!lpState->Finish()) return false;
         lpState.reset();
         return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool FDiscardNativeNewGame(std::string_view szDirectory, std::string_view szName) noexcept {
+    try {
+        const auto directory = NativeFamilyDirectory(fs::absolute(PathFromUtf8(szDirectory)));
+        const auto infoDirectory = InspectFamilyPath(directory);
+        Require(infoDirectory && infoDirectory->fDirectory && !InspectFamilyPath(directory / ".library"));
+        const auto controls = directory / "save-transactions";
+        const auto stem = PathFromUtf8(Fold(std::string(szName)));
+        Require(!stem.empty() && stem == stem.filename() && stem != "." && stem != "..");
+        const auto control = controls / stem;
+        const auto journal = control / "transaction";
+        const auto lockPath = control / "lock";
+        NATIVEFILEOWNER lock(nullptr, ICloseNativeFile);
+
+        const auto infoControls = InspectFamilyPath(controls);
+        if (infoControls) {
+            Require(infoControls->fDirectory);
+            for (const auto &entry : fs::directory_iterator(controls)) {
+                const auto info = InspectFamilyPath(entry.path());
+                Require(info && info->fDirectory && fs::equivalent(entry.path(), control));
+            }
+        }
+        const auto infoControl = InspectFamilyPath(control);
+        if (infoControl) {
+            Require(infoControl->fDirectory);
+            const auto infoLock = InspectFamilyPath(lockPath);
+            Require(!infoLock || infoLock->fRegular);
+            lock = NfoNativeLock(SzFromUtf8(lockPath.u8string()));
+            Require(bool(lock));
+            for (const auto &entry : fs::directory_iterator(control))
+                Require(entry.path() == journal || entry.path() == lockPath);
+        }
+        const auto infoJournal = InspectFamilyPath(journal);
+        if (infoJournal) {
+            Require(lock && infoJournal->fDirectory);
+            // A first write has no prior members to restore. Preserve
+            // a journal with saved files, receipts or unknown entries.
+            for (const auto &entry : fs::directory_iterator(journal)) {
+                const auto szEntry = Text(entry.path().filename());
+                const auto info = InspectFamilyPath(entry.path());
+                Require(info.has_value());
+                if (szEntry == "old" || szEntry == "original") {
+                    Require(info->fDirectory && fs::is_empty(entry.path()));
+                } else {
+                    Require((szEntry == "ready" || szEntry == "committed" || szEntry.starts_with("ready.")) &&
+                            info->fRegular);
+                }
+            }
+        }
+        // Only the wizard's reserved directory is eligible. A failed writer
+        // may have left an empty directory at a game-file destination.
+        for (const auto &entry : fs::directory_iterator(directory))
+            if (entry.path() != controls) fs::remove(entry.path());
+        if (infoJournal) fs::remove_all(journal);
+#ifdef _WIN32
+        // Windows requires the handle closed before deleting the lock entry.
+        lock.reset();
+#endif
+        if (infoControl) {
+            fs::remove(lockPath);
+            fs::remove(control);
+        }
+        fs::remove(controls);
+        return fs::remove(directory);
     } catch (...) {
         return false;
     }

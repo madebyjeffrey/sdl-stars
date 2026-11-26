@@ -384,6 +384,12 @@ if(STARS_BUILD_SDL_CLIENT)
         set_tests_properties(win32_utf8_filesystem PROPERTIES LABELS compat TIMEOUT 30)
     endif()
     include(cmake/sdl-client.cmake)
+    if(TARGET stars-compat-client-startup)
+        add_test(NAME win32_client_newgame_create_failure_dummy COMMAND "${Python3_EXECUTABLE}"
+            "${PROJECT_SOURCE_DIR}/tests/compat/run_newgame.py" "$<TARGET_FILE:stars-compat-client-startup>" --create-failure)
+        set_tests_properties(win32_client_newgame_create_failure_dummy PROPERTIES LABELS "client;library" TIMEOUT 180
+            ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy;STARS_SDL_RENDERER=software;STARS_FILE_DIALOG_BACKEND=compat")
+    endif()
 elseif(STARS_BUILD_TESTS)
     set(STARS_TEST_DIR "${CMAKE_BINARY_DIR}/tests")
     file(MAKE_DIRECTORY "${STARS_TEST_DIR}/data")
