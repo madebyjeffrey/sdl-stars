@@ -244,6 +244,7 @@ LShowTask:
             case iActionWaitPercent:
                 fPercent = 1;
                 /* fallthrough */
+            case iActionLoadExact:
             case iActionUnloadExact:
             case iActionSetAmount:
             case iActionSetWaypoint:

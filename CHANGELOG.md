@@ -13,6 +13,9 @@ produce different results from a 2.6j host for the same turn.
   the drag is released. Middle-button and Shift+right-button drags both work
   (#101).
 
+- Fleet reports show the quantity and units for Load Exactly transport orders
+  (#102).
+
 - Clearing a game's report now preserves dots in its directory path and
   removes the intended `.chk` file (#98).
 

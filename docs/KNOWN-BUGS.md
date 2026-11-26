@@ -530,6 +530,12 @@ returns the selection directly. The macOS input filter follows window
 ownership so the modal dialog's popup receives SDL events. The Progress
 Timeline test selects charts with both the pointer and keyboard (#99).
 
+## Load Exactly is missing from fleet report tasks — fixed
+
+`PszGetTaskName` skipped amount formatting for `iActionLoadExact`, displaying
+a dash. It now uses the same formatting as Unload Exactly. The report tests
+check amounts in kT for cargo and mg for fuel (#102).
+
 ## Temperature-label encoding — fixed on develop
 
 `PszCalcEnvVar` used `%c` with 186 for the `º` in a temperature unit,

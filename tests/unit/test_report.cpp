@@ -51,6 +51,11 @@ static void test_ReportLabels_owned_results(void) {
         const auto szCargoTask = PszGetTaskName(app, &fl);
         TEST_CHECK(szCargoTask.icr == i);
         TEST_CHECK(std::string_view(szCargoTask.sz.data()) == (i == 4 ? "Unload Exactly 42mg" : "Unload Exactly 42kT"));
+        storage.rgord[0].txp.rgia[i].SetIAction(iActionLoadExact);
+        storage.rgord[0].txp.rgia[i].SetCQuan(i == 4 ? 16 : 42);
+        const auto szLoadTask = PszGetTaskName(app, &fl);
+        TEST_CHECK(szLoadTask.icr == i);
+        TEST_CHECK(szLoadTask.sz.view() == (i == 4 ? "Load Exactly 16mg" : "Load Exactly 42kT"));
     }
 }
 
