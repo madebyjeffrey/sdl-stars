@@ -21,7 +21,10 @@ static bool fCursor, fInputKeys;
 static bool FCompatModalInputTarget(HWND hwnd) {
 #ifdef __APPLE__
     HWND hwndModal = HwndCompatModalDialog();
-    if (!hwndModal || (hwnd && HwndCompatRoot(hwnd) == hwndModal)) return 1;
+    if (!hwndModal) return 1;
+    // A modal's menus and combo lists can have their own SDL windows.
+    for (hwnd = HwndCompatRoot(hwnd); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_OWNER))
+        if (hwnd == hwndModal) return 1;
     return 0;
 #else
     static_cast<void>(hwnd);

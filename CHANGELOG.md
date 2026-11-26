@@ -6,6 +6,16 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The Progress Timeline chart menu accepts clicks and keyboard selections on
+  macOS (#99).
+
+- The scanner's measuring tape releases capture when the button that started
+  the drag is released. Middle-button and Shift+right-button drags both work
+  (#101).
+
+- Fleet reports show the quantity and units for Load Exactly transport orders
+  (#102).
+
 - Clearing a game's report now preserves dots in its directory path and
   removes the intended `.chk` file (#98).
 
@@ -21,8 +31,9 @@ produce different results from a 2.6j host for the same turn.
   Save & Submit preserves the active player and edits for retry (#95).
 
 - Conditional hosting (`-t`) loads each game before checking its submitted
-  orders. Batch entries with outstanding human orders stay at their current
-  turn. A host-file load failure exits with status 2.
+  orders. Single games and batch entries wait for current human submissions,
+  including when an older submission is redelivered (#94, #100). A host-file
+  load failure exits with status 2.
 
 - Hosted turn generation creates missing player turn files when advancing a host-only or partial game. A failed generation restores the previous host, orders, turns and backups, and stops the batch with exit status 2.
 

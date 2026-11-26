@@ -30,6 +30,14 @@ independently assembled reference label, including long UTF-8 names and
 maximum catalog values. No record size or game rule changes; regenerating
 and comparing the native baseline moved no checkpoint.
 
+## Scanner measuring tape ignores middle-button release — fixed
+
+`ScannerWndProc` starts the measuring tape for either middle-button down or
+Shift+right-button down. `FGetRMouseMove` previously waited for a right-button
+release in both cases. The tracker now receives the release message for the
+button that started the drag. The scanner test verifies that the matching
+button ends the drag and releases capture (#101).
+
 ## Generated startup filename overflows the file-dialog buffer — fixed on develop
 
 `FOpenGame` generated a `.hst` path in the 360-byte session work buffer, then
@@ -159,14 +167,16 @@ copying beyond the path. Real tests reproduce the LF truncation and exercise
 both initial and later names through two generated games, with rejection of a
 later overlong path. The separate batch-size wrapping repair is recorded above.
 
-## Conditional batch hosting advances games with outstanding orders — fixed
+## Conditional hosting advances games with outstanding orders — fixed
 
 `turn.cpp`, `FRunCmdLine`: moving to the next batch entry cleared the
-player count before the readiness check. The host now loads the selected
-game under the turn transaction's lock before checking its roster and
-orders. Tests run a game with a submitted turn and a game with an unsubmitted
-draft in both list orders. Only the submitted game advances, and the pending
-game's draft survives.
+player count before the readiness check (#94). The same readiness check
+could advance a single game after last year's submitted orders were
+redelivered (#100). The host now loads the selected game under the turn
+transaction's lock before checking its roster and orders. The batch test
+keeps the pending game's draft in both list orders. The single-game test
+redelivers a previous submission and verifies that the host waits for current
+orders before advancing.
 
 ## Memory-backed records lack source bounds — fixed on develop
 
@@ -511,6 +521,20 @@ column label could cross its row and the next row could overwrite its terminator
 Both the copy and catalog append now use the logical row span. The actual menu
 builder is tested with long multibyte labels, row-end sentinels and the unused
 tail of the work buffer. Fitting labels, save records and host results are unchanged.
+
+## Progress Timeline popup ignores input on macOS — fixed
+
+`PopupMenu` assigned the frame as owner even when the menu opened from a
+modal dialog. The tracker now takes the invoking window as owner and
+returns the selection directly. The macOS input filter follows window
+ownership so the modal dialog's popup receives SDL events. The Progress
+Timeline test selects charts with both the pointer and keyboard (#99).
+
+## Load Exactly is missing from fleet report tasks — fixed
+
+`PszGetTaskName` skipped amount formatting for `iActionLoadExact`, displaying
+a dash. It now uses the same formatting as Unload Exactly. The report tests
+check amounts in kT for cargo and mg for fuel (#102).
 
 ## Temperature-label encoding — fixed on develop
 
