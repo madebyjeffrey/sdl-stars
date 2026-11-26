@@ -9,6 +9,10 @@ produce different results from a 2.6j host for the same turn.
 - The Progress Timeline chart menu accepts clicks and keyboard selections on
   macOS (#99).
 
+- The scanner's measuring tape releases capture when the button that started
+  the drag is released. Middle-button and Shift+right-button drags both work
+  (#101).
+
 - Clearing a game's report now preserves dots in its directory path and
   removes the intended `.chk` file (#98).
 

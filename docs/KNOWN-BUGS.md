@@ -30,6 +30,14 @@ independently assembled reference label, including long UTF-8 names and
 maximum catalog values. No record size or game rule changes; regenerating
 and comparing the native baseline moved no checkpoint.
 
+## Scanner measuring tape ignores middle-button release — fixed
+
+`ScannerWndProc` starts the measuring tape for either middle-button down or
+Shift+right-button down. `FGetRMouseMove` previously waited for a right-button
+release in both cases. The tracker now receives the release message for the
+button that started the drag. The scanner test verifies that the matching
+button ends the drag and releases capture (#101).
+
 ## Generated startup filename overflows the file-dialog buffer — fixed on develop
 
 `FOpenGame` generated a `.hst` path in the 360-byte session work buffer, then

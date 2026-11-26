@@ -197,7 +197,7 @@ LRESULT  ScannerWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             break;
         }
         if (msg == win32::WM_MBUTTONDOWN || (msg == win32::WM_RBUTTONDOWN && (wParam & 4))) {
-            FHandleMeasuringTape(app, &scan, pt);
+            FHandleMeasuringTape(app, &scan, pt, msg == win32::WM_MBUTTONDOWN ? win32::WM_MBUTTONUP : win32::WM_RBUTTONUP);
             break;
         }
         if (msg == win32::WM_RBUTTONDOWN) {
@@ -2962,7 +2962,7 @@ LFinishUp:
     return orientation;
 }
 
-std::int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
+std::int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt, UINT msgUp) {
     HDC     hdc;
     HPEN    hpenSav;
     SBAR    sbar;
@@ -2990,7 +2990,7 @@ std::int16_t FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt) {
     iropSav = win32::SetROP2(hdc, win32::R2_XORPEN);
     ptNew = pt;
     LogicalToScan(app, &ptNew);
-    for (MOUSEMOVERESULT mouseMove = FGetRMouseMove(); ; mouseMove = FGetRMouseMove()) {
+    for (MOUSEMOVERESULT mouseMove = FGetRMouseMove(msgUp); ; mouseMove = FGetRMouseMove(msgUp)) {
         if (mouseMove.point) ptNew = *mouseMove.point;
         if (!mouseMove.fContinue) break;
         ptNew.x = (((0) > (StarsMin(rc.right, ptNew.x))) ? (0) : (StarsMin(rc.right, ptNew.x)));

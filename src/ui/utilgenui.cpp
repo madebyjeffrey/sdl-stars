@@ -670,12 +670,12 @@ MOUSEMOVERESULT FGetMouseMove() {
     return {true, std::nullopt};
 }
 
-MOUSEMOVERESULT FGetRMouseMove() {
+MOUSEMOVERESULT FGetRMouseMove(UINT msgUp) {
     win32::MSG msg;
 
     while (ui::PeekMessage(&msg, nullptr, 0, 0, 1)) {
-        if (msg.message == win32::WM_MOUSEMOVE || msg.message == win32::WM_RBUTTONUP) {
-            return {msg.message != win32::WM_RBUTTONUP,
+        if (msg.message == win32::WM_MOUSEMOVE || msg.message == msgUp) {
+            return {msg.message != msgUp,
                     POINT16{static_cast<std::int16_t>(LOWORD(msg.lParam)), static_cast<std::int16_t>(HIWORD(msg.lParam))}};
         }
     }

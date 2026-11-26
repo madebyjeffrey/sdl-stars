@@ -107,6 +107,31 @@ static int TestTimelineMenu(APPSESSION &app) {
     return 0;
 }
 
+static int TestScannerRuler(APPSESSION &app) {
+    win32::MSG msg;
+    RECT rc;
+
+    app.state.idPlayer = 0;
+    CHECK(FLoadGame(app, STARS_TEST_FOCUS_GAME, "m1"));
+    CreateChildWindows(app);
+    PostOpenGame(app);
+    HWND hwnd = app.lpui->hwndScanner;
+    CHECK(win32::GetClientRect(hwnd, &rc) && rc.right > 120 && rc.bottom > app.lpui->dySBar + 40);
+    for (const bool fMiddle : {true, false}) {
+        CHECK(win32::PostMessageA(hwnd, win32::WM_MOUSEMOVE, 0, win32::MAKELPARAM(110, 40)));
+        CHECK(win32::PostMessageA(hwnd, win32::WM_MBUTTONUP, 0, win32::MAKELPARAM(110, 40)));
+        // A right release lets a broken middle drag return so the assertion can fail.
+        CHECK(win32::PostMessageA(hwnd, win32::WM_RBUTTONUP, 0, win32::MAKELPARAM(110, 40)));
+        ui::SendMessage(hwnd, fMiddle ? win32::WM_MBUTTONDOWN : win32::WM_RBUTTONDOWN,
+                        fMiddle ? win32::MK_MBUTTON : win32::MK_SHIFT | win32::MK_RBUTTON,
+                        win32::MAKELPARAM(30, 40));
+        CHECK(!win32::GetCapture());
+        CHECK(bool(ui::PeekMessage(&msg, hwnd, win32::WM_RBUTTONUP, win32::WM_RBUTTONUP, win32::PM_REMOVE)) == fMiddle);
+    }
+    DestroyCurGame(app);
+    return 0;
+}
+
 static BOOL FNativeFocus(HWND hwnd) {
     win32::MSG msg;
     DWORD timeEnd = win32::GetTickCount() + 1000;
@@ -296,6 +321,7 @@ int main(void) {
     while (ui::PeekMessage(&msg, NULL, 0, 0, win32::PM_REMOVE)) ui::DispatchMessage(&msg);
     CHECK(TestWindowFocus(app) == 0);
     CHECK(TestTimelineMenu(app) == 0);
+    CHECK(TestScannerRuler(app) == 0);
     hwndFocus = win32::GetFocus();
     // The recorded scanner-combobox tip uses SetWindowPos to reveal a hidden
     // starstt, rather than Popup's direct ShowWindow path.

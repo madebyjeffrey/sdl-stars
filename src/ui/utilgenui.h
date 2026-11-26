@@ -40,7 +40,7 @@ struct MOUSEMOVERESULT {
     std::optional<POINT16> point;
 };
 MOUSEMOVERESULT FGetMouseMove();
-MOUSEMOVERESULT FGetRMouseMove();
+MOUSEMOVERESULT FGetRMouseMove(UINT msgUp);
 void     DrawFuzzyBorder(APPSESSION &app, HDC hdc, RECT *prc);
 // Text must terminate inside its mutable view; rejected views stay untouched.
 bool FStringFitsScreen(APPSESSION &app, std::span<char> lpsz, std::int16_t dxMax);

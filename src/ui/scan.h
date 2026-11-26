@@ -42,6 +42,6 @@ INT_PTR  FindDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 std::int16_t          FSelectSz(APPSESSION &app, std::string_view szName);
 SCANORIENTATIONRESULT GetScanFleetOrientation(APPSESSION &app, FLEET *lpfl);
 SCANORIENTATIONRESULT GetDxDyOrientation(APPSESSION &app, std::int16_t dx, std::int16_t dy);
-std::int16_t          FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt);
+std::int16_t          FHandleMeasuringTape(APPSESSION &app, SCAN *pscan, POINT16 pt, UINT msgUp);
 
 #endif
