@@ -159,14 +159,16 @@ copying beyond the path. Real tests reproduce the LF truncation and exercise
 both initial and later names through two generated games, with rejection of a
 later overlong path. The separate batch-size wrapping repair is recorded above.
 
-## Conditional batch hosting advances games with outstanding orders — fixed
+## Conditional hosting advances games with outstanding orders — fixed
 
 `turn.cpp`, `FRunCmdLine`: moving to the next batch entry cleared the
-player count before the readiness check. The host now loads the selected
-game under the turn transaction's lock before checking its roster and
-orders. Tests run a game with a submitted turn and a game with an unsubmitted
-draft in both list orders. Only the submitted game advances, and the pending
-game's draft survives.
+player count before the readiness check (#94). The same readiness check
+could advance a single game after last year's submitted orders were
+redelivered (#100). The host now loads the selected game under the turn
+transaction's lock before checking its roster and orders. The batch test
+keeps the pending game's draft in both list orders. The single-game test
+redelivers a previous submission and verifies that the host waits for current
+orders before advancing.
 
 ## Memory-backed records lack source bounds — fixed on develop
 

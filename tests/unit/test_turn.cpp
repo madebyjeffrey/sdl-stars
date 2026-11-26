@@ -6,6 +6,7 @@
 #include "callbackcontext.h"
 
 #include "stars_test.h"
+#include "filefamily.h"
 #include "record_io.h"
 #include <vector>
 
@@ -302,6 +303,53 @@ static void test_BatchRun_conditional_orders(void) {
     TEST_ASSERT(ParseCmdLine(app, std::string("-t -g1 ") + szPending + szDirSep + "missing.hst").fValid);
     TEST_CHECK(FRunCmdLine(app));
     TEST_CHECK(app.state.vretExitValue == 2);
+}
+
+static void test_ConditionalHost_stale_orders(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("conditional-stale", szDir, sizeof(szDir)));
+    const std::string szRace = std::string(szDir) + szDirSep + "human.r1";
+    const char *rgszPlayer[] = {szRace.c_str()};
+    TEST_ASSERT(FStarsTestNewGame(app, szDir, 12345, rgszPlayer, 1));
+    const std::string szBase = app.state.szBase;
+    const std::string szCmd = "-t -g1 " + szBase + ".hst";
+    const std::string szOrders = szBase + ".x2";
+    const std::string szStale = szBase + ".original-x2";
+
+    for (std::int16_t iPlayer = 0; iPlayer < 2; iPlayer++) {
+        TEST_ASSERT(FStarsTestLoadPlayer(app, iPlayer));
+        TEST_ASSERT(!app.state.rgplr[iPlayer].fAi && app.state.game.turn == 0);
+        app.state.gd.fSubmit = 1;
+        TEST_ASSERT(FWriteLogFile(app, szBase, iPlayer));
+    }
+    TEST_ASSERT(FCopyNativeFileDurable(szOrders, szStale));
+    TEST_ASSERT(ParseCmdLine(app, szCmd).fValid);
+    TEST_ASSERT(FRunCmdLine(app) && app.state.vretExitValue == 1);
+
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 0) && app.state.game.turn == 1);
+    app.state.gd.fSubmit = 1;
+    TEST_ASSERT(FWriteLogFile(app, szBase, 0));
+    TEST_ASSERT(FCopyNativeFileDurable(szStale, szOrders));
+    app.state.vretExitValue = 0;
+    TEST_ASSERT(ParseCmdLine(app, szCmd).fValid);
+    TEST_CHECK(FRunCmdLine(app) && app.state.vretExitValue == 0);
+    TEST_CHECK(app.state.rgOut[1] == 4); // File date mismatch.
+    TEST_ASSERT(FStarsTestLoadHost(app) && app.state.game.turn == 1);
+
+    TEST_ASSERT(FStarsTestLoadPlayer(app, 1));
+    app.state.gd.fSubmit = 1;
+    TEST_ASSERT(FWriteLogFile(app, szBase, 1));
+    TEST_ASSERT(ParseCmdLine(app, szCmd).fValid);
+    TEST_CHECK(FRunCmdLine(app) && app.state.vretExitValue == 1);
+    TEST_ASSERT(FStarsTestLoadHost(app) && app.state.game.turn == 2);
 }
 
 // test_generate_one_turn checks the turn-test plumbing: create a game, load
@@ -665,6 +713,7 @@ static void test_MoveThings_trader_without_retargeting_moves(void) {
 
 TEST_LIST = {{"batch command iterates owned LF paths and stops on invalid names", test_BatchRun_games}, {"batch input preserves names and full file sizes", test_BatchInput_contract}, {"MoveThings trader without retargeting moves", test_MoveThings_trader_without_retargeting_moves},
              {"conditional batch advances only the game with submitted orders", test_BatchRun_conditional_orders},
+             {"conditional hosting waits for a current submission after stale redelivery", test_ConditionalHost_stale_orders},
              {"definition filename survives logging and shared-buffer aliases", test_DefinitionFilename_logging},
              {"definition creation succeeds with logging and the command-line basename", test_DefinitionCreation_logging},
              {"generate one turn", test_generate_one_turn},
