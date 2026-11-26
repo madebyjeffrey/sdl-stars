@@ -962,7 +962,8 @@ bool CompatGetSurfaceRect(HWND hwnd, RECT *lprc) {
 
 static bool FCompatPosition(HWND hwnd, WINDOWPOS *lpwp) {
     RECT rc;
-    if (!win32::GetClientRect(hwnd, &rc)) return 0;
+    // WINDOWPOS sizes include nonclient scrollbars, unlike GetClientRect.
+    if (!CompatGetSurfaceRect(hwnd, &rc)) return 0;
     lpwp->cx = rc.right; lpwp->cy = rc.bottom + CyCompatMenuBar(hwnd);
     if (hwnd->hwndParent) {
         lpwp->x = hwnd->rcChild.left; lpwp->y = hwnd->rcChild.top;

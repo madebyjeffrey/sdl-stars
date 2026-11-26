@@ -6,6 +6,9 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The message pane stays responsive when a long private message needs a
+  scrollbar. Repainting the edit preserves its scroll position (#97).
+
 - New Game releases the library name after a failed initial write, including
   when the failed creation leaves a save journal with no previous game files.
   Journals with recoverable data are preserved (#96).

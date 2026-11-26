@@ -312,6 +312,31 @@ static int TestWrapping(HWND hwndParent) {
     CHECK(DestroyWindow(hwnd)); return 0;
 }
 #if !defined(_WIN32) || defined(STARS_UI_SDL)
+static int TestReadOnlyScrolling(HWND hwndParent) {
+    const int x = 10, y = 160, dx = 140, dy = 46;
+    const UINT flags = SWP_NOZORDER | SWP_NOACTIVATE;
+    const char pszMessage[] = "Fleet report \xce\xa9. The scout is en route to the rendezvous. "
+                              "The freighter will wait at the next waypoint for orders. "
+                              "Send its escort as planned and report back.";
+    HWND hwnd = CreateWindowExA(0, "Edit", "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER |
+                               ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL,
+                               x, y, dx, dy, hwndParent, NULL, NULL, NULL);
+    RECT rc;
+    CHECK(hwnd && SetWindowTextA(hwnd, pszMessage));
+    CHECK(GetClientRect(hwnd, &rc) && rc.right < dx);
+    CHECK(ValidateRect(hwndParent, NULL) && ValidateRect(hwnd, NULL));
+    CHECK(SetWindowPos(hwnd, NULL, x, y, dx, dy, flags | SWP_SHOWWINDOW));
+    CHECK(!GetUpdateRect(hwndParent, NULL, 0) && !GetUpdateRect(hwnd, NULL, 0));
+    CHECK(SetWindowPos(hwnd, NULL, x + 1, y, 0, 0, flags | SWP_NOSIZE));
+    CHECK(GetWindowRect(hwnd, &rc) && rc.right - rc.left == dx && rc.bottom - rc.top == dy);
+    CHECK(UpdateWindow(hwnd) && !GetUpdateRect(hwnd, NULL, 0));
+    CHECK(SendMessageA(hwnd, EM_LINESCROLL, 0, 1));
+    CHECK(UpdateWindow(hwnd) && !GetUpdateRect(hwnd, NULL, 0));
+    CHECK(SendMessageA(hwnd, EM_GETFIRSTVISIBLELINE, 0, 0) == 1);
+    CHECK(DestroyWindow(hwnd));
+    return 0;
+}
+
 static int TestWordNavigation(HWND hwndEdit, HWND hwndMulti) {
     static const struct {
         SDL_Scancode sc;
@@ -455,6 +480,9 @@ int main(void) {
     CHECK(TestEditBoundaries(hwnd, 0) == 0 && TestEditBoundaries(hwnd, ES_MULTILINE) == 0);
     CHECK(TestMixedUndo(hwnd, 0) == 0 && TestMixedUndo(hwnd, ES_MULTILINE | ES_AUTOVSCROLL) == 0);
     CHECK(TestWrapping(hwnd) == 0);
+#if !defined(_WIN32) || defined(STARS_UI_SDL)
+    CHECK(TestReadOnlyScrolling(hwnd) == 0);
+#endif
     hwndEdit = CreateWindowExA(0, "Edit", "abc", WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
                             10, 10, 180, 30, hwnd, (HMENU)(UINT_PTR)100, NULL, NULL);
     hwndMulti = CreateWindowExA(0, "Edit", "", WS_CHILD | WS_VISIBLE | ES_MULTILINE | ES_AUTOVSCROLL,
