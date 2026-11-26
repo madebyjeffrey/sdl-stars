@@ -100,6 +100,40 @@ static void test_ReportFilePath_clear(void) {
     TEST_CHECK(std::string_view(app.state.szBase) == szExtended);
 }
 
+static void test_ReportFilePath_clear_dotted_directory(void) {
+#ifdef STARS_UI_SDL
+    APPSESSION &app = ui::app;
+#else
+    APPSESSION &app = host::app;
+#endif
+    COMPATCALLBACKCONTEXTSCOPE callbackContext(&app);
+    char szDir[cbTestPath];
+
+    TEST_ASSERT(FStarsTestInit(app));
+    TEST_ASSERT(FStarsTestDir("clear.report-path", szDir, sizeof(szDir)));
+    const std::string szDirectory = szDir;
+    const std::string szSibling = szDirectory.substr(0, szDirectory.rfind('.'));
+    const std::string szBase = szDirectory + chDirSep + "rapport-é";
+    const std::string szReport = szBase + ".chk";
+    const std::string szSiblingReport = szSibling + ".chk";
+
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szSibling) >= 0);
+    OutputSz(app, 7, "Sibling report");
+    TEST_ASSERT(FFileExists(szSiblingReport));
+    const auto szBefore = SzReadReportFile(szSiblingReport);
+    TEST_ASSERT(CchCopyUtf8(std::span{app.state.szBase}, szBase) >= 0);
+    OutputSz(app, 7, "Game report");
+    TEST_ASSERT(FFileExists(szReport));
+
+    ClearFile(app, 7);
+
+    TEST_CHECK(!FFileExists(szReport));
+    if (TEST_CHECK(FFileExists(szSiblingReport))) TEST_CHECK(SzReadReportFile(szSiblingReport) == szBefore);
+    TEST_CHECK(std::string_view(app.state.szBase) == szBase);
+    RemoveNativeFile(szReport);
+    RemoveNativeFile(szSiblingReport);
+}
+
 static void test_GetDateTimeSz_bounds(void) {
     char szDate[9];
     char szTime[9];
@@ -577,6 +611,7 @@ static void test_ObjectName_contract(void) {
 TEST_LIST = {
     {"reports write and append complete UTF-8 paths", test_ReportFilePath_write},
     {"reports clear complete UTF-8 paths", test_ReportFilePath_clear},
+    {"reports clear extensionless game paths inside dotted directories", test_ReportFilePath_clear_dotted_directory},
     {"date and time outputs require bounded destinations", test_GetDateTimeSz_bounds},
     {"object names retain planet, fleet, thing and work-buffer behavior", test_ObjectName_contract},
     {"hull-name values retain duplicate ordinals and UTF-8 byte budgets", test_DecorateHullName_owned},

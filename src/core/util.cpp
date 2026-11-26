@@ -2517,14 +2517,21 @@ using REPORTFILEPATH = std::array<char, sizeof(APPGAMESTATE::szBase) + 1 + cchFi
 static std::optional<REPORTFILEPATH> SzReportFile(APPSESSION &app, std::int16_t dt, bool fReplaceExtension) {
     REPORTFILEPATH szFile{};
     std::string_view szBase;
-    std::size_t ich;
     const auto pchEnd = std::find(std::begin(app.state.szBase), std::end(app.state.szBase), '\0');
 
     if (dt < 0 || static_cast<std::size_t>(dt) >= APPGAMESTATE::mpdtsz.size() || pchEnd == std::end(app.state.szBase)) return std::nullopt;
     szBase = {app.state.szBase, static_cast<std::size_t>(pchEnd - app.state.szBase)};
     if (!FUtf8Valid(szBase)) return std::nullopt;
-    ich = fReplaceExtension ? szBase.rfind('.') : std::string_view::npos;
-    if (ich != std::string_view::npos) szBase = szBase.substr(0, ich);
+    if (fReplaceExtension) {
+#ifdef _WIN32
+        const auto ichDir = szBase.find_last_of("/\\");
+#else
+        const auto ichDir = szBase.rfind(chDirSep);
+#endif
+        const auto ichExt = szBase.rfind('.');
+        if (ichExt != std::string_view::npos && (ichDir == std::string_view::npos || ichExt > ichDir))
+            szBase = szBase.substr(0, ichExt);
+    }
     // Reports also run from allocation-error alerts: reserve the full path on the stack.
     if (CchCopyUtf8(std::span{szFile}, szBase) < 0 || !FAppendUtf8(std::span{szFile}, ".") ||
         !FAppendUtf8(std::span{szFile}, APPGAMESTATE::mpdtsz[static_cast<std::size_t>(dt)])) return std::nullopt;
