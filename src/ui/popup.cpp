@@ -417,7 +417,7 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
     HMENU   hmenuSub;
     HMENU   hmenuPopup;
     std::string_view szText;
-    win32::MSG     msg;
+    int     id;
     std::int16_t fChecked;
     std::int16_t fCheckedCur;
 
@@ -488,15 +488,16 @@ std::int16_t PopupMenu(APPSESSION &app, HWND hwnd, std::int16_t x, std::int16_t 
     } else {
         tpm = win32::TPM_LEFTBUTTON;
     }
-    ui::TrackPopupMenu(hmenuPopup, tpm, pt.x, pt.y, 0, app.lpui->hwndFrame, nullptr);
+    // SDL routes modal input through the popup's window ownership chain.
+    id = ui::TrackPopupMenu(hmenuPopup, tpm | win32::TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, nullptr);
     win32::DestroyMenu(hmenuPopup);
     if (hmenuSub) {
         win32::DestroyMenu(hmenuSub);
     }
     /* The original accepted only the first 100 items; the target popups now
        list every object at a location. */
-    if (ui::PeekMessage(&msg, app.lpui->hwndFrame, 273, 273, 2) && msg.wParam >= 15000 && msg.wParam < 15000 + static_cast<WPARAM>(cString)) {
-        app.lpui->iPopMenuSel = msg.wParam - 15000;
+    if (id >= 15000 && id < 15000 + cString) {
+        app.lpui->iPopMenuSel = id - 15000;
     }
     return app.lpui->iPopMenuSel;
 }

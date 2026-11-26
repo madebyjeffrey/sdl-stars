@@ -512,6 +512,14 @@ Both the copy and catalog append now use the logical row span. The actual menu
 builder is tested with long multibyte labels, row-end sentinels and the unused
 tail of the work buffer. Fitting labels, save records and host results are unchanged.
 
+## Progress Timeline popup ignores input on macOS — fixed
+
+`PopupMenu` assigned the frame as owner even when the menu opened from a
+modal dialog. The tracker now takes the invoking window as owner and
+returns the selection directly. The macOS input filter follows window
+ownership so the modal dialog's popup receives SDL events. The Progress
+Timeline test selects charts with both the pointer and keyboard (#99).
+
 ## Temperature-label encoding — fixed on develop
 
 `PszCalcEnvVar` used `%c` with 186 for the `º` in a temperature unit,

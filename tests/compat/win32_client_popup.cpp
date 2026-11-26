@@ -23,6 +23,90 @@ static void  CloseVisualMenu(HWND hwnd, UINT msg, UINT_PTR id, DWORD time) {
     win32::KillTimer(NULL, id);
 }
 
+static bool fTimelineKeyboard;
+
+static void ChooseTimelineChart(HWND, UINT, UINT_PTR id, DWORD) {
+    APPSESSION &app = AppCompatCallbackContext();
+    SDL_Event event = {};
+
+    win32::KillTimer(nullptr, id);
+    if (fTimelineKeyboard) {
+        for (const auto sc : {SDL_SCANCODE_END, SDL_SCANCODE_RETURN}) {
+            event.type = SDL_EVENT_KEY_DOWN;
+            event.key.windowID = app.lpui->hwndScoreXDlg->id;
+            event.key.scancode = sc;
+            event.key.key = SDL_GetKeyFromScancode(sc, SDL_KMOD_NONE, false);
+            event.key.down = true;
+            if (!SDL_PushEvent(&event)) return;
+            event.type = SDL_EVENT_KEY_UP;
+            event.key.down = false;
+            if (!SDL_PushEvent(&event)) return;
+        }
+        return;
+    }
+
+    for (HWND hwnd = HwndCompatFirstTop(); hwnd; hwnd = win32::GetWindow(hwnd, win32::GW_HWNDNEXT)) {
+        char szClass[32];
+        if (!win32::IsWindowVisible(hwnd) || !win32::GetClassNameA(hwnd, szClass, sizeof(szClass)) || strcmp(szClass, "StarsCompatPopup")) continue;
+        event.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+        event.button.windowID = hwnd->id;
+        event.button.button = SDL_BUTTON_LEFT;
+        event.button.clicks = 1;
+        event.button.x = 10;
+        event.button.y = 10;
+        event.button.down = true;
+        if (!SDL_PushEvent(&event)) return;
+        event.type = SDL_EVENT_MOUSE_BUTTON_UP;
+        event.button.down = false;
+        SDL_PushEvent(&event);
+        return;
+    }
+}
+
+static INT_PTR TimelineTestDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    APPSESSION &app = AppCompatCallbackContext();
+
+    if (msg == win32::WM_INITDIALOG) {
+        const auto result = ScoreXDlg(hwnd, msg, wParam, lParam);
+        if (!win32::PostMessageA(hwnd, win32::WM_APP, 0, 0)) win32::EndDialog(hwnd, 0);
+        return result;
+    }
+    if (msg == win32::WM_APP) {
+        ui::SendMessage(hwnd, win32::WM_COMMAND, IDC_SCORE_SWITCH, 0);
+        ui::SendMessage(hwnd, win32::WM_COMMAND, IDC_SCORE_SWITCH, 0);
+        fTimelineKeyboard = false;
+        for (const int iExpected : {0, 7}) {
+            const auto idInput = win32::SetTimer(nullptr, 0, 25, ChooseTimelineChart);
+            const auto idTimeout = win32::SetTimer(nullptr, 0, 400, CloseVisualMenu);
+            if (idInput && idTimeout) ui::SendMessage(hwnd, win32::WM_LBUTTONDOWN, 0, win32::MAKELPARAM(100, 10));
+            win32::KillTimer(nullptr, idInput);
+            win32::KillTimer(nullptr, idTimeout);
+            if (!idInput || !idTimeout || app.state.gd.iCurGraph != iExpected) {
+                fprintf(stderr, "Progress Timeline %s selection: expected %d, got %u\n",
+                        fTimelineKeyboard ? "keyboard" : "pointer", iExpected, static_cast<unsigned>(app.state.gd.iCurGraph));
+                win32::EndDialog(hwnd, 0);
+                return 1;
+            }
+            fTimelineKeyboard = true;
+        }
+        win32::EndDialog(hwnd, 1);
+        return 1;
+    }
+    return ScoreXDlg(hwnd, msg, wParam, lParam);
+}
+
+static int TestTimelineMenu(APPSESSION &app) {
+    app.state.idPlayer = 0;
+    CHECK(FLoadGame(app, STARS_TEST_FOCUS_GAME, "m1"));
+    app.state.gd.fScoreVictory = 0;
+    app.state.gd.iCurGraph = 7;
+    CHECK(ui::DialogBox(app.lpui->hInst, win32::MAKEINTRESOURCE(IDD_SCORE), app.lpui->hwndFrame, TimelineTestDlg, 0) == 1);
+    app.lpui->fInScoreDialog = 0;
+    app.lpui->hwndScoreXDlg = nullptr;
+    DestroyCurGame(app);
+    return 0;
+}
+
 static BOOL FNativeFocus(HWND hwnd) {
     win32::MSG msg;
     DWORD timeEnd = win32::GetTickCount() + 1000;
@@ -211,6 +295,7 @@ int main(void) {
     ui::SetFocus(app.lpui->hwndFrame);
     while (ui::PeekMessage(&msg, NULL, 0, 0, win32::PM_REMOVE)) ui::DispatchMessage(&msg);
     CHECK(TestWindowFocus(app) == 0);
+    CHECK(TestTimelineMenu(app) == 0);
     hwndFocus = win32::GetFocus();
     // The recorded scanner-combobox tip uses SetWindowPos to reveal a hidden
     // starstt, rather than Popup's direct ShowWindow path.

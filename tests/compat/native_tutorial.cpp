@@ -48,7 +48,7 @@ BOOL StarsTest_TrackPopupMenu(HMENU hmenu, UINT flags, int x, int y, int reserve
     char szText[256];
     int i, j, iItem = -1, cSteps = 0;
     if (!pszMenu) return win32::TrackPopupMenu(hmenu, flags, x, y, reserved, hwnd, prc);
-    /* PopupMenu sends commands to the frame even when a modal owns the input. */
+    /* Route synthetic keys to the active modal when a tracker uses a disabled owner. */
     if (hwndRoot && !win32::IsWindowEnabled(hwndRoot)) hwndRoot = HwndCompatRoot(HwndModal());
     for (i = 0; i < win32::GetMenuItemCount(hmenu); i++) {
         if (win32::GetMenuState(hmenu, i, win32::MF_BYPOSITION) & win32::MF_SEPARATOR) continue;
