@@ -6,6 +6,9 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- Home, End, Up and Down navigate the fleet battle-plan dropdown.
+  Return applies the highlighted plan (#108).
+
 - The game library imports combined turns after a missed deadline and opens the
   player at the latest year (#107).
 

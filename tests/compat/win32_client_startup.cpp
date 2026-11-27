@@ -1268,6 +1268,48 @@ static void DispatchWorkflowInput(APPSESSION &app, win32::MSG *lpmsg) {
         (lpmsg->message != win32::WM_CHAR || !FHandleChar(app, lpmsg->hwnd, lpmsg->wParam, lpmsg->lParam))) ui::DispatchMessage(lpmsg);
 }
 
+static BOOL FCheckBattlePlanKeyboard(APPSESSION &app, int idFleet) {
+    HWND hwnd = app.lpui->hwndBattleDD;
+    FLEET *lpfl = LpflFromId(app, static_cast<int16_t>(idFleet));
+    win32::MSG msg;
+    UINT_PTR id;
+    Uint64 ullStart;
+    LRESULT iStart, iLast, iExpected;
+    BOOL fPassed = 0;
+
+    if (!lpfl || !win32::IsWindowVisible(hwnd) || !win32::IsWindowEnabled(hwnd)) return 0;
+    iStart = ui::SendMessage(hwnd, win32::CB_GETCURSEL, 0, 0);
+    iLast = ui::SendMessage(hwnd, win32::CB_GETCOUNT, 0, 0) - 1;
+    if (iStart <= 0 || iStart >= iLast || lpfl->iplan != iStart - 1) return 0;
+    id = win32::SetTimer(nullptr, 0, 25, nullptr);
+    if (!id) return 0;
+    for (SDL_Scancode sc : {SDL_SCANCODE_ESCAPE, SDL_SCANCODE_RETURN}) {
+        iExpected = sc == SDL_SCANCODE_ESCAPE ? iStart : iLast;
+        ui::SetFocus(hwnd);
+        ui::SendMessage(hwnd, win32::CB_SHOWDROPDOWN, 1, 0);
+        if (!ui::SendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0) ||
+            !FPushWorkflowKey(hwnd, SDL_SCANCODE_END, 1) || !FPushWorkflowKey(hwnd, SDL_SCANCODE_END, 0) ||
+            !FPushWorkflowKey(hwnd, sc, 1) || !FPushWorkflowKey(hwnd, sc, 0)) goto LDone;
+        ullStart = SDL_GetTicks();
+        while (ui::SendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0) && SDL_GetTicks() - ullStart < 3000) {
+            if (ui::GetMessage(&msg, nullptr, 0, 0) <= 0) goto LDone;
+            DispatchWorkflowInput(app, &msg);
+        }
+        if (ui::SendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0) ||
+            ui::SendMessage(hwnd, win32::CB_GETCURSEL, 0, 0) != iExpected ||
+            lpfl->iplan != iExpected - 1 || app.state.sel.fl.iplan != iExpected - 1) goto LDone;
+    }
+    iExpected = iStart;
+    fPassed = FChooseWorkflowCombo(app, hwnd, static_cast<int>(iStart)) && lpfl->iplan == iStart - 1;
+LDone:
+    win32::KillTimer(nullptr, id);
+    if (!fPassed) fprintf(stderr, "Battle plan keyboard selection failed: row %lld, expected %lld\n",
+                          static_cast<long long>(ui::SendMessage(hwnd, win32::CB_GETCURSEL, 0, 0)),
+                          static_cast<long long>(iExpected));
+    else puts("Battle plan keyboard cancel and commit passed");
+    return fPassed;
+}
+
 static BOOL FCheckRouteAppendDelete(APPSESSION &app, int idFleet) {
     std::optional<SCANSNAPSHOT> snap;
     SCANOBJECT obj, objDrag;
@@ -1404,7 +1446,9 @@ static BOOL FCheckFleetWorkflows(APPSESSION &app) {
     if (!FCheckCargoWorkflows(app)) goto LDone;
     // Select through the game's normal fleet UI entry; only copied fixtures are edited.
     SelectAdjFleet(app, 0, (int16_t)idFleet);
-    if (app.state.sel.grobj != grobjFleet || app.state.sel.fl.id != idFleet || !FCheckRepeatOrders(app, idFleet) || !FCheckWaypointTask(app, idFleet) || !FCheckRouteAppendDelete(app, idFleet) || !FRunWorkflow(app, 13, 0) || app.state.cFleet != cFleetSav ||
+    if (app.state.sel.grobj != grobjFleet || app.state.sel.fl.id != idFleet || !FCheckRepeatOrders(app, idFleet) ||
+        !FCheckWaypointTask(app, idFleet) || !FCheckBattlePlanKeyboard(app, idFleet) || !FCheckRouteAppendDelete(app, idFleet) ||
+        !FRunWorkflow(app, 13, 0) || app.state.cFleet != cFleetSav ||
         CFleetTotals(app, rgShip, rgCargo) != cOwned || memcmp(rgShip, rgShipSav, sizeof(rgShip)) ||
         memcmp(rgCargo, rgCargoSav, sizeof(rgCargo))) goto LDone;
     for (i = 0; i < app.state.cFleet; i++) {

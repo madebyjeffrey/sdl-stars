@@ -400,7 +400,7 @@ std::int16_t FHandleKey(APPSESSION &app, HWND hwnd, std::int16_t iMsg, std::int1
         case win32::VK_HOME:
         case win32::VK_UP:
         case win32::VK_DOWN:
-            if (hwndF == app.lpui->hwndShipLB) {
+            if (hwndF == app.lpui->hwndShipLB || (hwnd && hwnd == app.lpui->hwndBattleDD)) {
                 return 0;
             }
             ControlIO().pfnSendMessage(app.lpui->hwndMessage, win32::WM_KEYDOWN, iKey, dw);

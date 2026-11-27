@@ -17,6 +17,13 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Fleet battle-plan dropdown ignores keyboard navigation — fixed
+
+`FHandleKey` sent Home, End, Up and Down to the waypoint pane when the
+battle-plan combo was the keyboard target. The keys now reach the combo,
+so Return commits the highlighted plan and the assignment is saved with
+the fleet's orders (#108).
+
 ## Game library rejects combined player turns — fixed
 
 After a missed deadline, the host appends a new turn segment to the
