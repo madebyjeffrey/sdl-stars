@@ -290,6 +290,10 @@ std::int16_t FHandleKey(APPSESSION &app, HWND hwnd, std::int16_t iMsg, std::int1
     std::int16_t       iwp;
 
     if (iMsg == win32::WM_KEYDOWN) {
+        if (iKey == win32::VK_ESCAPE && hwnd && hwnd == app.lpui->hwndBattleDD &&
+            ControlIO().pfnSendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0)) {
+            return 0;
+        }
         if (iKey == win32::VK_ESCAPE && app.lpui->hwndBrowser && win32::GetActiveWindow() == app.lpui->hwndBrowser) {
             ControlIO().pfnDestroyWindow(app.lpui->hwndBrowser);
             return 1;

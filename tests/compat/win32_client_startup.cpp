@@ -22,6 +22,7 @@
 #include <stars_compat.h>
 #include "internal.h"
 #include <SDL3/SDL.h>
+#include <cstdio>
 #include <iterator>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1269,8 +1270,8 @@ static void DispatchWorkflowInput(APPSESSION &app, win32::MSG *lpmsg) {
 }
 
 static BOOL FCheckBattlePlanKeyboard(APPSESSION &app, int idFleet) {
-    HWND hwnd = app.lpui->hwndBattleDD;
-    FLEET *lpfl = LpflFromId(app, static_cast<int16_t>(idFleet));
+    HWND hwnd = app.lpui->hwndBattleDD, hwndReport;
+    FLEET *lpfl = LpflFromId(app, static_cast<std::int16_t>(idFleet));
     win32::MSG msg;
     UINT_PTR id;
     Uint64 ullStart;
@@ -1282,7 +1283,11 @@ static BOOL FCheckBattlePlanKeyboard(APPSESSION &app, int idFleet) {
     iLast = ui::SendMessage(hwnd, win32::CB_GETCOUNT, 0, 0) - 1;
     if (iStart <= 0 || iStart >= iLast || lpfl->iplan != iStart - 1) return 0;
     id = win32::SetTimer(nullptr, 0, 25, nullptr);
-    if (!id) return 0;
+    if (id == 0) return 0;
+    iExpected = iStart;
+    ui::SendMessage(app.lpui->hwndFrame, win32::WM_COMMAND, IDM_REPORT_FLEET, 0);
+    hwndReport = app.lpui->hwndReportDlg;
+    if (!win32::IsWindow(hwndReport)) goto LDone;
     for (SDL_Scancode sc : {SDL_SCANCODE_ESCAPE, SDL_SCANCODE_RETURN}) {
         iExpected = sc == SDL_SCANCODE_ESCAPE ? iStart : iLast;
         ui::SetFocus(hwnd);
@@ -1295,18 +1300,23 @@ static BOOL FCheckBattlePlanKeyboard(APPSESSION &app, int idFleet) {
             if (ui::GetMessage(&msg, nullptr, 0, 0) <= 0) goto LDone;
             DispatchWorkflowInput(app, &msg);
         }
-        if (ui::SendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0) ||
+        if ((sc == SDL_SCANCODE_ESCAPE && !win32::IsWindow(hwndReport)) ||
+            ui::SendMessage(hwnd, win32::CB_GETDROPPEDSTATE, 0, 0) ||
             ui::SendMessage(hwnd, win32::CB_GETCURSEL, 0, 0) != iExpected ||
             lpfl->iplan != iExpected - 1 || app.state.sel.fl.iplan != iExpected - 1) goto LDone;
     }
-    iExpected = iStart;
-    fPassed = FChooseWorkflowCombo(app, hwnd, static_cast<int>(iStart)) && lpfl->iplan == iStart - 1;
+    fPassed = 1;
 LDone:
     win32::KillTimer(nullptr, id);
-    if (!fPassed) fprintf(stderr, "Battle plan keyboard selection failed: row %lld, expected %lld\n",
-                          static_cast<long long>(ui::SendMessage(hwnd, win32::CB_GETCURSEL, 0, 0)),
-                          static_cast<long long>(iExpected));
-    else puts("Battle plan keyboard cancel and commit passed");
+    if (win32::IsWindow(hwndReport)) ui::DestroyWindow(hwndReport);
+    if (fPassed) {
+        iExpected = iStart;
+        fPassed = FChooseWorkflowCombo(app, hwnd, static_cast<int>(iStart)) && lpfl->iplan == iStart - 1;
+    }
+    if (!fPassed) std::fprintf(stderr, "Battle plan keyboard selection failed: row %lld, expected %lld\n",
+                              static_cast<long long>(ui::SendMessage(hwnd, win32::CB_GETCURSEL, 0, 0)),
+                              static_cast<long long>(iExpected));
+    else std::puts("Battle plan keyboard cancel and commit passed with a Fleets report open");
     return fPassed;
 }
 

@@ -19,10 +19,10 @@ and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
 ## Fleet battle-plan dropdown ignores keyboard navigation — fixed
 
-`FHandleKey` sent Home, End, Up and Down to the waypoint pane when the
-battle-plan combo was the keyboard target. The keys now reach the combo,
-so Return commits the highlighted plan and the assignment is saved with
-the fleet's orders (#108).
+`FHandleKey` sent Home, End, Up and Down to the message pane when the
+battle-plan combo was the keyboard target. Escape could close the Fleets
+report while the list remained open. The focused combo now receives those
+navigation keys and handles Escape while its list is open (#108).
 
 ## Game library rejects combined player turns — fixed
 
