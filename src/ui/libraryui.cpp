@@ -1383,6 +1383,16 @@ std::int16_t FImportLibraryRaceAndEdit(APPSESSION &app, HWND hwnd, std::optional
     return 1;
 }
 
+static std::optional<RTBOF> FReadImportBof(NATIVEFILE *pf, DtFileType dt, int iplr) {
+    const auto hdr = FReadLibraryHdr(pf);
+    if (!hdr || hdr->rt != rtBOF || hdr->cb != cbWireBof) return std::nullopt;
+    const auto rtbof = FReadLibraryBof(pf);
+    if (!rtbof || std::memcmp(rtbof->rgid, "J3J3", 4) ||
+        rtbof->verMajor != 2 || rtbof->verMinor != 85 || rtbof->dt != dt ||
+        rtbof->iPlayer != iplr || rtbof->lidGame == 0) return std::nullopt;
+    return rtbof;
+}
+
 /* Inspect record framing and BOF metadata without calling FOpenFile, which
  * binds validation to the active game globals. */
 LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType dt, int iplr,
@@ -1393,17 +1403,20 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
     LIBRARYFILEINSPECTRESULT result;
     std::int64_t cbFile;
     std::optional<std::int64_t> ib;
-    std::uint16_t wGen;
+    RTBOF rtbofLatest;
+    bool fMultiTurn;
+    enum class TURNSECTION { battle, roster, payload };
+    TURNSECTION section = TURNSECTION::battle;
+    bool fHasBattle = false;
+    std::byte rgbTurn[2];
 
     pf = PfOpenNativeFile(pszFile, NATIVEFILEMODE::read);
     if (!pf) return result;
     if (LSeekNativeFile(pf, 0, NATIVESEEKORIGIN::end) < 0 || !(ib = LNativePosition(pf)) || *ib < 22 || LSeekNativeFile(pf, 0, NATIVESEEKORIGIN::begin) < 0) goto LDone;
     cbFile = *ib;
-    if (!(hdr = FReadLibraryHdr(pf)) || hdr->rt != rtBOF || hdr->cb != cbWireBof ||
-        !(rtbof = FReadLibraryBof(pf)) || std::memcmp(rtbof->rgid, "J3J3", 4) ||
-        rtbof->verMajor != 2 || rtbof->verMinor != 85 || rtbof->dt != dt ||
-        rtbof->iPlayer != iplr || rtbof->lidGame == 0) goto LDone;
-    wGen = rtbof->wGen;
+    if (!(rtbof = FReadImportBof(pf, dt, iplr))) goto LDone;
+    rtbofLatest = *rtbof;
+    fMultiTurn = dt == dtTurn && rtbof->fMulti;
     if (dt == dtXY) {
         std::uint32_t cPlanets;
         if (cbFile < 88 || (cbFile - 88) % 4 != 0 || (cPlanets = static_cast<std::uint32_t>(((cbFile - 88) / 4))) > 999 ||
@@ -1412,17 +1425,45 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
         result.fComplete = true;
         result.info.lidGame = rtbof->lidGame;
         if (request.fTurn) result.info.turn = rtbof->turn;
-        if (request.fGeneration) result.info.wGen = wGen;
+        if (request.fGeneration) result.info.wGen = static_cast<std::uint16_t>(rtbof->wGen);
         result.info.fMulti = rtbof->fMulti;
         goto LDone;
     }
     while ((hdr = FReadLibraryHdr(pf))) {
         ib = LNativePosition(pf);
-        if (!ib || *ib < 0 || *ib + hdr->cb > cbFile) break;
+        if (!ib || *ib < 0 || *ib > cbFile || hdr->cb > cbFile - *ib) break;
+        if (hdr->rt == rtBOF && dt == dtTurn) break;
+        // A turn starts with a player roster or with battle data followed by the roster.
+        if (fMultiTurn) {
+            if (hdr->rt == rtBtlData) {
+                if (section != TURNSECTION::battle || hdr->cb < cbWireBattleData) break;
+                fHasBattle = true;
+            } else if (hdr->rt == rtContinue) {
+                if (section != TURNSECTION::battle || !fHasBattle) break;
+            } else if (hdr->rt == rtPlr) {
+                // Even empty names need a marker and a terminator each.
+                if (section == TURNSECTION::payload || hdr->cb < cbWirePlayerPartial + 4) break;
+                section = TURNSECTION::roster;
+            } else {
+                if (section == TURNSECTION::battle) break;
+                section = TURNSECTION::payload;
+            }
+        }
         if (hdr->rt == rtEOF) {
-            /* Orders and history writers use an empty EOF; host and turn
-             * files carry the two-byte trailer. Both must end at EOF. */
+            // Orders and history may have an empty EOF. Turn trailers carry the year.
             if (hdr->cb != 2 && !(hdr->cb == 0 && (dt == dtLog || dt == dtHist))) break;
+            if (fMultiTurn) {
+                if (CReadNative(std::span{&rgbTurn, 1}, pf) != 1 || WFromStreamBytes(rgbTurn) != rtbofLatest.turn) break;
+                // A missed deadline leaves the old segment intact and appends a new BOF.
+                if (*ib + hdr->cb < cbFile) {
+                    const auto rtbofNext = FReadImportBof(pf, dt, iplr);
+                    if (!rtbofNext || rtbofNext->lidGame != rtbof->lidGame || rtbofNext->turn <= rtbofLatest.turn) break;
+                    rtbofLatest = *rtbofNext;
+                    section = TURNSECTION::battle;
+                    fHasBattle = false;
+                    continue;
+                }
+            }
             if (*ib + hdr->cb != cbFile) break;
             result.fComplete = true;
             break;
@@ -1431,10 +1472,10 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
     }
     if (result.fComplete) {
         result.info.lidGame = rtbof->lidGame;
-        if (request.fTurn) result.info.turn = rtbof->turn;
-        if (request.fGeneration) result.info.wGen = wGen;
+        if (request.fTurn) result.info.turn = rtbofLatest.turn;
+        if (request.fGeneration) result.info.wGen = static_cast<std::uint16_t>(rtbofLatest.wGen);
         result.info.fMulti = rtbof->fMulti;
-        if (rtbof->fMulti && request.fTurn) {
+        if (rtbof->fMulti && request.fTurn && !fMultiTurn) {
             std::uint16_t turnFinal;
             if (cbFile < 4 || LSeekNativeFile(pf, -2, NATIVESEEKORIGIN::end) < 0 || CReadNative(std::span{&turnFinal, 1}, pf) != 1) result.fComplete = false;
             else result.info.turn = turnFinal;

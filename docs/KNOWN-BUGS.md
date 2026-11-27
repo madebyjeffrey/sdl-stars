@@ -17,6 +17,14 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Game library rejects combined player turns — fixed
+
+After a missed deadline, the host appends a new turn segment to the
+player's file. Import inspection stopped at the old segment's trailer.
+The inspector now checks every segment's game, player, year, player data
+prefix, and trailer. It uses the latest year's metadata for the update
+(#107).
+
 ## Cybertron offensive packets target friends — fixed
 
 `FEnumPktAttack` considered friendly colonies for offensive mineral packets.
