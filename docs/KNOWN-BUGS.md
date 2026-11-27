@@ -17,6 +17,13 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Fleet battle-plan dropdown ignores keyboard navigation — fixed
+
+`FHandleKey` sent Home, End, Up and Down to the message pane when the
+battle-plan combo was the keyboard target. Escape could close the Fleets
+report while the list remained open. The focused combo now receives those
+navigation keys and handles Escape while its list is open (#108).
+
 ## Game library rejects combined player turns — fixed
 
 After a missed deadline, the host appends a new turn segment to the
