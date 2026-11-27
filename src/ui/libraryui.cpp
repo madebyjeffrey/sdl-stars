@@ -1433,13 +1433,17 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
         if (!ib || *ib < 0 || *ib > cbFile || hdr->cb > cbFile - *ib) break;
         if (hdr->rt == rtBOF && dt == dtTurn) break;
         // A turn starts with a player roster or with battle data followed by the roster.
-        if (fMultiTurn && !fHasPlayer) {
+        if (fMultiTurn) {
             if (hdr->rt == rtBtlData) {
-                if (hdr->cb < cbWireBattleData) break;
+                if (fHasPlayer || hdr->cb < cbWireBattleData) break;
                 fHasBattle = true;
-            } else if (hdr->rt != rtContinue || !fHasBattle) {
-                if (hdr->rt != rtPlr || hdr->cb < cbWirePlayerPartial) break;
+            } else if (hdr->rt == rtContinue) {
+                if (fHasPlayer || !fHasBattle) break;
+            } else if (hdr->rt == rtPlr) {
+                if (hdr->cb < cbWirePlayerPartial) break;
                 fHasPlayer = true;
+            } else if (!fHasPlayer) {
+                break;
             }
         }
         if (hdr->rt == rtEOF) {

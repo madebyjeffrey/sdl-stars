@@ -564,9 +564,12 @@ def main():
         incoming = work / 'combined-2408.m1'
         empty = multi + newest[:18] + newest[-4:]
         short_player = multi + newest[:18] + (6 << 10).to_bytes(2, 'little') + newest[-4:]
-        orphan_continuation = multi + newest[:18] + ((39 << 10) | 1).to_bytes(2, 'little') + b'\0' + newest[18:]
+        continuation = ((39 << 10) | 1).to_bytes(2, 'little') + b'\0'
+        orphan_continuation = multi + newest[:18] + continuation + newest[18:]
+        late_continuation = multi + newest[:-4] + continuation + newest[-4:]
         for damaged in (earlier + newest, combined[:-1], combined + b'x', wrong_game,
-                        wrong_player, wrong_year, empty, short_player, orphan_continuation):
+                        wrong_player, wrong_year, empty, short_player, orphan_continuation,
+                        late_continuation):
             incoming.write_bytes(damaged)
             run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
                 STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail')
