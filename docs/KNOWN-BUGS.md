@@ -21,8 +21,9 @@ and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
 After a missed deadline, the host appends a new turn segment to the
 player's file. Import inspection stopped at the old segment's trailer.
-The inspector now checks every segment's game, player, year, and trailer
-and uses the latest year's metadata for the update (#107).
+The inspector now checks every segment's game, player, year, player data
+prefix, and trailer. It uses the latest year's metadata for the update
+(#107).
 
 ## Cybertron offensive packets target friends — fixed
 

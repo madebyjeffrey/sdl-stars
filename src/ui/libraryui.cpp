@@ -1405,6 +1405,8 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
     std::optional<std::int64_t> ib;
     RTBOF rtbofLatest;
     bool fMultiTurn;
+    bool fHasBattle = false;
+    bool fHasPlayer = false;
     std::byte rgbTurn[2];
 
     pf = PfOpenNativeFile(pszFile, NATIVEFILEMODE::read);
@@ -1430,6 +1432,16 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
         ib = LNativePosition(pf);
         if (!ib || *ib < 0 || *ib > cbFile || hdr->cb > cbFile - *ib) break;
         if (hdr->rt == rtBOF && dt == dtTurn) break;
+        // A turn starts with a player roster or with battle data followed by the roster.
+        if (fMultiTurn && !fHasPlayer) {
+            if (hdr->rt == rtBtlData) {
+                if (hdr->cb < cbWireBattleData) break;
+                fHasBattle = true;
+            } else if (hdr->rt != rtContinue || !fHasBattle) {
+                if (hdr->rt != rtPlr || hdr->cb < cbWirePlayerPartial) break;
+                fHasPlayer = true;
+            }
+        }
         if (hdr->rt == rtEOF) {
             // Orders and history may have an empty EOF. Turn trailers carry the year.
             if (hdr->cb != 2 && !(hdr->cb == 0 && (dt == dtLog || dt == dtHist))) break;
@@ -1440,6 +1452,8 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
                     const auto rtbofNext = FReadImportBof(pf, dt, iplr);
                     if (!rtbofNext || rtbofNext->lidGame != rtbof->lidGame || rtbofNext->turn <= rtbofLatest.turn) break;
                     rtbofLatest = *rtbofNext;
+                    fHasBattle = false;
+                    fHasPlayer = false;
                     continue;
                 }
             }

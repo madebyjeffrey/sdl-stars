@@ -562,7 +562,11 @@ def main():
         wrong_year = bytearray(combined)
         wrong_year[-2:] = (9).to_bytes(2, 'little')
         incoming = work / 'combined-2408.m1'
-        for damaged in (earlier + newest, combined[:-1], combined + b'x', wrong_game, wrong_player, wrong_year):
+        empty = multi + newest[:18] + newest[-4:]
+        short_player = multi + newest[:18] + (6 << 10).to_bytes(2, 'little') + newest[-4:]
+        orphan_continuation = multi + newest[:18] + ((39 << 10) | 1).to_bytes(2, 'little') + b'\0' + newest[18:]
+        for damaged in (earlier + newest, combined[:-1], combined + b'x', wrong_game,
+                        wrong_player, wrong_year, empty, short_player, orphan_continuation):
             incoming.write_bytes(damaged)
             run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
                 STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail')
