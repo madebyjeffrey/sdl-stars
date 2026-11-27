@@ -1405,8 +1405,9 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
     std::optional<std::int64_t> ib;
     RTBOF rtbofLatest;
     bool fMultiTurn;
+    enum class TURNSECTION { battle, roster, payload };
+    TURNSECTION section = TURNSECTION::battle;
     bool fHasBattle = false;
-    bool fHasPlayer = false;
     std::byte rgbTurn[2];
 
     pf = PfOpenNativeFile(pszFile, NATIVEFILEMODE::read);
@@ -1435,15 +1436,17 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
         // A turn starts with a player roster or with battle data followed by the roster.
         if (fMultiTurn) {
             if (hdr->rt == rtBtlData) {
-                if (fHasPlayer || hdr->cb < cbWireBattleData) break;
+                if (section != TURNSECTION::battle || hdr->cb < cbWireBattleData) break;
                 fHasBattle = true;
             } else if (hdr->rt == rtContinue) {
-                if (fHasPlayer || !fHasBattle) break;
+                if (section != TURNSECTION::battle || !fHasBattle) break;
             } else if (hdr->rt == rtPlr) {
-                if (hdr->cb < cbWirePlayerPartial) break;
-                fHasPlayer = true;
-            } else if (!fHasPlayer) {
-                break;
+                // Even empty names need a marker and a terminator each.
+                if (section == TURNSECTION::payload || hdr->cb < cbWirePlayerPartial + 4) break;
+                section = TURNSECTION::roster;
+            } else {
+                if (section == TURNSECTION::battle) break;
+                section = TURNSECTION::payload;
             }
         }
         if (hdr->rt == rtEOF) {
@@ -1456,8 +1459,8 @@ LIBRARYFILEINSPECTRESULT FInspectImportFile(std::string_view pszFile, DtFileType
                     const auto rtbofNext = FReadImportBof(pf, dt, iplr);
                     if (!rtbofNext || rtbofNext->lidGame != rtbof->lidGame || rtbofNext->turn <= rtbofLatest.turn) break;
                     rtbofLatest = *rtbofNext;
+                    section = TURNSECTION::battle;
                     fHasBattle = false;
-                    fHasPlayer = false;
                     continue;
                 }
             }
