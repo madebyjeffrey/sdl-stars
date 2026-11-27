@@ -17,6 +17,28 @@ J/JRC3/JRC4 fix claims below come from the supplied list and are not independent
 verified release history. See [WIN16-PARITY.md](WIN16-PARITY.md) for native changes
 and [ROADMAP.md](ROADMAP.md) for the post-tag work.
 
+## Cybertron offensive packets target friends — fixed
+
+`FEnumPktAttack` considered friendly colonies for offensive mineral packets.
+The selector now excludes colonies whose owner the sender marks Friend.
+The regression checks unilateral and mutual Friend declarations and verifies
+that neutral and enemy colonies remain eligible (#105).
+
+## Packet terraforming misroutes the colony owner's notice — fixed
+
+`MoveThings` sent both versions of the terraforming notice to the packet
+sender. For a foreign colony, the colony owner now receives the recipient
+version. The regression tests both permanent and temporary changes (#110).
+
+## Transport orders reuse stale planet data in deep space — fixed
+
+`SatisfyOrders` processed planet transport orders without a successful
+planet lookup. A fleet in deep space could reuse planet data from another
+fleet, even triggering ground combat and changing subsequent random rolls.
+The transport order is now canceled when the fleet has no planet in orbit.
+The regression checks that an in-orbit unload succeeds and the deep-space
+fleet retains its cargo (#106).
+
 ## Scanner location label overflows its stack buffer — fixed on develop
 
 `DrawScannerSBar` appended a location name of up to 359 UTF-8 bytes to the

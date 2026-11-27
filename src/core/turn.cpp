@@ -1190,7 +1190,7 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
                             if (cTerraPerm != 0) {
                                 TurnIO().pfnMessage(app, iplr, idmMineralPacketHasPermanentlyDefault, static_cast<MsgGoto>(lppl->id), cTerraPerm > 0, i, lppl->id, std::abs(cTerraPerm), 0, 0, 0);
                                 if (lppl->iPlayer != iplrNone && lppl->iPlayer != iplr) {
-                                    TurnIO().pfnMessage(app, iplr, idmMineralPacketHasPermanentlyDefault2, static_cast<MsgGoto>(lppl->id), cTerraPerm > 0, i, lppl->id, std::abs(cTerraPerm), 0, 0, 0);
+                                    TurnIO().pfnMessage(app, lppl->iPlayer, idmMineralPacketHasPermanentlyDefault2, static_cast<MsgGoto>(lppl->id), cTerraPerm > 0, i, lppl->id, std::abs(cTerraPerm), 0, 0, 0);
                                 }
                                 lppl->rgEnvVarOrig[i] += cTerraPerm;
                             }
@@ -1223,7 +1223,7 @@ void MoveThings(APPSESSION &app, std::int16_t fPostProd) {
                                     lppl->rgEnvVar[i] += cTerraTemp;
                                     TurnIO().pfnMessage(app, iplr, idmMineralPacketHas, static_cast<MsgGoto>(lppl->id), cTerraTemp > 0, i, lppl->id, i << 8 | lppl->rgEnvVar[i], 0, 0, 0);
                                     if (lppl->iPlayer != iplrNone && lppl->iPlayer != iplr) {
-                                        TurnIO().pfnMessage(app, iplr, idmMineralPacketHas2, static_cast<MsgGoto>(lppl->id), cTerraTemp > 0, i, lppl->id, i << 8 | lppl->rgEnvVar[i], 0, 0, 0);
+                                        TurnIO().pfnMessage(app, lppl->iPlayer, idmMineralPacketHas2, static_cast<MsgGoto>(lppl->id), cTerraTemp > 0, i, lppl->id, i << 8 | lppl->rgEnvVar[i], 0, 0, 0);
                                     }
                                 }
                             }

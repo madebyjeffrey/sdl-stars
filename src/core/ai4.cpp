@@ -1214,7 +1214,8 @@ std::int16_t FEnumPktAttack(APPSESSION &app, PLANET *lpplSrc, PLANET *lpplTest) 
     dOffsetPlanTemp = app.state.game.cPlanMax * 2 + 2;
     lpciPlan = CivFromLp(app, app.state.vlpbAiData + 2);
     plMinMax = app.state.vlpbAiData + (dOffsetPlanTemp + app.state.game.cPlanMax * 2);
-    if (lpplTest->iPlayer == app.state.idPlayer || lpplTest->iPlayer == iplrNone || lpciPlan.At(lpplTest->id).iPktTarget() > 0 ||
+    if (lpplTest->iPlayer == app.state.idPlayer || lpplTest->iPlayer == iplrNone ||
+        app.state.rgplr[app.state.idPlayer].rgmdRelation[lpplTest->iPlayer] == 1 || lpciPlan.At(lpplTest->id).iPktTarget() > 0 ||
         RaceQueryIO().pfnStat(&app.state.rgplr[lpplTest->iPlayer], rsMajorAdv) == raMacintosh) {
         return 0;
     }

@@ -132,6 +132,9 @@ void SatisfyOrders(APPSESSION &app, std::int16_t iPass) {
                         xWP = 0xfffe;
                         break;
                     case grobjPlanet:
+                        // A stale planet waypoint can survive after the fleet leaves orbit.
+                        if (!fAtPlanet)
+                            goto CancelOrder;
                         xWP = 0xffff;
                         fHasPermission = lpfl->iPlayer == pl.iPlayer ? 3 : 0;
                         if (fHasPermission)
