@@ -541,6 +541,40 @@ def main():
             STARS_CLIENT_IMPORT_UPDATE_EXPECTED='adjacent', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy')
         assert (imported / 'managed-copy.m1').read_bytes() == adjacent_source.read_bytes()
         assert not orders.exists()
+
+        # A missed deadline leaves a complete older segment before the latest turn.
+        # The first BOF marks the combined file, and each EOF names its own year.
+        earlier = bytearray(adjacent_turn_data)
+        earlier[12:14] = earlier[-2:] = (7).to_bytes(2, 'little')
+        newest = bytearray(adjacent_turn_data)
+        newest[-2:] = (8).to_bytes(2, 'little')
+        target = imported / 'managed-copy.m1'
+        target.write_bytes(earlier)
+        orders.write_bytes(b'old player orders')
+        other_turn = (imported / 'managed-copy.m2').read_bytes()
+        multi = bytearray(earlier)
+        multi[17] |= 4
+        combined = multi + newest
+        wrong_game = bytearray(combined)
+        wrong_game[len(multi) + 6] ^= 1
+        wrong_player = bytearray(combined)
+        wrong_player[len(multi) + 14] ^= 1
+        wrong_year = bytearray(combined)
+        wrong_year[-2:] = (9).to_bytes(2, 'little')
+        incoming = work / 'combined-2408.m1'
+        for damaged in (earlier + newest, combined[:-1], combined + b'x', wrong_game, wrong_player, wrong_year):
+            incoming.write_bytes(damaged)
+            run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
+                STARS_CLIENT_IMPORT_UPDATE_EXPECTED='fail')
+            assert target.read_bytes() == earlier
+            assert orders.read_bytes() == b'old player orders'
+            assert incoming.read_bytes() == damaged
+        incoming.write_bytes(combined)
+        run(executable, work, STARS_CLIENT_IMPORT_UPDATE_SOURCE=str(incoming),
+            STARS_CLIENT_IMPORT_UPDATE_EXPECTED='adjacent', STARS_CLIENT_IMPORT_UPDATE_TARGET='managed-copy')
+        assert target.read_bytes() == incoming.read_bytes() == combined
+        assert (imported / 'managed-copy.m2').read_bytes() == other_turn
+        assert not orders.exists()
         orders.write_bytes(b'old player orders')
 
         duplicate = work / 'library' / 'Games' / 'managed-copy-duplicate'
@@ -571,7 +605,7 @@ def main():
         assert history.read_bytes() == b'preserve player history'
         assert backup.read_bytes() == backup_before
         assert (duplicate / 'managed-copy-duplicate.m2').read_bytes() == (source / 'exchange.m2').read_bytes()
-        assert (imported / 'managed-copy.m1').read_bytes() == adjacent_source.read_bytes()
+        assert (imported / 'managed-copy.m1').read_bytes() == combined
         assert orders.read_bytes() == b'old player orders'
 
         failed_turn = Path(__file__).parents[1] / 'scaffold' / 'fixtures' / 'regression' / 'native' / 'oneai2' / 'checkpoints' / '050' / 'game.m1'

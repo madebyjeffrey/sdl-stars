@@ -6,6 +6,9 @@ produce different results from a 2.6j host for the same turn.
 
 ## Unreleased
 
+- The game library imports combined turns after a missed deadline and opens the
+  player at the latest year (#107).
+
 - The Progress Timeline chart menu accepts clicks and keyboard selections on
   macOS (#99).
 
